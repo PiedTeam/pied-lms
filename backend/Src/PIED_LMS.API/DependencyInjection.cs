@@ -1,6 +1,7 @@
 using PIED_LMS.API.Filters;
 using PIED_LMS.API.Middlewares;
 using PIED_LMS.Application.Options;
+using PIED_LMS.Contract.Services.Compiler.Validators;
 
 namespace PIED_LMS.API;
 
@@ -10,6 +11,11 @@ public static class InfrastructureExtensions
     {
         services.AddOptions<JwtOption>()
             .Bind(configuration.GetSection("JwtSettings"))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        services.AddOptions<CompilerOption>()
+            .Bind(configuration.GetSection("CompilerOptions"))
             .ValidateDataAnnotations()
             .ValidateOnStart();
 
@@ -43,6 +49,7 @@ public static class InfrastructureExtensions
         services.AddExceptionHandler<GlobalExceptionHandler>();
         services.AddProblemDetails();
         services.AddCarter();
+        services.AddValidatorsFromAssemblyContaining<CompileCommandValidator>();
         services.AddHealthChecks()
             .AddCheck("self", () => HealthCheckResult.Healthy("API is reachable"));
         services.AddResponseCaching();
