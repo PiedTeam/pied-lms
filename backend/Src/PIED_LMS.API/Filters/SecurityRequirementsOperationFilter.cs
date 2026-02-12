@@ -1,6 +1,6 @@
 namespace PIED_LMS.API.Filters;
 
-public class SecurityRequirementsOperationFilter : IOperationFilter
+public sealed class SecurityRequirementsOperationFilter : IOperationFilter
 {
     private static readonly HashSet<string> _publicEndpoints =
     [

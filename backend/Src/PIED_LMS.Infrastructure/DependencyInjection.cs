@@ -8,6 +8,7 @@ using PIED_LMS.Domain.Abstractions;
 using PIED_LMS.Domain.Entities;
 using PIED_LMS.Infrastructure.Authentication;
 using PIED_LMS.Infrastructure.Email;
+using PIED_LMS.Infrastructure.Compiler;
 using PIED_LMS.Persistence;
 
 namespace PIED_LMS.Infrastructure;
@@ -100,6 +101,13 @@ public static class PersistenceExtensions
             o.TokenValidationParameters = JwtTokenValidationParametersFactory.CreateForAuthentication(
                 jwtIssuer, jwtAudience, jwtSecret);
         });
+
+        services.AddSingleton<IProcessExecutor, ProcessExecutor>();
+        services.AddSingleton<ContainerPoolManager>();
+        services.AddHostedService<ContainerPoolHostedService>();
+        services.AddHostedService<WorkDirSweeperHostedService>();
+        services.AddSingleton<ICompilerService, DockerCompilerService>();
+        services.AddSingleton<ITestCaseProvider, FileSystemTestCaseProvider>();
 
         return services;
     }

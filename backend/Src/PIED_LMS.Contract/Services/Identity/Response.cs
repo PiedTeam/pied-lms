@@ -1,5 +1,3 @@
-using System.Text.Json.Serialization;
-
 namespace PIED_LMS.Contract.Services.Identity;
 
 // Base Response
@@ -8,7 +6,7 @@ public record ServiceResponse<T>(
     string Message,
     T? Data = default,
     Dictionary<string, string[]>? Errors = null,
-    bool IsNotFound = false
+    string? ErrorCode = null
 );
 
 // User Response

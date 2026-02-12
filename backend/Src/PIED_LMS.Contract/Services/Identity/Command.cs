@@ -5,7 +5,7 @@ using PIED_LMS.Contract.Abstractions.Shared;
 namespace PIED_LMS.Contract.Services.Identity;
 
 // Register Commands
-public record RegisterCommand(
+public abstract record RegisterCommand(
     string Email,
     string FirstName,
     string LastName,
@@ -14,7 +14,7 @@ public record RegisterCommand(
 ) : IRequest<ServiceResponse<RegisterResponse>>;
 
 // Login Commands
-public record LoginCommand(
+public abstract record LoginCommand(
     string Email,
     string Password
 ) : IRequest<ServiceResponse<LoginResult>>;
