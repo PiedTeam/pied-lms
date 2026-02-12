@@ -2,6 +2,8 @@ using PIED_LMS.API.Filters;
 using PIED_LMS.API.Middlewares;
 using PIED_LMS.Application.Options;
 using PIED_LMS.Contract.Services.Compiler.Validators;
+using PIED_LMS.Infrastructure.Compiler;
+using PIED_LMS.Application.Abstractions;
 
 
 
@@ -20,6 +22,22 @@ public static class InfrastructureExtensions
             .Bind(configuration.GetSection("CompilerOptions"))
             .ValidateDataAnnotations()
             .ValidateOnStart();
+
+        var compilerEnabled = configuration.GetValue<bool>("CompilerOptions:Enabled");
+        if (compilerEnabled)
+        {
+            services.AddSingleton<IProcessExecutor, ProcessExecutor>();
+            services.AddSingleton<ContainerPoolManager>();
+            services.AddHostedService<ContainerPoolHostedService>();
+            services.AddHostedService<WorkDirSweeperHostedService>();
+            services.AddSingleton<ICompilerService, DockerCompilerService>();
+        }
+        else
+        {
+            services.AddSingleton<ICompilerService, NoOpCompilerService>();
+        }
+
+        services.AddScoped<ITestCaseProvider, FileSystemTestCaseProvider>();
 
         // 1. Swagger with JWT Bearer Authentication
         services.AddEndpointsApiExplorer();
