@@ -42,3 +42,17 @@ public record LogoutCommand(
 public record RefreshTokenCommand(
     string RefreshToken
 ) : IRequest<ServiceResponse<RefreshTokenResponse>>;
+
+// Concrete implementations for API binding
+public sealed record RegisterRequest(
+    string Email,
+    string FirstName,
+    string LastName,
+    string Password,
+    string ConfirmPassword
+) : RegisterCommand(Email, FirstName, LastName, Password, ConfirmPassword);
+
+public sealed record LoginRequest(
+    string Email,
+    string Password
+) : LoginCommand(Email, Password);

@@ -65,7 +65,7 @@ public class AuthenticationEndpoints : ICarterModule
     }
 
     private static async Task<IResult> Register(
-        RegisterCommand request,
+        RegisterRequest request,
         IMediator mediator)
     {
         var result = await mediator.Send(request);
@@ -73,7 +73,7 @@ public class AuthenticationEndpoints : ICarterModule
     }
 
     private static async Task<IResult> Login(
-        LoginCommand request,
+        LoginRequest request,
         IMediator mediator,
         HttpContext context,
         IConfiguration configuration,
