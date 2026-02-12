@@ -1,0 +1,48 @@
+@host = http://localhost:5000
+
+### 1. GET All Quizlets (Should be empty initially, then have data after POST)
+GET {{host}}/api/quizlets
+Content-Type: application/json
+
+### 2. POST Create Quizlet (Upload Excel)
+# Note: You need to use the actual path to your valid_quiz_data.xlsx file
+# or use Postman for easier file uploading.
+# This HTTP file syntax for file upload works with VS Code "REST Client" extension if configured correctly,
+# but usually Postman is recommended for Multipart forms.
+
+# curl equivalent:
+# curl -X POST http://localhost:5000/api/quizlets \
+#   -F "title=Test Quiz from Curl" \
+#   -F "description=Created via command line" \
+#   -F "isPublished=true" \
+#   -F "listQuestion=@valid_quiz_data.xlsx"
+
+### 4. PUT Update Quizlet
+# Replace 1 with the actual ID you want to update
+PUT {{host}}/api/quizlets/1
+Content-Type: application/json
+
+{
+  "title": "Updated Title via API",
+  "isPublished": true,
+  "listQuestion": [
+    {
+      "content": "Updated Question 1",
+      "score": 1,
+      "answers": ["Option A", "Option B", "Option C", "Option D"],
+      "correctAnswers": ["Option A"],
+      "questionType": "MultipleChoice"
+    },
+    {
+      "content": "New Question 2",
+      "score": 2,
+      "answers": ["True", "False"],
+      "correctAnswers": ["True"],
+      "questionType": "SingleChoice"
+    }
+  ]
+}
+
+### 5. GET Student Quizlets (Published Only)
+GET {{host}}/api/students/quizlets
+Content-Type: application/json

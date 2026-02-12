@@ -12,8 +12,8 @@ using PIED_LMS.Persistence;
 namespace PIED_LMS.Persistence.Migrations
 {
     [DbContext(typeof(PiedLmsDbContext))]
-    [Migration("20260203124114_FixCheckConstraint")]
-    partial class FixCheckConstraint
+    [Migration("20260208140959_Init")]
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -313,6 +313,121 @@ namespace PIED_LMS.Persistence.Migrations
                     b.ToTable("users", (string)null);
                 });
 
+            modelBuilder.Entity("PIED_LMS.Domain.Entities.Question", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("content");
+
+                    b.Property<string>("QuestionType")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("question_type");
+
+                    b.Property<int>("QuizId")
+                        .HasColumnType("integer")
+                        .HasColumnName("quiz_id");
+
+                    b.Property<double>("Score")
+                        .HasColumnType("double precision")
+                        .HasColumnName("score");
+
+                    b.HasKey("Id")
+                        .HasName("pk_questions");
+
+                    b.HasIndex("QuizId")
+                        .HasDatabaseName("ix_questions_quiz_id");
+
+                    b.ToTable("questions", (string)null);
+                });
+
+            modelBuilder.Entity("PIED_LMS.Domain.Entities.QuestionAnswer", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("content");
+
+                    b.Property<bool>("IsCorrect")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_correct");
+
+                    b.Property<int>("QuestionId")
+                        .HasColumnType("integer")
+                        .HasColumnName("question_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_question_answers");
+
+                    b.HasIndex("QuestionId")
+                        .HasDatabaseName("ix_question_answers_question_id");
+
+                    b.ToTable("question_answers", (string)null);
+                });
+
+            modelBuilder.Entity("PIED_LMS.Domain.Entities.QuestionQuiz", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("description");
+
+                    b.Property<bool>("IsPublished")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_published");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("title");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_question_quizs");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_question_quizs_user_id");
+
+                    b.ToTable("question_quizs", (string)null);
+                });
+
             modelBuilder.Entity("PIED_LMS.Domain.Entities.TestRoom", b =>
                 {
                     b.Property<Guid>("Id")
@@ -432,6 +547,42 @@ namespace PIED_LMS.Persistence.Migrations
                         .HasConstraintName("fk_user_tokens_users_user_id");
                 });
 
+            modelBuilder.Entity("PIED_LMS.Domain.Entities.Question", b =>
+                {
+                    b.HasOne("PIED_LMS.Domain.Entities.QuestionQuiz", "Quizlet")
+                        .WithMany("Questions")
+                        .HasForeignKey("QuizId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_questions_question_quiz_quiz_id");
+
+                    b.Navigation("Quizlet");
+                });
+
+            modelBuilder.Entity("PIED_LMS.Domain.Entities.QuestionAnswer", b =>
+                {
+                    b.HasOne("PIED_LMS.Domain.Entities.Question", "Question")
+                        .WithMany("Answers")
+                        .HasForeignKey("QuestionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_question_answers_question_question_id");
+
+                    b.Navigation("Question");
+                });
+
+            modelBuilder.Entity("PIED_LMS.Domain.Entities.QuestionQuiz", b =>
+                {
+                    b.HasOne("PIED_LMS.Domain.Entities.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_question_quizs_users_user_id");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("PIED_LMS.Domain.Entities.TestRoom", b =>
                 {
                     b.HasOne("PIED_LMS.Domain.Entities.ApplicationUser", "Creator")
@@ -442,6 +593,16 @@ namespace PIED_LMS.Persistence.Migrations
                         .HasConstraintName("fk_test_rooms_users_created_by");
 
                     b.Navigation("Creator");
+                });
+
+            modelBuilder.Entity("PIED_LMS.Domain.Entities.Question", b =>
+                {
+                    b.Navigation("Answers");
+                });
+
+            modelBuilder.Entity("PIED_LMS.Domain.Entities.QuestionQuiz", b =>
+                {
+                    b.Navigation("Questions");
                 });
 #pragma warning restore 612, 618
         }

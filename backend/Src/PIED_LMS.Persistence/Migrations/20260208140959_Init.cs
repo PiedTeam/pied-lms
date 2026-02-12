@@ -1,10 +1,8 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
-
-#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
 
 namespace PIED_LMS.Persistence.Migrations;
 
@@ -83,6 +81,56 @@ public partial class Init : Migration
                     principalTable: "roles",
                     principalColumn: "id",
                     onDelete: ReferentialAction.Cascade);
+            });
+
+        migrationBuilder.CreateTable(
+            name: "question_quizs",
+            columns: table => new
+            {
+                id = table.Column<int>(type: "integer", nullable: false)
+                    .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                title = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                description = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: false),
+                is_published = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                user_id = table.Column<Guid>(type: "uuid", nullable: false),
+                created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+            },
+            constraints: table =>
+            {
+                table.PrimaryKey("pk_question_quizs", x => x.id);
+                table.ForeignKey(
+                    name: "fk_question_quizs_users_user_id",
+                    column: x => x.user_id,
+                    principalTable: "users",
+                    principalColumn: "id",
+                    onDelete: ReferentialAction.Cascade);
+            });
+
+        migrationBuilder.CreateTable(
+            name: "test_rooms",
+            columns: table => new
+            {
+                id = table.Column<Guid>(type: "uuid", nullable: false),
+                name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                join_code = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
+                created_by = table.Column<Guid>(type: "uuid", nullable: false),
+                start_time = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                end_time = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                created_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false, defaultValueSql: "now()"),
+                updated_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
+            },
+            constraints: table =>
+            {
+                table.PrimaryKey("pk_test_rooms", x => x.id);
+                table.CheckConstraint("CK_TestRoom_EndTime_After_StartTime", "\"end_time\" > \"start_time\"");
+                table.ForeignKey(
+                    name: "fk_test_rooms_users_created_by",
+                    column: x => x.created_by,
+                    principalTable: "users",
+                    principalColumn: "id",
+                    onDelete: ReferentialAction.Restrict);
             });
 
         migrationBuilder.CreateTable(
@@ -170,15 +218,63 @@ public partial class Init : Migration
                     onDelete: ReferentialAction.Cascade);
             });
 
-        migrationBuilder.InsertData(
-            table: "roles",
-            columns: new[] { "id", "concurrency_stamp", "created_at", "description", "name", "normalized_name" },
-            values: new object[,]
+        migrationBuilder.CreateTable(
+            name: "questions",
+            columns: table => new
             {
-                    { new Guid("06970f04-b09a-7000-9879-1f1b7df06fed"), "9a491344-96bf-47bf-a0f6-283146b41713", new DateTime(2026, 1, 21, 15, 27, 7, 158, DateTimeKind.Utc).AddTicks(4745), "Administrator with full access", "Admin", "ADMIN" },
-                    { new Guid("06970f04-b09d-7000-9858-7c19400d62b7"), "541da432-b916-442b-b660-13b186933495", new DateTime(2026, 1, 21, 15, 27, 7, 158, DateTimeKind.Utc).AddTicks(5166), "Mentor who can create and manage courses", "Mentor", "MENTOR" },
-                    { new Guid("06970f04-b09d-7001-9b95-d70e7971f3fd"), "c4e7f281-f95c-4c8d-b371-4de5ebb1e847", new DateTime(2026, 1, 21, 15, 27, 7, 158, DateTimeKind.Utc).AddTicks(5179), "Student who can enroll in courses", "Student", "STUDENT" }
+                id = table.Column<int>(type: "integer", nullable: false)
+                    .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                content = table.Column<string>(type: "text", nullable: false),
+                score = table.Column<double>(type: "double precision", nullable: false),
+                question_type = table.Column<string>(type: "text", nullable: false),
+                quiz_id = table.Column<int>(type: "integer", nullable: false)
+            },
+            constraints: table =>
+            {
+                table.PrimaryKey("pk_questions", x => x.id);
+                table.ForeignKey(
+                    name: "fk_questions_question_quiz_quiz_id",
+                    column: x => x.quiz_id,
+                    principalTable: "question_quizs",
+                    principalColumn: "id",
+                    onDelete: ReferentialAction.Cascade);
             });
+
+        migrationBuilder.CreateTable(
+            name: "question_answers",
+            columns: table => new
+            {
+                id = table.Column<int>(type: "integer", nullable: false)
+                    .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                content = table.Column<string>(type: "text", nullable: false),
+                is_correct = table.Column<bool>(type: "boolean", nullable: false),
+                question_id = table.Column<int>(type: "integer", nullable: false)
+            },
+            constraints: table =>
+            {
+                table.PrimaryKey("pk_question_answers", x => x.id);
+                table.ForeignKey(
+                    name: "fk_question_answers_question_question_id",
+                    column: x => x.question_id,
+                    principalTable: "questions",
+                    principalColumn: "id",
+                    onDelete: ReferentialAction.Cascade);
+            });
+
+        migrationBuilder.CreateIndex(
+            name: "ix_question_answers_question_id",
+            table: "question_answers",
+            column: "question_id");
+
+        migrationBuilder.CreateIndex(
+            name: "ix_question_quizs_user_id",
+            table: "question_quizs",
+            column: "user_id");
+
+        migrationBuilder.CreateIndex(
+            name: "ix_questions_quiz_id",
+            table: "questions",
+            column: "quiz_id");
 
         migrationBuilder.CreateIndex(
             name: "ix_role_claims_role_id",
@@ -189,6 +285,17 @@ public partial class Init : Migration
             name: "RoleNameIndex",
             table: "roles",
             column: "normalized_name",
+            unique: true);
+
+        migrationBuilder.CreateIndex(
+            name: "ix_test_rooms_created_by",
+            table: "test_rooms",
+            column: "created_by");
+
+        migrationBuilder.CreateIndex(
+            name: "ix_test_rooms_join_code",
+            table: "test_rooms",
+            column: "join_code",
             unique: true);
 
         migrationBuilder.CreateIndex(
@@ -222,7 +329,13 @@ public partial class Init : Migration
     protected override void Down(MigrationBuilder migrationBuilder)
     {
         migrationBuilder.DropTable(
+            name: "question_answers");
+
+        migrationBuilder.DropTable(
             name: "role_claims");
+
+        migrationBuilder.DropTable(
+            name: "test_rooms");
 
         migrationBuilder.DropTable(
             name: "user_claims");
@@ -237,7 +350,13 @@ public partial class Init : Migration
             name: "user_tokens");
 
         migrationBuilder.DropTable(
+            name: "questions");
+
+        migrationBuilder.DropTable(
             name: "roles");
+
+        migrationBuilder.DropTable(
+            name: "question_quizs");
 
         migrationBuilder.DropTable(
             name: "users");
