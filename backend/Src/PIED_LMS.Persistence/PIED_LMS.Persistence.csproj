@@ -7,23 +7,17 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
-            <PrivateAssets>all</PrivateAssets>
-            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-        </PackageReference>
-        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore"/>
-        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL"/>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools">
-            <PrivateAssets>all</PrivateAssets>
-            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-        </PackageReference>
-        <PackageReference Include="EFCore.NamingConventions"/>
-        <PackageReference Include="UUIDNext"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" />
+        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+        <PackageReference Include="EFCore.NamingConventions" />
+        <PackageReference Include="UUIDNext" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\PIED_LMS.Contract\PIED_LMS.Contract.csproj"/>
-        <ProjectReference Include="..\PIED_LMS.Domain\PIED_LMS.Domain.csproj"/>
+        <ProjectReference Include="..\PIED_LMS.Contract\PIED_LMS.Contract.csproj" />
+        <ProjectReference Include="..\PIED_LMS.Domain\PIED_LMS.Domain.csproj" />
     </ItemGroup>
 
 </Project>

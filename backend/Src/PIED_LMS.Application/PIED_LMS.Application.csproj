@@ -17,8 +17,9 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\PIED_LMS.Contract\PIED_LMS.Contract.csproj" />
-        <ProjectReference Include="..\PIED_LMS.Domain\PIED_LMS.Domain.csproj" />
+        <ProjectReference Include="..\PIED_LMS.Contract\PIED_LMS.Contract.csproj"/>
+        <ProjectReference Include="..\PIED_LMS.Domain\PIED_LMS.Domain.csproj"/>
+        <ProjectReference Include="..\PIED_LMS.Persistence\PIED_LMS.Persistence.csproj"/>
     </ItemGroup>
 
 </Project>
