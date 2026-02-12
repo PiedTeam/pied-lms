@@ -14,6 +14,10 @@ public class PiedLmsDbContext(DbContextOptions<PiedLmsDbContext> options) : Iden
 {
     // DbSets for domain entities
     public DbSet<TestRoom> TestRooms { get; set; }
+    public DbSet<ExamRoom> ExamRooms { get; set; }
+    public DbSet<Exam> Exams { get; set; }
+    public DbSet<ExamRoomExam> ExamRoomExams { get; set; }
+    public DbSet<ExamParticipation> ExamParticipations { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

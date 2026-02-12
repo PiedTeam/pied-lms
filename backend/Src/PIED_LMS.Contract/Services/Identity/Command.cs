@@ -5,7 +5,7 @@ using PIED_LMS.Contract.Abstractions.Shared;
 namespace PIED_LMS.Contract.Services.Identity;
 
 // Register Commands
-public abstract record RegisterCommand(
+public  record RegisterCommand(
     string Email,
     string FirstName,
     string LastName,
@@ -14,7 +14,7 @@ public abstract record RegisterCommand(
 ) : IRequest<ServiceResponse<RegisterResponse>>;
 
 // Login Commands
-public abstract record LoginCommand(
+public  record LoginCommand(
     string Email,
     string Password
 ) : IRequest<ServiceResponse<LoginResult>>;
@@ -47,6 +47,20 @@ public record LogoutCommand(
 public record RefreshTokenCommand(
     string RefreshToken
 ) : IRequest<ServiceResponse<RefreshTokenResponse>>;
+
+// Concrete implementations for API binding
+public sealed record RegisterRequest(
+    string Email,
+    string FirstName,
+    string LastName,
+    string Password,
+    string ConfirmPassword
+) : RegisterCommand(Email, FirstName, LastName, Password, ConfirmPassword);
+
+public sealed record LoginRequest(
+    string Email,
+    string Password
+) : LoginCommand(Email, Password);
 
 public record CreateRoomCommand(
     string Name,
