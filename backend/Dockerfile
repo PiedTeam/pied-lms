@@ -24,7 +24,10 @@ COPY ["Directory.Packages.props", "./"]
 COPY ["global.json", "./"]
 
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
-    dotnet restore "Src/PIED_LMS.API/PIED_LMS.API.csproj"
+    dotnet publish "Src/PIED_LMS.API/PIED_LMS.API.csproj" \
+    -c $BUILD_CONFIGURATION \
+    -o /app/publish \
+    /p:UseAppHost=false
 
 # Copy source code
 COPY . .
