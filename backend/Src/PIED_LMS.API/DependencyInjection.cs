@@ -4,6 +4,7 @@ using PIED_LMS.Application.Options;
 using PIED_LMS.Contract.Services.Compiler.Validators;
 
 
+
 namespace PIED_LMS.API;
 
 public static class InfrastructureExtensions

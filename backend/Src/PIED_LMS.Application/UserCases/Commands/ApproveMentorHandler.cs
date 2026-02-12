@@ -6,7 +6,9 @@ using PIED_LMS.Domain.Entities;
 
 namespace PIED_LMS.Application.UserCases.Commands;
 
-public class ApproveMentorHandler(UserManager<ApplicationUser> userManager, IEmailService emailService, ILogger<ApproveMentorHandler> logger)
+public class ApproveMentorHandler(UserManager<ApplicationUser> userManager, 
+    IEmailService emailService, 
+    ILogger<ApproveMentorHandler> logger)
     : IRequestHandler<ApproveMentorCommand, ServiceResponse<string>>
 {
     public async Task<ServiceResponse<string>> Handle(ApproveMentorCommand request, CancellationToken ct)

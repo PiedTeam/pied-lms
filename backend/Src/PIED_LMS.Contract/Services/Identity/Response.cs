@@ -6,7 +6,6 @@ public record ServiceResponse<T>(
     string Message,
     T? Data = default,
     Dictionary<string, string[]>? Errors = null,
-    string? ErrorCode = null,
     bool IsNotFound = false
 );
 

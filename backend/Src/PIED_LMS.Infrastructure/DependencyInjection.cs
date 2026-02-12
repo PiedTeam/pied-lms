@@ -4,11 +4,11 @@ using Microsoft.IdentityModel.Tokens;
 using PIED_LMS.Application.Abstractions;
 using PIED_LMS.Application.Options;
 using PIED_LMS.Contract.Abstractions.Email;
+using PIED_LMS.Contract.Abstractions.Services;
 using PIED_LMS.Domain.Abstractions;
 using PIED_LMS.Domain.Entities;
 using PIED_LMS.Infrastructure.Authentication;
 using PIED_LMS.Infrastructure.Email;
-using PIED_LMS.Infrastructure.Compiler;
 using PIED_LMS.Persistence;
 
 namespace PIED_LMS.Infrastructure;
@@ -81,6 +81,8 @@ public static class PersistenceExtensions
         services.AddMemoryCache();
         services.AddScoped<IRefreshTokenService, RefreshTokenService>();
         services.AddScoped<IEmailService, SmtpEmailService>();
+        services.AddScoped<Contract.Abstractions.Excel.IExcelService, Services.ExcelService>();
+        services.AddScoped<IQuestionQuizService, Services.QuestionQuizService>();
 
         services.AddAuthentication(options =>
         {
@@ -101,23 +103,6 @@ public static class PersistenceExtensions
             o.TokenValidationParameters = JwtTokenValidationParametersFactory.CreateForAuthentication(
                 jwtIssuer, jwtAudience, jwtSecret);
         });
-
-        var compilerEnabled = configuration.GetValue<bool>("CompilerOptions:Enabled", true);
-
-        if (compilerEnabled)
-        {
-            services.AddSingleton<IProcessExecutor, ProcessExecutor>();
-            services.AddSingleton<ContainerPoolManager>();
-            services.AddHostedService<ContainerPoolHostedService>();
-            services.AddHostedService<WorkDirSweeperHostedService>();
-            services.AddSingleton<ICompilerService, DockerCompilerService>();
-        }
-        else
-        {
-            services.AddSingleton<ICompilerService, NoOpCompilerService>();
-        }
-
-        services.AddSingleton<ITestCaseProvider, FileSystemTestCaseProvider>();
 
         return services;
     }
