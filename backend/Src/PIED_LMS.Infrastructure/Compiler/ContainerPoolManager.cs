@@ -23,9 +23,7 @@ public sealed class ContainerPoolManager
         _logger = logger;
         _poolLock = new SemaphoreSlim(_options.ContainerPoolSize, _options.ContainerPoolSize);
         HostWorkRoot = GetHostWorkRoot();
-        _containerNames = Enumerable.Range(1, _options.ContainerPoolSize)
-            .Select(index => $"{_options.ContainerNamePrefix}{index}")
-            .ToArray();
+        _containerNames = [.. Enumerable.Range(1, _options.ContainerPoolSize).Select(index => $"{_options.ContainerNamePrefix}{index}")];
     }
 
     public string HostWorkRoot { get; }
@@ -57,6 +55,13 @@ public sealed class ContainerPoolManager
 
     public void ReleaseContainer(string containerId)
     {
+        EnqueueContainer(containerId);
+        _poolLock.Release();
+    }
+
+    public async Task RecycleContainerAsync(string containerId, CancellationToken cancellationToken)
+    {
+        await EnsureContainerAsync(containerId, cancellationToken);
         EnqueueContainer(containerId);
         _poolLock.Release();
     }

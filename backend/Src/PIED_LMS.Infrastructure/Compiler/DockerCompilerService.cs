@@ -32,6 +32,7 @@ public sealed class DockerCompilerService(
                 CompilerErrorCode.ServerBusy,
                 "Server is busy. Please try again.");
 
+        var recycleContainer = false;
         var sessionId = Guid.NewGuid().ToString("N");
         var containerId = await _containerPool.LeaseContainerAsync(cancellationToken);
         var workDir = CreateWorkDir(sessionId);
@@ -51,6 +52,14 @@ public sealed class DockerCompilerService(
 
             if (!compileResult.Success)
             {
+                if (compileResult.ErrorCode == CompilerErrorCode.ServerBusy)
+                {
+                    recycleContainer = true;
+                    return CompilerServiceResult<CompileResult>.Failure(
+                        CompilerErrorCode.ServerBusy,
+                        compileResult.Error ?? "Compiler container unhealthy. Please retry.");
+                }
+
                 var failedResult = new CompileResult(
                     false,
                     null,
@@ -72,6 +81,14 @@ public sealed class DockerCompilerService(
                 memoryLimitMb,
                 cancellationToken);
 
+            if (executionResult.ErrorCode == CompilerErrorCode.ServerBusy)
+            {
+                recycleContainer = true;
+                return CompilerServiceResult<CompileResult>.Failure(
+                    CompilerErrorCode.ServerBusy,
+                    executionResult.Error ?? "Compiler container unhealthy. Please retry.");
+            }
+
             var result = new CompileResult(
                 executionResult.IsSuccess,
                 executionResult.Output,
@@ -85,7 +102,10 @@ public sealed class DockerCompilerService(
         }
         finally
         {
-            _containerPool.ReleaseContainer(containerId);
+            if (recycleContainer)
+                await _containerPool.RecycleContainerAsync(containerId, cancellationToken);
+            else
+                _containerPool.ReleaseContainer(containerId);
             CleanupWorkDir(workDir);
             _semaphore.Release();
             logger.LogInformation("Compilation finished. SessionId: {SessionId}", sessionId);
@@ -105,6 +125,7 @@ public sealed class DockerCompilerService(
                 CompilerErrorCode.ServerBusy,
                 "Server is busy. Please try again.");
 
+        var recycleContainer = false;
         var sessionId = Guid.NewGuid().ToString("N");
         var containerId = await _containerPool.LeaseContainerAsync(cancellationToken);
         var workDir = CreateWorkDir(sessionId);
@@ -138,6 +159,23 @@ public sealed class DockerCompilerService(
                 unifiedScript,
                 cancellationToken);
 
+            var combinedOutput = CombineOutput(batchOutcome.Result);
+            if (batchOutcome.ExitCode != 0 && IsInfrastructureFailure(combinedOutput))
+            {
+                recycleContainer = true;
+                return CompilerServiceResult<JudgeResult>.Failure(
+                    CompilerErrorCode.ServerBusy,
+                    "Compiler container unhealthy. Please retry.");
+            }
+
+            if (!HasCompileMarkers(batchOutcome.Stdout))
+            {
+                recycleContainer = true;
+                return CompilerServiceResult<JudgeResult>.Failure(
+                    CompilerErrorCode.ServerBusy,
+                    "Compiler container unhealthy. Please retry.");
+            }
+
             if (batchOutcome.Stdout.Contains("###COMPILE_FAILED###", StringComparison.Ordinal))
             {
                 var compileDetails = ExtractCompileError(batchOutcome.Stdout);
@@ -159,7 +197,10 @@ public sealed class DockerCompilerService(
         }
         finally
         {
-            _containerPool.ReleaseContainer(containerId);
+            if (recycleContainer)
+                await _containerPool.RecycleContainerAsync(containerId, cancellationToken);
+            else
+                _containerPool.ReleaseContainer(containerId);
             CleanupWorkDir(workDir);
             _semaphore.Release();
             logger.LogInformation("Judge finished. SessionId: {SessionId}", sessionId);
@@ -204,12 +245,22 @@ public sealed class DockerCompilerService(
             stopwatch.ElapsedMilliseconds);
 
         if (result.ExitCode != 0)
+        {
+            if (IsInfrastructureFailure(CombineOutput(result)))
+                return new CompileStepResult(
+                    false,
+                    (int)stopwatch.ElapsedMilliseconds,
+                    "Compiler container unhealthy.",
+                    CompilerErrorCode.ServerBusy,
+                    CombineOutput(result));
+
             return new CompileStepResult(
                 false,
                 (int)stopwatch.ElapsedMilliseconds,
                 "Compilation failed.",
                 CompilerErrorCode.CompileError,
                 CombineOutput(result));
+        }
 
         return new CompileStepResult(true, (int)stopwatch.ElapsedMilliseconds, null, null, null);
     }
@@ -302,6 +353,16 @@ public sealed class DockerCompilerService(
                 (int)stopwatch.ElapsedMilliseconds);
 
         if (result.ExitCode != 0)
+        {
+            if (IsInfrastructureFailure(combinedOutput))
+                return new ExecutionOutcome(
+                    false,
+                    null,
+                    CompilerErrorCode.ServerBusy,
+                    "Compiler container unhealthy.",
+                    combinedOutput,
+                    (int)stopwatch.ElapsedMilliseconds);
+
             return new ExecutionOutcome(
                 false,
                 null,
@@ -309,6 +370,7 @@ public sealed class DockerCompilerService(
                 "Runtime error.",
                 combinedOutput,
                 (int)stopwatch.ElapsedMilliseconds);
+        }
 
         return new ExecutionOutcome(
             true,
@@ -526,6 +588,12 @@ public sealed class DockerCompilerService(
         return string.IsNullOrWhiteSpace(details) ? null : details;
     }
 
+    private static bool HasCompileMarkers(string stdout)
+    {
+        return stdout.Contains("###COMPILE_SUCCESS###", StringComparison.Ordinal) ||
+               stdout.Contains("###COMPILE_FAILED###", StringComparison.Ordinal);
+    }
+
     private static IReadOnlyList<ParsedCase> ParseBatchOutput(string stdout, int testCaseCount)
     {
         var results = new List<ParsedCase>(testCaseCount);
@@ -640,6 +708,19 @@ public sealed class DockerCompilerService(
             return result.Stderr;
 
         return $"{result.Stdout}\n{result.Stderr}";
+    }
+
+    private static bool IsInfrastructureFailure(string output)
+    {
+        if (string.IsNullOrWhiteSpace(output))
+            return false;
+
+        return output.Contains("Resource temporarily unavailable", StringComparison.OrdinalIgnoreCase) ||
+               output.Contains("Cannot allocate memory", StringComparison.OrdinalIgnoreCase) ||
+               output.Contains("OCI runtime exec failed", StringComparison.OrdinalIgnoreCase) ||
+               output.Contains("container is not running", StringComparison.OrdinalIgnoreCase) ||
+               output.Contains("No space left on device", StringComparison.OrdinalIgnoreCase) ||
+               output.Contains("fork:", StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool ContainsFloatingPointException(string output) =>

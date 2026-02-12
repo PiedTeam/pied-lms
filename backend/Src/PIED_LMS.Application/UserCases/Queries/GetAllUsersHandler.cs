@@ -28,7 +28,7 @@ public class GetAllUsersQueryHandler(UserManager<ApplicationUser> userManager, I
                     user.LastName,
                     user.IsActive,
                     user.CreatedAt,
-                    roles.ToList()
+                    [.. roles]
                 ));
             }
 
