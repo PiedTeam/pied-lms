@@ -2,7 +2,7 @@ using PIED_LMS.Contract.Services.Identity;
 
 namespace PIED_LMS.Contract.Services.Compiler;
 
-public abstract record CompileCommand(
+public sealed record CompileCommand(
     string Code,
     string? Input,
     int? TimeLimit,
@@ -10,12 +10,12 @@ public abstract record CompileCommand(
     OptimizationLevel? OptimizationLevel
 ) : IRequest<ServiceResponse<CompileResult>>;
 
-public abstract record TestCase(
+public sealed record TestCase(
     string Input,
     string ExpectedOutput
 );
 
-public abstract record JudgeCommand(
+public sealed record JudgeCommand(
     string Code,
     IReadOnlyList<TestCase> TestCases,
     int? TimeLimit,
@@ -23,7 +23,7 @@ public abstract record JudgeCommand(
     OptimizationLevel? OptimizationLevel
 ) : IRequest<ServiceResponse<JudgeResult>>;
 
-public abstract record JudgeFromFileCommand(
+public sealed record JudgeFromFileCommand(
     string Code,
     string RoomId,
     string QuestionId,

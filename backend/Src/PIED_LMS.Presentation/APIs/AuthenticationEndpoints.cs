@@ -222,18 +222,18 @@ public class AuthenticationEndpoints : ICarterModule
     }
 }
 
-public abstract record ChangePasswordRequest(
+public sealed record ChangePasswordRequest(
     string CurrentPassword,
     string NewPassword,
     string ConfirmPassword
 );
 
-public abstract record AssignRoleRequest(
+public sealed record AssignRoleRequest(
     Guid UserId,
     string RoleName
 );
 
-public abstract record GetAllUsersRequest(
+public sealed record GetAllUsersRequest(
     int PageNumber = 1,
     int PageSize = 10
 );

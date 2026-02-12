@@ -111,6 +111,10 @@ public abstract class CompileCommandValidator : AbstractValidator<CompileCommand
     }
 }
 
+public sealed class CompileCommandRequestValidator : CompileCommandValidator
+{
+}
+
 public class JudgeCommandValidator : AbstractValidator<JudgeCommand>
 {
     public JudgeCommandValidator()
