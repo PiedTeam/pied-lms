@@ -8,17 +8,17 @@
     "Database": {
         "Host": "localhost",
         "Port": "5432",
-        "Name": "PiedlmsDb",
-        "User": "postgres",
-        "Password": "12345"
+        "Name": "YourDatabaseName",
+        "User": "your_username",
+        "Password": "your_password"
     },
     "Seed": {
-        "AdminPassword": "AdminPassword123!",
-        "TeacherPassword": "TeacherPassword123!"
+        "AdminPassword": "YourAdminPassword",
+        "TeacherPassword": "YourTeacherPassword"
     },
     "AllowedHosts": "localhost;127.0.0.1",
     "ConnectionStrings": {
-        "DefaultConnection": "Host=localhost;Port=5432;Database=PiedlmsDb;Username=postgres;Password=12345"
+        "DefaultConnection": "Host=localhost;Port=5432;Database=YourDatabaseName;Username=your_username;Password=your_password"
     },
     "JwtSettings": {
         "Issuer": "https://localhost:7001",
@@ -30,7 +30,7 @@
     "EmailSettings": {
         "Host": "smtp.gmail.com",
         "Port": "587",
-        "SenderEmail": "nemnguyenhoang2907@gmail.com",
-        "SenderPassword": "temv rspf xvuo tloa"
+        "SenderEmail": "your-email@gmail.com",
+        "SenderPassword": "your-app-password"
     }
 }
