@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PIED_LMS.Persistence;
@@ -11,9 +12,11 @@ using PIED_LMS.Persistence;
 namespace PIED_LMS.Persistence.Migrations
 {
     [DbContext(typeof(PiedLmsDbContext))]
-    partial class PiedLmsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260203124114_FixCheckConstraint")]
+    partial class FixCheckConstraint
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

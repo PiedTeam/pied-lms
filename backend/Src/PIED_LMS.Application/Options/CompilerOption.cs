@@ -2,6 +2,8 @@ namespace PIED_LMS.Application.Options;
 
 public class CompilerOption
 {
+    public bool Enabled { get; set; } = true;
+
     [Range(1, int.MaxValue)] public int ContainerPoolSize { get; set; } = 10;
 
     [Range(1, int.MaxValue)] public int MaxConcurrentCompilations { get; set; } = 10;

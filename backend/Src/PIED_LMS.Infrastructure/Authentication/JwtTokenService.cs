@@ -33,16 +33,8 @@ public class JwtTokenService(IOptions<JwtOption> options) : IJwtTokenService
 
     public TokenValidationResult GetPrincipalFromExpiredToken(string token)
     {
-        var tokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateAudience = true,
-            ValidateIssuer = true,
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOption.Secret)),
-            ValidateLifetime = false,
-            ValidIssuer = _jwtOption.Issuer,
-            ValidAudience = _jwtOption.Audience
-        };
+        var tokenValidationParameters = JwtTokenValidationParametersFactory.CreateForExpiredTokenValidation(
+            _jwtOption.Issuer, _jwtOption.Audience, _jwtOption.Secret);
 
         try
         {

@@ -12,6 +12,9 @@ public class PiedLmsDbContext(DbContextOptions<PiedLmsDbContext> options) : Iden
     IdentityRoleClaim<Guid>,
     IdentityUserToken<Guid>>(options)
 {
+    // DbSets for domain entities
+    public DbSet<TestRoom> TestRooms { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -21,5 +24,7 @@ public class PiedLmsDbContext(DbContextOptions<PiedLmsDbContext> options) : Iden
 
         // Apply all configurations from the assembly
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(PiedLmsDbContext).Assembly);
+
+        
     }
 }

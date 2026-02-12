@@ -3,6 +3,7 @@ using PIED_LMS.API.Middlewares;
 using PIED_LMS.Application.Options;
 using PIED_LMS.Contract.Services.Compiler.Validators;
 
+
 namespace PIED_LMS.API;
 
 public static class InfrastructureExtensions
@@ -25,14 +26,15 @@ public static class InfrastructureExtensions
         {
             c.SwaggerDoc("v1", new OpenApiInfo { Title = "PIED LMS API", Version = "v1" });
 
-            // Define Bearer security scheme (ApiKey type)
+            // Define Bearer security scheme (Http type)
             c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
-                Description = "JWT Authorization header. Enter: Bearer {your token}",
+                Description = "Enter your JWT token directly below (no need to type 'Bearer ')",
                 Name = "Authorization",
                 In = ParameterLocation.Header,
-                Type = SecuritySchemeType.ApiKey,
-                Scheme = "Bearer"
+                Type = SecuritySchemeType.Http,
+                Scheme = "Bearer",
+                BearerFormat = "JWT"
             });
 
             // Apply Bearer globally to all operations
@@ -63,28 +65,9 @@ public static class InfrastructureExtensions
             limiterOptions.QueueLimit = 2;
         }));
 
-        // 4. Authentication & Authorization
-        var jwtSettings = configuration.GetSection("JwtSettings");
-        var secretKey = jwtSettings["Secret"] ?? throw new InvalidOperationException("JWT Secret missing.");
-
-        services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-            .AddJwtBearer(options => options.TokenValidationParameters = new TokenValidationParameters
-            {
-                ValidateIssuer = true,
-                ValidateAudience = true,
-                ValidateLifetime = true,
-                ValidateIssuerSigningKey = true,
-                ValidIssuer = jwtSettings["Issuer"],
-                ValidAudience = jwtSettings["Audience"],
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
-                ClockSkew = TimeSpan.Zero
-            });
-
+       
         services.AddAuthorization();
+
 
         return services;
     }

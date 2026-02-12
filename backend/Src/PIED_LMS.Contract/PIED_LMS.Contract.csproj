@@ -6,11 +6,11 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
     <ItemGroup>
-        <FrameworkReference Include="Microsoft.AspNetCore.App"/>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="FluentValidation"/>
-        <PackageReference Include="MediatR"/>
+        <PackageReference Include="FluentValidation" />
+        <PackageReference Include="MediatR" />
     </ItemGroup>
 </Project>
