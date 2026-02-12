@@ -24,3 +24,4 @@ public class IdentityUserTokenConfiguration : IEntityTypeConfiguration<IdentityU
 {
     public void Configure(EntityTypeBuilder<IdentityUserToken<Guid>> builder) => builder.ToTable("user_tokens");
 }
+

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PIED_LMS.Persistence;
@@ -11,9 +12,11 @@ using PIED_LMS.Persistence;
 namespace PIED_LMS.Persistence.Migrations
 {
     [DbContext(typeof(PiedLmsDbContext))]
-    partial class PiedLmsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260202162304_UpdateTestRoomTimeProperties")]
+    partial class UpdateTestRoomTimeProperties
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -318,10 +321,8 @@ namespace PIED_LMS.Persistence.Migrations
                         .HasColumnName("id");
 
                     b.Property<DateTimeOffset>("CreatedAt")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at")
-                        .HasDefaultValueSql("now()");
+                        .HasColumnName("created_at");
 
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uuid")
@@ -368,7 +369,7 @@ namespace PIED_LMS.Persistence.Migrations
 
                     b.ToTable("test_rooms", null, t =>
                         {
-                            t.HasCheckConstraint("CK_TestRoom_EndTime_After_StartTime", "\"end_time\" > \"start_time\"");
+                            t.HasCheckConstraint("CK_TestRoom_EndTime_After_StartTime", "\"EndTime\" > \"StartTime\"");
                         });
                 });
 

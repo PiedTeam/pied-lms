@@ -1,7 +1,13 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using PIED_LMS.Application.Abstractions;
+using PIED_LMS.Application.Options;
+using PIED_LMS.Contract.Abstractions.Email;
 using PIED_LMS.Domain.Abstractions;
 using PIED_LMS.Domain.Entities;
 using PIED_LMS.Infrastructure.Authentication;
+using PIED_LMS.Infrastructure.Email;
 using PIED_LMS.Infrastructure.Compiler;
 using PIED_LMS.Persistence;
 
@@ -55,17 +61,62 @@ public static class PersistenceExtensions
             .AddEntityFrameworkStores<PiedLmsDbContext>()
             .AddDefaultTokenProviders();
 
+        services.AddHttpContextAccessor();
+
+        // Configure strongly-typed settings with validation
+
+        services.AddOptions<EmailSettings>()
+            .Bind(configuration.GetSection(EmailSettings.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        services.AddOptions<JwtOption>()
+            .Bind(configuration.GetSection(JwtOption.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
         services.AddScoped<IUnitOfWork, EFUnitOfWork>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
 
         services.AddMemoryCache();
         services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+        services.AddScoped<IEmailService, SmtpEmailService>();
 
-        services.AddSingleton<IProcessExecutor, ProcessExecutor>();
-        services.AddSingleton<ContainerPoolManager>();
-        services.AddHostedService<ContainerPoolHostedService>();
-        services.AddHostedService<WorkDirSweeperHostedService>();
-        services.AddSingleton<ICompilerService, DockerCompilerService>();
+        services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+        }).AddJwtBearer(o =>
+        {
+            var jwtIssuer = configuration[$"{JwtOption.SectionName}:Issuer"];
+            var jwtAudience = configuration[$"{JwtOption.SectionName}:Audience"];
+            var jwtSecret = configuration[$"{JwtOption.SectionName}:Secret"];
+
+            if (string.IsNullOrWhiteSpace(jwtIssuer) || string.IsNullOrWhiteSpace(jwtAudience) || string.IsNullOrWhiteSpace(jwtSecret))
+            {
+                throw new InvalidOperationException($"One or more JWT settings are missing. Please configure '{JwtOption.SectionName}:Issuer', '{JwtOption.SectionName}:Audience', and '{JwtOption.SectionName}:Secret'.");
+            }
+
+            o.TokenValidationParameters = JwtTokenValidationParametersFactory.CreateForAuthentication(
+                jwtIssuer, jwtAudience, jwtSecret);
+        });
+
+        var compilerEnabled = configuration.GetValue<bool>("CompilerOptions:Enabled", true);
+
+        if (compilerEnabled)
+        {
+            services.AddSingleton<IProcessExecutor, ProcessExecutor>();
+            services.AddSingleton<ContainerPoolManager>();
+            services.AddHostedService<ContainerPoolHostedService>();
+            services.AddHostedService<WorkDirSweeperHostedService>();
+            services.AddSingleton<ICompilerService, DockerCompilerService>();
+        }
+        else
+        {
+            services.AddSingleton<ICompilerService, NoOpCompilerService>();
+        }
+
         services.AddSingleton<ITestCaseProvider, FileSystemTestCaseProvider>();
 
         return services;

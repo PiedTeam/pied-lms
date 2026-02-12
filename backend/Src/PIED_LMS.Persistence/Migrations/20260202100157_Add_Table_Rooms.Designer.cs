@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PIED_LMS.Persistence;
@@ -11,9 +12,11 @@ using PIED_LMS.Persistence;
 namespace PIED_LMS.Persistence.Migrations
 {
     [DbContext(typeof(PiedLmsDbContext))]
-    partial class PiedLmsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260202100157_Add_Table_Rooms")]
+    partial class Add_Table_Rooms
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -194,6 +197,35 @@ namespace PIED_LMS.Persistence.Migrations
                         .HasDatabaseName("RoleNameIndex");
 
                     b.ToTable("roles", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("b4a5b0c5-9c3a-4f0a-8e1f-6d2c3a1b2f10"),
+                            ConcurrencyStamp = "role-admin-concurrency",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Administrator with full access",
+                            Name = "Admin",
+                            NormalizedName = "ADMIN"
+                        },
+                        new
+                        {
+                            Id = new Guid("7a2f3c45-1d6b-4e8f-9a0b-3c2d1e4f5a67"),
+                            ConcurrencyStamp = "role-mentor-concurrency",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Mentor who can create and manage courses",
+                            Name = "Mentor",
+                            NormalizedName = "MENTOR"
+                        },
+                        new
+                        {
+                            Id = new Guid("3c1d2e4f-5a67-4b8f-9a0b-7a2f3c451d6b"),
+                            ConcurrencyStamp = "role-student-concurrency",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Student who can enroll in courses",
+                            Name = "Student",
+                            NormalizedName = "STUDENT"
+                        });
                 });
 
             modelBuilder.Entity("PIED_LMS.Domain.Entities.ApplicationUser", b =>
@@ -317,24 +349,14 @@ namespace PIED_LMS.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .ValueGeneratedOnAdd()
+                    b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at")
-                        .HasDefaultValueSql("now()");
-
-                    b.Property<Guid>("CreatedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("created_by");
+                        .HasColumnName("created_at");
 
                     b.Property<string>("Description")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
                         .HasColumnName("description");
-
-                    b.Property<DateTimeOffset>("EndTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("end_time");
 
                     b.Property<string>("JoinCode")
                         .IsRequired()
@@ -348,28 +370,17 @@ namespace PIED_LMS.Persistence.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("name");
 
-                    b.Property<DateTimeOffset>("StartTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("start_time");
-
-                    b.Property<DateTimeOffset?>("UpdatedAt")
+                    b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
 
                     b.HasKey("Id")
                         .HasName("pk_test_rooms");
 
-                    b.HasIndex("CreatedBy")
-                        .HasDatabaseName("ix_test_rooms_created_by");
-
                     b.HasIndex("JoinCode")
-                        .IsUnique()
                         .HasDatabaseName("ix_test_rooms_join_code");
 
-                    b.ToTable("test_rooms", null, t =>
-                        {
-                            t.HasCheckConstraint("CK_TestRoom_EndTime_After_StartTime", "\"end_time\" > \"start_time\"");
-                        });
+                    b.ToTable("test_rooms", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
@@ -427,18 +438,6 @@ namespace PIED_LMS.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_user_tokens_users_user_id");
-                });
-
-            modelBuilder.Entity("PIED_LMS.Domain.Entities.TestRoom", b =>
-                {
-                    b.HasOne("PIED_LMS.Domain.Entities.ApplicationUser", "Creator")
-                        .WithMany()
-                        .HasForeignKey("CreatedBy")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_test_rooms_users_created_by");
-
-                    b.Navigation("Creator");
                 });
 #pragma warning restore 612, 618
         }

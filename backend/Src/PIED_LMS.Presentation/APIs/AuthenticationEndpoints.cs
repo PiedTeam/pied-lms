@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using PIED_LMS.Contract.Services.Identity;
+using PIED_LMS.Domain.Constants;
 
 namespace PIED_LMS.Presentation.APIs;
 
@@ -46,40 +47,63 @@ public class AuthenticationEndpoints : ICarterModule
         group.MapPost("/assign-role", AssignRole)
             .WithName("AssignRole")
             .WithOpenApi()
-            .RequireAuthorization()
+            .RequireAuthorization(new AuthorizeAttribute { Roles = RoleConstants.Administrator })
             .Produces<ServiceResponse<string>>()
             .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest);
 
         group.MapGet("/users/{id}", GetUserById)
             .WithName("GetUserById")
             .WithOpenApi()
-            .RequireAuthorization(new AuthorizeAttribute { Roles = "Administrator" })
+            .RequireAuthorization(new AuthorizeAttribute { Roles = RoleConstants.Administrator })
             .Produces<ServiceResponse<UserResponse>>()
             .Produces<ServiceResponse<UserResponse>>(StatusCodes.Status404NotFound);
 
         group.MapGet("/users", GetAllUsers)
             .WithName("GetAllUsers")
             .WithOpenApi()
-            .RequireAuthorization(new AuthorizeAttribute { Roles = "Administrator" })
+            .RequireAuthorization(new AuthorizeAttribute { Roles = RoleConstants.Administrator })
             .Produces<ServiceResponse<PaginatedResponse<UserResponse>>>();
     }
 
-    private static async Task<IResult> Register(
-        RegisterRequest request,
-        IMediator mediator)
+    private static CookieOptions CreateRefreshTokenCookieOptions(
+        IConfiguration configuration,
+        IWebHostEnvironment environment)
     {
-        var result = await mediator.Send(request);
+        var refreshTokenExpirationDays = configuration.GetValue("JwtSettings:RefreshTokenExpirationDays", 7);
+        var sameSite = configuration.GetValue("Cookies:SameSite", SameSiteMode.Lax);
+        var secureCookie = configuration.GetValue("Cookies:Secure", !environment.IsDevelopment());
+        
+        if (sameSite == SameSiteMode.None)
+            secureCookie = true;
+
+        return new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = secureCookie,
+            SameSite = sameSite,
+            Expires = DateTime.UtcNow.AddDays(refreshTokenExpirationDays),
+            Path = "/api/auth"
+        };
+    }
+
+    private static async Task<IResult> Register(
+        RegisterCommand request,
+        IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(request, cancellationToken);
         return result.Success ? Results.Ok(result) : Results.BadRequest(result);
     }
 
     private static async Task<IResult> Login(
-        LoginRequest request,
+        LoginCommand request,
         IMediator mediator,
         HttpContext context,
         IConfiguration configuration,
-        IWebHostEnvironment environment)
+        IWebHostEnvironment environment,
+        CancellationToken cancellationToken)
     {
-        var result = await mediator.Send(request);
+        var result = await mediator.Send(request, cancellationToken);
 
         if (!result.Success || result.Data == null)
             return Results.Unauthorized();
@@ -88,16 +112,7 @@ public class AuthenticationEndpoints : ICarterModule
         var loginResult = result.Data;
 
         // Set refresh token in HttpOnly cookie
-        var refreshTokenExpirationDays = configuration.GetValue("JwtSettings:RefreshTokenExpirationDays", 7);
-        var secureCookie = configuration.GetValue("Cookies:Secure", !environment.IsDevelopment());
-        var cookieOptions = new CookieOptions
-        {
-            HttpOnly = true,
-            Secure = secureCookie,
-            SameSite = SameSiteMode.Lax, // Changed from Strict to Lax for better compatibility
-            Expires = DateTime.UtcNow.AddDays(refreshTokenExpirationDays),
-            Path = "/api/auth/refresh"
-        };
+        var cookieOptions = CreateRefreshTokenCookieOptions(configuration, environment);
 
         context.Response.Cookies.Append("refreshToken", loginResult.RefreshToken, cookieOptions);
 
@@ -116,7 +131,8 @@ public class AuthenticationEndpoints : ICarterModule
         IMediator mediator,
         ILogger<AuthenticationEndpoints> logger,
         IConfiguration configuration,
-        IWebHostEnvironment environment)
+        IWebHostEnvironment environment,
+        CancellationToken cancellationToken)
     {
         // Get refresh token from cookie
         var refreshToken = context.Request.Cookies["refreshToken"];
@@ -129,7 +145,7 @@ public class AuthenticationEndpoints : ICarterModule
         }
 
         var command = new RefreshTokenCommand(refreshToken);
-        var result = await mediator.Send(command);
+        var result = await mediator.Send(command, cancellationToken);
 
         if (!result.Success || result.Data == null)
         {
@@ -138,16 +154,7 @@ public class AuthenticationEndpoints : ICarterModule
         }
 
         // Update refresh token cookie
-        var refreshTokenExpirationDays = configuration.GetValue("JwtSettings:RefreshTokenExpirationDays", 7);
-        var secureCookie = configuration.GetValue("Cookies:Secure", !environment.IsDevelopment());
-        var cookieOptions = new CookieOptions
-        {
-            HttpOnly = true,
-            Secure = secureCookie,
-            SameSite = SameSiteMode.Lax,
-            Expires = DateTime.UtcNow.AddDays(refreshTokenExpirationDays),
-            Path = "/api/auth/refresh"
-        };
+        var cookieOptions = CreateRefreshTokenCookieOptions(configuration, environment);
 
         context.Response.Cookies.Append("refreshToken", result.Data.RefreshToken, cookieOptions);
 
@@ -157,7 +164,10 @@ public class AuthenticationEndpoints : ICarterModule
 
     private static async Task<IResult> Logout(
         HttpContext context,
-        IMediator mediator)
+        IConfiguration configuration,
+        IWebHostEnvironment environment,
+        IMediator mediator,
+        CancellationToken cancellationToken)
     {
         var userIdClaim = context.User.FindFirst(ClaimTypes.NameIdentifier);
         if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
@@ -167,17 +177,19 @@ public class AuthenticationEndpoints : ICarterModule
         var refreshToken = context.Request.Cookies["refreshToken"];
 
         // Delete refresh token cookie
-        context.Response.Cookies.Delete("refreshToken", new CookieOptions { Path = "/api/auth/refresh" });
+        var cookieOptions = CreateRefreshTokenCookieOptions(configuration, environment);
+        context.Response.Cookies.Delete("refreshToken", cookieOptions);
 
-        var command = new LogoutCommand(userId, refreshToken ?? string.Empty);
-        var result = await mediator.Send(command);
+        var command = new LogoutCommand(userId, refreshToken ?? string.Empty, RevokeAll: string.IsNullOrEmpty(refreshToken));
+        var result = await mediator.Send(command, cancellationToken);
         return result.Success ? Results.Ok(result) : Results.BadRequest(result);
     }
 
     private static async Task<IResult> ChangePassword(
         HttpContext context,
         ChangePasswordRequest request,
-        IMediator mediator)
+        IMediator mediator,
+        CancellationToken cancellationToken)
     {
         var userIdClaim = context.User.FindFirst(ClaimTypes.NameIdentifier);
         if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
@@ -190,34 +202,37 @@ public class AuthenticationEndpoints : ICarterModule
             request.ConfirmPassword
         );
 
-        var result = await mediator.Send(command);
+        var result = await mediator.Send(command, cancellationToken);
         return result.Success ? Results.Ok(result) : Results.BadRequest(result);
     }
 
     private static async Task<IResult> AssignRole(
         AssignRoleRequest request,
-        IMediator mediator)
+        IMediator mediator,
+        CancellationToken cancellationToken)
     {
         var command = new AssignRoleCommand(request.UserId, request.RoleName);
-        var result = await mediator.Send(command);
+        var result = await mediator.Send(command, cancellationToken);
         return result.Success ? Results.Ok(result) : Results.BadRequest(result);
     }
 
     private static async Task<IResult> GetUserById(
         Guid id,
-        IMediator mediator)
+        IMediator mediator,
+        CancellationToken cancellationToken)
     {
         var query = new GetUserByIdQuery(id);
-        var result = await mediator.Send(query);
+        var result = await mediator.Send(query, cancellationToken);
         return result.Success ? Results.Ok(result) : Results.NotFound(result);
     }
 
     private static async Task<IResult> GetAllUsers(
         [AsParameters] GetAllUsersRequest request,
-        IMediator mediator)
+        IMediator mediator,
+        CancellationToken cancellationToken)
     {
         var query = new GetAllUsersQuery(request.PageNumber, request.PageSize);
-        var result = await mediator.Send(query);
+        var result = await mediator.Send(query, cancellationToken);
         return result.Success ? Results.Ok(result) : Results.BadRequest(result);
     }
 }

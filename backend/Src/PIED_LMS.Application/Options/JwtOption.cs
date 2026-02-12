@@ -2,7 +2,10 @@ namespace PIED_LMS.Application.Options;
 
 public class JwtOption
 {
-    [Required] [MinLength(32)] public string Secret { get; set; } = string.Empty;
+    public const string SectionName = "JwtSettings";
+
+    [Required, MinLength(32)]
+    public string Secret { get; set; } = string.Empty;
 
     [Required] public string Issuer { get; set; } = string.Empty;
 

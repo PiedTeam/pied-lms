@@ -35,8 +35,28 @@ public partial class FixRoleSeed : Migration
             {
                     { new Guid("3c1d2e4f-5a67-4b8f-9a0b-7a2f3c451d6b"), "role-student-concurrency", new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Student who can enroll in courses", "Student", "STUDENT" },
                     { new Guid("7a2f3c45-1d6b-4e8f-9a0b-3c2d1e4f5a67"), "role-mentor-concurrency", new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Mentor who can create and manage courses", "Mentor", "MENTOR" },
-                    { new Guid("b4a5b0c5-9c3a-4f0a-8e1f-6d2c3a1b2f10"), "role-admin-concurrency", new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Administrator with full access", "Admin", "ADMIN" }
+                    { new Guid("b4a5b0c5-9c3a-4f0a-8e1f-6d2c3a1b2f10"), "role-admin-concurrency", new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "Administrator with full access", "Administrator", "ADMINISTRATOR" }
             });
+
+        // Fix existing data for environments where this migration already ran with "Admin"
+        migrationBuilder.Sql("UPDATE roles SET name = 'Administrator', normalized_name = 'ADMINISTRATOR' WHERE id = 'b4a5b0c5-9c3a-4f0a-8e1f-6d2c3a1b2f10'");
+        
+        // Also handle legacy 'Admin' role if it exists under a different ID (move users and delete)
+        migrationBuilder.Sql(@"
+            DO $$
+            DECLARE
+                admin_role_id uuid;
+                legacy_admin_role_id uuid;
+            BEGIN
+                SELECT id INTO admin_role_id FROM roles WHERE name = 'Administrator';
+                SELECT id INTO legacy_admin_role_id FROM roles WHERE name = 'Admin' AND id != 'b4a5b0c5-9c3a-4f0a-8e1f-6d2c3a1b2f10';
+                
+                IF legacy_admin_role_id IS NOT NULL AND admin_role_id IS NOT NULL THEN
+                    UPDATE user_roles SET role_id = admin_role_id WHERE role_id = legacy_admin_role_id;
+                    DELETE FROM roles WHERE id = legacy_admin_role_id;
+                END IF;
+            END $$;
+        ");
     }
 
     /// <inheritdoc />
