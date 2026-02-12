@@ -102,11 +102,21 @@ public static class PersistenceExtensions
                 jwtIssuer, jwtAudience, jwtSecret);
         });
 
-        services.AddSingleton<IProcessExecutor, ProcessExecutor>();
-        services.AddSingleton<ContainerPoolManager>();
-        services.AddHostedService<ContainerPoolHostedService>();
-        services.AddHostedService<WorkDirSweeperHostedService>();
-        services.AddSingleton<ICompilerService, DockerCompilerService>();
+        var compilerEnabled = configuration.GetValue<bool>("CompilerOptions:Enabled", true);
+
+        if (compilerEnabled)
+        {
+            services.AddSingleton<IProcessExecutor, ProcessExecutor>();
+            services.AddSingleton<ContainerPoolManager>();
+            services.AddHostedService<ContainerPoolHostedService>();
+            services.AddHostedService<WorkDirSweeperHostedService>();
+            services.AddSingleton<ICompilerService, DockerCompilerService>();
+        }
+        else
+        {
+            services.AddSingleton<ICompilerService, NoOpCompilerService>();
+        }
+
         services.AddSingleton<ITestCaseProvider, FileSystemTestCaseProvider>();
 
         return services;
