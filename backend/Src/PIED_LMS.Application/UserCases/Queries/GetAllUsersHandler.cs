@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Entities;
 
@@ -29,7 +28,7 @@ public class GetAllUsersQueryHandler(UserManager<ApplicationUser> userManager, I
                     user.LastName,
                     user.IsActive,
                     user.CreatedAt,
-                    roles.ToList()
+                    [.. roles]
                 ));
             }
 

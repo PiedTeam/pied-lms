@@ -1,5 +1,3 @@
-using System.Text.Json.Serialization;
-
 namespace PIED_LMS.Contract.Services.Identity;
 
 // Base Response

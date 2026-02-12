@@ -1,23 +1,17 @@
-using System.Collections.Concurrent;
-using System.Diagnostics;
-using System.Globalization;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using PIED_LMS.Application.Options;
 
 namespace PIED_LMS.Infrastructure.Compiler;
 
 public sealed class ContainerPoolManager
 {
-    private readonly CompilerOption _options;
-    private readonly IProcessExecutor _processExecutor;
-    private readonly ILogger<ContainerPoolManager> _logger;
+    private readonly List<string> _allContainers = [];
     private readonly Queue<string> _availableContainers = new();
-    private readonly List<string> _allContainers = new();
-    private readonly SemaphoreSlim _poolLock;
-    private readonly object _poolGuard = new();
-    private readonly string _hostWorkRoot;
     private readonly string[] _containerNames;
+    private readonly ILogger<ContainerPoolManager> _logger;
+    private readonly CompilerOption _options;
+    private readonly Lock _poolGuard = new();
+    private readonly SemaphoreSlim _poolLock;
+    private readonly IProcessExecutor _processExecutor;
 
     public ContainerPoolManager(
         IOptions<CompilerOption> options,
@@ -28,23 +22,18 @@ public sealed class ContainerPoolManager
         _processExecutor = processExecutor;
         _logger = logger;
         _poolLock = new SemaphoreSlim(_options.ContainerPoolSize, _options.ContainerPoolSize);
-        _hostWorkRoot = GetHostWorkRoot();
-        _containerNames = Enumerable.Range(1, _options.ContainerPoolSize)
-            .Select(index => $"{_options.ContainerNamePrefix}{index}")
-            .ToArray();
+        HostWorkRoot = GetHostWorkRoot();
+        _containerNames = [.. Enumerable.Range(1, _options.ContainerPoolSize).Select(index => $"{_options.ContainerNamePrefix}{index}")];
     }
 
-    public string HostWorkRoot => _hostWorkRoot;
+    public string HostWorkRoot { get; }
 
-    public string GetContainerWorkDir(string hostWorkDir)
-    {
-        return _options.ContainerWorkDir;
-    }
+    public string GetContainerWorkDir() => _options.ContainerWorkDir;
 
     public async Task InitializeAsync(CancellationToken cancellationToken)
     {
-        Directory.CreateDirectory(_hostWorkRoot);
-        EnsureWritableDirectory(_hostWorkRoot);
+        Directory.CreateDirectory(HostWorkRoot);
+        EnsureWritableDirectory(HostWorkRoot);
 
         foreach (var name in _containerNames)
         {
@@ -66,6 +55,13 @@ public sealed class ContainerPoolManager
 
     public void ReleaseContainer(string containerId)
     {
+        EnqueueContainer(containerId);
+        _poolLock.Release();
+    }
+
+    public async Task RecycleContainerAsync(string containerId, CancellationToken cancellationToken)
+    {
+        await EnsureContainerAsync(containerId, cancellationToken);
         EnqueueContainer(containerId);
         _poolLock.Release();
     }
@@ -106,7 +102,7 @@ public sealed class ContainerPoolManager
         startInfo.ArgumentList.Add("--tmpfs");
         startInfo.ArgumentList.Add(_options.ContainerTmpfsMount);
         startInfo.ArgumentList.Add("-v");
-        startInfo.ArgumentList.Add($"{_hostWorkRoot}:{_options.ContainerWorkDir}:rw");
+        startInfo.ArgumentList.Add($"{HostWorkRoot}:{_options.ContainerWorkDir}:rw");
         startInfo.ArgumentList.Add("-w");
         startInfo.ArgumentList.Add(_options.ContainerWorkDir);
         startInfo.ArgumentList.Add(_options.ContainerImage);

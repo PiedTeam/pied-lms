@@ -1,8 +1,3 @@
-using System.Diagnostics;
-using System.Globalization;
-using System.Text;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using PIED_LMS.Application.Abstractions;
 using PIED_LMS.Application.Options;
 using PIED_LMS.Contract.Services.Compiler;
@@ -17,11 +12,12 @@ public sealed class DockerCompilerService(
     ILogger<DockerCompilerService> logger)
     : ICompilerService
 {
-    private readonly CompilerOption _options = options.Value;
     private readonly ContainerPoolManager _containerPool = containerPool;
+    private readonly string _hostWorkRoot = containerPool.HostWorkRoot;
+    private readonly CompilerOption _options = options.Value;
+
     private readonly SemaphoreSlim _semaphore =
         new(options.Value.MaxConcurrentCompilations, options.Value.MaxConcurrentCompilations);
-    private readonly string _hostWorkRoot = containerPool.HostWorkRoot;
 
     public async Task<CompilerServiceResult<CompileResult>> CompileAsync(
         string code,
@@ -36,6 +32,7 @@ public sealed class DockerCompilerService(
                 CompilerErrorCode.ServerBusy,
                 "Server is busy. Please try again.");
 
+        var recycleContainer = false;
         var sessionId = Guid.NewGuid().ToString("N");
         var containerId = await _containerPool.LeaseContainerAsync(cancellationToken);
         var workDir = CreateWorkDir(sessionId);
@@ -55,6 +52,14 @@ public sealed class DockerCompilerService(
 
             if (!compileResult.Success)
             {
+                if (compileResult.ErrorCode == CompilerErrorCode.ServerBusy)
+                {
+                    recycleContainer = true;
+                    return CompilerServiceResult<CompileResult>.Failure(
+                        CompilerErrorCode.ServerBusy,
+                        compileResult.Error ?? "Compiler container unhealthy. Please retry.");
+                }
+
                 var failedResult = new CompileResult(
                     false,
                     null,
@@ -76,6 +81,14 @@ public sealed class DockerCompilerService(
                 memoryLimitMb,
                 cancellationToken);
 
+            if (executionResult.ErrorCode == CompilerErrorCode.ServerBusy)
+            {
+                recycleContainer = true;
+                return CompilerServiceResult<CompileResult>.Failure(
+                    CompilerErrorCode.ServerBusy,
+                    executionResult.Error ?? "Compiler container unhealthy. Please retry.");
+            }
+
             var result = new CompileResult(
                 executionResult.IsSuccess,
                 executionResult.Output,
@@ -89,7 +102,10 @@ public sealed class DockerCompilerService(
         }
         finally
         {
-            _containerPool.ReleaseContainer(containerId);
+            if (recycleContainer)
+                await _containerPool.RecycleContainerAsync(containerId, cancellationToken);
+            else
+                _containerPool.ReleaseContainer(containerId);
             CleanupWorkDir(workDir);
             _semaphore.Release();
             logger.LogInformation("Compilation finished. SessionId: {SessionId}", sessionId);
@@ -109,6 +125,7 @@ public sealed class DockerCompilerService(
                 CompilerErrorCode.ServerBusy,
                 "Server is busy. Please try again.");
 
+        var recycleContainer = false;
         var sessionId = Guid.NewGuid().ToString("N");
         var containerId = await _containerPool.LeaseContainerAsync(cancellationToken);
         var workDir = CreateWorkDir(sessionId);
@@ -142,6 +159,23 @@ public sealed class DockerCompilerService(
                 unifiedScript,
                 cancellationToken);
 
+            var combinedOutput = CombineOutput(batchOutcome.Result);
+            if (batchOutcome.ExitCode != 0 && IsInfrastructureFailure(combinedOutput))
+            {
+                recycleContainer = true;
+                return CompilerServiceResult<JudgeResult>.Failure(
+                    CompilerErrorCode.ServerBusy,
+                    "Compiler container unhealthy. Please retry.");
+            }
+
+            if (!HasCompileMarkers(batchOutcome.Stdout))
+            {
+                recycleContainer = true;
+                return CompilerServiceResult<JudgeResult>.Failure(
+                    CompilerErrorCode.ServerBusy,
+                    "Compiler container unhealthy. Please retry.");
+            }
+
             if (batchOutcome.Stdout.Contains("###COMPILE_FAILED###", StringComparison.Ordinal))
             {
                 var compileDetails = ExtractCompileError(batchOutcome.Stdout);
@@ -163,7 +197,10 @@ public sealed class DockerCompilerService(
         }
         finally
         {
-            _containerPool.ReleaseContainer(containerId);
+            if (recycleContainer)
+                await _containerPool.RecycleContainerAsync(containerId, cancellationToken);
+            else
+                _containerPool.ReleaseContainer(containerId);
             CleanupWorkDir(workDir);
             _semaphore.Release();
             logger.LogInformation("Judge finished. SessionId: {SessionId}", sessionId);
@@ -209,6 +246,14 @@ public sealed class DockerCompilerService(
 
         if (result.ExitCode != 0)
         {
+            if (IsInfrastructureFailure(CombineOutput(result)))
+                return new CompileStepResult(
+                    false,
+                    (int)stopwatch.ElapsedMilliseconds,
+                    "Compiler container unhealthy.",
+                    CompilerErrorCode.ServerBusy,
+                    CombineOutput(result));
+
             return new CompileStepResult(
                 false,
                 (int)stopwatch.ElapsedMilliseconds,
@@ -252,7 +297,6 @@ public sealed class DockerCompilerService(
             stopwatch.ElapsedMilliseconds);
 
         if (result.StdoutLimitExceeded)
-        {
             return new ExecutionOutcome(
                 false,
                 null,
@@ -260,10 +304,8 @@ public sealed class DockerCompilerService(
                 "Program output exceeded maximum allowed size.",
                 null,
                 (int)stopwatch.ElapsedMilliseconds);
-        }
 
         if (result.StderrLimitExceeded)
-        {
             return new ExecutionOutcome(
                 false,
                 null,
@@ -271,12 +313,10 @@ public sealed class DockerCompilerService(
                 "Program error output exceeded maximum allowed size.",
                 null,
                 (int)stopwatch.ElapsedMilliseconds);
-        }
 
         var combinedOutput = CombineOutput(result);
 
         if (IsFloatingPointException(result.ExitCode, combinedOutput))
-        {
             return new ExecutionOutcome(
                 false,
                 null,
@@ -284,10 +324,8 @@ public sealed class DockerCompilerService(
                 "Floating point exception.",
                 combinedOutput,
                 (int)stopwatch.ElapsedMilliseconds);
-        }
 
         if (IsSegmentationFault(result.ExitCode, combinedOutput))
-        {
             return new ExecutionOutcome(
                 false,
                 null,
@@ -295,10 +333,8 @@ public sealed class DockerCompilerService(
                 "Segmentation fault.",
                 combinedOutput,
                 (int)stopwatch.ElapsedMilliseconds);
-        }
 
         if (IsTimeLimitExceeded(result.ExitCode, combinedOutput))
-        {
             return new ExecutionOutcome(
                 false,
                 null,
@@ -306,10 +342,8 @@ public sealed class DockerCompilerService(
                 "Time limit exceeded.",
                 combinedOutput,
                 (int)stopwatch.ElapsedMilliseconds);
-        }
 
         if (IsMemoryLimitExceeded(result.ExitCode, combinedOutput))
-        {
             return new ExecutionOutcome(
                 false,
                 null,
@@ -317,10 +351,18 @@ public sealed class DockerCompilerService(
                 "Memory limit exceeded.",
                 combinedOutput,
                 (int)stopwatch.ElapsedMilliseconds);
-        }
 
         if (result.ExitCode != 0)
         {
+            if (IsInfrastructureFailure(combinedOutput))
+                return new ExecutionOutcome(
+                    false,
+                    null,
+                    CompilerErrorCode.ServerBusy,
+                    "Compiler container unhealthy.",
+                    combinedOutput,
+                    (int)stopwatch.ElapsedMilliseconds);
+
             return new ExecutionOutcome(
                 false,
                 null,
@@ -376,7 +418,7 @@ public sealed class DockerCompilerService(
             var filePath = Path.Combine(inputsDir, $"{index}.txt");
             await File.WriteAllTextAsync(
                 filePath,
-                testCases[index].Input ?? string.Empty,
+                testCases[index].Input,
                 Encoding.UTF8,
                 cancellationToken);
         }
@@ -390,16 +432,16 @@ public sealed class DockerCompilerService(
 
         if (batchOutcome.StdoutLimitExceeded)
         {
-            for (var i = 0; i < testCases.Count; i++)
-                results.Add(BuildFailedResult(i, testCases[i], CompilerErrorCode.OutputLimitExceeded, "Output limit exceeded", null));
+            results.AddRange(testCases.Select((t, i) =>
+                BuildFailedResult(i, t, CompilerErrorCode.OutputLimitExceeded, "Output limit exceeded", null)));
 
             return results;
         }
 
         if (batchOutcome.StderrLimitExceeded)
         {
-            for (var i = 0; i < testCases.Count; i++)
-                results.Add(BuildFailedResult(i, testCases[i], CompilerErrorCode.StderrLimitExceeded, "Stderr limit exceeded", null));
+            results.AddRange(testCases.Select((t, i) =>
+                BuildFailedResult(i, t, CompilerErrorCode.StderrLimitExceeded, "Stderr limit exceeded", null)));
 
             return results;
         }
@@ -408,68 +450,67 @@ public sealed class DockerCompilerService(
 
         for (var i = 0; i < testCases.Count; i++)
         {
-            var parsedCase = parsed[i];
-            var output = parsedCase.Output;
-            var exitCode = parsedCase.ExitCode;
-            var combinedOutput = output ?? string.Empty;
-            var detectionOutput = combinedOutput;
+            var (output, exitCode) = parsed[i];
+            var combinedOutput = output;
 
-            if (IsFloatingPointException(exitCode, detectionOutput))
+            if (IsFloatingPointException(exitCode, combinedOutput))
             {
-                results.Add(BuildFailedResult(i, testCases[i], CompilerErrorCode.FloatingPointException, "Floating point exception.", combinedOutput));
+                results.Add(BuildFailedResult(i, testCases[i], CompilerErrorCode.FloatingPointException,
+                    "Floating point exception.", combinedOutput));
                 continue;
             }
 
-            if (IsSegmentationFault(exitCode, detectionOutput))
+            if (IsSegmentationFault(exitCode, combinedOutput))
             {
-                results.Add(BuildFailedResult(i, testCases[i], CompilerErrorCode.SegmentationFault, "Segmentation fault.", combinedOutput));
+                results.Add(BuildFailedResult(i, testCases[i], CompilerErrorCode.SegmentationFault,
+                    "Segmentation fault.", combinedOutput));
                 continue;
             }
 
-            if (IsTimeLimitExceeded(exitCode, detectionOutput))
+            if (IsTimeLimitExceeded(exitCode, combinedOutput))
             {
-                results.Add(BuildFailedResult(i, testCases[i], CompilerErrorCode.TimeLimitExceeded, "Time limit exceeded.", combinedOutput));
+                results.Add(BuildFailedResult(i, testCases[i], CompilerErrorCode.TimeLimitExceeded,
+                    "Time limit exceeded.", combinedOutput));
                 continue;
             }
 
-            if (IsMemoryLimitExceeded(exitCode, detectionOutput))
+            if (IsMemoryLimitExceeded(exitCode, combinedOutput))
             {
-                results.Add(BuildFailedResult(i, testCases[i], CompilerErrorCode.MemoryLimitExceeded, "Memory limit exceeded.", combinedOutput));
+                results.Add(BuildFailedResult(i, testCases[i], CompilerErrorCode.MemoryLimitExceeded,
+                    "Memory limit exceeded.", combinedOutput));
                 continue;
             }
 
             if (exitCode == 141)
             {
-                results.Add(BuildFailedResult(i, testCases[i], CompilerErrorCode.OutputLimitExceeded, "Output limit exceeded.", combinedOutput));
+                results.Add(BuildFailedResult(i, testCases[i], CompilerErrorCode.OutputLimitExceeded,
+                    "Output limit exceeded.", combinedOutput));
                 continue;
             }
 
             if (exitCode != 0)
             {
-                results.Add(BuildFailedResult(i, testCases[i], CompilerErrorCode.RuntimeError, "Runtime error.", combinedOutput));
+                results.Add(BuildFailedResult(i, testCases[i], CompilerErrorCode.RuntimeError, "Runtime error.",
+                    combinedOutput));
                 continue;
             }
 
-            var expected = (testCases[i].ExpectedOutput ?? string.Empty).Trim();
-            var actual = (output ?? string.Empty).Trim();
+            var expected = testCases[i].ExpectedOutput.Trim();
+            var actual = output.Trim();
             var passed = string.Equals(expected, actual, StringComparison.Ordinal);
 
             if (passed)
-            {
                 results.Add(new JudgeTestCaseResult(
                     i + 1,
                     true,
                     testCases[i].Input,
-                    testCases[i].ExpectedOutput ?? string.Empty,
+                    testCases[i].ExpectedOutput,
                     output,
                     null,
                     null,
                     null));
-            }
             else
-            {
                 results.Add(BuildFailedResult(i, testCases[i], CompilerErrorCode.WrongAnswer, "Wrong answer", output));
-            }
         }
 
         return results;
@@ -487,7 +528,7 @@ public sealed class DockerCompilerService(
             index + 1,
             false,
             testCase.Input,
-            testCase.ExpectedOutput ?? string.Empty,
+            testCase.ExpectedOutput,
             actualOutput,
             null,
             message,
@@ -514,7 +555,8 @@ public sealed class DockerCompilerService(
         builder.AppendLine($"  while [ $(jobs -rp | wc -l) -ge {maxParallelCases} ]; do wait -n; done");
         builder.AppendLine("  idx=$i");
         builder.AppendLine("  (");
-        builder.AppendLine($"    timeout -s KILL {timeoutSeconds}s ./main < \"$f\" 2>&1 | head -c {outputLimitBytes} > \"outputs/$idx.out\"");
+        builder.AppendLine(
+            $"    timeout -s KILL {timeoutSeconds}s ./main < \"$f\" 2>&1 | head -c {outputLimitBytes} > \"outputs/$idx.out\"");
         builder.AppendLine("    echo ${PIPESTATUS[0]} > \"outputs/$idx.code\"");
         builder.AppendLine("  ) &");
         builder.AppendLine("  i=$((i+1))");
@@ -544,6 +586,12 @@ public sealed class DockerCompilerService(
 
         var details = stdout.Substring(0, markerIndex).Trim();
         return string.IsNullOrWhiteSpace(details) ? null : details;
+    }
+
+    private static bool HasCompileMarkers(string stdout)
+    {
+        return stdout.Contains("###COMPILE_SUCCESS###", StringComparison.Ordinal) ||
+               stdout.Contains("###COMPILE_FAILED###", StringComparison.Ordinal);
     }
 
     private static IReadOnlyList<ParsedCase> ParseBatchOutput(string stdout, int testCaseCount)
@@ -596,17 +644,6 @@ public sealed class DockerCompilerService(
         return results;
     }
 
-    private sealed record ParsedCase(string Output, int ExitCode);
-
-    private sealed record BatchExecutionResult(ProcessExecutionResult Result)
-    {
-        public string Stdout => Result.Stdout;
-        public string Stderr => Result.Stderr;
-        public bool StdoutLimitExceeded => Result.StdoutLimitExceeded;
-        public bool StderrLimitExceeded => Result.StderrLimitExceeded;
-        public int ExitCode => Result.ExitCode;
-    }
-
     private async Task<ProcessExecutionResult> ExecuteInWarmContainerAsync(
         string containerId,
         string sessionId,
@@ -654,7 +691,7 @@ public sealed class DockerCompilerService(
         try
         {
             if (Directory.Exists(workDir))
-                Directory.Delete(workDir, recursive: true);
+                Directory.Delete(workDir, true);
         }
         catch
         {
@@ -673,10 +710,21 @@ public sealed class DockerCompilerService(
         return $"{result.Stdout}\n{result.Stderr}";
     }
 
-    private static bool ContainsFloatingPointException(string output)
+    private static bool IsInfrastructureFailure(string output)
     {
-        return output.Contains("Floating point exception", StringComparison.OrdinalIgnoreCase);
+        if (string.IsNullOrWhiteSpace(output))
+            return false;
+
+        return output.Contains("Resource temporarily unavailable", StringComparison.OrdinalIgnoreCase) ||
+               output.Contains("Cannot allocate memory", StringComparison.OrdinalIgnoreCase) ||
+               output.Contains("OCI runtime exec failed", StringComparison.OrdinalIgnoreCase) ||
+               output.Contains("container is not running", StringComparison.OrdinalIgnoreCase) ||
+               output.Contains("No space left on device", StringComparison.OrdinalIgnoreCase) ||
+               output.Contains("fork:", StringComparison.OrdinalIgnoreCase);
     }
+
+    private static bool ContainsFloatingPointException(string output) =>
+        output.Contains("Floating point exception", StringComparison.OrdinalIgnoreCase);
 
     private static bool IsFloatingPointException(int exitCode, string output)
     {
@@ -693,28 +741,22 @@ public sealed class DockerCompilerService(
 
         if (output.Contains("Segmentation fault", StringComparison.OrdinalIgnoreCase) ||
             output.Contains("SIGSEGV", StringComparison.OrdinalIgnoreCase))
-        {
             return !ContainsTimeoutIndicator(output);
-        }
 
         return false;
     }
 
     private static bool IsTimeLimitExceeded(int exitCode, string output)
     {
-        if (exitCode == 124)
-            return true;
-
-        if (exitCode == 137)
-            return ContainsTimeoutIndicator(output);
-
-        return ContainsTimeoutIndicator(output);
+        return exitCode switch
+        {
+            124 => true,
+            _ => ContainsTimeoutIndicator(output)
+        };
     }
 
-    private static bool IsMemoryLimitExceeded(int exitCode, string output)
-    {
-        return exitCode == 137 && !ContainsTimeoutIndicator(output);
-    }
+    private static bool IsMemoryLimitExceeded(int exitCode, string output) =>
+        exitCode == 137 && !ContainsTimeoutIndicator(output);
 
     private static bool ContainsTimeoutIndicator(string output)
     {
@@ -732,21 +774,6 @@ public sealed class DockerCompilerService(
             _ => fallback ?? "Wrong answer"
         };
     }
-
-    private sealed record ExecutionOutcome(
-        bool IsSuccess,
-        string? Output,
-        string? ErrorCode,
-        string? Error,
-        string? ErrorDetails,
-        int ExecutionTimeMs);
-
-    private sealed record CompileStepResult(
-        bool Success,
-        int CompilationTimeMs,
-        string? Error,
-        string? ErrorCode,
-        string? ErrorDetails);
 
     private static void EnsureWritableDirectory(string path)
     {
@@ -766,4 +793,30 @@ public sealed class DockerCompilerService(
             // Best-effort permissions to allow container users to write.
         }
     }
+
+    private sealed record ParsedCase(string Output, int ExitCode);
+
+    private sealed record BatchExecutionResult(ProcessExecutionResult Result)
+    {
+        public string Stdout => Result.Stdout;
+        public string Stderr => Result.Stderr;
+        public bool StdoutLimitExceeded => Result.StdoutLimitExceeded;
+        public bool StderrLimitExceeded => Result.StderrLimitExceeded;
+        public int ExitCode => Result.ExitCode;
+    }
+
+    private sealed record ExecutionOutcome(
+        bool IsSuccess,
+        string? Output,
+        string? ErrorCode,
+        string? Error,
+        string? ErrorDetails,
+        int ExecutionTimeMs);
+
+    private sealed record CompileStepResult(
+        bool Success,
+        int CompilationTimeMs,
+        string? Error,
+        string? ErrorCode,
+        string? ErrorDetails);
 }

@@ -1,3 +1,4 @@
+global using System.Security.Claims;
 global using Carter;
 global using MediatR;
 global using Microsoft.AspNetCore.Builder;

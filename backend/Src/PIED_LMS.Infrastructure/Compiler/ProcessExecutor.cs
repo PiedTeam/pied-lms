@@ -1,6 +1,3 @@
-using System.Diagnostics;
-using System.Text;
-
 namespace PIED_LMS.Infrastructure.Compiler;
 
 public interface IProcessExecutor
@@ -20,7 +17,9 @@ public sealed class ProcessExecutor : IProcessExecutor
         int stderrLimitBytes,
         CancellationToken cancellationToken)
     {
-        using var process = new Process { StartInfo = startInfo, EnableRaisingEvents = true };
+        using var process = new Process();
+        process.StartInfo = startInfo;
+        process.EnableRaisingEvents = true;
 
         if (!process.Start())
             throw new InvalidOperationException("Failed to start process.");
@@ -106,7 +105,7 @@ public sealed class ProcessExecutor : IProcessExecutor
         try
         {
             if (!process.HasExited)
-                process.Kill(entireProcessTree: true);
+                process.Kill(true);
         }
         catch
         {
