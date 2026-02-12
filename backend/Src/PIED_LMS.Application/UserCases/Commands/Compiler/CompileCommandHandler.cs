@@ -1,10 +1,8 @@
-using FluentValidation;
-using FluentValidation.Results;
-using Microsoft.Extensions.Options;
 using PIED_LMS.Application.Abstractions;
 using PIED_LMS.Application.Options;
 using PIED_LMS.Contract.Services.Compiler;
 using PIED_LMS.Contract.Services.Identity;
+using ValidationResult = FluentValidation.Results.ValidationResult;
 
 namespace PIED_LMS.Application.UserCases.Commands.Compiler;
 
@@ -17,7 +15,8 @@ public sealed class CompileCommandHandler(
 {
     private readonly CompilerOption _options = options.Value;
 
-    public async Task<ServiceResponse<CompileResult>> Handle(CompileCommand request, CancellationToken cancellationToken)
+    public async Task<ServiceResponse<CompileResult>> Handle(CompileCommand request,
+        CancellationToken cancellationToken)
     {
         var validation = await validator.ValidateAsync(request, cancellationToken);
         if (!validation.IsValid)
@@ -25,14 +24,12 @@ public sealed class CompileCommandHandler(
 
         var memoryLimit = request.MemoryLimit ?? _options.DefaultMemoryLimitMb;
         if (memoryLimit > _options.ContainerMemoryLimitMb)
-        {
             return new ServiceResponse<CompileResult>(
                 false,
                 $"Requested memory limit exceeds container maximum ({_options.ContainerMemoryLimitMb} MB).",
                 null,
                 null,
                 CompilerErrorCode.InvalidRequest);
-        }
 
         var timeLimit = request.TimeLimit ?? _options.DefaultTimeLimitMs;
 

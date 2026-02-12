@@ -1,9 +1,8 @@
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-
 namespace PIED_LMS.Infrastructure.Compiler;
 
-public sealed class ContainerPoolHostedService(ContainerPoolManager poolManager, ILogger<ContainerPoolHostedService> logger)
+public sealed class ContainerPoolHostedService(
+    ContainerPoolManager poolManager,
+    ILogger<ContainerPoolHostedService> logger)
     : IHostedService
 {
     public async Task StartAsync(CancellationToken cancellationToken)

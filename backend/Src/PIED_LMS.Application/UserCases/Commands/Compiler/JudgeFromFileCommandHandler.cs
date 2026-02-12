@@ -1,10 +1,8 @@
-using FluentValidation;
-using FluentValidation.Results;
-using Microsoft.Extensions.Options;
 using PIED_LMS.Application.Abstractions;
 using PIED_LMS.Application.Options;
 using PIED_LMS.Contract.Services.Compiler;
 using PIED_LMS.Contract.Services.Identity;
+using ValidationResult = FluentValidation.Results.ValidationResult;
 
 namespace PIED_LMS.Application.UserCases.Commands.Compiler;
 
@@ -28,14 +26,12 @@ public sealed class JudgeFromFileCommandHandler(
 
         var memoryLimit = request.MemoryLimit ?? _options.DefaultMemoryLimitMb;
         if (memoryLimit > _options.ContainerMemoryLimitMb)
-        {
             return new ServiceResponse<JudgeResult>(
                 false,
                 $"Requested memory limit exceeds container maximum ({_options.ContainerMemoryLimitMb} MB).",
                 null,
                 null,
                 CompilerErrorCode.InvalidRequest);
-        }
 
         var timeLimit = request.TimeLimit ?? _options.DefaultTimeLimitMs;
         var includePrivate = request.IncludePrivate ?? false;
@@ -48,7 +44,7 @@ public sealed class JudgeFromFileCommandHandler(
         if (testCases.Count == 0)
         {
             var emptyResult = new JudgeResult(0, 0, 0, Array.Empty<JudgeTestCaseResult>());
-            return new ServiceResponse<JudgeResult>(true, "No test cases found.", emptyResult, null, null);
+            return new ServiceResponse<JudgeResult>(true, "No test cases found.", emptyResult);
         }
 
         var serviceResult = await compilerService.JudgeAsync(
@@ -73,9 +69,7 @@ public sealed class JudgeFromFileCommandHandler(
         return new ServiceResponse<JudgeResult>(
             true,
             "Judge completed.",
-            serviceResult.Data,
-            null,
-            null);
+            serviceResult.Data);
     }
 
     private static ServiceResponse<JudgeResult> CreateInvalidRequestResponse(ValidationResult validation)

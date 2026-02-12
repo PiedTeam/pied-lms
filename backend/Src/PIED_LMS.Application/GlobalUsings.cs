@@ -1,6 +1,12 @@
+global using System.ComponentModel.DataAnnotations;
 global using System.Security.Claims;
+global using System.Security.Cryptography;
+global using System.Text.RegularExpressions;
+global using FluentValidation;
 global using MediatR;
 global using Microsoft.AspNetCore.Identity;
+global using Microsoft.EntityFrameworkCore;
 global using Microsoft.Extensions.Configuration;
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Logging;
+global using Microsoft.Extensions.Options;

@@ -1,5 +1,3 @@
-using System.Text.RegularExpressions;
-
 namespace PIED_LMS.Application.UserCases.Commands.Compiler;
 
 internal static partial class CompilerErrorMessageBuilder
@@ -63,10 +61,8 @@ internal static partial class CompilerErrorMessageBuilder
     private static string GetPrimaryErrorMessage(string errorDetails)
     {
         foreach (var line in errorDetails.Split('\n', StringSplitOptions.RemoveEmptyEntries))
-        {
             if (line.Contains("error:", StringComparison.OrdinalIgnoreCase))
                 return line;
-        }
 
         return errorDetails;
     }

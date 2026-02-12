@@ -1,12 +1,12 @@
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using PIED_LMS.Application.Abstractions;
 using PIED_LMS.Application.Options;
 using PIED_LMS.Domain.Compiler;
 
 namespace PIED_LMS.Infrastructure.Compiler;
 
-public sealed class FileSystemTestCaseProvider(IOptions<CompilerOption> options, ILogger<FileSystemTestCaseProvider> logger)
+public sealed class FileSystemTestCaseProvider(
+    IOptions<CompilerOption> options,
+    ILogger<FileSystemTestCaseProvider> logger)
     : ITestCaseProvider
 {
     private readonly CompilerOption _options = options.Value;
@@ -23,11 +23,9 @@ public sealed class FileSystemTestCaseProvider(IOptions<CompilerOption> options,
         var publicPath = Path.Combine(basePath, "public");
         await LoadFromDirectoryAsync(publicPath, testCases, cancellationToken);
 
-        if (includePrivate)
-        {
-            var privatePath = Path.Combine(basePath, "private");
-            await LoadFromDirectoryAsync(privatePath, testCases, cancellationToken);
-        }
+        if (!includePrivate) return testCases;
+        var privatePath = Path.Combine(basePath, "private");
+        await LoadFromDirectoryAsync(privatePath, testCases, cancellationToken);
 
         return testCases;
     }

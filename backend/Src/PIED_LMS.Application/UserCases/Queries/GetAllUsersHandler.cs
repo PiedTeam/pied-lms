@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Entities;
 

@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using PIED_LMS.Contract.Services.Identity;
 
@@ -223,18 +222,18 @@ public class AuthenticationEndpoints : ICarterModule
     }
 }
 
-public record ChangePasswordRequest(
+public abstract record ChangePasswordRequest(
     string CurrentPassword,
     string NewPassword,
     string ConfirmPassword
 );
 
-public record AssignRoleRequest(
+public abstract record AssignRoleRequest(
     Guid UserId,
     string RoleName
 );
 
-public record GetAllUsersRequest(
+public abstract record GetAllUsersRequest(
     int PageNumber = 1,
     int PageSize = 10
 );
