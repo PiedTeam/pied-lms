@@ -31,8 +31,7 @@ RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
     dotnet publish "Src/PIED_LMS.API/PIED_LMS.API.csproj" \
     -c $BUILD_CONFIGURATION \
     -o /app/publish \
-    /p:UseAppHost=false \
-    --no-restore
+    /p:UseAppHost=false
 
 FROM base AS final
 WORKDIR /app
