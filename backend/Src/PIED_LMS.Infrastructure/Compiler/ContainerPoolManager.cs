@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Globalization;
 using Microsoft.Extensions.Logging;
@@ -11,7 +12,11 @@ public sealed class ContainerPoolManager
     private readonly CompilerOption _options;
     private readonly IProcessExecutor _processExecutor;
     private readonly ILogger<ContainerPoolManager> _logger;
-    private int _roundRobinIndex;
+    private readonly Queue<string> _availableContainers = new();
+    private readonly List<string> _allContainers = new();
+    private readonly SemaphoreSlim _poolLock;
+    private readonly object _poolGuard = new();
+    private readonly string _hostWorkRoot;
     private readonly string[] _containerNames;
 
     public ContainerPoolManager(
@@ -22,31 +27,47 @@ public sealed class ContainerPoolManager
         _options = options.Value;
         _processExecutor = processExecutor;
         _logger = logger;
+        _poolLock = new SemaphoreSlim(_options.ContainerPoolSize, _options.ContainerPoolSize);
+        _hostWorkRoot = GetHostWorkRoot();
         _containerNames = Enumerable.Range(1, _options.ContainerPoolSize)
             .Select(index => $"{_options.ContainerNamePrefix}{index}")
             .ToArray();
     }
 
-    public string GetNextContainerName()
+    public string HostWorkRoot => _hostWorkRoot;
+
+    public string GetContainerWorkDir(string hostWorkDir)
     {
-        var index = Interlocked.Increment(ref _roundRobinIndex);
-        var normalized = index & int.MaxValue;
-        return _containerNames[normalized % _containerNames.Length];
+        return _options.ContainerWorkDir;
     }
 
     public async Task InitializeAsync(CancellationToken cancellationToken)
     {
+        Directory.CreateDirectory(_hostWorkRoot);
+        EnsureWritableDirectory(_hostWorkRoot);
+
         foreach (var name in _containerNames)
         {
-            var running = await IsContainerRunningAsync(name, cancellationToken);
-            if (running)
-            {
-                _logger.LogInformation("Container already running: {ContainerName}", name);
-                continue;
-            }
-
             await EnsureContainerAsync(name, cancellationToken);
+            EnqueueContainer(name);
+            _allContainers.Add(name);
         }
+    }
+
+    public async Task<string> LeaseContainerAsync(CancellationToken cancellationToken)
+    {
+        await _poolLock.WaitAsync(cancellationToken);
+        if (TryDequeueContainer(out var containerId))
+            return containerId;
+
+        _poolLock.Release();
+        throw new InvalidOperationException("Container pool is exhausted.");
+    }
+
+    public void ReleaseContainer(string containerId)
+    {
+        EnqueueContainer(containerId);
+        _poolLock.Release();
     }
 
     public async Task CleanupAsync(CancellationToken cancellationToken)
@@ -84,11 +105,14 @@ public sealed class ContainerPoolManager
 
         startInfo.ArgumentList.Add("--tmpfs");
         startInfo.ArgumentList.Add(_options.ContainerTmpfsMount);
+        startInfo.ArgumentList.Add("-v");
+        startInfo.ArgumentList.Add($"{_hostWorkRoot}:{_options.ContainerWorkDir}:rw");
         startInfo.ArgumentList.Add("-w");
         startInfo.ArgumentList.Add(_options.ContainerWorkDir);
         startInfo.ArgumentList.Add(_options.ContainerImage);
-        startInfo.ArgumentList.Add("sleep");
-        startInfo.ArgumentList.Add("infinity");
+        startInfo.ArgumentList.Add("tail");
+        startInfo.ArgumentList.Add("-f");
+        startInfo.ArgumentList.Add("/dev/null");
 
         var result = await _processExecutor.ExecuteAsync(startInfo, 16_384, 16_384, cancellationToken);
         if (result.ExitCode != 0)
@@ -103,21 +127,6 @@ public sealed class ContainerPoolManager
         }
 
         _logger.LogInformation("Container started: {ContainerName}", name);
-    }
-
-    private async Task<bool> IsContainerRunningAsync(string name, CancellationToken cancellationToken)
-    {
-        var startInfo = CreateDockerStartInfo();
-        startInfo.ArgumentList.Add("inspect");
-        startInfo.ArgumentList.Add("-f");
-        startInfo.ArgumentList.Add("{{.State.Running}}");
-        startInfo.ArgumentList.Add(name);
-
-        var result = await _processExecutor.ExecuteAsync(startInfo, 8_192, 8_192, cancellationToken);
-        if (result.ExitCode != 0)
-            return false;
-
-        return result.Stdout.Trim().Equals("true", StringComparison.OrdinalIgnoreCase);
     }
 
     private async Task RemoveContainerAsync(string name, CancellationToken cancellationToken)
@@ -142,5 +151,53 @@ public sealed class ContainerPoolManager
             UseShellExecute = false,
             CreateNoWindow = true
         };
+    }
+
+    private static string GetHostWorkRoot()
+    {
+        var basePath = Directory.Exists("/dev/shm") ? "/dev/shm" : Path.GetTempPath();
+        return Path.Combine(basePath, "pied-judge");
+    }
+
+    private static void EnsureWritableDirectory(string path)
+    {
+        if (!OperatingSystem.IsLinux() && !OperatingSystem.IsMacOS())
+            return;
+
+        try
+        {
+            File.SetUnixFileMode(
+                path,
+                UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute |
+                UnixFileMode.GroupRead | UnixFileMode.GroupWrite | UnixFileMode.GroupExecute |
+                UnixFileMode.OtherRead | UnixFileMode.OtherWrite | UnixFileMode.OtherExecute);
+        }
+        catch
+        {
+            // Best-effort permissions to allow container users to write.
+        }
+    }
+
+    private void EnqueueContainer(string containerId)
+    {
+        lock (_poolGuard)
+        {
+            _availableContainers.Enqueue(containerId);
+        }
+    }
+
+    private bool TryDequeueContainer(out string containerId)
+    {
+        lock (_poolGuard)
+        {
+            if (_availableContainers.Count > 0)
+            {
+                containerId = _availableContainers.Dequeue();
+                return true;
+            }
+        }
+
+        containerId = string.Empty;
+        return false;
     }
 }

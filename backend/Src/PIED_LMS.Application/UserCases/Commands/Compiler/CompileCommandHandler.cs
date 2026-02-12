@@ -56,13 +56,26 @@ public sealed class CompileCommandHandler(
         }
 
         var compileResult = serviceResult.Data!;
-        var message = compileResult.Success ? "Compilation succeeded." : (compileResult.Error ?? "Compilation failed.");
+        var friendlyError = compileResult.Success
+            ? null
+            : CompilerErrorMessageBuilder.Build(compileResult.ErrorDetails);
+        var message = compileResult.Success ? "Compilation succeeded." : friendlyError ?? "Compilation failed.";
         var errorCode = compileResult.Success ? null : compileResult.ErrorCode;
+        var updatedResult = compileResult.Success
+            ? compileResult
+            : new CompileResult(
+                false,
+                compileResult.Output,
+                compileResult.CompilationTime,
+                compileResult.ExecutionTime,
+                friendlyError,
+                compileResult.ErrorCode,
+                compileResult.ErrorDetails);
 
         return new ServiceResponse<CompileResult>(
             compileResult.Success,
             message,
-            compileResult,
+            updatedResult,
             null,
             errorCode);
     }

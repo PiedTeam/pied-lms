@@ -63,9 +63,10 @@ public static class PersistenceExtensions
 
         services.AddSingleton<IProcessExecutor, ProcessExecutor>();
         services.AddSingleton<ContainerPoolManager>();
+        services.AddHostedService<ContainerPoolHostedService>();
+        services.AddHostedService<WorkDirSweeperHostedService>();
         services.AddSingleton<ICompilerService, DockerCompilerService>();
         services.AddSingleton<ITestCaseProvider, FileSystemTestCaseProvider>();
-        services.AddHostedService<ContainerPoolHostedService>();
 
         return services;
     }

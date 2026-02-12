@@ -1,28 +1,27 @@
-using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Globalization;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using PIED_LMS.Application.Abstractions;
 using PIED_LMS.Application.Options;
 using PIED_LMS.Contract.Services.Compiler;
-using PIED_LMS.Domain.Compiler;
 using DomainTestCase = PIED_LMS.Domain.Compiler.TestCase;
 
 namespace PIED_LMS.Infrastructure.Compiler;
 
 public sealed class DockerCompilerService(
     IOptions<CompilerOption> options,
-    ContainerPoolManager poolManager,
+    ContainerPoolManager containerPool,
     IProcessExecutor processExecutor,
     ILogger<DockerCompilerService> logger)
     : ICompilerService
 {
     private readonly CompilerOption _options = options.Value;
+    private readonly ContainerPoolManager _containerPool = containerPool;
     private readonly SemaphoreSlim _semaphore =
         new(options.Value.MaxConcurrentCompilations, options.Value.MaxConcurrentCompilations);
-
-    private readonly ConcurrentDictionary<string, CompilationSession> _activeSessions = new();
+    private readonly string _hostWorkRoot = containerPool.HostWorkRoot;
 
     public async Task<CompilerServiceResult<CompileResult>> CompileAsync(
         string code,
@@ -38,21 +37,19 @@ public sealed class DockerCompilerService(
                 "Server is busy. Please try again.");
 
         var sessionId = Guid.NewGuid().ToString("N");
-        var container = poolManager.GetNextContainerName();
-        var session = new CompilationSession(sessionId, container, DateTime.UtcNow);
-        _activeSessions.TryAdd(sessionId, session);
+        var containerId = await _containerPool.LeaseContainerAsync(cancellationToken);
+        var workDir = CreateWorkDir(sessionId);
 
         try
         {
-            logger.LogInformation(
-                "Compilation started. SessionId: {SessionId} Container: {Container}",
-                sessionId,
-                container);
+            logger.LogInformation("Compilation started. SessionId: {SessionId}", sessionId);
 
             var compileResult = await CompileExecutableAsync(
-                container,
                 sessionId,
+                workDir,
+                containerId,
                 code,
+                memoryLimitMb,
                 optimizationLevel,
                 cancellationToken);
 
@@ -61,7 +58,7 @@ public sealed class DockerCompilerService(
                 var failedResult = new CompileResult(
                     false,
                     null,
-                    compileResult.CompilationTime,
+                    compileResult.CompilationTimeMs,
                     null,
                     compileResult.Error,
                     compileResult.ErrorCode,
@@ -70,17 +67,19 @@ public sealed class DockerCompilerService(
                 return CompilerServiceResult<CompileResult>.FromData(failedResult);
             }
 
-            var executionResult = await ExecuteProgramAsync(
-                container,
+            var executionResult = await RunTestCaseAsync(
                 sessionId,
+                workDir,
+                containerId,
                 input,
                 timeLimitMs,
+                memoryLimitMb,
                 cancellationToken);
 
             var result = new CompileResult(
                 executionResult.IsSuccess,
                 executionResult.Output,
-                compileResult.CompilationTime,
+                compileResult.CompilationTimeMs,
                 executionResult.ExecutionTimeMs,
                 executionResult.Error,
                 executionResult.ErrorCode,
@@ -90,14 +89,10 @@ public sealed class DockerCompilerService(
         }
         finally
         {
-            _activeSessions.TryRemove(sessionId, out _);
-            await CleanupAsync(container, sessionId, CancellationToken.None);
+            _containerPool.ReleaseContainer(containerId);
+            CleanupWorkDir(workDir);
             _semaphore.Release();
-
-            logger.LogInformation(
-                "Compilation finished. SessionId: {SessionId} Container: {Container}",
-                sessionId,
-                container);
+            logger.LogInformation("Compilation finished. SessionId: {SessionId}", sessionId);
         }
     }
 
@@ -115,96 +110,63 @@ public sealed class DockerCompilerService(
                 "Server is busy. Please try again.");
 
         var sessionId = Guid.NewGuid().ToString("N");
-        var container = poolManager.GetNextContainerName();
-        var session = new CompilationSession(sessionId, container, DateTime.UtcNow);
-        _activeSessions.TryAdd(sessionId, session);
+        var containerId = await _containerPool.LeaseContainerAsync(cancellationToken);
+        var workDir = CreateWorkDir(sessionId);
 
         try
         {
-            logger.LogInformation(
-                "Judge started. SessionId: {SessionId} Container: {Container}",
-                sessionId,
-                container);
+            logger.LogInformation("Judge started. SessionId: {SessionId}", sessionId);
 
-            var compileResult = await CompileExecutableAsync(
-                container,
-                sessionId,
+            var inputsDir = Path.Combine(workDir, "inputs");
+            await WriteInputsAsync(inputsDir, testCases, cancellationToken);
+            await File.WriteAllTextAsync(
+                Path.Combine(workDir, "main.c"),
                 code,
-                optimizationLevel,
+                Encoding.UTF8,
                 cancellationToken);
 
-            if (!compileResult.Success)
+            var optimizationFlag = optimizationLevel?.ToGccFlag() ?? "-O0";
+            var unifiedScript = BuildUnifiedScript(
+                timeLimitMs,
+                _options.OutputLimitBytes,
+                _options.GccStandard,
+                optimizationFlag,
+                _options.MaxConcurrentTestCases);
+
+            var batchOutcome = await RunUnifiedAsync(
+                sessionId,
+                workDir,
+                containerId,
+                memoryLimitMb,
+                testCases.Count,
+                unifiedScript,
+                cancellationToken);
+
+            if (batchOutcome.Stdout.Contains("###COMPILE_FAILED###", StringComparison.Ordinal))
             {
+                var compileDetails = ExtractCompileError(batchOutcome.Stdout);
+                logger.LogWarning(
+                    "Compilation failed. SessionId: {SessionId}. Details: {Details}",
+                    sessionId,
+                    compileDetails);
                 return CompilerServiceResult<JudgeResult>.Failure(
                     CompilerErrorCode.CompileError,
-                    compileResult.Error ?? "Compilation failed.");
+                    compileDetails ?? "Compilation failed.");
             }
 
-            var results = new List<JudgeTestCaseResult>();
-            var passed = 0;
-            var failed = 0;
-
-            for (var i = 0; i < testCases.Count; i++)
-            {
-                var testCase = testCases[i];
-                var execution = await ExecuteProgramAsync(
-                    container,
-                    sessionId,
-                    testCase.Input,
-                    timeLimitMs,
-                    cancellationToken);
-
-                var actualOutput = execution.Output;
-                var testCasePassed = execution.IsSuccess &&
-                                     string.Equals(
-                                         (testCase.ExpectedOutput ?? string.Empty).Trim(),
-                                         (actualOutput ?? string.Empty).Trim(),
-                                         StringComparison.Ordinal);
-
-                if (testCasePassed)
-                {
-                    passed++;
-                    results.Add(new JudgeTestCaseResult(
-                        i + 1,
-                        true,
-                        testCase.Input,
-                        testCase.ExpectedOutput ?? string.Empty,
-                        actualOutput,
-                        execution.ExecutionTimeMs,
-                        null,
-                        null));
-                }
-                else
-                {
-                    failed++;
-                    var errorCode = execution.ErrorCode ?? CompilerErrorCode.WrongAnswer;
-                    var errorMessage = NormalizeJudgeErrorMessage(errorCode, execution.Error);
-
-                    results.Add(new JudgeTestCaseResult(
-                        i + 1,
-                        false,
-                        testCase.Input,
-                        testCase.ExpectedOutput ?? string.Empty,
-                        execution.IsSuccess ? actualOutput : null,
-                        execution.ExecutionTimeMs,
-                        errorMessage,
-                        errorCode));
-                }
-            }
-
+            var results = MapBatchResults(testCases, batchOutcome);
+            var passed = results.Count(result => result.Passed);
+            var failed = results.Count - passed;
             var judgeResult = new JudgeResult(passed, failed, testCases.Count, results);
+
             return CompilerServiceResult<JudgeResult>.FromData(judgeResult);
         }
         finally
         {
-            _activeSessions.TryRemove(sessionId, out _);
-            await CleanupAsync(container, sessionId, CancellationToken.None);
+            _containerPool.ReleaseContainer(containerId);
+            CleanupWorkDir(workDir);
             _semaphore.Release();
-
-            logger.LogInformation(
-                "Judge finished. SessionId: {SessionId} Container: {Container}",
-                sessionId,
-                container);
+            logger.LogInformation("Judge finished. SessionId: {SessionId}", sessionId);
         }
     }
 
@@ -215,27 +177,29 @@ public sealed class DockerCompilerService(
     }
 
     private async Task<CompileStepResult> CompileExecutableAsync(
-        string container,
         string sessionId,
+        string workDir,
+        string containerId,
         string code,
+        int memoryLimitMb,
         OptimizationLevel? optimizationLevel,
         CancellationToken cancellationToken)
     {
-        var sourceFile = GetSourceFileName(sessionId);
-        var executableFile = GetExecutableFileName(sessionId);
-        var compileScript = BuildCompileScript(code, sourceFile, executableFile, optimizationLevel);
+        var base64Code = Convert.ToBase64String(Encoding.UTF8.GetBytes(code));
+        var optimizationFlag = optimizationLevel?.ToGccFlag() ?? "-O0";
+        var compileScript =
+            $"echo '{base64Code}' | base64 -d > main.c && " +
+            $"gcc main.c -o main {optimizationFlag} -std={_options.GccStandard}";
 
         var stopwatch = Stopwatch.StartNew();
-        var result = await ExecuteInContainerAsync(
-            container,
+        var result = await ExecuteInWarmContainerAsync(
+            containerId,
+            sessionId,
             compileScript,
             _options.OutputLimitBytes,
             _options.StderrLimitBytes,
             cancellationToken);
         stopwatch.Stop();
-
-        var combined = CombineOutput(result);
-        var hasMarker = combined.Contains(_options.CompileSuccessMarker, StringComparison.Ordinal);
 
         logger.LogInformation(
             "Compilation finished. SessionId: {SessionId} ExitCode: {ExitCode} DurationMs: {DurationMs}",
@@ -243,46 +207,43 @@ public sealed class DockerCompilerService(
             result.ExitCode,
             stopwatch.ElapsedMilliseconds);
 
-        if (!hasMarker)
+        if (result.ExitCode != 0)
         {
-            logger.LogError(
-                "Compilation failed. SessionId: {SessionId} OutputLength: {OutputLength}",
-                sessionId,
-                combined.Length);
             return new CompileStepResult(
                 false,
-                null,
                 (int)stopwatch.ElapsedMilliseconds,
                 "Compilation failed.",
                 CompilerErrorCode.CompileError,
-                combined);
+                CombineOutput(result));
         }
 
-        return new CompileStepResult(true, null, (int)stopwatch.ElapsedMilliseconds, null, null, null);
+        return new CompileStepResult(true, (int)stopwatch.ElapsedMilliseconds, null, null, null);
     }
 
-    private async Task<ExecutionOutcome> ExecuteProgramAsync(
-        string container,
+    private async Task<ExecutionOutcome> RunTestCaseAsync(
         string sessionId,
+        string workDir,
+        string containerId,
         string? input,
         int timeLimitMs,
+        int memoryLimitMb,
         CancellationToken cancellationToken)
     {
-        var executableFile = GetExecutableFileName(sessionId);
-        var inputFile = GetInputFileName(sessionId);
+        var base64Input = Convert.ToBase64String(Encoding.UTF8.GetBytes(input ?? string.Empty));
         var timeoutSeconds = Math.Max(1, (int)Math.Ceiling(timeLimitMs / 1000d));
-        var runScript = BuildRunScript(executableFile, inputFile, input, timeoutSeconds);
+        var runScript =
+            $"echo '{base64Input}' | base64 -d | " +
+            $"timeout -s KILL {timeoutSeconds}s ./main";
 
         var stopwatch = Stopwatch.StartNew();
-        var result = await ExecuteInContainerAsync(
-            container,
+        var result = await ExecuteInWarmContainerAsync(
+            containerId,
+            sessionId,
             runScript,
             _options.OutputLimitBytes,
             _options.StderrLimitBytes,
             cancellationToken);
         stopwatch.Stop();
-
-        await CleanupInputAsync(container, inputFile, CancellationToken.None);
 
         logger.LogInformation(
             "Execution finished. SessionId: {SessionId} ExitCode: {ExitCode} DurationMs: {DurationMs}",
@@ -292,23 +253,17 @@ public sealed class DockerCompilerService(
 
         if (result.StdoutLimitExceeded)
         {
-            logger.LogWarning(
-                "Output limit exceeded. SessionId: {SessionId}",
-                sessionId);
             return new ExecutionOutcome(
                 false,
                 null,
                 CompilerErrorCode.OutputLimitExceeded,
-                "Program output exceeded maximum allowed size (1 MB).",
+                "Program output exceeded maximum allowed size.",
                 null,
                 (int)stopwatch.ElapsedMilliseconds);
         }
 
         if (result.StderrLimitExceeded)
         {
-            logger.LogWarning(
-                "Stderr limit exceeded. SessionId: {SessionId}",
-                sessionId);
             return new ExecutionOutcome(
                 false,
                 null,
@@ -320,11 +275,8 @@ public sealed class DockerCompilerService(
 
         var combinedOutput = CombineOutput(result);
 
-        if (ContainsFloatingPointException(combinedOutput))
+        if (IsFloatingPointException(result.ExitCode, combinedOutput))
         {
-            logger.LogWarning(
-                "Floating point exception. SessionId: {SessionId}",
-                sessionId);
             return new ExecutionOutcome(
                 false,
                 null,
@@ -336,9 +288,6 @@ public sealed class DockerCompilerService(
 
         if (IsSegmentationFault(result.ExitCode, combinedOutput))
         {
-            logger.LogWarning(
-                "Segmentation fault. SessionId: {SessionId}",
-                sessionId);
             return new ExecutionOutcome(
                 false,
                 null,
@@ -350,9 +299,6 @@ public sealed class DockerCompilerService(
 
         if (IsTimeLimitExceeded(result.ExitCode, combinedOutput))
         {
-            logger.LogWarning(
-                "Time limit exceeded. SessionId: {SessionId}",
-                sessionId);
             return new ExecutionOutcome(
                 false,
                 null,
@@ -362,12 +308,19 @@ public sealed class DockerCompilerService(
                 (int)stopwatch.ElapsedMilliseconds);
         }
 
+        if (IsMemoryLimitExceeded(result.ExitCode, combinedOutput))
+        {
+            return new ExecutionOutcome(
+                false,
+                null,
+                CompilerErrorCode.MemoryLimitExceeded,
+                "Memory limit exceeded.",
+                combinedOutput,
+                (int)stopwatch.ElapsedMilliseconds);
+        }
+
         if (result.ExitCode != 0)
         {
-            logger.LogWarning(
-                "Runtime error. SessionId: {SessionId} ExitCode: {ExitCode}",
-                sessionId,
-                result.ExitCode);
             return new ExecutionOutcome(
                 false,
                 null,
@@ -386,29 +339,289 @@ public sealed class DockerCompilerService(
             (int)stopwatch.ElapsedMilliseconds);
     }
 
-    private async Task CleanupAsync(string container, string sessionId, CancellationToken cancellationToken)
+    private async Task<BatchExecutionResult> RunUnifiedAsync(
+        string sessionId,
+        string workDir,
+        string containerId,
+        int memoryLimitMb,
+        int testCaseCount,
+        string script,
+        CancellationToken cancellationToken)
     {
-        var sourceFile = GetSourceFileName(sessionId);
-        var executableFile = GetExecutableFileName(sessionId);
-        var inputFile = GetInputFileName(sessionId);
-        var script = $"rm -f {sourceFile} {executableFile} {inputFile}";
+        var result = await ExecuteInWarmContainerAsync(
+            containerId,
+            sessionId,
+            script,
+            _options.OutputLimitBytes * Math.Max(1, testCaseCount),
+            _options.StderrLimitBytes,
+            cancellationToken);
 
-        await ExecuteInContainerAsync(container, script, 8_192, 8_192, cancellationToken);
+        logger.LogInformation(
+            "Batch execution finished. SessionId: {SessionId} ExitCode: {ExitCode}",
+            sessionId,
+            result.ExitCode);
+
+        return new BatchExecutionResult(result);
     }
 
-    private async Task CleanupInputAsync(string container, string inputFile, CancellationToken cancellationToken)
+    private static async Task WriteInputsAsync(
+        string inputsDir,
+        IReadOnlyList<DomainTestCase> testCases,
+        CancellationToken cancellationToken)
     {
-        var script = $"rm -f {inputFile}";
-        await ExecuteInContainerAsync(container, script, 4_096, 4_096, cancellationToken);
+        Directory.CreateDirectory(inputsDir);
+
+        for (var index = 0; index < testCases.Count; index++)
+        {
+            var filePath = Path.Combine(inputsDir, $"{index}.txt");
+            await File.WriteAllTextAsync(
+                filePath,
+                testCases[index].Input ?? string.Empty,
+                Encoding.UTF8,
+                cancellationToken);
+        }
     }
 
-    private async Task<ProcessExecutionResult> ExecuteInContainerAsync(
-        string container,
+    private IReadOnlyList<JudgeTestCaseResult> MapBatchResults(
+        IReadOnlyList<DomainTestCase> testCases,
+        BatchExecutionResult batchOutcome)
+    {
+        var results = new List<JudgeTestCaseResult>(testCases.Count);
+
+        if (batchOutcome.StdoutLimitExceeded)
+        {
+            for (var i = 0; i < testCases.Count; i++)
+                results.Add(BuildFailedResult(i, testCases[i], CompilerErrorCode.OutputLimitExceeded, "Output limit exceeded", null));
+
+            return results;
+        }
+
+        if (batchOutcome.StderrLimitExceeded)
+        {
+            for (var i = 0; i < testCases.Count; i++)
+                results.Add(BuildFailedResult(i, testCases[i], CompilerErrorCode.StderrLimitExceeded, "Stderr limit exceeded", null));
+
+            return results;
+        }
+
+        var parsed = ParseBatchOutput(batchOutcome.Stdout, testCases.Count);
+
+        for (var i = 0; i < testCases.Count; i++)
+        {
+            var parsedCase = parsed[i];
+            var output = parsedCase.Output;
+            var exitCode = parsedCase.ExitCode;
+            var combinedOutput = output ?? string.Empty;
+            var detectionOutput = combinedOutput;
+
+            if (IsFloatingPointException(exitCode, detectionOutput))
+            {
+                results.Add(BuildFailedResult(i, testCases[i], CompilerErrorCode.FloatingPointException, "Floating point exception.", combinedOutput));
+                continue;
+            }
+
+            if (IsSegmentationFault(exitCode, detectionOutput))
+            {
+                results.Add(BuildFailedResult(i, testCases[i], CompilerErrorCode.SegmentationFault, "Segmentation fault.", combinedOutput));
+                continue;
+            }
+
+            if (IsTimeLimitExceeded(exitCode, detectionOutput))
+            {
+                results.Add(BuildFailedResult(i, testCases[i], CompilerErrorCode.TimeLimitExceeded, "Time limit exceeded.", combinedOutput));
+                continue;
+            }
+
+            if (IsMemoryLimitExceeded(exitCode, detectionOutput))
+            {
+                results.Add(BuildFailedResult(i, testCases[i], CompilerErrorCode.MemoryLimitExceeded, "Memory limit exceeded.", combinedOutput));
+                continue;
+            }
+
+            if (exitCode == 141)
+            {
+                results.Add(BuildFailedResult(i, testCases[i], CompilerErrorCode.OutputLimitExceeded, "Output limit exceeded.", combinedOutput));
+                continue;
+            }
+
+            if (exitCode != 0)
+            {
+                results.Add(BuildFailedResult(i, testCases[i], CompilerErrorCode.RuntimeError, "Runtime error.", combinedOutput));
+                continue;
+            }
+
+            var expected = (testCases[i].ExpectedOutput ?? string.Empty).Trim();
+            var actual = (output ?? string.Empty).Trim();
+            var passed = string.Equals(expected, actual, StringComparison.Ordinal);
+
+            if (passed)
+            {
+                results.Add(new JudgeTestCaseResult(
+                    i + 1,
+                    true,
+                    testCases[i].Input,
+                    testCases[i].ExpectedOutput ?? string.Empty,
+                    output,
+                    null,
+                    null,
+                    null));
+            }
+            else
+            {
+                results.Add(BuildFailedResult(i, testCases[i], CompilerErrorCode.WrongAnswer, "Wrong answer", output));
+            }
+        }
+
+        return results;
+    }
+
+    private static JudgeTestCaseResult BuildFailedResult(
+        int index,
+        DomainTestCase testCase,
+        string errorCode,
+        string errorMessage,
+        string? actualOutput)
+    {
+        var message = NormalizeJudgeErrorMessage(errorCode, errorMessage);
+        return new JudgeTestCaseResult(
+            index + 1,
+            false,
+            testCase.Input,
+            testCase.ExpectedOutput ?? string.Empty,
+            actualOutput,
+            null,
+            message,
+            errorCode);
+    }
+
+    private static string BuildUnifiedScript(
+        int timeLimitMs,
+        int outputLimitBytes,
+        string gccStandard,
+        string optimizationFlag,
+        int maxParallelCases)
+    {
+        var timeoutSeconds = Math.Max(1, (int)Math.Ceiling(timeLimitMs / 1000d));
+        var builder = new StringBuilder();
+        builder.AppendLine("set -o pipefail");
+        builder.AppendLine(
+            $"gcc main.c -o main {optimizationFlag} -std={gccStandard} 2>&1 || " +
+            "{ printf '###COMPILE_FAILED###\\n'; exit 0; }");
+        builder.AppendLine("printf '###COMPILE_SUCCESS###\\n'");
+        builder.AppendLine("mkdir -p outputs");
+        builder.AppendLine("i=0");
+        builder.AppendLine("for f in ./inputs/*.txt; do");
+        builder.AppendLine($"  while [ $(jobs -rp | wc -l) -ge {maxParallelCases} ]; do wait -n; done");
+        builder.AppendLine("  idx=$i");
+        builder.AppendLine("  (");
+        builder.AppendLine($"    timeout -s KILL {timeoutSeconds}s ./main < \"$f\" 2>&1 | head -c {outputLimitBytes} > \"outputs/$idx.out\"");
+        builder.AppendLine("    echo ${PIPESTATUS[0]} > \"outputs/$idx.code\"");
+        builder.AppendLine("  ) &");
+        builder.AppendLine("  i=$((i+1))");
+        builder.AppendLine("done");
+        builder.AppendLine("wait");
+        builder.AppendLine("i=0");
+        builder.AppendLine("for f in ./inputs/*.txt; do");
+        builder.AppendLine("  printf '###CASE_START_%d###\\n' \"$i\"");
+        builder.AppendLine("  if [ -f \"outputs/$i.out\" ]; then cat \"outputs/$i.out\"; fi");
+        builder.AppendLine("  code=0");
+        builder.AppendLine("  if [ -f \"outputs/$i.code\" ]; then code=$(cat \"outputs/$i.code\"); fi");
+        builder.AppendLine("  if [ \"$code\" -eq 124 ] || [ \"$code\" -eq 137 ]; then");
+        builder.AppendLine("    printf 'timeout: killed\\n'");
+        builder.AppendLine("  fi");
+        builder.AppendLine("  printf '\\n###CASE_END_%d###:%d\\n' \"$i\" \"$code\"");
+        builder.AppendLine("  i=$((i+1))");
+        builder.AppendLine("done");
+
+        return builder.ToString();
+    }
+
+    private static string? ExtractCompileError(string stdout)
+    {
+        var markerIndex = stdout.IndexOf("###COMPILE_FAILED###", StringComparison.Ordinal);
+        if (markerIndex < 0)
+            return null;
+
+        var details = stdout.Substring(0, markerIndex).Trim();
+        return string.IsNullOrWhiteSpace(details) ? null : details;
+    }
+
+    private static IReadOnlyList<ParsedCase> ParseBatchOutput(string stdout, int testCaseCount)
+    {
+        var results = new List<ParsedCase>(testCaseCount);
+        var searchStart = 0;
+
+        for (var index = 0; index < testCaseCount; index++)
+        {
+            var startToken = $"###CASE_START_{index}###";
+            var endToken = $"###CASE_END_{index}###:";
+
+            var startIndex = stdout.IndexOf(startToken, searchStart, StringComparison.Ordinal);
+            if (startIndex < 0)
+            {
+                results.Add(new ParsedCase(string.Empty, -1));
+                continue;
+            }
+
+            var contentStart = stdout.IndexOf('\n', startIndex + startToken.Length);
+            if (contentStart < 0)
+            {
+                results.Add(new ParsedCase(string.Empty, -1));
+                continue;
+            }
+
+            contentStart += 1;
+            var endIndex = stdout.IndexOf(endToken, contentStart, StringComparison.Ordinal);
+            if (endIndex < 0)
+            {
+                results.Add(new ParsedCase(stdout[contentStart..], -1));
+                continue;
+            }
+
+            var output = stdout.Substring(contentStart, endIndex - contentStart).TrimEnd();
+            var codeStart = endIndex + endToken.Length;
+            var codeEnd = stdout.IndexOf('\n', codeStart);
+            if (codeEnd < 0)
+                codeEnd = stdout.Length;
+
+            var codeSpan = stdout.AsSpan(codeStart, codeEnd - codeStart);
+            var exitCode = int.TryParse(codeSpan, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed)
+                ? parsed
+                : -1;
+
+            results.Add(new ParsedCase(output, exitCode));
+            searchStart = codeEnd;
+        }
+
+        return results;
+    }
+
+    private sealed record ParsedCase(string Output, int ExitCode);
+
+    private sealed record BatchExecutionResult(ProcessExecutionResult Result)
+    {
+        public string Stdout => Result.Stdout;
+        public string Stderr => Result.Stderr;
+        public bool StdoutLimitExceeded => Result.StdoutLimitExceeded;
+        public bool StderrLimitExceeded => Result.StderrLimitExceeded;
+        public int ExitCode => Result.ExitCode;
+    }
+
+    private async Task<ProcessExecutionResult> ExecuteInWarmContainerAsync(
+        string containerId,
+        string sessionId,
         string script,
         int stdoutLimitBytes,
         int stderrLimitBytes,
         CancellationToken cancellationToken)
     {
+        var scopedScript =
+            $"cd {_options.ContainerWorkDir} && " +
+            $"mkdir -p {sessionId} && " +
+            $"cd {sessionId}; " +
+            $"trap 'cd {_options.ContainerWorkDir}; rm -rf {sessionId}' EXIT; " +
+            $"{script}";
+
         var startInfo = new ProcessStartInfo
         {
             FileName = "docker",
@@ -419,48 +632,35 @@ public sealed class DockerCompilerService(
         };
 
         startInfo.ArgumentList.Add("exec");
-        startInfo.ArgumentList.Add("-i");
-        startInfo.ArgumentList.Add(container);
-        startInfo.ArgumentList.Add("sh");
-        startInfo.ArgumentList.Add("-c");
-        startInfo.ArgumentList.Add(script);
+        startInfo.ArgumentList.Add(containerId);
+        startInfo.ArgumentList.Add("bash");
+        startInfo.ArgumentList.Add("-lc");
+        startInfo.ArgumentList.Add(scopedScript);
 
         return await processExecutor.ExecuteAsync(startInfo, stdoutLimitBytes, stderrLimitBytes, cancellationToken);
     }
 
-    private string BuildCompileScript(
-        string code,
-        string sourceFile,
-        string executableFile,
-        OptimizationLevel? optimizationLevel)
+    private string CreateWorkDir(string sessionId)
     {
-        var base64Code = Convert.ToBase64String(Encoding.UTF8.GetBytes(code));
-        var optimizationFlag = optimizationLevel?.ToGccFlag() ?? "-O0";
-
-        return $"echo '{base64Code}' | base64 -d > {sourceFile} && " +
-               $"gcc {sourceFile} -o {executableFile} {optimizationFlag} -std={_options.GccStandard} 2>&1 && " +
-               $"echo '{_options.CompileSuccessMarker}'";
+        Directory.CreateDirectory(_hostWorkRoot);
+        var workDir = Path.Combine(_hostWorkRoot, sessionId);
+        Directory.CreateDirectory(workDir);
+        EnsureWritableDirectory(workDir);
+        return workDir;
     }
 
-    private static string BuildRunScript(
-        string executableFile,
-        string inputFile,
-        string? input,
-        int timeoutSeconds)
+    private static void CleanupWorkDir(string workDir)
     {
-        var hasInput = !string.IsNullOrEmpty(input);
-        var inputScript = hasInput
-            ? $"echo '{Convert.ToBase64String(Encoding.UTF8.GetBytes(input!))}' | base64 -d > {inputFile}"
-            : $": > {inputFile}";
-
-        return $"{inputScript} && timeout -s KILL {timeoutSeconds}s ./{executableFile} < {inputFile}";
+        try
+        {
+            if (Directory.Exists(workDir))
+                Directory.Delete(workDir, recursive: true);
+        }
+        catch
+        {
+            // Best-effort cleanup.
+        }
     }
-
-    private static string GetSourceFileName(string sessionId) => $"code_{sessionId}.c";
-
-    private static string GetExecutableFileName(string sessionId) => $"code_{sessionId}";
-
-    private static string GetInputFileName(string sessionId) => $"input_{sessionId}.txt";
 
     private static string CombineOutput(ProcessExecutionResult result)
     {
@@ -476,6 +676,14 @@ public sealed class DockerCompilerService(
     private static bool ContainsFloatingPointException(string output)
     {
         return output.Contains("Floating point exception", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsFloatingPointException(int exitCode, string output)
+    {
+        if (exitCode == 136)
+            return true;
+
+        return ContainsFloatingPointException(output);
     }
 
     private static bool IsSegmentationFault(int exitCode, string output)
@@ -494,10 +702,18 @@ public sealed class DockerCompilerService(
 
     private static bool IsTimeLimitExceeded(int exitCode, string output)
     {
-        if (exitCode == 124 || exitCode == 137)
+        if (exitCode == 124)
             return true;
 
+        if (exitCode == 137)
+            return ContainsTimeoutIndicator(output);
+
         return ContainsTimeoutIndicator(output);
+    }
+
+    private static bool IsMemoryLimitExceeded(int exitCode, string output)
+    {
+        return exitCode == 137 && !ContainsTimeoutIndicator(output);
     }
 
     private static bool ContainsTimeoutIndicator(string output)
@@ -517,14 +733,6 @@ public sealed class DockerCompilerService(
         };
     }
 
-    private sealed record CompileStepResult(
-        bool Success,
-        string? Output,
-        int CompilationTime,
-        string? Error,
-        string? ErrorCode,
-        string? ErrorDetails);
-
     private sealed record ExecutionOutcome(
         bool IsSuccess,
         string? Output,
@@ -532,4 +740,30 @@ public sealed class DockerCompilerService(
         string? Error,
         string? ErrorDetails,
         int ExecutionTimeMs);
+
+    private sealed record CompileStepResult(
+        bool Success,
+        int CompilationTimeMs,
+        string? Error,
+        string? ErrorCode,
+        string? ErrorDetails);
+
+    private static void EnsureWritableDirectory(string path)
+    {
+        if (!OperatingSystem.IsLinux() && !OperatingSystem.IsMacOS())
+            return;
+
+        try
+        {
+            File.SetUnixFileMode(
+                path,
+                UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute |
+                UnixFileMode.GroupRead | UnixFileMode.GroupWrite | UnixFileMode.GroupExecute |
+                UnixFileMode.OtherRead | UnixFileMode.OtherWrite | UnixFileMode.OtherExecute);
+        }
+        catch
+        {
+            // Best-effort permissions to allow container users to write.
+        }
+    }
 }
