@@ -7,7 +7,8 @@ public record ServiceResponse<T>(
     bool Success,
     string Message,
     T? Data = default,
-    Dictionary<string, string[]>? Errors = null
+    Dictionary<string, string[]>? Errors = null,
+    string? ErrorCode = null
 );
 
 // User Response
