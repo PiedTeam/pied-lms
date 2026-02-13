@@ -1,12 +1,13 @@
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Contract.Services.Exam;
 using PIED_LMS.Contract.Services.Identity;
-using PIED_LMS.Persistence;
+using PIED_LMS.Domain.Abstractions;
 
 namespace PIED_LMS.Application.UserCases.Queries.Exam;
 
 public class GetExamsByMentorHandler(
-    PiedLmsDbContext dbContext,
+    IUnitOfWork unitOfWork,
     IHttpContextAccessor httpContextAccessor,
     ILogger<GetExamsByMentorHandler> logger
 ) : IRequestHandler<GetExamsByMentorQuery, ServiceResponse<PaginatedResponse<ExamResponse>>>
@@ -29,8 +30,8 @@ public class GetExamsByMentorHandler(
             }
 
             // Query exams created by mentor
-            var query = dbContext.Exams
-                .Where(e => e.CreatedBy == userId && !e.IsDeleted);
+            var query = unitOfWork.Repository<Domain.Entities.Exam>()
+                .FindAll(e => e.CreatedBy == userId && !e.IsDeleted);
 
             // Get total count
             var totalCount = await query.CountAsync(cancellationToken);

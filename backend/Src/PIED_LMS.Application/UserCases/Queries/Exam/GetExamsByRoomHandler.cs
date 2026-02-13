@@ -1,11 +1,12 @@
+using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Contract.Services.Exam;
 using PIED_LMS.Contract.Services.Identity;
-using PIED_LMS.Persistence;
+using PIED_LMS.Domain.Abstractions;
 
 namespace PIED_LMS.Application.UserCases.Queries.Exam;
 
 public class GetExamsByRoomHandler(
-    PiedLmsDbContext dbContext,
+    IUnitOfWork unitOfWork,
     ILogger<GetExamsByRoomHandler> logger
 ) : IRequestHandler<GetExamsByRoomQuery, ServiceResponse<List<ExamResponse>>>
 {
@@ -16,8 +17,9 @@ public class GetExamsByRoomHandler(
         try
         {
             // Query exams assigned to exam room via ExamRoomExam join table
-            var exams = await dbContext.ExamRoomExams
-                .Where(ere => ere.ExamRoomId == request.ExamRoomId && !ere.Exam.IsDeleted)
+            var exams = await unitOfWork.Repository<Domain.Entities.ExamRoomExam>()
+                .FindAll(ere => ere.ExamRoomId == request.ExamRoomId && !ere.Exam.IsDeleted)
+                .Include(ere => ere.Exam)
                 .Select(ere => new ExamResponse(
                     ere.Exam.Id,
                     ere.Exam.Title,

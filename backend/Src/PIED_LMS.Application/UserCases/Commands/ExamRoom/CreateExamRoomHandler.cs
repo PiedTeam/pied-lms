@@ -1,12 +1,13 @@
 using Microsoft.AspNetCore.Http;
 using PIED_LMS.Contract.Services.ExamRoom;
 using PIED_LMS.Contract.Services.Identity;
-using PIED_LMS.Persistence;
+using PIED_LMS.Domain.Abstractions;
+
 
 namespace PIED_LMS.Application.UserCases.Commands.ExamRoom;
 
 public class CreateExamRoomHandler(
-    PiedLmsDbContext dbContext,
+    IUnitOfWork unitOfWork,
     IHttpContextAccessor httpContextAccessor,
     ILogger<CreateExamRoomHandler> logger
 ) : IRequestHandler<CreateExamRoomCommand, ServiceResponse<ExamRoomResponse>>
@@ -63,8 +64,8 @@ public class CreateExamRoomHandler(
                 IsDeleted = false
             };
 
-            dbContext.ExamRooms.Add(examRoom);
-            await dbContext.SaveChangesAsync(cancellationToken);
+            await unitOfWork.Repository<Domain.Entities.ExamRoom>().AddAsync(examRoom, cancellationToken);
+            await unitOfWork.CommitAsync(cancellationToken);
 
             logger.LogInformation(
                 "Exam room created successfully. Id: {ExamRoomId}, Name: {Name}, CreatedBy: {UserId}",

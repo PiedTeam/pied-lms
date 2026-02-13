@@ -1,12 +1,14 @@
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Contract.Services.ExamRoom;
 using PIED_LMS.Contract.Services.Identity;
-using PIED_LMS.Persistence;
+using PIED_LMS.Domain.Abstractions;
+
 
 namespace PIED_LMS.Application.UserCases.Commands.ExamRoom;
 
 public class RemoveExamFromRoomHandler(
-    PiedLmsDbContext dbContext,
+    IUnitOfWork unitOfWork,
     IHttpContextAccessor httpContextAccessor,
     ILogger<RemoveExamFromRoomHandler> logger
 ) : IRequestHandler<RemoveExamFromRoomCommand, ServiceResponse<string>>
@@ -29,9 +31,10 @@ public class RemoveExamFromRoomHandler(
             }
 
             // Find exam room by ID
-            var examRoom = await dbContext.ExamRooms
+            var examRoom = await unitOfWork.Repository<Domain.Entities.ExamRoom>()
+                .FindAll(er => er.Id == request.ExamRoomId && !er.IsDeleted)
                 .Include(er => er.Participations.Where(p => p.ExamId == request.ExamId))
-                .FirstOrDefaultAsync(er => er.Id == request.ExamRoomId && !er.IsDeleted, cancellationToken);
+                .FirstOrDefaultAsync(cancellationToken);
 
             if (examRoom == null)
             {
@@ -67,11 +70,9 @@ public class RemoveExamFromRoomHandler(
             }
 
             // Find and delete ExamRoomExam association
-            var examRoomExam = await dbContext.ExamRoomExams
-                .FirstOrDefaultAsync(
-                    ere => ere.ExamRoomId == request.ExamRoomId && ere.ExamId == request.ExamId,
-                    cancellationToken
-                );
+            var examRoomExam = await unitOfWork.Repository<Domain.Entities.ExamRoomExam>()
+                .FindAll(ere => ere.ExamRoomId == request.ExamRoomId && ere.ExamId == request.ExamId)
+                .FirstOrDefaultAsync(cancellationToken);
 
             if (examRoomExam == null)
             {
@@ -82,8 +83,8 @@ public class RemoveExamFromRoomHandler(
                 );
             }
 
-            dbContext.ExamRoomExams.Remove(examRoomExam);
-            await dbContext.SaveChangesAsync(cancellationToken);
+            unitOfWork.Repository<Domain.Entities.ExamRoomExam>().Remove(examRoomExam);
+            await unitOfWork.CommitAsync(cancellationToken);
 
             logger.LogInformation(
                 "Exam removed from room successfully. ExamRoomId: {ExamRoomId}, ExamId: {ExamId}, RemovedBy: {UserId}",

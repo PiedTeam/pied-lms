@@ -6,7 +6,7 @@ using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Contract.Services.QuestionQuiz;
 using System.Security.Claims;
 
-namespace PIED_LMS.Application.UserCases.Commands;
+namespace PIED_LMS.Application.UserCases.Commands.Quiz;
 
 public class CreateQuestionQuizHandler(
     IHttpContextAccessor httpContextAccessor, 

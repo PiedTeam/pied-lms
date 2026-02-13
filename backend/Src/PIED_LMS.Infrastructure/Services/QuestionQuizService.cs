@@ -129,12 +129,12 @@ public class QuestionQuizService(IExcelService excelService, IUnitOfWork unitOfW
 
     private class QuestionImportDto
     {
-        public string Content { get; set; }
-        public string Option1 { get; set; }
-        public string Option2 { get; set; }
-        public string Option3 { get; set; }
-        public string Option4 { get; set; }
-        public string CorrectAnswer { get; set; }
+        public string Content { get; set; } = string.Empty;
+        public string Option1 { get; set; } = string.Empty;
+        public string Option2 { get; set; } = string.Empty;
+        public string Option3 { get; set; } = string.Empty;
+        public string Option4 { get; set; } = string.Empty;
+        public string CorrectAnswer { get; set; } = string.Empty;
     }
 }
 

@@ -310,6 +310,212 @@ namespace PIED_LMS.Persistence.Migrations
                     b.ToTable("users", (string)null);
                 });
 
+            modelBuilder.Entity("PIED_LMS.Domain.Entities.Exam", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("description");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_deleted");
+
+                    b.Property<int>("PassingMarks")
+                        .HasColumnType("integer")
+                        .HasColumnName("passing_marks");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("title");
+
+                    b.Property<int>("TotalMarks")
+                        .HasColumnType("integer")
+                        .HasColumnName("total_marks");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_exams");
+
+                    b.HasIndex("CreatedBy")
+                        .HasDatabaseName("ix_exams_created_by");
+
+                    b.HasIndex("IsDeleted")
+                        .HasDatabaseName("ix_exams_is_deleted");
+
+                    b.ToTable("exams", (string)null);
+                });
+
+            modelBuilder.Entity("PIED_LMS.Domain.Entities.ExamParticipation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTime>("Deadline")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deadline");
+
+                    b.Property<Guid>("ExamId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("exam_id");
+
+                    b.Property<Guid>("ExamRoomId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("exam_room_id");
+
+                    b.Property<bool>("IsCompleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_completed");
+
+                    b.Property<int?>("Score")
+                        .HasColumnType("integer")
+                        .HasColumnName("score");
+
+                    b.Property<DateTime>("StartedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("started_at");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("student_id");
+
+                    b.Property<DateTime?>("SubmittedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("submitted_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_exam_participations");
+
+                    b.HasIndex("StudentId")
+                        .HasDatabaseName("ix_exam_participations_student_id");
+
+                    b.HasIndex("ExamId", "StudentId")
+                        .HasDatabaseName("ix_exam_participations_exam_id_student_id");
+
+                    b.HasIndex("ExamRoomId", "StudentId")
+                        .HasDatabaseName("ix_exam_participations_exam_room_id_student_id");
+
+                    b.ToTable("exam_participations", (string)null);
+                });
+
+            modelBuilder.Entity("PIED_LMS.Domain.Entities.ExamRoom", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("description");
+
+                    b.Property<int>("DurationInMinutes")
+                        .HasColumnType("integer")
+                        .HasColumnName("duration_in_minutes");
+
+                    b.Property<DateTime>("EndTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("end_time");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_deleted");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<DateTime>("StartTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("start_time");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_exam_rooms");
+
+                    b.HasIndex("CreatedBy")
+                        .HasDatabaseName("ix_exam_rooms_created_by");
+
+                    b.HasIndex("EndTime")
+                        .HasDatabaseName("ix_exam_rooms_end_time");
+
+                    b.HasIndex("IsDeleted")
+                        .HasDatabaseName("ix_exam_rooms_is_deleted");
+
+                    b.HasIndex("StartTime")
+                        .HasDatabaseName("ix_exam_rooms_start_time");
+
+                    b.ToTable("exam_rooms", (string)null);
+                });
+
+            modelBuilder.Entity("PIED_LMS.Domain.Entities.ExamRoomExam", b =>
+                {
+                    b.Property<Guid>("ExamRoomId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("exam_room_id");
+
+                    b.Property<Guid>("ExamId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("exam_id");
+
+                    b.Property<DateTime>("AssignedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("assigned_at");
+
+                    b.HasKey("ExamRoomId", "ExamId")
+                        .HasName("pk_exam_room_exams");
+
+                    b.HasIndex("ExamId")
+                        .HasDatabaseName("ix_exam_room_exams_exam_id");
+
+                    b.ToTable("exam_room_exams", (string)null);
+                });
+
             modelBuilder.Entity("PIED_LMS.Domain.Entities.Question", b =>
                 {
                     b.Property<int>("Id")
@@ -472,16 +678,16 @@ namespace PIED_LMS.Persistence.Migrations
                         .HasColumnName("updated_at");
 
                     b.HasKey("Id")
-                        .HasName("pk_test_rooms");
+                        .HasName("pk_test_room");
 
                     b.HasIndex("CreatedBy")
-                        .HasDatabaseName("ix_test_rooms_created_by");
+                        .HasDatabaseName("ix_test_room_created_by");
 
                     b.HasIndex("JoinCode")
                         .IsUnique()
-                        .HasDatabaseName("ix_test_rooms_join_code");
+                        .HasDatabaseName("ix_test_room_join_code");
 
-                    b.ToTable("test_rooms", null, t =>
+                    b.ToTable("test_room", null, t =>
                         {
                             t.HasCheckConstraint("CK_TestRoom_EndTime_After_StartTime", "\"end_time\" > \"start_time\"");
                         });
@@ -544,6 +750,81 @@ namespace PIED_LMS.Persistence.Migrations
                         .HasConstraintName("fk_user_tokens_users_user_id");
                 });
 
+            modelBuilder.Entity("PIED_LMS.Domain.Entities.Exam", b =>
+                {
+                    b.HasOne("PIED_LMS.Domain.Entities.ApplicationUser", "Creator")
+                        .WithMany()
+                        .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_exams_users_created_by");
+
+                    b.Navigation("Creator");
+                });
+
+            modelBuilder.Entity("PIED_LMS.Domain.Entities.ExamParticipation", b =>
+                {
+                    b.HasOne("PIED_LMS.Domain.Entities.Exam", "Exam")
+                        .WithMany()
+                        .HasForeignKey("ExamId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_exam_participations_exams_exam_id");
+
+                    b.HasOne("PIED_LMS.Domain.Entities.ExamRoom", "ExamRoom")
+                        .WithMany("Participations")
+                        .HasForeignKey("ExamRoomId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_exam_participations_exam_room_exam_room_id");
+
+                    b.HasOne("PIED_LMS.Domain.Entities.ApplicationUser", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_exam_participations_users_student_id");
+
+                    b.Navigation("Exam");
+
+                    b.Navigation("ExamRoom");
+
+                    b.Navigation("Student");
+                });
+
+            modelBuilder.Entity("PIED_LMS.Domain.Entities.ExamRoom", b =>
+                {
+                    b.HasOne("PIED_LMS.Domain.Entities.ApplicationUser", "Creator")
+                        .WithMany()
+                        .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_exam_rooms_users_created_by");
+
+                    b.Navigation("Creator");
+                });
+
+            modelBuilder.Entity("PIED_LMS.Domain.Entities.ExamRoomExam", b =>
+                {
+                    b.HasOne("PIED_LMS.Domain.Entities.Exam", "Exam")
+                        .WithMany("ExamRoomExams")
+                        .HasForeignKey("ExamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_exam_room_exams_exams_exam_id");
+
+                    b.HasOne("PIED_LMS.Domain.Entities.ExamRoom", "ExamRoom")
+                        .WithMany("ExamRoomExams")
+                        .HasForeignKey("ExamRoomId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_exam_room_exams_exam_rooms_exam_room_id");
+
+                    b.Navigation("Exam");
+
+                    b.Navigation("ExamRoom");
+                });
+
             modelBuilder.Entity("PIED_LMS.Domain.Entities.Question", b =>
                 {
                     b.HasOne("PIED_LMS.Domain.Entities.QuestionQuiz", "Quizlet")
@@ -587,9 +868,21 @@ namespace PIED_LMS.Persistence.Migrations
                         .HasForeignKey("CreatedBy")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_test_rooms_users_created_by");
+                        .HasConstraintName("fk_test_room_users_created_by");
 
                     b.Navigation("Creator");
+                });
+
+            modelBuilder.Entity("PIED_LMS.Domain.Entities.Exam", b =>
+                {
+                    b.Navigation("ExamRoomExams");
+                });
+
+            modelBuilder.Entity("PIED_LMS.Domain.Entities.ExamRoom", b =>
+                {
+                    b.Navigation("ExamRoomExams");
+
+                    b.Navigation("Participations");
                 });
 
             modelBuilder.Entity("PIED_LMS.Domain.Entities.Question", b =>

@@ -6,7 +6,7 @@ using PIED_LMS.Domain.Abstractions;
 using PIED_LMS.Domain.Entities;
 using System.Security.Claims;
 
-namespace PIED_LMS.Application.UserCases.Commands;
+namespace PIED_LMS.Application.UserCases.Commands.Quiz;
 
 public class DeleteQuestionQuizHandler(
     IHttpContextAccessor httpContextAccessor,
@@ -16,7 +16,7 @@ public class DeleteQuestionQuizHandler(
     public async Task<ServiceResponse<string>> Handle(DeleteQuestionQuizCommand request, CancellationToken cancellationToken)
     {
         var user = httpContextAccessor.HttpContext?.User;
-        if (user == null || !user.Identity.IsAuthenticated)
+        if (user?.Identity?.IsAuthenticated != true)
              return new ServiceResponse<string>(false, "User not authenticated.");
 
         var repo = unitOfWork.Repository<QuestionQuiz>();

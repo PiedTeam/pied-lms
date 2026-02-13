@@ -46,4 +46,9 @@ public class Repository<T>(PiedLmsDbContext dbContext) : IRepository<T> where T 
     {
         dbContext.Set<T>().Update(entity);
     }
+
+    public void Remove(T entity)
+    {
+        dbContext.Set<T>().Remove(entity);
+    }
 }

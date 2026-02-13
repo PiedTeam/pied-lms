@@ -2,12 +2,12 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Contract.Services.ExamParticipation;
 using PIED_LMS.Contract.Services.Identity;
-using PIED_LMS.Persistence;
+using PIED_LMS.Domain.Abstractions;
 
 namespace PIED_LMS.Application.UserCases.Queries.ExamParticipation;
 
 public class GetStudentParticipationsHandler(
-    PiedLmsDbContext dbContext,
+    IUnitOfWork unitOfWork,
     IHttpContextAccessor httpContextAccessor,
     ILogger<GetStudentParticipationsHandler> logger
 ) : IRequestHandler<GetStudentParticipationsQuery, ServiceResponse<PaginatedResponse<ExamParticipationResponse>>>
@@ -30,10 +30,11 @@ public class GetStudentParticipationsHandler(
             }
 
             // Query participations for student with eager loading of exam room and exam
-            var query = dbContext.ExamParticipations
+            // We use Repository<ExamParticipation> to start
+            var query = unitOfWork.Repository<Domain.Entities.ExamParticipation>()
+                .FindAll(ep => ep.StudentId == studentId && !ep.ExamRoom.IsDeleted && !ep.Exam.IsDeleted)
                 .Include(ep => ep.ExamRoom)
-                .Include(ep => ep.Exam)
-                .Where(ep => ep.StudentId == studentId && !ep.ExamRoom.IsDeleted && !ep.Exam.IsDeleted);
+                .Include(ep => ep.Exam);
 
             // Get total count
             var totalCount = await query.CountAsync(cancellationToken);

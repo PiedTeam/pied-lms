@@ -2,12 +2,13 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Contract.Services.ExamParticipation;
 using PIED_LMS.Contract.Services.Identity;
-using PIED_LMS.Persistence;
+using PIED_LMS.Domain.Abstractions;
+
 
 namespace PIED_LMS.Application.UserCases.Queries.ExamParticipation;
 
 public class CheckExamRoomAccessHandler(
-    PiedLmsDbContext dbContext,
+    IUnitOfWork unitOfWork,
     IHttpContextAccessor httpContextAccessor,
     ILogger<CheckExamRoomAccessHandler> logger
 ) : IRequestHandler<CheckExamRoomAccessQuery, ServiceResponse<ExamRoomAccessResponse>>
@@ -30,8 +31,9 @@ public class CheckExamRoomAccessHandler(
             }
 
             // Find exam room by ID
-            var examRoom = await dbContext.ExamRooms
-                .FirstOrDefaultAsync(er => er.Id == request.ExamRoomId && !er.IsDeleted, cancellationToken);
+            var examRoom = await unitOfWork.Repository<Domain.Entities.ExamRoom>()
+                .FindAll(er => er.Id == request.ExamRoomId && !er.IsDeleted)
+                .FirstOrDefaultAsync(cancellationToken);
 
             if (examRoom == null)
             {
@@ -91,7 +93,7 @@ public class CheckExamRoomAccessHandler(
             }
 
             // Check if student has already completed exam
-            var hasCompletedExam = await dbContext.ExamParticipations
+            var hasCompletedExam = await unitOfWork.Repository<Domain.Entities.ExamParticipation>()
                 .AnyAsync(
                     ep => ep.ExamRoomId == request.ExamRoomId 
                         && ep.StudentId == studentId 

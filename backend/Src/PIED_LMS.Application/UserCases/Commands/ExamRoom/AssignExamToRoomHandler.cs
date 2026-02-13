@@ -1,12 +1,13 @@
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Contract.Services.ExamRoom;
 using PIED_LMS.Contract.Services.Identity;
-using PIED_LMS.Persistence;
+using PIED_LMS.Domain.Abstractions;
 
 namespace PIED_LMS.Application.UserCases.Commands.ExamRoom;
 
 public class AssignExamToRoomHandler(
-    PiedLmsDbContext dbContext,
+    IUnitOfWork unitOfWork,
     IHttpContextAccessor httpContextAccessor,
     ILogger<AssignExamToRoomHandler> logger
 ) : IRequestHandler<AssignExamToRoomCommand, ServiceResponse<string>>
@@ -29,8 +30,9 @@ public class AssignExamToRoomHandler(
             }
 
             // Find exam room by ID
-            var examRoom = await dbContext.ExamRooms
-                .FirstOrDefaultAsync(er => er.Id == request.ExamRoomId && !er.IsDeleted, cancellationToken);
+            var examRoom = await unitOfWork.Repository<Domain.Entities.ExamRoom>()
+                .FindAll(er => er.Id == request.ExamRoomId && !er.IsDeleted)
+                .FirstOrDefaultAsync(cancellationToken);
 
             if (examRoom == null)
             {
@@ -52,8 +54,9 @@ public class AssignExamToRoomHandler(
             }
 
             // Find exam by ID
-            var exam = await dbContext.Exams
-                .FirstOrDefaultAsync(e => e.Id == request.ExamId && !e.IsDeleted, cancellationToken);
+            var exam = await unitOfWork.Repository<Domain.Entities.Exam>()
+                .FindAll(e => e.Id == request.ExamId && !e.IsDeleted)
+                .FirstOrDefaultAsync(cancellationToken);
 
             if (exam == null)
             {
@@ -64,12 +67,20 @@ public class AssignExamToRoomHandler(
                 );
             }
 
-            // Check if exam is already assigned to the room
-            var existingAssignment = await dbContext.ExamRoomExams
-                .FirstOrDefaultAsync(
-                    ere => ere.ExamRoomId == request.ExamRoomId && ere.ExamId == request.ExamId,
-                    cancellationToken
+            // Verify user is the creator of the exam
+            if (exam.CreatedBy != userId)
+            {
+                return new ServiceResponse<string>(
+                    false,
+                    "You are not authorized to assign this exam",
+                    ErrorCode: "FORBIDDEN"
                 );
+            }
+
+            // Check if exam is already assigned to the room
+            var existingAssignment = await unitOfWork.Repository<Domain.Entities.ExamRoomExam>()
+                .FindAll(ere => ere.ExamRoomId == request.ExamRoomId && ere.ExamId == request.ExamId)
+                .FirstOrDefaultAsync(cancellationToken);
 
             if (existingAssignment != null)
             {
@@ -88,8 +99,8 @@ public class AssignExamToRoomHandler(
                 AssignedAt = DateTime.UtcNow
             };
 
-            dbContext.ExamRoomExams.Add(examRoomExam);
-            await dbContext.SaveChangesAsync(cancellationToken);
+            await unitOfWork.Repository<Domain.Entities.ExamRoomExam>().AddAsync(examRoomExam, cancellationToken);
+            await unitOfWork.CommitAsync(cancellationToken);
 
             logger.LogInformation(
                 "Exam assigned to room successfully. ExamRoomId: {ExamRoomId}, ExamId: {ExamId}, AssignedBy: {UserId}",

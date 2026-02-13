@@ -1,12 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Contract.Services.ExamRoom;
 using PIED_LMS.Contract.Services.Identity;
-using PIED_LMS.Persistence;
+using PIED_LMS.Domain.Abstractions;
+
 
 namespace PIED_LMS.Application.UserCases.Queries.ExamRoom;
 
 public class GetExamRoomByIdHandler(
-    PiedLmsDbContext dbContext,
+    IUnitOfWork unitOfWork,
     ILogger<GetExamRoomByIdHandler> logger
 ) : IRequestHandler<GetExamRoomByIdQuery, ServiceResponse<ExamRoomDetailResponse>>
 {
@@ -17,10 +18,11 @@ public class GetExamRoomByIdHandler(
         try
         {
             // Find exam room by ID with eager loading of exams
-            var examRoom = await dbContext.ExamRooms
+            var examRoom = await unitOfWork.Repository<Domain.Entities.ExamRoom>()
+                .FindAll(er => er.Id == request.Id && !er.IsDeleted)
                 .Include(er => er.ExamRoomExams)
                     .ThenInclude(ere => ere.Exam)
-                .FirstOrDefaultAsync(er => er.Id == request.Id && !er.IsDeleted, cancellationToken);
+                .FirstOrDefaultAsync(cancellationToken);
 
             if (examRoom == null)
             {

@@ -2,12 +2,12 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Contract.Services.ExamRoom;
 using PIED_LMS.Contract.Services.Identity;
-using PIED_LMS.Persistence;
+using PIED_LMS.Domain.Abstractions;
 
 namespace PIED_LMS.Application.UserCases.Queries.ExamRoom;
 
 public class GetAvailableExamRoomsForStudentHandler(
-    PiedLmsDbContext dbContext,
+    IUnitOfWork unitOfWork,
     IHttpContextAccessor httpContextAccessor,
     ILogger<GetAvailableExamRoomsForStudentHandler> logger
 ) : IRequestHandler<GetAvailableExamRoomsForStudentQuery, ServiceResponse<PaginatedResponse<ExamRoomResponse>>>
@@ -32,13 +32,11 @@ public class GetAvailableExamRoomsForStudentHandler(
             var now = DateTime.UtcNow;
 
             // Query exam rooms where current time is within time window
-            var query = dbContext.ExamRooms
+            var query = unitOfWork.Repository<Domain.Entities.ExamRoom>()
+                .FindAll(er => !er.IsDeleted && er.StartTime <= now && er.EndTime >= now)
                 .Include(er => er.ExamRoomExams)
                     .ThenInclude(ere => ere.Exam)
-                .Include(er => er.Participations)
-                .Where(er => !er.IsDeleted 
-                    && er.StartTime <= now 
-                    && er.EndTime >= now);
+                .Include(er => er.Participations);
 
             // Exclude rooms where student has completed all exams
             var availableRooms = await query.ToListAsync(cancellationToken);
@@ -46,7 +44,7 @@ public class GetAvailableExamRoomsForStudentHandler(
             var filteredRooms = availableRooms.Where(er =>
             {
                 var examIds = er.ExamRoomExams
-                    .Where(ere => !ere.Exam.IsDeleted)
+                    .Where(ere => ere.Exam != null && !ere.Exam.IsDeleted)
                     .Select(ere => ere.ExamId)
                     .ToList();
 
@@ -76,7 +74,7 @@ public class GetAvailableExamRoomsForStudentHandler(
             var items = paginatedRooms.Select(er =>
             {
                 var status = "Ongoing";
-                var examCount = er.ExamRoomExams.Count(ere => !ere.Exam.IsDeleted);
+                var examCount = er.ExamRoomExams.Count(ere => ere.Exam != null && !ere.Exam.IsDeleted);
 
                 return new ExamRoomResponse(
                     er.Id,

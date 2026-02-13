@@ -1,11 +1,12 @@
+using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Contract.Services.Exam;
 using PIED_LMS.Contract.Services.Identity;
-using PIED_LMS.Persistence;
+using PIED_LMS.Domain.Abstractions;
 
 namespace PIED_LMS.Application.UserCases.Queries.Exam;
 
 public class GetExamByIdHandler(
-    PiedLmsDbContext dbContext,
+    IUnitOfWork unitOfWork,
     ILogger<GetExamByIdHandler> logger
 ) : IRequestHandler<GetExamByIdQuery, ServiceResponse<ExamResponse>>
 {
@@ -16,8 +17,9 @@ public class GetExamByIdHandler(
         try
         {
             // Find exam by ID
-            var exam = await dbContext.Exams
-                .FirstOrDefaultAsync(e => e.Id == request.Id && !e.IsDeleted, cancellationToken);
+            var exam = await unitOfWork.Repository<Domain.Entities.Exam>()
+                .FindAll(e => e.Id == request.Id && !e.IsDeleted)
+                .FirstOrDefaultAsync(cancellationToken);
 
             if (exam == null)
             {

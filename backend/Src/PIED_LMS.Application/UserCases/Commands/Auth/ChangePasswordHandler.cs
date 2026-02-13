@@ -1,7 +1,7 @@
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Entities;
 
-namespace PIED_LMS.Application.UserCases.Commands;
+namespace PIED_LMS.Application.UserCases.Commands.Auth;
 
 public class ChangePasswordCommandHandler(UserManager<ApplicationUser> userManager)
     : IRequestHandler<ChangePasswordCommand, ServiceResponse<string>>

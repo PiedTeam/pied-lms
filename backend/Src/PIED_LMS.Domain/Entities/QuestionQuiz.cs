@@ -21,7 +21,7 @@ public class QuestionQuiz
     public DateTime UpdatedAt { get; set; }
 
     public virtual ICollection<Question> Questions { get; set; }
-    public virtual ApplicationUser User { get; set; }
+    public virtual ApplicationUser User { get; set; } = null!;
     public QuestionQuiz()
     {
         Questions = new List<Question>();

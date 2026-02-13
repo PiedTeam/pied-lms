@@ -9,7 +9,7 @@ using PIED_LMS.Domain.Entities;
 using PIED_LMS.Contract.Services.Identity;
 using System.Security.Claims;
 
-namespace PIED_LMS.Application.UserCases.Commands;
+namespace PIED_LMS.Application.UserCases.Commands.Auth;
 
 public class UpdateQuestionQuizHandler(
     IHttpContextAccessor httpContextAccessor, 
@@ -90,11 +90,11 @@ public class UpdateQuestionQuizHandler(
         return new ServiceResponse<string>(true, "Update Successfully!!!");
     }
 
-    private PIED_LMS.Domain.Constants.QuestionType ParseQuestionType(string typeStr)
+    private Domain.Constants.QuestionType ParseQuestionType(string typeStr)
     {
         if (string.IsNullOrWhiteSpace(typeStr)) return PIED_LMS.Domain.Constants.QuestionType.MultipleChoice;
 
-        if (Enum.TryParse<PIED_LMS.Domain.Constants.QuestionType>(typeStr, true, out var result))
+        if (Enum.TryParse<Domain.Constants.QuestionType>(typeStr, true, out var result))
         {
             return result;
         }

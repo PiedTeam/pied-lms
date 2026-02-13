@@ -1,12 +1,14 @@
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Contract.Services.ExamRoom;
 using PIED_LMS.Contract.Services.Identity;
-using PIED_LMS.Persistence;
+using PIED_LMS.Domain.Abstractions;
+
 
 namespace PIED_LMS.Application.UserCases.Commands.ExamRoom;
 
 public class DeleteExamRoomHandler(
-    PiedLmsDbContext dbContext,
+    IUnitOfWork unitOfWork,
     IHttpContextAccessor httpContextAccessor,
     ILogger<DeleteExamRoomHandler> logger
 ) : IRequestHandler<DeleteExamRoomCommand, ServiceResponse<string>>
@@ -29,9 +31,9 @@ public class DeleteExamRoomHandler(
             }
 
             // Find exam room by ID
-            var examRoom = await dbContext.ExamRooms
-                .Include(er => er.Participations)
-                .FirstOrDefaultAsync(er => er.Id == request.Id && !er.IsDeleted, cancellationToken);
+            var examRoom = await unitOfWork.Repository<Domain.Entities.ExamRoom>()
+                .FindAll(er => er.Id == request.Id && !er.IsDeleted, er => er.Participations)
+                .FirstOrDefaultAsync(cancellationToken);
 
             if (examRoom == null)
             {
@@ -67,7 +69,7 @@ public class DeleteExamRoomHandler(
             examRoom.IsDeleted = true;
             examRoom.UpdatedAt = DateTime.UtcNow;
 
-            await dbContext.SaveChangesAsync(cancellationToken);
+            await unitOfWork.CommitAsync(cancellationToken);
 
             logger.LogInformation(
                 "Exam room deleted successfully. Id: {ExamRoomId}, Name: {Name}, DeletedBy: {UserId}",

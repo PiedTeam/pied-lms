@@ -2,12 +2,12 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Contract.Services.Exam;
 using PIED_LMS.Contract.Services.Identity;
-using PIED_LMS.Persistence;
+using PIED_LMS.Domain.Abstractions;
 
 namespace PIED_LMS.Application.UserCases.Commands.Exam;
 
 public class DeleteExamHandler(
-    PiedLmsDbContext dbContext,
+    IUnitOfWork unitOfWork,
     IHttpContextAccessor httpContextAccessor,
     ILogger<DeleteExamHandler> logger
 ) : IRequestHandler<DeleteExamCommand, ServiceResponse<string>>
@@ -30,8 +30,9 @@ public class DeleteExamHandler(
             }
 
             // Find exam by ID
-            var exam = await dbContext.Exams
-                .FirstOrDefaultAsync(e => e.Id == request.Id && !e.IsDeleted, cancellationToken);
+            var exam = await unitOfWork.Repository<Domain.Entities.Exam>()
+                .FindAll(e => e.Id == request.Id && !e.IsDeleted)
+                .FirstOrDefaultAsync(cancellationToken);
 
             if (exam == null)
             {
@@ -56,7 +57,7 @@ public class DeleteExamHandler(
             exam.IsDeleted = true;
             exam.UpdatedAt = DateTime.UtcNow;
 
-            await dbContext.SaveChangesAsync(cancellationToken);
+            await unitOfWork.CommitAsync(cancellationToken);
 
             logger.LogInformation(
                 "Exam deleted successfully. Id: {ExamId}, Title: {Title}, DeletedBy: {UserId}",
