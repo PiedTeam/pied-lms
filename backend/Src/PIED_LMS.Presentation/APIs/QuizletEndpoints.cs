@@ -1,6 +1,7 @@
 using Carter;
 using PIED_LMS.Contract.Services.QuestionQuiz;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -15,88 +16,126 @@ public class QuizletEndpoints : ICarterModule
     {
         var group = app.MapGroup("/api/quizlets");
 
+        // POST /api/quizlets
         group.MapPost("", CreateQuizlet)
             .WithName("CreateQuizlet")
             .DisableAntiforgery();
 
+        // GET /api/quizlets  (Admin, Mentor, Lecturer — all quizlets summary)
         group.MapGet("", GetAllQuizlets)
-            .WithName("GetAllQuizlets");
+            .WithName("GetAllQuizlets")
+            .RequireAuthorization(new AuthorizeAttribute { Roles = "Admin,Mentor,Lecturer" });
 
+        // GET /api/quizlets/{id}  (Admin, Mentor, Lecturer — full detail)
+        group.MapGet("/{id:int}", GetQuizletById)
+            .WithName("GetQuizletById")
+            .RequireAuthorization(new AuthorizeAttribute { Roles = "Admin,Mentor,Lecturer" });
+
+        // DELETE /api/quizlets/{id}
         group.MapDelete("/{id}", DeleteQuizlet)
             .WithName("DeleteQuizlet");
 
+        // PUT /api/quizlets/{id}
         group.MapPut("/{id}", UpdateQuizlet)
             .WithName("UpdateQuizlet");
 
-        // Student Endpoint
+        // GET /api/students/quizlets  (Student — published only, summary)
         app.MapGet("/api/students/quizlets", GetStudentQuizlets)
-             .WithName("GetStudentQuizlets")
-             .WithTags("StudentQuizlets");
+            .WithName("GetStudentQuizlets")
+            .WithTags("StudentQuizlets")
+            .RequireAuthorization(new AuthorizeAttribute { Roles = "Student" });
+
+        // GET /api/students/quizlets/{id}  (Student — published only, full detail)
+        app.MapGet("/api/students/quizlets/{id:int}", GetStudentQuizletById)
+            .WithName("GetStudentQuizletById")
+            .WithTags("StudentQuizlets")
+            .RequireAuthorization(new AuthorizeAttribute { Roles = "Student" });
     }
 
+    // GET /api/quizlets
+    public static async Task<IResult> GetAllQuizlets(ISender sender)
+    {
+        var result = await sender.Send(new GetQuizletSummariesQuery());
+        return Results.Ok(result);
+    }
+
+    // GET /api/quizlets/{id}
+    public static async Task<IResult> GetQuizletById(int id, ISender sender)
+    {
+        var result = await sender.Send(new GetQuizletByIdQuery(id));
+        if (!result.Success)
+        {
+            if (result.ErrorCode == "UNAUTHORIZED")
+                return Results.Json(result, statusCode: StatusCodes.Status401Unauthorized);
+            if (result.ErrorCode == "NOT_FOUND")
+                return Results.NotFound(result);
+            return Results.BadRequest(result);
+        }
+        return Results.Ok(result);
+    }
+
+    // GET /api/students/quizlets
     public static async Task<IResult> GetStudentQuizlets(ISender sender)
     {
         var result = await sender.Send(new GetStudentQuizletsQuery());
+        if (!result.Success)
+        {
+            if (result.ErrorCode == "UNAUTHORIZED")
+                return Results.Json(result, statusCode: StatusCodes.Status401Unauthorized);
+            return Results.BadRequest(result);
+        }
         return Results.Ok(result);
     }
 
-    public static async Task<IResult> GetAllQuizlets(ISender sender)
+    // GET /api/students/quizlets/{id}
+    public static async Task<IResult> GetStudentQuizletById(int id, ISender sender)
     {
-        var result = await sender.Send(new GetQuestionQuizsQuery());
+        var result = await sender.Send(new GetStudentQuizletByIdQuery(id));
+        if (!result.Success)
+        {
+            if (result.ErrorCode == "UNAUTHORIZED")
+                return Results.Json(result, statusCode: StatusCodes.Status401Unauthorized);
+            if (result.ErrorCode == "NOT_FOUND")
+                return Results.NotFound(result);
+            return Results.BadRequest(result);
+        }
         return Results.Ok(result);
     }
 
+    // POST /api/quizlets
     public static async Task<IResult> CreateQuizlet(
         [FromForm] string title,
-        [FromForm] string description, 
-        [FromForm] bool isPublished, 
+        [FromForm] string description,
+        [FromForm] bool isPublished,
         IFormFile listQuestion,
         ISender sender)
     {
         var command = new CreateQuestionQuizCommand(title, description, isPublished, listQuestion);
-        
         var result = await sender.Send(command);
-
         if (result.Success)
-        {
             return Results.Ok(result);
-        }
-
         return Results.BadRequest(result);
     }
 
+    // DELETE /api/quizlets/{id}
     public static async Task<IResult> DeleteQuizlet(int id, ISender sender)
     {
         var result = await sender.Send(new DeleteQuestionQuizCommand(id));
-        
         if (result.Success)
-        {
             return Results.Ok(result);
-        }
-
         return Results.BadRequest(result);
     }
 
+    // PUT /api/quizlets/{id}
     public static async Task<IResult> UpdateQuizlet(
-        int id, 
-        [FromBody] UpdateQuestionQuizRequest request, // We need a DTO for body to avoid implicit binding issues mixed with ID
+        int id,
+        [FromBody] UpdateQuestionQuizRequest request,
         ISender sender)
     {
-        // Map request to command
-        var command = new UpdateQuestionQuizCommand(
-            id,
-            request.Title,
-            request.IsPublished,
-            request.ListQuestion
-        );
-
+        var command = new UpdateQuestionQuizCommand(id, request.Title, request.IsPublished, request.ListQuestion);
         var result = await sender.Send(command);
-        
         if (result.Success)
-        {
             return Results.Ok(result);
-        }
-
         return Results.BadRequest(result);
     }
 }

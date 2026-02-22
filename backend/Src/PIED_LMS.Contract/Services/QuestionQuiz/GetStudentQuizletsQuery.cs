@@ -4,7 +4,24 @@ using PIED_LMS.Contract.Abstractions.Shared;
 
 namespace PIED_LMS.Contract.Services.QuestionQuiz;
 
-public record GetStudentQuizletsQuery : IRequest<ServiceResponse<List<StudentQuizletDto>>>;
+// List — students (summary only, isPublished=true)
+public record GetStudentQuizletsQuery : IRequest<ServiceResponse<List<QuizletSummaryResponse>>>;
+
+// Detail — admin/mentor/lecturer (full questions, any publish status)
+public record GetQuizletByIdQuery(int Id) : IRequest<ServiceResponse<QuizletDetailResponse>>;
+
+// Detail — student (full questions, only isPublished=true)
+public record GetStudentQuizletByIdQuery(int Id) : IRequest<ServiceResponse<QuizletDetailResponse>>;
+
+public record QuizletDetailResponse(
+    int Id,
+    string Title,
+    string UserName,
+    DateTime CreatedAt,
+    DateTime UpdatedAt,
+    bool IsPublished,
+    List<StudentQuestionDto> ListQuestion
+);
 
 public record StudentQuizletDto(
     int Id,
