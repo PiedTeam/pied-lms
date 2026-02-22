@@ -6,6 +6,19 @@ namespace PIED_LMS.Contract.Services.QuestionQuiz;
 
 public record GetQuestionQuizsQuery : IRequest<ServiceResponse<List<QuestionQuizResponse>>>;
 
+// Lightweight query for the list / summary view
+public record GetQuizletSummariesQuery : IRequest<ServiceResponse<List<QuizletSummaryResponse>>>;
+
+public record QuizletSummaryResponse(
+    int Id,
+    string Title,
+    string UserName,
+    DateTime CreatedAt,
+    DateTime UpdatedAt,
+    bool IsPublished,
+    int QuantityQuestion
+);
+
 public record QuestionQuizResponse(
     int Id,
     string Title,

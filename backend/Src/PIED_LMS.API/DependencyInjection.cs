@@ -85,8 +85,19 @@ public static class InfrastructureExtensions
         }));
 
        
-        services.AddAuthorization();
+        // 4. CORS
+        services.AddCors(options =>
+        {
+            options.AddPolicy("AllowAll", policy =>
+            {
+                policy
+                    .AllowAnyOrigin()
+                    .AllowAnyHeader()
+                    .AllowAnyMethod();
+            });
+        });
 
+        services.AddAuthorization();
 
         return services;
     }
@@ -98,6 +109,7 @@ public static class InfrastructureExtensions
         app.UseRateLimiter();
         app.UseResponseCaching();
         app.UseHttpsRedirection();
+        app.UseCors("AllowAll");
         app.UseAuthentication();
         app.UseAuthorization();
 

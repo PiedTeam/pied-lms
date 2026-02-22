@@ -106,7 +106,7 @@ public class AuthenticationEndpoints : ICarterModule
         var result = await mediator.Send(request, cancellationToken);
 
         if (!result.Success || result.Data == null)
-            return Results.Unauthorized();
+            return Results.BadRequest(result);
 
         // Extract login result (contains response and refresh token)
         var loginResult = result.Data;
