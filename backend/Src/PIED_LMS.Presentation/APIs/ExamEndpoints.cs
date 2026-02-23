@@ -16,7 +16,7 @@ public class ExamEndpoints : ICarterModule
         group.MapPost("", CreateExam)
             .WithName("CreateExam")
             .WithOpenApi()
-           .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Lecturer"))
             .Produces<ServiceResponse<ExamResponse>>()
             .Produces<ServiceResponse<ExamResponse>>(StatusCodes.Status400BadRequest);
 
@@ -24,7 +24,7 @@ public class ExamEndpoints : ICarterModule
         group.MapGet("", GetExamsByMentor)
             .WithName("GetExamsByMentor")
             .WithOpenApi()
-         .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Lecturer"))
             .Produces<ServiceResponse<PaginatedResponse<ExamResponse>>>();
 
         // GET /api/exams/{id}
@@ -39,7 +39,7 @@ public class ExamEndpoints : ICarterModule
         group.MapPut("/{id}", UpdateExam)
             .WithName("UpdateExam")
             .WithOpenApi()
-     .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Lecturer"))
             .Produces<ServiceResponse<ExamResponse>>()
             .Produces<ServiceResponse<ExamResponse>>(StatusCodes.Status400BadRequest)
             .Produces<ServiceResponse<ExamResponse>>(StatusCodes.Status403Forbidden);
@@ -48,7 +48,7 @@ public class ExamEndpoints : ICarterModule
         group.MapDelete("/{id}", DeleteExam)
             .WithName("DeleteExam")
             .WithOpenApi()
-        .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Lecturer"))
             .Produces<ServiceResponse<string>>()
             .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest)
             .Produces<ServiceResponse<string>>(StatusCodes.Status403Forbidden);

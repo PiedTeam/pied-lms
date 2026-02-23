@@ -1,7 +1,7 @@
 namespace PIED_LMS.Contract.Services.TestCase;
 
 public record TestCaseResponse(
-    int QuestionId,
+    Guid ExamId,
     Guid TestCaseId,
     int Index,
     string InputPath,

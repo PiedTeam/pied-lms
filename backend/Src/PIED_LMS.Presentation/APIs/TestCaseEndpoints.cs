@@ -16,16 +16,16 @@ public class TestCaseEndpoints : ICarterModule
         group.MapPost("", CreateTestCase)
             .WithName("CreateTestCase")
             .WithOpenApi()
-            .RequireAuthorization(new AuthorizeAttribute { Roles = "Admin,Mentor,Lecturer" })
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Lecturer"))
             .Produces<ServiceResponse<TestCaseResponse>>(StatusCodes.Status201Created)
             .Produces<ServiceResponse<TestCaseResponse>>(StatusCodes.Status400BadRequest)
             .Produces<ServiceResponse<TestCaseResponse>>(StatusCodes.Status401Unauthorized)
             .Produces<ServiceResponse<TestCaseResponse>>(StatusCodes.Status403Forbidden);
-        // GET /api/testcases/{questionId}
-        group.MapGet("/{questionId:int}", GetTestCasesByQuestion)
-            .WithName("GetTestCasesByQuestion")
+        // GET /api/testcases/{examId}
+        group.MapGet("/{examId:guid}", GetTestCasesByExam)
+            .WithName("GetTestCasesByExam")
             .WithOpenApi()
-            .RequireAuthorization(new AuthorizeAttribute { Roles = "Admin,Mentor,Lecturer" })
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Lecturer"))
             .Produces<ServiceResponse<List<TestCaseResponse>>>()
             .Produces<ServiceResponse<List<TestCaseResponse>>>(StatusCodes.Status404NotFound)
             .Produces<ServiceResponse<List<TestCaseResponse>>>(StatusCodes.Status401Unauthorized);
@@ -34,7 +34,7 @@ public class TestCaseEndpoints : ICarterModule
         group.MapPut("/{testcaseId:guid}", UpdateTestCase)
             .WithName("UpdateTestCase")
             .WithOpenApi()
-            .RequireAuthorization(new AuthorizeAttribute { Roles = "Admin,Mentor,Lecturer" })
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Lecturer"))
             .Produces<ServiceResponse<TestCaseResponse>>()
             .Produces<ServiceResponse<TestCaseResponse>>(StatusCodes.Status404NotFound)
             .Produces<ServiceResponse<TestCaseResponse>>(StatusCodes.Status400BadRequest)
@@ -44,7 +44,7 @@ public class TestCaseEndpoints : ICarterModule
         group.MapDelete("/{testcaseId:guid}", DeleteTestCase)
             .WithName("DeleteTestCase")
             .WithOpenApi()
-            .RequireAuthorization(new AuthorizeAttribute { Roles = "Admin,Mentor,Lecturer" })
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Lecturer"))
             .Produces<ServiceResponse<string>>()
             .Produces<ServiceResponse<string>>(StatusCodes.Status404NotFound)
             .Produces<ServiceResponse<string>>(StatusCodes.Status401Unauthorized);
@@ -62,7 +62,7 @@ public class TestCaseEndpoints : ICarterModule
             if (result.ErrorCode == "UNAUTHORIZED")
                 return Results.Json(result, statusCode: StatusCodes.Status401Unauthorized);
 
-            if (result.ErrorCode == "QUESTION_NOT_FOUND")
+            if (result.ErrorCode == "EXAM_NOT_FOUND")
                 return Results.NotFound(result);
 
             return Results.BadRequest(result);
@@ -71,12 +71,12 @@ public class TestCaseEndpoints : ICarterModule
         return Results.Json(result, statusCode: StatusCodes.Status201Created);
     }
 
-    // GET /api/testcases/{questionId}
-    private static async Task<IResult> GetTestCasesByQuestion(
-        int questionId,
+    // GET /api/testcases/{examId}
+    private static async Task<IResult> GetTestCasesByExam(
+        Guid examId,
         IMediator mediator)
     {
-        var query = new GetTestCasesByQuestionQuery(questionId);
+        var query = new GetTestCasesByExamQuery(examId);
         var result = await mediator.Send(query);
 
         if (!result.Success)
@@ -84,7 +84,7 @@ public class TestCaseEndpoints : ICarterModule
             if (result.ErrorCode == "UNAUTHORIZED")
                 return Results.Json(result, statusCode: StatusCodes.Status401Unauthorized);
 
-            if (result.ErrorCode == "QUESTION_NOT_FOUND")
+            if (result.ErrorCode == "EXAM_NOT_FOUND")
                 return Results.NotFound(result);
 
             return Results.BadRequest(result);
@@ -101,7 +101,7 @@ public class TestCaseEndpoints : ICarterModule
     {
         var command = new UpdateTestCaseCommand(
             testcaseId,
-            request.QuestionId,
+            request.ExamId,
             request.Index,
             request.InputPath,
             request.OutputPath,
@@ -114,7 +114,7 @@ public class TestCaseEndpoints : ICarterModule
             if (result.ErrorCode == "UNAUTHORIZED")
                 return Results.Json(result, statusCode: StatusCodes.Status401Unauthorized);
 
-            if (result.ErrorCode is "TESTCASE_NOT_FOUND" or "QUESTION_NOT_FOUND")
+            if (result.ErrorCode is "TESTCASE_NOT_FOUND" or "EXAM_NOT_FOUND")
                 return Results.NotFound(result);
 
             return Results.BadRequest(result);
@@ -148,7 +148,7 @@ public class TestCaseEndpoints : ICarterModule
 
 // Request DTO for PUT body
 public sealed record UpdateTestCaseRequest(
-    int QuestionId,
+    Guid ExamId,
     int Index,
     string InputPath,
     string OutputPath,
