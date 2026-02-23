@@ -4,7 +4,7 @@ using PIED_LMS.Contract.Services.Identity;
 namespace PIED_LMS.Contract.Services.TestCase;
 
 public record CreateTestCaseCommand(
-    int QuestionId,
+    Guid ExamId,
     int Index,
     string InputPath,
     string OutputPath,
@@ -13,7 +13,7 @@ public record CreateTestCaseCommand(
 
 public record UpdateTestCaseCommand(
     Guid TestCaseId,
-    int QuestionId,
+    Guid ExamId,
     int Index,
     string InputPath,
     string OutputPath,

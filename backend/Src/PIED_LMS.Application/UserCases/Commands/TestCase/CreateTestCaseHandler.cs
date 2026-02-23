@@ -28,16 +28,16 @@ public class CreateTestCaseHandler(
                 );
             }
 
-            // Validate that the Question exists
-            var question = await unitOfWork.Repository<Domain.Entities.Question>()
-                .GetByIdAsync(request.QuestionId, cancellationToken);
+            // Validate that the Exam exists
+            var exam = await unitOfWork.Repository<Domain.Entities.Exam>()
+                .GetByIdAsync(request.ExamId, cancellationToken);
 
-            if (question == null)
+            if (exam == null)
             {
                 return new ServiceResponse<TestCaseResponse>(
                     false,
-                    $"Question with id '{request.QuestionId}' not found",
-                    ErrorCode: "QUESTION_NOT_FOUND"
+                    $"Exam with id '{request.ExamId}' not found",
+                    ErrorCode: "EXAM_NOT_FOUND"
                 );
             }
 
@@ -45,7 +45,7 @@ public class CreateTestCaseHandler(
             var testCase = new Domain.Entities.TestCase
             {
                 Id = Guid.NewGuid(),
-                QuestionId = request.QuestionId,
+                ExamId = request.ExamId,
                 Index = request.Index,
                 InputPath = request.InputPath,
                 OutputPath = request.OutputPath,
@@ -56,14 +56,14 @@ public class CreateTestCaseHandler(
             await unitOfWork.CommitAsync(cancellationToken);
 
             logger.LogInformation(
-                "TestCase created. Id: {TestCaseId}, QuestionId: {QuestionId}, CreatedBy: {UserId}",
+                "TestCase created. Id: {TestCaseId}, ExamId: {ExamId}, CreatedBy: {UserId}",
                 testCase.Id,
-                testCase.QuestionId,
+                testCase.ExamId,
                 userId
             );
 
             var response = new TestCaseResponse(
-                testCase.QuestionId,
+                testCase.ExamId,
                 testCase.Id,
                 testCase.Index,
                 testCase.InputPath,
@@ -81,8 +81,8 @@ public class CreateTestCaseHandler(
         {
             logger.LogError(
                 ex,
-                "Failed to create TestCase. QuestionId: {QuestionId}",
-                request.QuestionId
+                "Failed to create TestCase. ExamId: {ExamId}",
+                request.ExamId
             );
             return new ServiceResponse<TestCaseResponse>(
                 false,
