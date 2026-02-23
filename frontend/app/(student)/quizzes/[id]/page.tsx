@@ -56,8 +56,8 @@ export default function TakeQuizPage() {
     );
   }
 
-  const question = quizlet.questions[currentQuestion];
-  const totalQuestions = quizlet.questions.length;
+  const question = quizlet.listQuestion[currentQuestion];
+  const totalQuestions = quizlet.listQuestion.length;
   const progress = ((currentQuestion + 1) / totalQuestions) * 100;
 
   const currentAnswer = answers.find(
@@ -127,7 +127,7 @@ export default function TakeQuizPage() {
     let totalScore = 0;
     let earnedScore = 0;
 
-    quizlet.questions.forEach((q, index) => {
+    quizlet.listQuestion.forEach((q, index) => {
       totalScore += q.score;
       const userAnswer = answers.find((a) => a.questionIndex === index);
 
@@ -152,7 +152,7 @@ export default function TakeQuizPage() {
       earnedScore,
       timeElapsed,
       answers,
-      questions: quizlet.questions,
+      questions: quizlet.listQuestion,
     };
 
     sessionStorage.setItem(`quiz-result-${id}`, JSON.stringify(resultData));
@@ -216,7 +216,7 @@ export default function TakeQuizPage() {
               >
                 <div className="flex items-center gap-3">
                   <div
-                    className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                    className={`shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center ${
                       isSelected ? "border-primary bg-primary" : "border-border"
                     }`}
                   >

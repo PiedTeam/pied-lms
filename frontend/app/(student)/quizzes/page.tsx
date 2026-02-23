@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { useGetStudentQuizlets } from "@/service";
 
 export default function StudentQuizzesPage() {
@@ -40,16 +41,26 @@ export default function StudentQuizzesPage() {
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <FileSpreadsheet className="h-8 w-8 text-primary" />
+                  <Badge variant="default">Published</Badge>
                 </div>
                 <CardTitle className="mt-4">{quizlet.title}</CardTitle>
-                <CardDescription className="mt-2">
-                  {quizlet.description}
+                <CardDescription className="mt-2 space-y-1">
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="font-medium">By:</span>
+                    <span>{quizlet.userName}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="font-medium">Created:</span>
+                    <span>
+                      {new Date(quizlet.createdAt).toLocaleDateString("vi-VN")}
+                    </span>
+                  </div>
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Clock className="h-4 w-4" />
-                  <span>{quizlet.questionCount} questions</span>
+                  <span>{quizlet.quantityQuestion} questions</span>
                 </div>
                 <Button className="w-full mt-4">Start Quiz</Button>
               </CardContent>

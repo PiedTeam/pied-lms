@@ -1,8 +1,8 @@
 // TestCase Interfaces
 
 export interface TestCaseResponse {
-  questionId: number;
-  id: string;
+  examId: string; // Changed from questionId to examId (Guid)
+  testCaseId: string; // Changed from id to testCaseId
   index: number;
   inputPath: string;
   outputPath: string;
@@ -10,15 +10,15 @@ export interface TestCaseResponse {
 }
 
 export interface CreateTestCaseRequest {
-  questionId: number; // Changed to number to match backend int
-  index: number; // Added required field
-  inputPath: string; // Changed from input to inputPath
-  outputPath: string; // Changed from expectedOutput to outputPath
+  examId: string; // Changed from questionId (number) to examId (string/Guid)
+  index: number;
+  inputPath: string;
+  outputPath: string;
   isHidden: boolean;
 }
 
 export interface UpdateTestCaseRequest {
-  questionId: number;
+  examId: string; // Changed from questionId to examId
   index: number;
   inputPath: string;
   outputPath: string;

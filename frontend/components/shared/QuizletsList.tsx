@@ -287,7 +287,7 @@ export function QuizletsList({ role }: QuizletsListProps) {
                     <TableCell className="font-medium">
                       {quizlet.title}
                     </TableCell>
-                    <TableCell>—</TableCell>
+                    <TableCell>{quizlet.userName || "—"}</TableCell>
                     <TableCell>{quizlet.quantityQuestion}</TableCell>
                     <TableCell>
                       {quizlet.isPublished ? (

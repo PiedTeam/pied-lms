@@ -60,23 +60,32 @@ export interface UpdateQuizletRequest {
 export interface StudentQuestionDto {
   content: string;
   score: number;
-  answers: string[];
+  answers: string[]; // Backend returns "answers" not "options"
   correctAnswers: string[];
-  questionType: string;
+  questionType: string; // "SingleChoice" or "MultipleChoice"
 }
 
 // Student summary response (GET /api/students/quizlets)
+// Backend returns QuizletSummaryResponse (same as admin/teacher list)
 export interface StudentQuizletSummaryResponse {
   id: number;
   title: string;
   description: string;
-  questionCount: number;
+  userName: string;
+  isPublished: boolean;
+  quantityQuestion: number; // Backend uses quantityQuestion not questionCount
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Student full detail response (GET /api/students/quizlets/{id})
+// Backend returns QuizletDetailResponse with ListQuestion
 export interface StudentQuizletResponse {
   id: number;
   title: string;
-  description: string;
-  questions: StudentQuestionDto[];
+  userName: string;
+  createdAt: string;
+  updatedAt: string;
+  isPublished: boolean;
+  listQuestion: StudentQuestionDto[]; // Backend uses listQuestion not questions
 }

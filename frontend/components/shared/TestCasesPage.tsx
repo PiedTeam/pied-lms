@@ -8,21 +8,21 @@ import { TestCasesList } from "./TestCasesList";
 
 interface TestCasesPageProps {
   role: "admin" | "teacher" | "mentor";
-  questionTitle?: string;
+  examTitle?: string;
 }
 
-export function TestCasesPage({ role, questionTitle }: TestCasesPageProps) {
+export function TestCasesPage({ role, examTitle }: TestCasesPageProps) {
   const params = useParams();
-  const questionId = params.questionId as string;
+  const examId = params.examId as string;
 
   const getBackUrl = () => {
     switch (role) {
       case "admin":
-        return `/admin/questions/${questionId}`;
+        return `/admin/exams/${examId}`;
       case "teacher":
-        return `/teacher/questions/${questionId}`;
+        return `/teacher/exams/${examId}`;
       case "mentor":
-        return `/mentor/questions/${questionId}`;
+        return `/mentor/exams/${examId}`;
       default:
         return "/";
     }
@@ -34,12 +34,12 @@ export function TestCasesPage({ role, questionTitle }: TestCasesPageProps) {
         <Button variant="ghost" size="sm" asChild>
           <Link href={getBackUrl()}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Question
+            Back to Exam
           </Link>
         </Button>
       </div>
 
-      <TestCasesList questionId={questionId} questionTitle={questionTitle} />
+      <TestCasesList examId={examId} examTitle={examTitle} />
     </div>
   );
 }

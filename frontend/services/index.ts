@@ -67,7 +67,7 @@ export {
 
 // TestCase Services
 export {
-  useGetTestCasesByQuestion,
+  useGetTestCasesByExam, // Changed from useGetTestCasesByQuestion
   useGetTestCaseById,
   useCreateTestCase,
   useUpdateTestCase,

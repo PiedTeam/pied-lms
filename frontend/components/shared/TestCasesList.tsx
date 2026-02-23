@@ -50,17 +50,17 @@ import {
 } from "@/components/ui/alert-dialog";
 import { TestCaseForm } from "@/components/shared/TestCaseForm";
 import { TestCaseRunner } from "@/components/shared/TestCaseRunner";
-import { useGetTestCasesByQuestion, useDeleteTestCase } from "@/service";
+import { useGetTestCasesByExam, useDeleteTestCase } from "@/service";
 import type { TestCaseResponse } from "@/interface/testcase/testcase.interface";
 
 interface TestCasesListProps {
-  questionId: string;
-  questionTitle?: string;
+  examId: string; // Changed from questionId
+  examTitle?: string; // Changed from questionTitle
 }
 
 export function TestCasesList({
-  questionId,
-  questionTitle,
+  examId, // Changed from questionId
+  examTitle, // Changed from questionTitle
 }: TestCasesListProps) {
   const { toast } = useToast();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -69,7 +69,7 @@ export function TestCasesList({
   const [runningTestCase, setRunningTestCase] =
     useState<TestCaseResponse | null>(null);
 
-  const { data: testCases, isLoading } = useGetTestCasesByQuestion(questionId);
+  const { data: testCases, isLoading } = useGetTestCasesByExam(examId); // Changed from useGetTestCasesByQuestion
   const { mutate: deleteTestCase, isPending: isDeleting } = useDeleteTestCase();
 
   const handleDelete = (id: string) => {
@@ -106,8 +106,8 @@ export function TestCasesList({
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Test Cases</h2>
-          {questionTitle && (
-            <p className="text-muted-foreground">Câu hỏi: {questionTitle}</p>
+          {examTitle && (
+            <p className="text-muted-foreground">Đề thi: {examTitle}</p> // Changed from "Câu hỏi"
           )}
         </div>
 
@@ -126,7 +126,8 @@ export function TestCasesList({
               </DialogDescription>
             </DialogHeader>
             <TestCaseForm
-              questionId={questionId}
+              examId={examId} // Changed from questionId
+              existingTestCases={testCases || []} // Pass existing test cases
               onSuccess={() => {
                 setIsCreateDialogOpen(false);
                 toast({
@@ -163,7 +164,9 @@ export function TestCasesList({
               </TableHeader>
               <TableBody>
                 {testCases.map((testCase) => (
-                  <TableRow key={testCase.id}>
+                  <TableRow key={testCase.testCaseId}>
+                    {" "}
+                    {/* Changed from testCase.id */}
                     <TableCell className="font-mono text-sm max-w-xs">
                       <div className="truncate" title={testCase.inputPath}>
                         {testCase.inputPath || "—"}
@@ -234,7 +237,9 @@ export function TestCasesList({
                             <AlertDialogFooter>
                               <AlertDialogCancel>Hủy</AlertDialogCancel>
                               <AlertDialogAction
-                                onClick={() => handleDelete(testCase.id)}
+                                onClick={() =>
+                                  handleDelete(testCase.testCaseId)
+                                }
                                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                               >
                                 Xóa
@@ -283,8 +288,9 @@ export function TestCasesList({
               </DialogDescription>
             </DialogHeader>
             <TestCaseForm
-              questionId={questionId}
+              examId={examId} // Changed from questionId
               testCase={editingTestCase}
+              existingTestCases={testCases || []} // Pass existing test cases
               onSuccess={() => {
                 setEditingTestCase(null);
                 toast({

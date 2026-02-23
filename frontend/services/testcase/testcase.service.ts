@@ -10,13 +10,13 @@ import type {
   RunTestCaseResponse,
 } from "@/interface/testcase/testcase.interface";
 
-// Get TestCases By Question ID
-export function useGetTestCasesByQuestion(questionId: string) {
+// Get TestCases By Exam ID
+export function useGetTestCasesByExam(examId: string) {
   return useQuery({
-    queryKey: ["testcases", "question", questionId],
+    queryKey: ["testcases", "exam", examId],
     queryFn: async (): Promise<TestCaseResponse[]> => {
       const { data } = await axios.get<ApiResponse<TestCaseResponse[]>>(
-        `/testcases/${questionId}`, // Changed endpoint to match backend
+        `/testcases/${examId}`,
       );
 
       if (!data.success || !data.data) {
@@ -25,7 +25,7 @@ export function useGetTestCasesByQuestion(questionId: string) {
 
       return data.data;
     },
-    enabled: !!questionId,
+    enabled: !!examId,
   });
 }
 
@@ -74,7 +74,7 @@ export function useCreateTestCase() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ["testcases", "question", variables.questionId],
+        queryKey: ["testcases", "exam", variables.examId],
       });
     },
   });
@@ -112,7 +112,7 @@ export function useUpdateTestCase() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["testcases", variables.id] });
-      queryClient.invalidateQueries({ queryKey: ["testcases", "question"] });
+      queryClient.invalidateQueries({ queryKey: ["testcases", "exam"] });
     },
   });
 }

@@ -28,15 +28,17 @@ interface TestCaseFormData {
 }
 
 interface TestCaseFormProps {
-  questionId: string;
+  examId: string; // Changed from questionId to examId
   testCase?: TestCaseResponse;
+  existingTestCases?: TestCaseResponse[]; // Add existing test cases for validation
   onSuccess: () => void;
   onCancel: () => void;
 }
 
 export function TestCaseForm({
-  questionId,
+  examId, // Changed from questionId
   testCase,
+  existingTestCases = [], // Add default empty array
   onSuccess,
   onCancel,
 }: TestCaseFormProps) {
@@ -84,10 +86,26 @@ export function TestCaseForm({
       return;
     }
 
+    // Check if index already exists (only when creating or changing index)
+    const indexExists = existingTestCases.some(
+      (tc) =>
+        tc.index === data.index &&
+        (!testCase || tc.testCaseId !== testCase.testCaseId),
+    );
+
+    if (indexExists) {
+      toast({
+        title: "Lỗi",
+        description: `Test case với index ${data.index} đã tồn tại. Vui lòng chọn index khác.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     const payload = {
-      questionId: parseInt(questionId),
+      examId: examId, // Changed from questionId
       index: data.index,
       inputPath: data.inputPath,
       outputPath: data.outputPath,
@@ -98,9 +116,9 @@ export function TestCaseForm({
       // Update existing test case
       updateTestCase(
         {
-          id: testCase.id,
+          id: testCase.testCaseId, // Changed from testCase.id
           payload: {
-            questionId: parseInt(questionId),
+            examId: examId, // Changed from questionId
             index: data.index,
             inputPath: data.inputPath,
             outputPath: data.outputPath,

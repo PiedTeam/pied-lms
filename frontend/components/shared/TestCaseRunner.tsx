@@ -80,7 +80,7 @@ export function TestCaseRunner({ testCase, onClose }: TestCaseRunnerProps) {
 
     runTestCase(
       {
-        id: testCase.id,
+        id: testCase.testCaseId,
         payload: {
           code: data.code,
           language: data.language,

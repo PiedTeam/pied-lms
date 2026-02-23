@@ -11,14 +11,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
@@ -29,6 +25,14 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -38,13 +42,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
 import { useGetExamsByMentor, useCreateExam, useDeleteExam } from "@/service";
-import { EXAM_MESSAGES } from "@/constants/messages.constants";
-import { useForm } from "react-hook-form";
 import type { CreateExamRequest } from "@/interface/exam/exam.interface";
 
 interface ExamsListProps {
@@ -56,35 +55,41 @@ export function ExamsList({ basePath }: ExamsListProps) {
   const { toast } = useToast();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [deleteExamId, setDeleteExamId] = useState<string | null>(null);
+  const [formData, setFormData] = useState<CreateExamRequest>({
+    title: "",
+    description: "",
+    totalMarks: 100,
+    passingMarks: 50,
+  });
 
   const { data: examsData, isLoading } = useGetExamsByMentor({
     pageNumber: 1,
-    pageSize: 100,
+    pageSize: 50,
   });
   const { mutate: createExam, isPending: isCreating } = useCreateExam();
   const { mutate: deleteExam, isPending: isDeleting } = useDeleteExam();
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<CreateExamRequest>();
+  const handleCreateSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
 
-  const onSubmit = (data: CreateExamRequest) => {
-    createExam(data, {
+    createExam(formData, {
       onSuccess: () => {
         toast({
           title: "Thành công",
-          description: EXAM_MESSAGES.SUCCESS.CREATED,
+          description: "Đề thi đã được tạo thành công",
         });
         setIsCreateDialogOpen(false);
-        reset();
+        setFormData({
+          title: "",
+          description: "",
+          totalMarks: 100,
+          passingMarks: 50,
+        });
       },
       onError: (error: Error) => {
         toast({
           title: "Lỗi",
-          description: error.message || EXAM_MESSAGES.ERROR.CREATE_FAILED,
+          description: error.message || "Không thể tạo đề thi",
           variant: "destructive",
         });
       },
@@ -98,26 +103,17 @@ export function ExamsList({ basePath }: ExamsListProps) {
       onSuccess: () => {
         toast({
           title: "Thành công",
-          description: EXAM_MESSAGES.SUCCESS.DELETED,
+          description: "Đề thi đã được xóa thành công",
         });
         setDeleteExamId(null);
       },
       onError: (error: Error) => {
         toast({
           title: "Lỗi",
-          description: error.message || EXAM_MESSAGES.ERROR.DELETE_FAILED,
+          description: error.message || "Không thể xóa đề thi",
           variant: "destructive",
         });
-        setDeleteExamId(null);
       },
-    });
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("vi-VN", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
     });
   };
 
@@ -125,116 +121,101 @@ export function ExamsList({ basePath }: ExamsListProps) {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Exams</h1>
-          <p className="text-muted-foreground">Manage your exams</p>
+          <h1 className="text-3xl font-bold tracking-tight">Đề Thi</h1>
+          <p className="text-muted-foreground">Quản lý các đề thi</p>
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="mr-2 h-4 w-4" />
-              Create Exam
+              Tạo Đề Thi
             </Button>
           </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create New Exam</DialogTitle>
-              <DialogDescription>
-                Enter information to create a new exam
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              <div className="grid gap-2">
-                <Label htmlFor="title">
-                  Exam Title <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="title"
-                  {...register("title", {
-                    required: "Exam title is required",
-                  })}
-                  placeholder="Enter exam title"
-                />
-                {errors.title && (
-                  <p className="text-sm text-destructive">
-                    {errors.title.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  {...register("description")}
-                  placeholder="Enter exam description"
-                  rows={3}
-                />
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
+          <DialogContent className="sm:max-w-[600px]">
+            <form onSubmit={handleCreateSubmit}>
+              <DialogHeader>
+                <DialogTitle>Tạo Đề Thi Mới</DialogTitle>
+                <DialogDescription>Nhập thông tin đề thi</DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="totalMarks">
-                    Total Marks <span className="text-destructive">*</span>
+                  <Label htmlFor="title">
+                    Tên Đề Thi <span className="text-red-500">*</span>
                   </Label>
                   <Input
-                    id="totalMarks"
-                    type="number"
-                    {...register("totalMarks", {
-                      required: "Total marks is required",
-                      valueAsNumber: true,
-                      min: {
-                        value: 1,
-                        message: "Total marks must be greater than 0",
-                      },
-                    })}
-                    placeholder="100"
+                    id="title"
+                    placeholder="VD: Đề thi giữa kỳ"
+                    value={formData.title}
+                    onChange={(e) =>
+                      setFormData({ ...formData, title: e.target.value })
+                    }
+                    required
                   />
-                  {errors.totalMarks && (
-                    <p className="text-sm text-destructive">
-                      {errors.totalMarks.message}
-                    </p>
-                  )}
                 </div>
-
                 <div className="grid gap-2">
-                  <Label htmlFor="passingMarks">
-                    Passing Marks <span className="text-destructive">*</span>
-                  </Label>
-                  <Input
-                    id="passingMarks"
-                    type="number"
-                    {...register("passingMarks", {
-                      required: "Passing marks is required",
-                      valueAsNumber: true,
-                      min: {
-                        value: 1,
-                        message: "Passing marks must be greater than 0",
-                      },
-                    })}
-                    placeholder="60"
+                  <Label htmlFor="description">Mô Tả</Label>
+                  <Textarea
+                    id="description"
+                    placeholder="Mô tả về đề thi"
+                    value={formData.description}
+                    onChange={(e) =>
+                      setFormData({ ...formData, description: e.target.value })
+                    }
+                    rows={3}
                   />
-                  {errors.passingMarks && (
-                    <p className="text-sm text-destructive">
-                      {errors.passingMarks.message}
-                    </p>
-                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="totalMarks">
+                      Tổng Điểm <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="totalMarks"
+                      type="number"
+                      min="1"
+                      placeholder="100"
+                      value={formData.totalMarks}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          totalMarks: parseInt(e.target.value) || 0,
+                        })
+                      }
+                      required
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="passingMarks">
+                      Điểm Đạt <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="passingMarks"
+                      type="number"
+                      min="1"
+                      placeholder="50"
+                      value={formData.passingMarks}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          passingMarks: parseInt(e.target.value) || 0,
+                        })
+                      }
+                      required
+                    />
+                  </div>
                 </div>
               </div>
-
               <DialogFooter>
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => {
-                    setIsCreateDialogOpen(false);
-                    reset();
-                  }}
+                  onClick={() => setIsCreateDialogOpen(false)}
                   disabled={isCreating}
                 >
-                  Cancel
+                  Hủy
                 </Button>
                 <Button type="submit" disabled={isCreating}>
-                  {isCreating ? "Creating..." : "Create Exam"}
+                  {isCreating ? "Đang tạo..." : "Tạo Đề Thi"}
                 </Button>
               </DialogFooter>
             </form>
@@ -244,40 +225,45 @@ export function ExamsList({ basePath }: ExamsListProps) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Exam List</CardTitle>
-          <CardDescription>{examsData?.totalCount || 0} exams</CardDescription>
+          <CardTitle>Danh Sách Đề Thi</CardTitle>
+          <CardDescription>
+            {examsData?.items.length || 0} đề thi
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="text-center py-8">Loading...</div>
+            <div className="text-center py-8">Đang tải...</div>
           ) : !examsData?.items.length ? (
             <div className="text-center py-8 text-muted-foreground">
-              No exams yet. Create your first exam!
+              Chưa có đề thi nào. Tạo đề thi đầu tiên!
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Exam Title</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Total Marks</TableHead>
-                  <TableHead>Passing Marks</TableHead>
-                  <TableHead>Created Date</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>Tên Đề Thi</TableHead>
+                  <TableHead>Mô Tả</TableHead>
+                  <TableHead>Điểm</TableHead>
+                  <TableHead className="text-right">Thao Tác</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {examsData.items.map((exam) => (
                   <TableRow key={exam.id}>
                     <TableCell className="font-medium">{exam.title}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {exam.description}
+                    <TableCell className="max-w-md truncate">
+                      {exam.description || "—"}
                     </TableCell>
-                    <TableCell>{exam.totalMarks}</TableCell>
-                    <TableCell>{exam.passingMarks}</TableCell>
-                    <TableCell>{formatDate(exam.createdAt)}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline">Tổng: {exam.totalMarks}</Badge>
+                        <Badge variant="secondary">
+                          Đạt: {exam.passingMarks}
+                        </Badge>
+                      </div>
+                    </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
+                      <div className="flex items-center justify-end gap-2">
                         <Button
                           variant="ghost"
                           size="icon"
@@ -315,20 +301,24 @@ export function ExamsList({ basePath }: ExamsListProps) {
 
       <AlertDialog
         open={!!deleteExamId}
-        onOpenChange={(open) => !open && setDeleteExamId(null)}
+        onOpenChange={() => setDeleteExamId(null)}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirm Delete</AlertDialogTitle>
+            <AlertDialogTitle>Xác Nhận Xóa</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this exam? This action cannot be
-              undone.
+              Bạn có chắc chắn muốn xóa đề thi này? Hành động này không thể hoàn
+              tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} disabled={isDeleting}>
-              {isDeleting ? "Deleting..." : "Delete"}
+            <AlertDialogCancel disabled={isDeleting}>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Đang xóa..." : "Xóa"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
