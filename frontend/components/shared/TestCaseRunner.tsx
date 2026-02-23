@@ -124,25 +124,27 @@ export function TestCaseRunner({ testCase, onClose }: TestCaseRunnerProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <h4 className="font-medium mb-2">Input:</h4>
+            <h4 className="font-medium mb-2">Input Path:</h4>
             <pre className="bg-muted p-3 rounded-md text-sm font-mono whitespace-pre-wrap">
-              {testCase.input || "No input"}
+              {testCase.inputPath || "No input path"}
             </pre>
           </div>
           <div>
-            <h4 className="font-medium mb-2">Expected Output:</h4>
+            <h4 className="font-medium mb-2">Output Path:</h4>
             <pre className="bg-muted p-3 rounded-md text-sm font-mono whitespace-pre-wrap">
-              {testCase.expectedOutput || "No expected output"}
+              {testCase.outputPath || "No output path"}
             </pre>
           </div>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-1">
-              <Clock className="h-4 w-4" />
-              Time Limit: {formatTime(testCase.timeLimit)}
+              Index: {testCase.index}
             </div>
             <div className="flex items-center gap-1">
-              <HardDrive className="h-4 w-4" />
-              Memory Limit: {formatMemory(testCase.memoryLimit)}
+              {testCase.isHidden ? (
+                <Badge variant="secondary">Hidden</Badge>
+              ) : (
+                <Badge variant="outline">Visible</Badge>
+              )}
             </div>
           </div>
         </CardContent>
