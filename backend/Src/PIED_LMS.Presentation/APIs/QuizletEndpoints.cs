@@ -21,15 +21,13 @@ public class QuizletEndpoints : ICarterModule
             .WithName("CreateQuizlet")
             .DisableAntiforgery();
 
-        // GET /api/quizlets  (Admin, Mentor, Lecturer — all quizlets summary)
         group.MapGet("", GetAllQuizlets)
             .WithName("GetAllQuizlets")
-            .RequireAuthorization(new AuthorizeAttribute { Roles = "Admin,Mentor,Lecturer" });
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Lecturer"));
 
-        // GET /api/quizlets/{id}  (Admin, Mentor, Lecturer — full detail)
         group.MapGet("/{id:int}", GetQuizletById)
             .WithName("GetQuizletById")
-            .RequireAuthorization(new AuthorizeAttribute { Roles = "Admin,Mentor,Lecturer" });
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Lecturer"));
 
         // DELETE /api/quizlets/{id}
         group.MapDelete("/{id}", DeleteQuizlet)
@@ -43,13 +41,13 @@ public class QuizletEndpoints : ICarterModule
         app.MapGet("/api/students/quizlets", GetStudentQuizlets)
             .WithName("GetStudentQuizlets")
             .WithTags("StudentQuizlets")
-            .RequireAuthorization(new AuthorizeAttribute { Roles = "Student" });
+            .RequireAuthorization(policy => policy.RequireRole("Student"));
 
         // GET /api/students/quizlets/{id}  (Student — published only, full detail)
         app.MapGet("/api/students/quizlets/{id:int}", GetStudentQuizletById)
             .WithName("GetStudentQuizletById")
             .WithTags("StudentQuizlets")
-            .RequireAuthorization(new AuthorizeAttribute { Roles = "Student" });
+            .RequireAuthorization(policy => policy.RequireRole("Student"));
     }
 
     // GET /api/quizlets
