@@ -1,15 +1,23 @@
 // Base API interfaces
 
 export interface ApiResponse<T> {
-	success: boolean
-	message?: string
-	error?: string
-	code: number
-	data?: T
+  success: boolean;
+  message: string;
+  data: T;
+  errors: {
+    [key: string]: string[];
+  };
+  isNotFound: boolean;
+  errorCode: string;
+  code: number;
 }
 
 export interface ApiErrorResponse {
-	error: string
-	message?: string
-	statusCode?: number
+  success: false;
+  message: string;
+  errors?: {
+    [key: string]: string[];
+  };
+  errorCode?: string;
+  code?: number;
 }
