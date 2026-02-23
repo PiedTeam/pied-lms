@@ -76,7 +76,9 @@ export default function MentorProfilePage() {
               <label className="text-sm font-medium text-muted-foreground">
                 User ID
               </label>
-              <p className="font-mono text-sm">{user?.id || "Not available"}</p>
+              <p className="font-mono text-sm">
+                {user?.uuid || "Not available"}
+              </p>
             </div>
             <div>
               <label className="text-sm font-medium text-muted-foreground">

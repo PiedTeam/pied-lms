@@ -1,6 +1,4 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { axiosGeneral as axios } from "@/common/axios";
-import type { ApiResponse } from "@/interface";
 import {
   Question,
   QuestionListResponse,
@@ -8,6 +6,70 @@ import {
   CreateQuestionResponse,
   UpdateQuestionRequest,
 } from "@/interface/question/question.interface";
+
+// Mock data for development - temporary until backend is fixed
+const mockQuestions: Question[] = [
+  {
+    questionId: "1",
+    title: "Two Sum Problem",
+    descriptionPath: "/problems/two-sum.md",
+    score: 100,
+    timeLimit: 1000,
+    memoryLimit: 256,
+    order: 1,
+    createdAt: "2024-01-15T10:00:00Z",
+    roomId: "room-001",
+    code: "TWO_SUM",
+  },
+  {
+    questionId: "2",
+    title: "Reverse String",
+    descriptionPath: "/problems/reverse-string.md",
+    score: 80,
+    timeLimit: 500,
+    memoryLimit: 128,
+    order: 2,
+    createdAt: "2024-01-15T11:00:00Z",
+    roomId: "room-001",
+    code: "REVERSE_STR",
+  },
+  {
+    questionId: "3",
+    title: "Binary Search",
+    descriptionPath: "/problems/binary-search.md",
+    score: 150,
+    timeLimit: 2000,
+    memoryLimit: 512,
+    order: 3,
+    createdAt: "2024-01-15T12:00:00Z",
+    roomId: "room-002",
+    code: "BINARY_SEARCH",
+  },
+  {
+    questionId: "4",
+    title: "Fibonacci Sequence",
+    descriptionPath: "/problems/fibonacci.md",
+    score: 120,
+    timeLimit: 1500,
+    memoryLimit: 256,
+    order: 4,
+    createdAt: "2024-01-15T13:00:00Z",
+    roomId: "room-002",
+    code: "FIBONACCI",
+  },
+  {
+    questionId: "5",
+    title: "Merge Sort Algorithm",
+    descriptionPath: "/problems/merge-sort.md",
+    score: 200,
+    timeLimit: 3000,
+    memoryLimit: 1024,
+    order: 5,
+    createdAt: "2024-01-15T14:00:00Z",
+    roomId: "room-003",
+    code: "MERGE_SORT",
+  },
+];
 
 // Query keys
 export const QUESTION_QUERY_KEYS = {
@@ -19,91 +81,12 @@ export const QUESTION_QUERY_KEYS = {
   detail: (id: string) => [...QUESTION_QUERY_KEYS.details(), id] as const,
 };
 
-// Backend response types for Quizlets
-interface QuizletSummary {
-  id: number;
-  title: string;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-  isPublished: boolean;
-}
-
-interface QuestionDto {
-  content: string;
-  score: number;
-  answers: string[];
-  correctAnswers: string[];
-  questionType: string;
-}
-
-interface QuizletDetail {
-  id: number;
-  title: string;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-  isPublished: boolean;
-  questions: QuestionDto[];
-}
-
-// API functions
+// Mock API functions - temporary until backend is fixed
 const questionApi = {
   getAll: async (): Promise<QuestionListResponse> => {
-    try {
-      // Fetch all quizlets
-      const { data } =
-        await axios.get<ApiResponse<QuizletSummary[]>>("/quizlets");
-
-      if (!data.success || !data.data) {
-        return { listQuestion: [] };
-      }
-
-      // Fetch details for each quizlet to get questions
-      const quizletDetails = await Promise.all(
-        data.data.map(async (quizlet) => {
-          try {
-            const detailResponse = await axios.get<ApiResponse<QuizletDetail>>(
-              `/quizlets/${quizlet.id}`,
-            );
-            return detailResponse.data.data;
-          } catch (error) {
-            console.error(`Failed to fetch quizlet ${quizlet.id}:`, error);
-            return null;
-          }
-        }),
-      );
-
-      // Transform quizlet questions into Question format
-      const questions: Question[] = [];
-      let questionIndex = 0;
-
-      quizletDetails.forEach((quizlet) => {
-        if (!quizlet) return;
-
-        quizlet.questions.forEach((q, idx) => {
-          questionIndex++;
-          questions.push({
-            questionId: questionIndex.toString(), // Use sequential IDs since backend doesn't expose question IDs directly
-            title:
-              q.content.substring(0, 50) + (q.content.length > 50 ? "..." : ""), // Use first 50 chars as title
-            descriptionPath: q.content, // Store full content
-            score: q.score,
-            timeLimit: 1000, // Default values
-            memoryLimit: 256,
-            order: idx + 1,
-            createdAt: quizlet.createdAt,
-            roomId: quizlet.id.toString(),
-            code: `Q${questionIndex}`,
-          });
-        });
-      });
-
-      return { listQuestion: questions };
-    } catch (error) {
-      console.error("Failed to fetch questions:", error);
-      return { listQuestion: [] };
-    }
+    // Simulate API delay
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    return { listQuestion: mockQuestions };
   },
 
   getById: async (questionId: string): Promise<Question> => {
