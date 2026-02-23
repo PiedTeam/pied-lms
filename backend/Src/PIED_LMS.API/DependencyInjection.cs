@@ -39,6 +39,21 @@ public static class InfrastructureExtensions
 
         services.AddScoped<ITestCaseProvider, FileSystemTestCaseProvider>();
 
+        // CORS Configuration
+        services.AddCors(options =>
+        {
+            options.AddPolicy("AllowFrontend", policy =>
+            {
+                policy.WithOrigins(
+                    "http://localhost:3000",
+                    "https://localhost:3000"
+                )
+                .AllowAnyMethod()
+                .AllowAnyHeader()
+                .AllowCredentials();
+            });
+        });
+
         // 1. Swagger with JWT Bearer Authentication
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen(c =>
@@ -106,6 +121,10 @@ public static class InfrastructureExtensions
     {
         app.UseExceptionHandler();
         app.UseSerilogRequestLogging();
+        
+        // Enable CORS - must be before UseAuthentication and UseAuthorization
+        app.UseCors("AllowFrontend");
+        
         app.UseRateLimiter();
         app.UseResponseCaching();
         app.UseHttpsRedirection();

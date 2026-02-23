@@ -21,6 +21,7 @@ public class QuizletEndpoints : ICarterModule
             .WithName("CreateQuizlet")
             .DisableAntiforgery();
 
+        // GET /api/quizlets  (Admin, Mentor, Lecturer — all quizlets summary)
         group.MapGet("", GetAllQuizlets)
             .WithName("GetAllQuizlets")
             .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Lecturer"));

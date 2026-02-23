@@ -1,141 +1,164 @@
-'use client'
+"use client";
 
-import type React from 'react'
+import type React from "react";
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardFooter,
-	CardHeader,
-	CardTitle
-} from '@/components/ui/card'
-import { AlertCircle } from 'lucide-react'
-import { useLogin } from '@/service/login.service'
-import { useAuthStore } from '@/store/auth.store'
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { AlertCircle, Eye, EyeOff } from "lucide-react";
+import { useLogin } from "@/service";
+import { useAuthStore } from "@/store/auth.store";
 
 export function LoginForm() {
-	const router = useRouter()
-	const [email, setEmail] = useState('')
-	const [password, setPassword] = useState('')
-	const [errors, setErrors] = useState<{
-		email?: string
-		password?: string
-		general?: string
-	}>({})
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState<{
+    email?: string;
+    password?: string;
+    general?: string;
+  }>({});
 
-	const { mutate: login, isPending } = useLogin()
-	const loginStore = useAuthStore(state => state.login)
+  const { mutate: login, isPending } = useLogin();
 
-	const validate = () => {
-		const newErrors: typeof errors = {}
-		if (!email.trim()) {
-			newErrors.email = 'Email is required'
-		} else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-			newErrors.email = 'Please enter a valid email address'
-		}
-		if (!password) {
-			newErrors.password = 'Password is required'
-		} else if (password.length < 6) {
-			newErrors.password = 'Password must be at least 6 characters'
-		}
-		setErrors(newErrors)
-		return Object.keys(newErrors).length === 0
-	}
+  const validate = () => {
+    const newErrors: typeof errors = {};
+    if (!email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+    if (!password) {
+      newErrors.password = "Password is required";
+    } else if (password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
-	const handleSubmit = (e: React.FormEvent) => {
-		e.preventDefault()
-		if (!validate()) return
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validate()) return;
 
-		login(
-			{ email, password },
-			{
-				onSuccess: data => {
-					loginStore(data.token, data.user)
-					// Redirect based on role
-					if (data.user.role === 'ADMIN') {
-						router.push('/admin')
-					} else {
-						router.push('/dashboard')
-					}
-				},
-				onError: (error: Error) => {
-					setErrors({
-						general: error.message || 'Login failed. Please try again.'
-					})
-				}
-			}
-		)
-	}
+    login(
+      { email, password },
+      {
+        onSuccess: () => {
+          // Auth service already handles store update
+          // Redirect based on role from store
+          const user = useAuthStore.getState().user;
+          if (user?.role === "ADMIN" || user?.role === "Administrator") {
+            router.push("/admin");
+          } else if (user?.role === "TEACHER" || user?.role === "Teacher") {
+            router.push("/teacher/dashboard");
+          } else if (user?.role === "MENTOR" || user?.role === "Mentor") {
+            router.push("/mentor/dashboard");
+          } else if (user?.role === "STUDENT" || user?.role === "Student") {
+            router.push("/dashboard");
+          } else {
+            router.push("/dashboard");
+          }
+        },
+        onError: (error: Error) => {
+          setErrors({
+            general: error.message || "Login failed. Please try again.",
+          });
+        },
+      },
+    );
+  };
 
-	return (
-		<Card className="w-full max-w-md">
-			<CardHeader>
-				<CardTitle>Login</CardTitle>
-				<CardDescription>
-					Enter your credentials to access your account
-				</CardDescription>
-			</CardHeader>
-			<form onSubmit={handleSubmit}>
-				<CardContent className="space-y-4">
-					{errors.general && (
-						<div className="flex items-center gap-2 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-							<AlertCircle className="h-4 w-4" />
-							<span>{errors.general}</span>
-						</div>
-					)}
-					<div className="space-y-2">
-						<label htmlFor="email" className="text-sm font-medium">
-							Email
-						</label>
-						<Input
-							id="email"
-							type="email"
-							placeholder="Enter your email"
-							value={email}
-							onChange={e => {
-								setEmail(e.target.value)
-								if (errors.email) setErrors({ ...errors, email: undefined })
-							}}
-							disabled={isPending}
-							className={errors.email ? 'border-destructive' : ''}
-						/>
-						{errors.email && (
-							<p className="text-sm text-destructive">{errors.email}</p>
-						)}
-					</div>
-					<div className="space-y-2">
-						<label htmlFor="password" className="text-sm font-medium">
-							Password
-						</label>
-						<Input
-							id="password"
-							type="password"
-							placeholder="Enter your password"
-							value={password}
-							onChange={e => {
-								setPassword(e.target.value)
-								if (errors.password)
-									setErrors({ ...errors, password: undefined })
-							}}
-							disabled={isPending}
-							className={errors.password ? 'border-destructive' : ''}
-						/>
-						{errors.password && (
-							<p className="text-sm text-destructive">{errors.password}</p>
-						)}
-					</div>
-				</CardContent>
-				<CardFooter className="flex flex-col gap-4">
-					<Button type="submit" className="w-full" disabled={isPending}>
-						{isPending ? 'Logging in...' : 'Login'}
-					</Button>
-				</CardFooter>
-			</form>
-		</Card>
-	)
+  return (
+    <Card className="w-full max-w-md">
+      <CardHeader>
+        <CardTitle>Login</CardTitle>
+        <CardDescription>
+          Enter your credentials to access your account
+        </CardDescription>
+      </CardHeader>
+      <form onSubmit={handleSubmit}>
+        <CardContent className="space-y-4">
+          {errors.general && (
+            <div className="flex items-center gap-2 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+              <AlertCircle className="h-4 w-4" />
+              <span>{errors.general}</span>
+            </div>
+          )}
+          <div className="space-y-2">
+            <label htmlFor="email" className="text-sm font-medium">
+              Email
+            </label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="Enter your email"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (errors.email) setErrors({ ...errors, email: undefined });
+              }}
+              disabled={isPending}
+              className={errors.email ? "border-destructive" : ""}
+            />
+            {errors.email && (
+              <p className="text-sm text-destructive">{errors.email}</p>
+            )}
+          </div>
+          <div className="space-y-2">
+            <label htmlFor="password" className="text-sm font-medium">
+              Password
+            </label>
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (errors.password)
+                    setErrors({ ...errors, password: undefined });
+                }}
+                disabled={isPending}
+                className={
+                  errors.password ? "border-destructive pr-10" : "pr-10"
+                }
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                tabIndex={-1}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
+            </div>
+            {errors.password && (
+              <p className="text-sm text-destructive">{errors.password}</p>
+            )}
+          </div>
+        </CardContent>
+        <CardFooter className="flex flex-col gap-4">
+          <Button type="submit" className="w-full" disabled={isPending}>
+            {isPending ? "Logging in..." : "Login"}
+          </Button>
+        </CardFooter>
+      </form>
+    </Card>
+  );
 }
