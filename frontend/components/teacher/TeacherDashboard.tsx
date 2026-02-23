@@ -15,8 +15,8 @@ export function TeacherDashboard() {
   const roomsData = null;
   const questionsData = null;
 
-  const rooms = roomsData?.data || [];
-  const questions = questionsData?.data?.listQuestion || [];
+  const rooms = (roomsData as any)?.data || [];
+  const questions = (questionsData as any)?.data?.listQuestion || [];
 
   const stats = [
     {
@@ -95,7 +95,7 @@ export function TeacherDashboard() {
             </p>
           ) : (
             <div className="space-y-4">
-              {rooms.slice(0, 5).map((room) => (
+              {rooms.slice(0, 5).map((room: any) => (
                 <div
                   key={room.uuid}
                   className="flex items-center justify-between border-b pb-4 last:border-0"

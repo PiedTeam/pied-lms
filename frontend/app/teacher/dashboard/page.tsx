@@ -18,7 +18,7 @@ export default function TeacherDashboardPage() {
 
     if (user?.role !== "TEACHER" && user?.role !== "Teacher") {
       // Redirect to appropriate dashboard based on role
-      if (user?.role === "ADMIN" || user?.role === "Administrator") {
+      if (user?.role === "ADMIN" || user?.role === "Admin") {
         router.push("/admin");
       } else if (user?.role === "STUDENT" || user?.role === "Student") {
         router.push("/student/dashboard");

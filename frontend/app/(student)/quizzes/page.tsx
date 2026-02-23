@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { FileSpreadsheet, Clock, User, Calendar } from "lucide-react";
+import { FileSpreadsheet, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,7 +10,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { useGetStudentQuizlets } from "@/service";
 
 export default function StudentQuizzesPage() {
@@ -41,30 +40,16 @@ export default function StudentQuizzesPage() {
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <FileSpreadsheet className="h-8 w-8 text-primary" />
-                  {quizlet.isPublished && (
-                    <Badge variant="default">Published</Badge>
-                  )}
                 </div>
                 <CardTitle className="mt-4">{quizlet.title}</CardTitle>
-                <CardDescription className="flex items-center gap-2 mt-2">
-                  <User className="h-4 w-4" />
-                  {quizlet.userName}
+                <CardDescription className="mt-2">
+                  {quizlet.description}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Clock className="h-4 w-4" />
-                  <span>{quizlet.listQuestion.length} questions</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Calendar className="h-4 w-4" />
-                  <span>
-                    {new Date(quizlet.createdAt).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </span>
+                  <span>{quizlet.questionCount} questions</span>
                 </div>
                 <Button className="w-full mt-4">Start Quiz</Button>
               </CardContent>

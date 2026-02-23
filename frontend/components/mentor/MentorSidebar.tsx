@@ -14,6 +14,7 @@ import {
   FileSpreadsheet,
   DoorOpen,
   FileText,
+  TestTube,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth.store";
@@ -51,6 +52,11 @@ const menuItems = [
     title: "Quizlets",
     href: "/mentor/quizlets",
     icon: FileSpreadsheet,
+  },
+  {
+    title: "Test Cases",
+    href: "/mentor/testcases",
+    icon: TestTube,
   },
   {
     title: "Slot Advice",

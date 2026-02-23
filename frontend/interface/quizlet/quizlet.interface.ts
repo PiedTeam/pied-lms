@@ -5,7 +5,7 @@ export interface QuestionResponse {
   content: string;
   score: number;
   type: QuestionType;
-  options: string[];
+  answers: string[]; // Backend returns "answers" not "options"
   correctAnswers: string[];
 }
 
@@ -14,15 +14,26 @@ export enum QuestionType {
   MultipleChoice = 1,
 }
 
+// Summary response for list (GET /api/quizlets)
+export interface QuizletSummaryResponse {
+  id: number;
+  title: string;
+  description: string;
+  userName: string;
+  isPublished: boolean;
+  quantityQuestion: number; // Backend returns quantityQuestion not questionCount
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Full detail response (GET /api/quizlets/{id})
 export interface QuizletResponse {
   id: number;
   title: string;
   description: string;
   isPublished: boolean;
-  userName: string;
+  listQuestion: QuestionResponse[];
   createdAt: string;
-  updatedAt: string;
-  questions: QuestionResponse[];
 }
 
 export interface CreateQuizletRequest {
@@ -54,11 +65,18 @@ export interface StudentQuestionDto {
   questionType: string;
 }
 
+// Student summary response (GET /api/students/quizlets)
+export interface StudentQuizletSummaryResponse {
+  id: number;
+  title: string;
+  description: string;
+  questionCount: number;
+}
+
+// Student full detail response (GET /api/students/quizlets/{id})
 export interface StudentQuizletResponse {
   id: number;
   title: string;
-  userName: string;
-  createdAt: string;
-  isPublished: boolean;
-  listQuestion: StudentQuestionDto[];
+  description: string;
+  questions: StudentQuestionDto[];
 }

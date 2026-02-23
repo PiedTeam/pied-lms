@@ -16,7 +16,7 @@ export default function StudentDashboardPage() {
       return;
     }
 
-    if (user?.role === "ADMIN" || user?.role === "Administrator") {
+    if (user?.role === "ADMIN" || user?.role === "Admin") {
       router.push("/admin");
     }
 

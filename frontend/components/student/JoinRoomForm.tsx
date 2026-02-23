@@ -27,7 +27,9 @@ export function JoinRoomForm() {
 
   // TODO: Replace with new service
   // const { mutate: joinRoom, isPending } = useJoinRoom();
-  const joinRoom = () => {};
+  const joinRoom = (payload: any, options?: any) => {
+    console.log("Join room not implemented", payload, options);
+  };
   const isPending = false;
 
   const validate = () => {
@@ -55,7 +57,7 @@ export function JoinRoomForm() {
         roomCode: roomCode.trim().toUpperCase(),
       },
       {
-        onSuccess: (data) => {
+        onSuccess: (data: any) => {
           // Redirect to the room page after successful join
           router.push(`/rooms/${data.roomId}`);
         },

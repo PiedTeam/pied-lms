@@ -25,13 +25,28 @@ import {
 import { useAuthStore } from "@/store/auth.store";
 import { RoomCard } from "@/components/student/RoomCard";
 
+interface Room {
+  roomId: string;
+  name: string;
+  open_time: string | Date;
+  close_time: string | Date;
+}
+
+interface RoomsData {
+  roomList: Room[];
+}
+
+interface Profile {
+  full_name: string;
+}
+
 export function StudentDashboard() {
   // TODO: Replace with new services
   // const { data: roomsData, isLoading: isLoadingRooms } = useGetRooms()
   // const { data: profile, isLoading: isLoadingProfile } = useGetProfile()
-  const roomsData = null;
+  const roomsData = null as RoomsData | null;
   const isLoadingRooms = false;
-  const profile = null;
+  const profile = null as Profile | null;
   const isLoadingProfile = false;
   const user = useAuthStore((state) => state.user);
 
@@ -40,7 +55,7 @@ export function StudentDashboard() {
     const now = new Date();
 
     const totalRooms = rooms.length;
-    const activeExams = rooms.filter((room) => {
+    const activeExams = rooms.filter((room: Room) => {
       const openTime =
         typeof room.open_time === "string"
           ? new Date(room.open_time)
@@ -52,7 +67,7 @@ export function StudentDashboard() {
       return now >= openTime && now <= closeTime;
     }).length;
 
-    const upcomingExams = rooms.filter((room) => {
+    const upcomingExams = rooms.filter((room: Room) => {
       const openTime =
         typeof room.open_time === "string"
           ? new Date(room.open_time)
@@ -76,14 +91,14 @@ export function StudentDashboard() {
     if (!roomsData?.roomList) return [];
     const now = new Date();
     return roomsData.roomList
-      .filter((room) => {
+      .filter((room: Room) => {
         const openTime =
           typeof room.open_time === "string"
             ? new Date(room.open_time)
             : room.open_time;
         return now < openTime;
       })
-      .sort((a, b) => {
+      .sort((a: Room, b: Room) => {
         const aTime =
           typeof a.open_time === "string"
             ? new Date(a.open_time).getTime()
@@ -104,7 +119,7 @@ export function StudentDashboard() {
       <div>
         <h1 className="text-3xl font-bold">Student Dashboard</h1>
         <p className="mt-2 text-muted-foreground">
-          Welcome back, {profile?.full_name || user?.fullName || "Student"}!
+          Welcome back, {profile?.full_name ?? user?.fullName ?? "Student"}!
           Here&apos;s an overview of your exam activities.
         </p>
       </div>
@@ -223,7 +238,7 @@ export function StudentDashboard() {
                 </Button>
               </div>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {recentRooms.map((room) => (
+                {recentRooms.map((room: Room) => (
                   <RoomCard key={room.roomId} room={room} />
                 ))}
               </div>
@@ -242,7 +257,7 @@ export function StudentDashboard() {
                 </Button>
               </div>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {upcomingRooms.map((room) => (
+                {upcomingRooms.map((room: Room) => (
                   <RoomCard key={room.roomId} room={room} />
                 ))}
               </div>

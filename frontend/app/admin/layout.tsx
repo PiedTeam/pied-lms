@@ -9,7 +9,7 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ProtectedRoute requiredRole="Administrator" redirectTo="/login">
+    <ProtectedRoute requiredRole="Admin" redirectTo="/login">
       <div className="flex min-h-screen">
         <AdminSidebar />
         <main className="flex-1 ml-64">{children}</main>

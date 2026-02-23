@@ -14,7 +14,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import { useGetStudentQuizlets } from "@/service";
+import { useGetStudentQuizletById } from "@/service";
 
 interface Answer {
   questionIndex: number;
@@ -27,8 +27,7 @@ export default function TakeQuizPage() {
   const { toast } = useToast();
   const id = parseInt(params.id as string);
 
-  const { data: quizlets } = useGetStudentQuizlets();
-  const quizlet = quizlets?.find((q) => q.id === id);
+  const { data: quizlet } = useGetStudentQuizletById(id);
 
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Answer[]>([]);
@@ -57,8 +56,8 @@ export default function TakeQuizPage() {
     );
   }
 
-  const question = quizlet.listQuestion[currentQuestion];
-  const totalQuestions = quizlet.listQuestion.length;
+  const question = quizlet.questions[currentQuestion];
+  const totalQuestions = quizlet.questions.length;
   const progress = ((currentQuestion + 1) / totalQuestions) * 100;
 
   const currentAnswer = answers.find(
@@ -128,7 +127,7 @@ export default function TakeQuizPage() {
     let totalScore = 0;
     let earnedScore = 0;
 
-    quizlet.listQuestion.forEach((q, index) => {
+    quizlet.questions.forEach((q, index) => {
       totalScore += q.score;
       const userAnswer = answers.find((a) => a.questionIndex === index);
 
@@ -153,7 +152,7 @@ export default function TakeQuizPage() {
       earnedScore,
       timeElapsed,
       answers,
-      questions: quizlet.listQuestion,
+      questions: quizlet.questions,
     };
 
     sessionStorage.setItem(`quiz-result-${id}`, JSON.stringify(resultData));

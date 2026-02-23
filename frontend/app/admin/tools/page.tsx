@@ -305,7 +305,7 @@ export default function AdminToolsPage() {
 
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
-      case "Administrator":
+      case "Admin":
         return "destructive";
       case "Teacher":
         return "default";
@@ -745,9 +745,9 @@ export default function AdminToolsPage() {
               <div className="mt-4 bg-muted p-4 rounded-lg space-y-2">
                 <h4 className="text-sm font-medium">Hướng dẫn:</h4>
                 <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
-                  <li>Chọn người dùng từ danh sách bằng nút "Chọn"</li>
+                  <li>Chọn người dùng từ danh sách</li>
                   <li>Hoặc sao chép User ID bằng icon Copy</li>
-                  <li>Sau đó nhấn "Phê duyệt" để xác nhận</li>
+                  <li>Sau đó nhấn Phê duyệt để xác nhận</li>
                 </ul>
               </div>
             </CardContent>

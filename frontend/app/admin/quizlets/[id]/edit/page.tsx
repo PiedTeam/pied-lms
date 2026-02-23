@@ -1,7 +1,7 @@
 "use client";
 
-import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useState, useEffect, useMemo } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import { ArrowLeft, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,61 +13,46 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useGetQuizletById, useUpdateQuizlet } from "@/service";
-import type {
-  UpdateQuestionDto,
-  QuizletResponse,
-} from "@/interface/quizlet/quizlet.interface";
+import type { UpdateQuestionDto } from "@/interface/quizlet/quizlet.interface";
 
 export default function EditQuizletPage() {
   const params = useParams();
   const router = useRouter();
   const { toast } = useToast();
-  const searchParams = useSearchParams();
   const id = parseInt(params.id as string);
 
-  const dataFromParams = useMemo(() => {
-    const dataParam = searchParams.get("data");
-    if (dataParam) {
-      try {
-        return JSON.parse(decodeURIComponent(dataParam)) as QuizletResponse;
-      } catch {
-        return null;
-      }
-    }
-    return null;
-  }, [searchParams]);
+  // Always fetch from API
+  const { data: quizlet, isLoading } = useGetQuizletById(id);
 
-  const { data: fetchedData, isLoading } = useGetQuizletById(id, {
-    enabled: !dataFromParams,
-  });
-
-  const quizlet = dataFromParams || fetchedData;
   const { mutate: updateQuizlet, isPending } = useUpdateQuizlet();
 
   const [title, setTitle] = useState("");
   const [isPublished, setIsPublished] = useState(false);
   const [questions, setQuestions] = useState<UpdateQuestionDto[]>([]);
 
+  // Initialize state when quizlet data is loaded
   useEffect(() => {
     if (quizlet) {
-      setTitle(quizlet.title);
-      setIsPublished(quizlet.isPublished);
-      setQuestions(
-        quizlet.questions.map((q) => ({
-          content: q.content,
-          score: q.score,
-          answers: q.options,
-          correctAnswers: q.correctAnswers,
-          questionType: q.type === 0 ? "SingleChoice" : "MultipleChoice",
-        })),
-      );
+      const initialTitle = quizlet.title;
+      const initialIsPublished = quizlet.isPublished;
+      const initialQuestions = quizlet.listQuestion.map((q) => ({
+        content: q.content,
+        score: q.score,
+        answers: q.answers || [], // Backend returns 'answers'
+        correctAnswers: q.correctAnswers || [],
+        questionType: q.type === 0 ? "SingleChoice" : "MultipleChoice",
+      }));
+
+      setTitle(initialTitle);
+      setIsPublished(initialIsPublished);
+      setQuestions(initialQuestions);
     }
   }, [quizlet]);
 
   const handleQuestionChange = (
     index: number,
     field: keyof UpdateQuestionDto,
-    value: any,
+    value: string | number,
   ) => {
     const newQuestions = [...questions];
     newQuestions[index] = { ...newQuestions[index], [field]: value };
@@ -185,7 +170,7 @@ export default function EditQuizletPage() {
     );
   };
 
-  if (isLoading && !dataFromParams) {
+  if (isLoading) {
     return (
       <div className="container mx-auto p-6">
         <div className="text-center py-12">Đang tải...</div>

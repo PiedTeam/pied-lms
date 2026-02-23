@@ -25,7 +25,7 @@ export function StudentProfile() {
           View your profile information
         </p>
       </div>
-      <ProfileView profile={profile} isLoading={false} error={null} />
+      <ProfileView profile={profile as any} isLoading={false} error={null} />
     </div>
   );
 }

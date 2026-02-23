@@ -22,7 +22,7 @@ export default function UserDetailPage() {
 
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
-      case "Administrator":
+      case "Admin":
         return "destructive";
       case "Teacher":
         return "default";

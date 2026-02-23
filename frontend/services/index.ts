@@ -16,6 +16,15 @@ export {
 // Admin Services
 export { useImportStudents, useApproveMentor } from "./admin/admin.service";
 
+// Question Services
+export {
+  useGetQuestions,
+  useGetQuestionById,
+  useCreateQuestion,
+  useUpdateQuestion,
+  useDeleteQuestion,
+} from "./question/question.service";
+
 // Exam Room Services
 export {
   useCreateExamRoom,
@@ -47,9 +56,21 @@ export {
 // Quizlet Services
 export {
   useGetStudentQuizlets,
+  useGetStudentQuizletById,
   useGetAllQuizlets,
   useGetQuizletById,
   useCreateQuizlet,
   useUpdateQuizlet,
+  useTogglePublishQuizlet,
   useDeleteQuizlet,
 } from "./quizlet/quizlet.service";
+
+// TestCase Services
+export {
+  useGetTestCasesByQuestion,
+  useGetTestCaseById,
+  useCreateTestCase,
+  useUpdateTestCase,
+  useDeleteTestCase,
+  useRunTestCase,
+} from "./testcase/testcase.service";

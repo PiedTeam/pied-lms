@@ -24,9 +24,9 @@ export default function TeacherQuestionsPage() {
   const error = null;
   const [searchQuery, setSearchQuery] = useState("");
 
-  const questions = data?.data?.listQuestion || [];
+  const questions = (data as any)?.listQuestion || [];
 
-  const filteredQuestions = questions.filter((question) => {
+  const filteredQuestions = questions.filter((question: any) => {
     if (!searchQuery.trim()) return true;
     const query = searchQuery.toLowerCase();
     return (
@@ -116,7 +116,7 @@ export default function TeacherQuestionsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredQuestions.map((question) => (
+              {filteredQuestions.map((question: any) => (
                 <TableRow key={question.uuid}>
                   <TableCell className="font-mono">{question.code}</TableCell>
                   <TableCell className="font-medium">

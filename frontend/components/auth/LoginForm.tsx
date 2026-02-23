@@ -58,7 +58,7 @@ export function LoginForm() {
           // Auth service already handles store update
           // Redirect based on role from store
           const user = useAuthStore.getState().user;
-          if (user?.role === "ADMIN" || user?.role === "Administrator") {
+          if (user?.role === "ADMIN" || user?.role === "Admin") {
             router.push("/admin");
           } else if (user?.role === "TEACHER" || user?.role === "Teacher") {
             router.push("/teacher/dashboard");

@@ -34,19 +34,43 @@ const profileFormSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
+interface Profile {
+  full_name: string;
+  email: string;
+  studentId: string;
+}
+
+interface UpdateProfileMutation {
+  mutate: () => void;
+  mutateAsync: (payload: Profile) => Promise<void>;
+  isPending: boolean;
+  isSuccess: boolean;
+  isError: boolean;
+  error: Error | null;
+}
+
 export function ProfileEditForm() {
   const router = useRouter();
   // TODO: Replace with new services
   // const { data: profile, isLoading: isLoadingProfile } = useGetProfile();
   // const updateProfile = useUpdateProfile();
-  const profile = null;
+  const profile = null as Profile | null;
   const isLoadingProfile = false;
-  const updateProfile = { mutate: () => {}, isPending: false };
+  const updateProfile: UpdateProfileMutation = {
+    mutate: () => {},
+    mutateAsync: async (payload: Profile) => {
+      console.log("Update profile not implemented", payload);
+    },
+    isPending: false,
+    isSuccess: false,
+    isError: false,
+    error: null,
+  };
 
   const formik = useFormik<ProfileFormValues>({
     initialValues: {
-      full_name: profile?.full_name || "",
-      email: profile?.email || "",
+      full_name: profile?.full_name ?? "",
+      email: profile?.email ?? "",
     },
     enableReinitialize: true,
     validate: (values) => {
@@ -67,7 +91,7 @@ export function ProfileEditForm() {
         // Include studentId from profile
         await updateProfile.mutateAsync({
           ...values,
-          studentId: profile?.studentId,
+          studentId: profile?.studentId ?? "",
         });
         // Success is handled by the mutation's onSuccess callback
         // Redirect back to profile page after a short delay to show success message

@@ -101,12 +101,12 @@ export default function AdminDashboardPage() {
 
   // Get all room UUIDs
   const roomUuids = useMemo(() => {
-    return roomsData?.data?.map((room: any) => room.uuid) || [];
+    return (roomsData as any)?.map((room: any) => room.uuid) || [];
   }, [roomsData]);
 
   // Fetch participants for all rooms
   const participantsQueries = useQueries({
-    queries: roomUuids.map((roomId) => ({
+    queries: roomUuids.map((roomId: string) => ({
       queryKey: ["admin", "room", roomId, "participants"],
       queryFn: async () => {
         const { data } = await axios.get(`/admin/room/${roomId}/participants`);
@@ -119,15 +119,15 @@ export default function AdminDashboardPage() {
 
   // Calculate stats
   const dashboardStats = useMemo(() => {
-    const totalRooms = roomsData?.data?.length || 0;
-    const totalQuestions = questionsData?.data?.listQuestion?.length || 0;
-    const totalStudents = usersData?.data?.length || 0;
+    const totalRooms = (roomsData as any)?.length || 0;
+    const totalQuestions = (questionsData as any)?.listQuestion?.length || 0;
+    const totalStudents = (usersData as any)?.length || 0;
 
     // Count active exams (rooms with non-empty participants)
     const activeExams = participantsQueries.reduce((count, query) => {
       if (
-        query.data?.data?.participants &&
-        query.data.data.participants.length > 0
+        (query.data as any)?.participants &&
+        (query.data as any).participants.length > 0
       ) {
         return count + 1;
       }
@@ -164,7 +164,7 @@ export default function AdminDashboardPage() {
     }
 
     // Count rooms by month
-    roomsData?.data?.forEach((room) => {
+    (roomsData as any)?.forEach((room: any) => {
       if (room.createdAt) {
         const roomDate = new Date(room.createdAt);
         const monthsDiff =
@@ -181,7 +181,7 @@ export default function AdminDashboardPage() {
     });
 
     // Count questions by month
-    questionsData?.data?.listQuestion?.forEach((question) => {
+    (questionsData as any)?.listQuestion?.forEach((question: any) => {
       if (question.createdAt) {
         const questionDate = new Date(question.createdAt);
         const monthsDiff =
@@ -198,7 +198,7 @@ export default function AdminDashboardPage() {
     });
 
     // Count students by month (based on createdAt)
-    usersData?.data?.forEach((user) => {
+    (usersData as any)?.forEach((user: any) => {
       if (user.createdAt) {
         const userDate = new Date(user.createdAt);
         const monthsDiff =
@@ -227,14 +227,14 @@ export default function AdminDashboardPage() {
     }> = [];
 
     // Recent rooms
-    roomsData?.data
+    (roomsData as any)
       ?.slice()
       .sort(
-        (a, b) =>
+        (a: any, b: any) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       )
       .slice(0, 2)
-      .forEach((room) => {
+      .forEach((room: any) => {
         activities.push({
           type: "room",
           message: `Created new exam room "${room.name}"`,
@@ -244,17 +244,17 @@ export default function AdminDashboardPage() {
       });
 
     // Recent questions
-    questionsData?.data?.listQuestion
+    (questionsData as any)?.listQuestion
       ?.slice()
       .sort(
-        (a, b) =>
+        (a: any, b: any) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       )
       .slice(0, 1)
-      .forEach((question) => {
+      .forEach((question: any) => {
         const roomName =
-          roomsData?.data?.find((r) => r.uuid === question.roomId)?.name ||
-          "exam room";
+          (roomsData as any)?.find((r: any) => r.uuid === question.roomId)
+            ?.name || "exam room";
         activities.push({
           type: "question",
           message: `Added new question to "${roomName}"`,
@@ -266,10 +266,10 @@ export default function AdminDashboardPage() {
     // Active exams (rooms with participants)
     participantsQueries.forEach((query) => {
       if (
-        query.data?.data?.participants &&
-        query.data.data.participants.length > 0
+        (query.data as any)?.participants &&
+        (query.data as any).participants.length > 0
       ) {
-        const roomName = query.data.data.roomName;
+        const roomName = (query.data as any).roomName;
         activities.push({
           type: "exam",
           message: `Exam room "${roomName}" has started`,

@@ -1,7 +1,7 @@
 "use client";
 
-import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useState, useEffect, useMemo } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import { ArrowLeft, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,26 +22,11 @@ export default function EditQuizletPage() {
   const params = useParams();
   const router = useRouter();
   const { toast } = useToast();
-  const searchParams = useSearchParams();
   const id = parseInt(params.id as string);
 
-  const dataFromParams = useMemo(() => {
-    const dataParam = searchParams.get("data");
-    if (dataParam) {
-      try {
-        return JSON.parse(decodeURIComponent(dataParam)) as QuizletResponse;
-      } catch {
-        return null;
-      }
-    }
-    return null;
-  }, [searchParams]);
+  // Always fetch from API
+  const { data: quizlet, isLoading } = useGetQuizletById(id);
 
-  const { data: fetchedData, isLoading } = useGetQuizletById(id, {
-    enabled: !dataFromParams,
-  });
-
-  const quizlet = dataFromParams || fetchedData;
   const { mutate: updateQuizlet, isPending } = useUpdateQuizlet();
 
   const [title, setTitle] = useState("");
@@ -53,11 +38,11 @@ export default function EditQuizletPage() {
       setTitle(quizlet.title);
       setIsPublished(quizlet.isPublished);
       setQuestions(
-        quizlet.questions.map((q) => ({
+        quizlet.listQuestion.map((q) => ({
           content: q.content,
           score: q.score,
-          answers: q.options,
-          correctAnswers: q.correctAnswers,
+          answers: q.answers || [], // Backend returns 'answers'
+          correctAnswers: q.correctAnswers || [],
           questionType: q.type === 0 ? "SingleChoice" : "MultipleChoice",
         })),
       );
@@ -185,7 +170,7 @@ export default function EditQuizletPage() {
     );
   };
 
-  if (isLoading && !dataFromParams) {
+  if (isLoading) {
     return (
       <div className="container mx-auto p-6">
         <div className="text-center py-12">Đang tải...</div>

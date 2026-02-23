@@ -11,6 +11,7 @@ import {
   FileSpreadsheet,
   DoorOpen,
   FileText,
+  TestTube,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth.store";
@@ -43,6 +44,11 @@ const menuItems = [
     title: "Quizlets",
     href: "/teacher/quizlets",
     icon: FileSpreadsheet,
+  },
+  {
+    title: "Test Cases",
+    href: "/teacher/testcases",
+    icon: TestTube,
   },
   // TODO: Uncomment when backend allows teacher to view users
   // {

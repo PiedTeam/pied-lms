@@ -44,10 +44,7 @@ export function ProtectedRoute({
 
       if (userRoleNormalized !== requiredRoleNormalized) {
         // Redirect to appropriate dashboard based on actual role
-        if (
-          userRoleNormalized === "ADMIN" ||
-          userRoleNormalized === "ADMINISTRATOR"
-        ) {
+        if (userRoleNormalized === "ADMIN") {
           router.push("/admin");
         } else if (userRoleNormalized === "TEACHER") {
           router.push("/teacher/dashboard");
@@ -96,8 +93,13 @@ export function ProtectedRoute({
   // If requiredRole is set, user must have exactly that role
   if (requiredRole) {
     // Helper function to normalize role comparison
-    const normalizeRole = (role: string) => role.toUpperCase();
-    const userRoleNormalized = user?.role ? normalizeRole(user.role) : "";
+    const normalizeRole = (role: string | undefined | null) => {
+      if (typeof role === "string") {
+        return role.toUpperCase();
+      }
+      return "";
+    };
+    const userRoleNormalized = normalizeRole(user?.role);
     const requiredRoleNormalized = normalizeRole(requiredRole);
 
     // If user role doesn't match required role, don't render children

@@ -59,8 +59,18 @@ export const RoomCard = React.forwardRef<HTMLDivElement, RoomCardProps>(
     // TODO: Replace with new services
     // const createQuestion = useCreateQuestion();
     // const createTestCase = useCreateTestCase();
-    const createQuestion = { mutate: () => {}, isPending: false };
-    const createTestCase = { mutate: () => {}, isPending: false };
+    const createQuestion = {
+      mutate: (payload: any, options?: any) => {
+        console.log("Create question not implemented", payload, options);
+      },
+      isPending: false,
+    };
+    const createTestCase = {
+      mutate: (payload: any, options?: any) => {
+        console.log("Create test case not implemented", payload, options);
+      },
+      isPending: false,
+    };
 
     const [isDialogOpen, setIsDialogOpen] = React.useState(false);
     const [createdQuestionId, setCreatedQuestionId] = React.useState<
@@ -99,7 +109,7 @@ export const RoomCard = React.forwardRef<HTMLDivElement, RoomCardProps>(
           descriptionPath: questionForm.descriptionPath,
         },
         {
-          onSuccess: (data) => {
+          onSuccess: (data: any) => {
             const newId = data?.data?.questionUuid;
             setCreatedQuestionId(newId || null);
             setCurrentStep(2);
