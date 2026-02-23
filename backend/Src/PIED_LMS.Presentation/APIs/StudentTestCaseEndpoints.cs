@@ -12,23 +12,23 @@ public class StudentTestCaseEndpoints : ICarterModule
             .WithName("StudentTestCases")
             .WithOpenApi();
 
-        // GET /api/students/testcases/{questionId}
-        group.MapGet("/{questionId:int}", GetVisibleTestCasesByQuestion)
-            .WithName("GetVisibleTestCasesByQuestion")
+        // GET /api/students/testcases/{examId}
+        group.MapGet("/{examId:guid}", GetVisibleTestCasesByExam)
+            .WithName("GetVisibleTestCasesByExam")
             .WithOpenApi()
-            .RequireAuthorization(new AuthorizeAttribute { Roles = "Student" })
+            .RequireAuthorization(policy => policy.RequireRole("Student"))
             .Produces<ServiceResponse<List<TestCaseResponse>>>()
             .Produces<ServiceResponse<List<TestCaseResponse>>>(StatusCodes.Status404NotFound)
             .Produces<ServiceResponse<List<TestCaseResponse>>>(StatusCodes.Status401Unauthorized)
             .Produces<ServiceResponse<List<TestCaseResponse>>>(StatusCodes.Status403Forbidden);
     }
 
-    // GET /api/students/testcases/{questionId}
-    private static async Task<IResult> GetVisibleTestCasesByQuestion(
-        int questionId,
+    // GET /api/students/testcases/{examId}
+    private static async Task<IResult> GetVisibleTestCasesByExam(
+        Guid examId,
         IMediator mediator)
     {
-        var query = new GetVisibleTestCasesByQuestionQuery(questionId);
+        var query = new GetVisibleTestCasesByExamQuery(examId);
         var result = await mediator.Send(query);
 
         if (!result.Success)
@@ -36,7 +36,7 @@ public class StudentTestCaseEndpoints : ICarterModule
             if (result.ErrorCode == "UNAUTHORIZED")
                 return Results.Json(result, statusCode: StatusCodes.Status401Unauthorized);
 
-            if (result.ErrorCode == "QUESTION_NOT_FOUND")
+            if (result.ErrorCode == "EXAM_NOT_FOUND")
                 return Results.NotFound(result);
 
             return Results.BadRequest(result);

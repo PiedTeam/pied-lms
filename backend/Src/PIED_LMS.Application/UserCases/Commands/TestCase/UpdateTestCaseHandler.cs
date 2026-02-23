@@ -41,21 +41,21 @@ public class UpdateTestCaseHandler(
                 );
             }
 
-            // Validate that the target Question exists (in case questionId is being changed)
-            var question = await unitOfWork.Repository<Domain.Entities.Question>()
-                .GetByIdAsync(request.QuestionId, cancellationToken);
+            // Validate that the target Exam exists (in case examId is being changed)
+            var exam = await unitOfWork.Repository<Domain.Entities.Exam>()
+                .GetByIdAsync(request.ExamId, cancellationToken);
 
-            if (question == null)
+            if (exam == null)
             {
                 return new ServiceResponse<TestCaseResponse>(
                     false,
-                    $"Question with id '{request.QuestionId}' not found",
-                    ErrorCode: "QUESTION_NOT_FOUND"
+                    $"Exam with id '{request.ExamId}' not found",
+                    ErrorCode: "EXAM_NOT_FOUND"
                 );
             }
 
             // Apply updates
-            testCase.QuestionId = request.QuestionId;
+            testCase.ExamId = request.ExamId;
             testCase.Index = request.Index;
             testCase.InputPath = request.InputPath;
             testCase.OutputPath = request.OutputPath;
@@ -65,14 +65,14 @@ public class UpdateTestCaseHandler(
             await unitOfWork.CommitAsync(cancellationToken);
 
             logger.LogInformation(
-                "TestCase updated. Id: {TestCaseId}, QuestionId: {QuestionId}, UpdatedBy: {UserId}",
+                "TestCase updated. Id: {TestCaseId}, ExamId: {ExamId}, UpdatedBy: {UserId}",
                 testCase.Id,
-                testCase.QuestionId,
+                testCase.ExamId,
                 userId
             );
 
             var response = new TestCaseResponse(
-                testCase.QuestionId,
+                testCase.ExamId,
                 testCase.Id,
                 testCase.Index,
                 testCase.InputPath,

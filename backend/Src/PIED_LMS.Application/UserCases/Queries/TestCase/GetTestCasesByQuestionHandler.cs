@@ -5,14 +5,14 @@ using PIED_LMS.Domain.Abstractions;
 
 namespace PIED_LMS.Application.UserCases.Queries.TestCase;
 
-public class GetTestCasesByQuestionHandler(
+public class GetTestCasesByExamHandler(
     IUnitOfWork unitOfWork,
     IHttpContextAccessor httpContextAccessor,
-    ILogger<GetTestCasesByQuestionHandler> logger
-) : IRequestHandler<GetTestCasesByQuestionQuery, ServiceResponse<List<TestCaseResponse>>>
+    ILogger<GetTestCasesByExamHandler> logger
+) : IRequestHandler<GetTestCasesByExamQuery, ServiceResponse<List<TestCaseResponse>>>
 {
     public async Task<ServiceResponse<List<TestCaseResponse>>> Handle(
-        GetTestCasesByQuestionQuery request,
+        GetTestCasesByExamQuery request,
         CancellationToken cancellationToken)
     {
         try
@@ -28,25 +28,25 @@ public class GetTestCasesByQuestionHandler(
                 );
             }
 
-            // Validate that the Question exists
-            var question = await unitOfWork.Repository<Domain.Entities.Question>()
-                .GetByIdAsync(request.QuestionId, cancellationToken);
+            // Validate that the Exam exists
+            var exam = await unitOfWork.Repository<Domain.Entities.Exam>()
+                .GetByIdAsync(request.ExamId, cancellationToken);
 
-            if (question == null)
+            if (exam == null)
             {
                 return new ServiceResponse<List<TestCaseResponse>>(
                     false,
-                    $"Question with id '{request.QuestionId}' not found",
-                    ErrorCode: "QUESTION_NOT_FOUND"
+                    $"Exam with id '{request.ExamId}' not found",
+                    ErrorCode: "EXAM_NOT_FOUND"
                 );
             }
 
-            // Fetch all test cases for the question
+            // Fetch all test cases for the exam
             var testCases = unitOfWork.Repository<Domain.Entities.TestCase>()
-                .FindAll(tc => tc.QuestionId == request.QuestionId)
+                .FindAll(tc => tc.ExamId == request.ExamId)
                 .OrderBy(tc => tc.Index)
                 .Select(tc => new TestCaseResponse(
-                    tc.QuestionId,
+                    tc.ExamId,
                     tc.Id,
                     tc.Index,
                     tc.InputPath,
@@ -56,9 +56,9 @@ public class GetTestCasesByQuestionHandler(
                 .ToList();
 
             logger.LogInformation(
-                "Retrieved {Count} test cases for QuestionId: {QuestionId}",
+                "Retrieved {Count} test cases for ExamId: {ExamId}",
                 testCases.Count,
-                request.QuestionId
+                request.ExamId
             );
 
             return new ServiceResponse<List<TestCaseResponse>>(
@@ -71,8 +71,8 @@ public class GetTestCasesByQuestionHandler(
         {
             logger.LogError(
                 ex,
-                "Failed to retrieve test cases for QuestionId: {QuestionId}",
-                request.QuestionId
+                "Failed to retrieve test cases for ExamId: {ExamId}",
+                request.ExamId
             );
             return new ServiceResponse<List<TestCaseResponse>>(
                 false,

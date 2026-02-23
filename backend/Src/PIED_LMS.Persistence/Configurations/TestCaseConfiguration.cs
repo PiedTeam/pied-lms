@@ -15,7 +15,7 @@ public class TestCaseConfiguration : IEntityTypeConfiguration<TestCase>
         builder.Property(x => x.Id)
             .HasDefaultValueSql("gen_random_uuid()");
 
-        builder.Property(x => x.QuestionId)
+        builder.Property(x => x.ExamId)
             .IsRequired();
 
         builder.Property(x => x.Index)
@@ -33,13 +33,13 @@ public class TestCaseConfiguration : IEntityTypeConfiguration<TestCase>
             .IsRequired()
             .HasDefaultValue(false);
 
-        // Relationship: TestCase belongs to a Question
-        builder.HasOne(x => x.Question)
-            .WithMany()
-            .HasForeignKey(x => x.QuestionId)
+        // Relationship: TestCase belongs to an Exam
+        builder.HasOne(x => x.Exam)
+            .WithMany(e => e.TestCases)
+            .HasForeignKey(x => x.ExamId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Unique constraint: one index per question
-        builder.HasIndex(x => new { x.QuestionId, x.Index }).IsUnique();
+        // Unique constraint: one index per exam
+        builder.HasIndex(x => new { x.ExamId, x.Index }).IsUnique();
     }
 }
