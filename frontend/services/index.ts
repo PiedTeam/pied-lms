@@ -36,6 +36,7 @@ export {
   useRemoveExamFromRoom,
   useGetAvailableExamRooms,
   useCheckExamRoomAccess,
+  useEnrollStudents,
 } from "./exam-room/exam-room.service";
 
 // Exam Services (Mentor - CRUD exam questions)

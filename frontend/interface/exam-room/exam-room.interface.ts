@@ -38,6 +38,7 @@ export interface ExamRoomDetailResponse {
   durationInMinutes: number;
   status: string;
   exams: ExamRoomExamResponse[];
+  enrolledStudentsCount?: number;
   createdAt: string;
   updatedAt?: string;
 }
@@ -82,4 +83,20 @@ export interface PaginatedExamRoomsResponse {
   pageSize: number;
   totalCount: number;
   totalPages: number;
+}
+
+export interface EnrollStudentsRequest {
+  studentIds: string[];
+}
+
+export interface EnrollmentError {
+  studentId: string;
+  reason: string;
+}
+
+export interface EnrollmentResultResponse {
+  totalStudents: number;
+  successfulEnrollments: number;
+  failedEnrollments: number;
+  errors: EnrollmentError[];
 }

@@ -32,14 +32,14 @@ public class GetAvailableExamRoomsForStudentHandler(
             var user = httpContextAccessor.HttpContext?.User;
             var isAdmin = user?.IsInRole("Admin") ?? false;
             var isMentor = user?.IsInRole("Mentor") ?? false;
-            var isLecturer = user?.IsInRole("Lecturer") ?? false;
+            var isTeacher = user?.IsInRole("Teacher") ?? false;
             var isStudent = user?.IsInRole("Student") ?? false;
 
             var now = DateTime.UtcNow;
             IQueryable<Domain.Entities.ExamRoom> query;
 
-            // If Admin/Mentor/Lecturer: return all non-deleted rooms
-            if (isAdmin || isMentor || isLecturer)
+            // If Admin/Mentor/Teacher: return all non-deleted rooms
+            if (isAdmin || isMentor || isTeacher)
             {
                 query = unitOfWork.Repository<Domain.Entities.ExamRoom>()
                     .FindAll(er => !er.IsDeleted)

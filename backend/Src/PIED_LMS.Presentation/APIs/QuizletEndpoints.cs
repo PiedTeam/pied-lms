@@ -22,7 +22,7 @@ public class QuizletEndpoints : ICarterModule
             .DisableAntiforgery()
             .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher")); 
 
-        // GET /api/quizlets  (Admin, Mentor, Lecturer — all quizlets summary)
+        // GET /api/quizlets  (Admin, Mentor, Teacher — all quizlets summary)
         group.MapGet("", GetAllQuizlets)
             .WithName("GetAllQuizlets")
             .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"));
