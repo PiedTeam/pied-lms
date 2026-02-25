@@ -67,6 +67,8 @@ public class CreateExamHandler(
                 exam.Description,
                 exam.TotalMarks,
                 exam.PassingMarks,
+                exam.IsDeleted,
+                exam.DeletedAt,
                 exam.CreatedAt
             );
 

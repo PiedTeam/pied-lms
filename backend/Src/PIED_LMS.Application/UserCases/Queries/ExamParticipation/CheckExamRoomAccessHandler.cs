@@ -21,7 +21,7 @@ public class CheckExamRoomAccessHandler(
         {
             // Get current user ID from HttpContext claims
             var userIdClaim = httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var studentId))
+            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
             {
                 return new ServiceResponse<ExamRoomAccessResponse>(
                     false,
@@ -29,6 +29,13 @@ public class CheckExamRoomAccessHandler(
                     ErrorCode: "UNAUTHORIZED"
                 );
             }
+
+            // Get user role from HttpContext
+            var user = httpContextAccessor.HttpContext?.User;
+            var isAdmin = user?.IsInRole("Admin") ?? false;
+            var isMentor = user?.IsInRole("Mentor") ?? false;
+            var isLecturer = user?.IsInRole("Lecturer") ?? false;
+            var isStudent = user?.IsInRole("Student") ?? false;
 
             // Find exam room by ID
             var examRoom = await unitOfWork.Repository<Domain.Entities.ExamRoom>()
@@ -46,6 +53,58 @@ public class CheckExamRoomAccessHandler(
 
             var now = DateTime.UtcNow;
 
+            // If Admin/Mentor/Lecturer: grant view access
+            if (isAdmin || isMentor || isLecturer)
+            {
+                var staffResponse = new ExamRoomAccessResponse(
+                    true,
+                    "Access granted for staff viewing",
+                    examRoom.StartTime,
+                    examRoom.EndTime
+                );
+
+                logger.LogInformation(
+                    "Access granted for staff. ExamRoomId: {ExamRoomId}, UserId: {UserId}",
+                    request.ExamRoomId,
+                    userId
+                );
+
+                return new ServiceResponse<ExamRoomAccessResponse>(
+                    true,
+                    "Access check completed",
+                    staffResponse
+                );
+            }
+
+            // If Student: check enrollment and time window
+            // Check if student is enrolled in the exam room
+            var isEnrolled = await unitOfWork.Repository<Domain.Entities.ExamRoomEnrollment>()
+                .AnyAsync(
+                    e => e.ExamRoomId == request.ExamRoomId && e.StudentId == userId,
+                    cancellationToken);
+
+            if (!isEnrolled)
+            {
+                var notEnrolledResponse = new ExamRoomAccessResponse(
+                    false,
+                    "You are not enrolled in this exam room",
+                    examRoom.StartTime,
+                    examRoom.EndTime
+                );
+
+                logger.LogInformation(
+                    "Access denied - not enrolled. ExamRoomId: {ExamRoomId}, StudentId: {StudentId}",
+                    request.ExamRoomId,
+                    userId
+                );
+
+                return new ServiceResponse<ExamRoomAccessResponse>(
+                    true,
+                    "Access check completed",
+                    notEnrolledResponse
+                );
+            }
+
             // Check if current time is before start time
             if (now < examRoom.StartTime)
             {
@@ -59,7 +118,7 @@ public class CheckExamRoomAccessHandler(
                 logger.LogInformation(
                     "Access denied - exam not started. ExamRoomId: {ExamRoomId}, StudentId: {StudentId}",
                     request.ExamRoomId,
-                    studentId
+                    userId
                 );
 
                 return new ServiceResponse<ExamRoomAccessResponse>(
@@ -82,7 +141,7 @@ public class CheckExamRoomAccessHandler(
                 logger.LogInformation(
                     "Access denied - exam ended. ExamRoomId: {ExamRoomId}, StudentId: {StudentId}",
                     request.ExamRoomId,
-                    studentId
+                    userId
                 );
 
                 return new ServiceResponse<ExamRoomAccessResponse>(
@@ -96,7 +155,7 @@ public class CheckExamRoomAccessHandler(
             var hasCompletedExam = await unitOfWork.Repository<Domain.Entities.ExamParticipation>()
                 .AnyAsync(
                     ep => ep.ExamRoomId == request.ExamRoomId 
-                        && ep.StudentId == studentId 
+                        && ep.StudentId == userId 
                         && ep.IsCompleted,
                     cancellationToken);
 
@@ -112,7 +171,7 @@ public class CheckExamRoomAccessHandler(
                 logger.LogInformation(
                     "Access denied - already completed. ExamRoomId: {ExamRoomId}, StudentId: {StudentId}",
                     request.ExamRoomId,
-                    studentId
+                    userId
                 );
 
                 return new ServiceResponse<ExamRoomAccessResponse>(
@@ -133,7 +192,7 @@ public class CheckExamRoomAccessHandler(
             logger.LogInformation(
                 "Access granted. ExamRoomId: {ExamRoomId}, StudentId: {StudentId}",
                 request.ExamRoomId,
-                studentId
+                userId
             );
 
             return new ServiceResponse<ExamRoomAccessResponse>(

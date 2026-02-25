@@ -37,3 +37,9 @@ public record RemoveExamFromRoomCommand(
     Guid ExamRoomId,
     Guid ExamId
 ) : IRequest<ServiceResponse<string>>;
+
+// Enroll Students Command
+public record EnrollStudentsCommand(
+    Guid ExamRoomId,
+    List<Guid> StudentIds
+) : IRequest<ServiceResponse<EnrollmentResultResponse>>;

@@ -16,9 +16,9 @@ public class GetExamByIdHandler(
     {
         try
         {
-            // Find exam by ID
+            // Find exam by ID - allow querying deleted exams (no filter)
             var exam = await unitOfWork.Repository<Domain.Entities.Exam>()
-                .FindAll(e => e.Id == request.Id && !e.IsDeleted)
+                .FindAll(e => e.Id == request.Id)
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (exam == null)
@@ -36,6 +36,8 @@ public class GetExamByIdHandler(
                 exam.Description,
                 exam.TotalMarks,
                 exam.PassingMarks,
+                exam.IsDeleted,
+                exam.DeletedAt,
                 exam.CreatedAt
             );
 

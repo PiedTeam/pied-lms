@@ -18,7 +18,7 @@ public class GetAvailableExamRoomsForStudentHandler(
     {
         try
         {
-            // Get current user ID from HttpContext claims
+            // Get current user ID and role from HttpContext claims
             var userIdClaim = httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier);
             if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
             {
@@ -29,11 +29,82 @@ public class GetAvailableExamRoomsForStudentHandler(
                 );
             }
 
-            var now = DateTime.UtcNow;
+            var user = httpContextAccessor.HttpContext?.User;
+            var isAdmin = user?.IsInRole("Admin") ?? false;
+            var isMentor = user?.IsInRole("Mentor") ?? false;
+            var isLecturer = user?.IsInRole("Lecturer") ?? false;
+            var isStudent = user?.IsInRole("Student") ?? false;
 
-            // Query exam rooms where current time is within time window
-            var query = unitOfWork.Repository<Domain.Entities.ExamRoom>()
-                .FindAll(er => !er.IsDeleted && er.StartTime <= now && er.EndTime >= now)
+            var now = DateTime.UtcNow;
+            IQueryable<Domain.Entities.ExamRoom> query;
+
+            // If Admin/Mentor/Lecturer: return all non-deleted rooms
+            if (isAdmin || isMentor || isLecturer)
+            {
+                query = unitOfWork.Repository<Domain.Entities.ExamRoom>()
+                    .FindAll(er => !er.IsDeleted)
+                    .Include(er => er.ExamRoomExams)
+                        .ThenInclude(ere => ere.Exam);
+
+                // Get total count
+                var totalCount = await query.CountAsync(cancellationToken);
+
+                // Apply pagination
+                var examRooms = await query
+                    .OrderBy(er => er.StartTime)
+                    .Skip((request.PageNumber - 1) * request.PageSize)
+                    .Take(request.PageSize)
+                    .ToListAsync(cancellationToken);
+
+                // Map to response
+                var items = examRooms.Select(er =>
+                {
+                    var status = now < er.StartTime ? "Upcoming" :
+                                now > er.EndTime ? "Completed" : "Ongoing";
+                    var examCount = er.ExamRoomExams.Count(ere => ere.Exam != null && !ere.Exam.IsDeleted);
+
+                    return new ExamRoomResponse(
+                        er.Id,
+                        er.Name,
+                        er.Description,
+                        er.StartTime,
+                        er.EndTime,
+                        er.DurationInMinutes,
+                        er.RoomCode,
+                        status,
+                        examCount,
+                        er.IsDeleted,
+                        er.DeletedAt,
+                        er.CreatedAt
+                    );
+                }).ToList();
+
+                var paginatedResponse = new PaginatedResponse<ExamRoomResponse>(
+                    items,
+                    totalCount,
+                    request.PageNumber,
+                    request.PageSize
+                );
+
+                logger.LogInformation(
+                    "Available exam rooms retrieved successfully for staff. UserId: {UserId}, Count: {Count}",
+                    userId,
+                    items.Count
+                );
+
+                return new ServiceResponse<PaginatedResponse<ExamRoomResponse>>(
+                    true,
+                    "Available exam rooms retrieved successfully",
+                    paginatedResponse
+                );
+            }
+
+            // If Student: return enrolled rooms with time window filter
+            query = unitOfWork.Repository<Domain.Entities.ExamRoom>()
+                .FindAll(er => !er.IsDeleted && 
+                              er.StartTime <= now && 
+                              er.EndTime >= now &&
+                              er.Enrollments.Any(e => e.StudentId == userId))
                 .Include(er => er.ExamRoomExams)
                     .ThenInclude(ere => ere.Exam)
                 .Include(er => er.Participations);
@@ -61,7 +132,7 @@ public class GetAvailableExamRoomsForStudentHandler(
             }).ToList();
 
             // Get total count
-            var totalCount = filteredRooms.Count;
+            var studentTotalCount = filteredRooms.Count;
 
             // Apply pagination
             var paginatedRooms = filteredRooms
@@ -70,8 +141,8 @@ public class GetAvailableExamRoomsForStudentHandler(
                 .Take(request.PageSize)
                 .ToList();
 
-            // Calculate remaining time for each room and map to response
-            var items = paginatedRooms.Select(er =>
+            // Map to response
+            var studentItems = paginatedRooms.Select(er =>
             {
                 var status = "Ongoing";
                 var examCount = er.ExamRoomExams.Count(ere => ere.Exam != null && !ere.Exam.IsDeleted);
@@ -83,15 +154,18 @@ public class GetAvailableExamRoomsForStudentHandler(
                     er.StartTime,
                     er.EndTime,
                     er.DurationInMinutes,
+                    er.RoomCode,
                     status,
                     examCount,
+                    er.IsDeleted,
+                    er.DeletedAt,
                     er.CreatedAt
                 );
             }).ToList();
 
-            var paginatedResponse = new PaginatedResponse<ExamRoomResponse>(
-                items,
-                totalCount,
+            var studentPaginatedResponse = new PaginatedResponse<ExamRoomResponse>(
+                studentItems,
+                studentTotalCount,
                 request.PageNumber,
                 request.PageSize
             );
@@ -99,20 +173,20 @@ public class GetAvailableExamRoomsForStudentHandler(
             logger.LogInformation(
                 "Available exam rooms retrieved successfully for student. UserId: {UserId}, Count: {Count}",
                 userId,
-                items.Count
+                studentItems.Count
             );
 
             return new ServiceResponse<PaginatedResponse<ExamRoomResponse>>(
                 true,
                 "Available exam rooms retrieved successfully",
-                paginatedResponse
+                studentPaginatedResponse
             );
         }
         catch (Exception ex)
         {
             logger.LogError(
                 ex,
-                "Failed to retrieve available exam rooms for student. UserId: {UserId}",
+                "Failed to retrieve available exam rooms. UserId: {UserId}",
                 httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
             );
             return new ServiceResponse<PaginatedResponse<ExamRoomResponse>>(

@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Contract.Services.Exam;
 using PIED_LMS.Contract.Services.Identity;
@@ -6,32 +5,26 @@ using PIED_LMS.Domain.Abstractions;
 
 namespace PIED_LMS.Application.UserCases.Queries.Exam;
 
-public class GetExamsByMentorHandler(
+public class GetAllExamsHandler(
     IUnitOfWork unitOfWork,
-    IHttpContextAccessor httpContextAccessor,
-    ILogger<GetExamsByMentorHandler> logger
-) : IRequestHandler<GetExamsByMentorQuery, ServiceResponse<PaginatedResponse<ExamResponse>>>
+    ILogger<GetAllExamsHandler> logger
+) : IRequestHandler<GetAllExamsQuery, ServiceResponse<PaginatedResponse<ExamResponse>>>
 {
     public async Task<ServiceResponse<PaginatedResponse<ExamResponse>>> Handle(
-        GetExamsByMentorQuery request,
+        GetAllExamsQuery request,
         CancellationToken cancellationToken)
     {
         try
         {
-            // Get current user ID from HttpContext claims
-            var userIdClaim = httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
-            {
-                return new ServiceResponse<PaginatedResponse<ExamResponse>>(
-                    false,
-                    "User not authenticated",
-                    ErrorCode: "UNAUTHORIZED"
-                );
-            }
-
-            // Query exams created by mentor
+            // Query all exams - no CreatedBy filter
             var query = unitOfWork.Repository<Domain.Entities.Exam>()
-                .FindAll(e => e.CreatedBy == userId && !e.IsDeleted);
+                .FindAll();
+
+            // Apply IncludeDeleted filter
+            if (!request.IncludeDeleted)
+            {
+                query = query.Where(e => !e.IsDeleted);
+            }
 
             // Get total count
             var totalCount = await query.CountAsync(cancellationToken);
@@ -47,6 +40,8 @@ public class GetExamsByMentorHandler(
                     e.Description,
                     e.TotalMarks,
                     e.PassingMarks,
+                    e.IsDeleted,
+                    e.DeletedAt,
                     e.CreatedAt
                 ))
                 .ToListAsync(cancellationToken);
@@ -59,9 +54,9 @@ public class GetExamsByMentorHandler(
             );
 
             logger.LogInformation(
-                "Exams retrieved successfully for mentor. UserId: {UserId}, Count: {Count}",
-                userId,
-                exams.Count
+                "All exams retrieved successfully. Count: {Count}, IncludeDeleted: {IncludeDeleted}",
+                exams.Count,
+                request.IncludeDeleted
             );
 
             return new ServiceResponse<PaginatedResponse<ExamResponse>>(
@@ -74,8 +69,7 @@ public class GetExamsByMentorHandler(
         {
             logger.LogError(
                 ex,
-                "Failed to retrieve exams for mentor. UserId: {UserId}",
-                httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                "Failed to retrieve all exams"
             );
             return new ServiceResponse<PaginatedResponse<ExamResponse>>(
                 false,

@@ -4,6 +4,6 @@ namespace PIED_LMS.Contract.Services.ExamParticipation;
 
 // Start Exam Command
 public record StartExamCommand(
-    Guid ExamRoomId,
+    string RoomCode,
     Guid ExamId
 ) : IRequest<ServiceResponse<ExamParticipationResponse>>;
