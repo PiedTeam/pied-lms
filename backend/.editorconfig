@@ -1,84 +1,47 @@
-# All rules apply to the project root
 root = true
 
-# General settings for all file types
 [*]
-indent_style = space
 indent_size = 4
-insert_final_newline = true
-trim_trailing_whitespace = true
+indent_style = space
+tab_width = 4
 end_of_line = lf
+insert_final_newline = true
 charset = utf-8
 
-# Specific settings for web/config files (usually 2 spaces for compactness)
-[*.{xml,json,yml,yaml,config,html,js,ts,css,scss}]
-indent_size = 2
-
-# Detailed settings for C# (.cs)
 [*.cs]
 
-#### 1. Naming Conventions ####
+dotnet_separate_import_directive_groups = false
+dotnet_sort_system_directives_first = true
 
-# Private fields must use an underscore prefix and camelCase (e.g., _userRepository)
-dotnet_naming_rule.private_fields_with_underscore.symbols = private_fields_symbols
-dotnet_naming_rule.private_fields_with_underscore.style = prefix_underscore_style
+dotnet_naming_rule.private_fields_with_underscore.symbols = private_fields
+dotnet_naming_rule.private_fields_with_underscore.style = prefix_underscore
 dotnet_naming_rule.private_fields_with_underscore.severity = suggestion
 
-dotnet_naming_symbols.private_fields_symbols.applicable_kinds = field
-dotnet_naming_symbols.private_fields_symbols.applicable_accessibilities = private
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
 
-dotnet_naming_style.prefix_underscore_style.capitalization = camel_case
-dotnet_naming_style.prefix_underscore_style.required_prefix = _
+dotnet_naming_style.prefix_underscore.required_prefix = _
+dotnet_naming_style.prefix_underscore.capitalization = camel_case
 
-# Interfaces must start with the letter I (e.g., IUserService)
-dotnet_naming_rule.interfaces_start_with_i.symbols = interface_symbols
-dotnet_naming_rule.interfaces_start_with_i.style = i_prefix_style
-dotnet_naming_rule.interfaces_start_with_i.severity = suggestion
+csharp_style_prefer_utf8_string_literals = true:suggestion
 
-dotnet_naming_symbols.interface_symbols.applicable_kinds = interface
-dotnet_naming_style.i_prefix_style.capitalization = pascal_case
-dotnet_naming_style.i_prefix_style.required_prefix = I
-
-#### 2. Modern C# Style Rules (C# 12/13) ####
-
-# Prefer primary constructors (C# 12+)
-csharp_style_prefer_primary_constructors = true:suggestion
-
-# Prefer collection expressions [] instead of new List<t>() (C# 12+)
-csharp_style_prefer_collection_expression = true:suggestion
-
-# Use file-scoped namespaces to reduce indentation
-csharp_style_namespace_declarations = file_scoped:suggestion
-
-# Use 'var' when the type is obvious
-csharp_style_var_when_type_is_apparent = true:suggestion
-csharp_style_var_for_built_in_types = true:suggestion
-
-# Prefer readonly for fields that do not change
-dotnet_style_prefer_readonly_fields = true:suggestion
-
-# Expression-bodied members for single-line methods/properties
 csharp_style_expression_bodied_methods = when_on_single_line:suggestion
-csharp_style_expression_bodied_properties = when_on_single_line:suggestion
+csharp_style_expression_bodied_constructors = false:silent
+csharp_style_expression_bodied_operators = true:error
+csharp_style_expression_bodied_properties = true:error
+csharp_style_expression_bodied_accessors = true:error
+csharp_style_expression_bodied_lambdas = true:suggestion
+csharp_style_expression_bodied_local_functions = true:error
 
-#### 3. Formatting Rules ####
+csharp_style_var_when_type_is_apparent = true:error
+csharp_style_var_for_built_in_types = true:suggestion
+csharp_style_var_elsewhere = true:suggestion
 
-# Braces - Allman style (new line)
+csharp_style_namespace_declarations = file_scoped:error
+csharp_prefer_simple_using_statement = true:error
+
+csharp_style_prefer_switch_expression = true:error
+csharp_style_prefer_not_pattern = true:error
+
+csharp_space_around_binary_operators = before_and_after
 csharp_new_line_before_open_brace = all
-csharp_new_line_before_else = true
-csharp_new_line_before_catch = true
-csharp_new_line_before_finally = true
-
-# Whitespace
-csharp_space_after_cast = false
-csharp_space_after_keywords_in_control_flow_statements = true
-csharp_space_between_method_call_parameter_list_parentheses = false
-
-#### 4. Organizing Usings ####
-
-# Place System.* first and sort alphabetically
-dotnet_sort_system_directives_first = true
-dotnet_separate_import_directive_groups = true
-
-# Automatically remove unused usings
-dotnet_style_unnecessary_unused_value_assignment_check = true:suggestion

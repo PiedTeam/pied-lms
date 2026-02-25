@@ -5,10 +5,13 @@
         <File Path="Directory.Packages.props"/>
     </Folder>
     <Folder Name="/Src/">
-        <Project Path="Src/PIED-LMS.API/PIED-LMS.API.csproj"/>
-        <Project Path="Src/PIED-LMS.Application/PIED-LMS.Application.csproj"/>
-        <Project Path="Src/PIED-LMS.Domain/PIED-LMS.Domain.csproj"/>
-        <Project Path="Src/PIED-LMS.Infrastructure/PIED-LMS.Infrastructure.csproj"/>
+        <Project Path="Src/PIED_LMS.API/PIED_LMS.API.csproj"/>
+        <Project Path="Src/PIED_LMS.Contract/PIED_LMS.Contract.csproj"/>
+        <Project Path="Src\PIED_LMS.Application\PIED_LMS.Application.csproj"/>
+        <Project Path="Src\PIED_LMS.Domain\PIED_LMS.Domain.csproj"/>
+        <Project Path="Src\PIED_LMS.Infrastructure\PIED_LMS.Infrastructure.csproj"/>
+        <Project Path="Src\PIED_LMS.Persistence\PIED_LMS.Persistence.csproj"/>
+        <Project Path="Src\PIED_LMS.Presentation\PIED_LMS.Presentation.csproj"/>
     </Folder>
     <Folder Name="/Test/"/>
 </Solution>

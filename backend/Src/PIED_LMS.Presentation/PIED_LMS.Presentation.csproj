@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <NoWarn>$(NoWarn);ASPDEPR002</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\PIED_LMS.Application\PIED_LMS.Application.csproj"/>
+        <ProjectReference Include="..\PIED_LMS.Contract\PIED_LMS.Contract.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Carter"/>
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi"/>
+    </ItemGroup>
+
+</Project>

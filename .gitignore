@@ -91,8 +91,12 @@ TestResults/
 appsettings.Development.json
 env.local
 
+# --- FIXED SECTION ---
 volume
 backend/AppHost/appsettings.json
 .vscode
-backend/Src/PIED-LMS.API/appsettings.json
-bin\\Debug/
+# Corrected folder name (PIED-LMS -> PIED_LMS)
+backend/Src/PIED_LMS.API/appsettings.json
+# Global ignore for any appsettings.json to be safe
+**/appsettings.json
+bin/Debug/

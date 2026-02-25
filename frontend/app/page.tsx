@@ -27,8 +27,6 @@ export default function Home() {
 			router.push('/login')
 		} else if (user?.role === 'ADMIN') {
 			router.push('/admin')
-		} else if (user?.role === 'MENTOR') {
-			router.push('/mentor')
 		} else {
 			router.push('/dashboard')
 		}

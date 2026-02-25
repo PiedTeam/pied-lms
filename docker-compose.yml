@@ -6,7 +6,6 @@ services:
     container_name: pied-lms-db
     restart: unless-stopped
     environment:
-      # Map trực tiếp từ biến Doppler cung cấp
       POSTGRES_DB: ${DATABASE__NAME:-piedlms}
       POSTGRES_USER: ${DATABASE__USER:-postgres}
       POSTGRES_PASSWORD: ${DATABASE__PASSWORD}
@@ -21,10 +20,12 @@ services:
       retries: 5
 
   backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     image: ${DOCKERHUB_USERNAME}/pied-lms-backend:latest
     container_name: pied-lms-backend
     restart: unless-stopped
-    pull_policy: always
     ports:
       - "${API_PORT:-5000}:8080"
     environment:

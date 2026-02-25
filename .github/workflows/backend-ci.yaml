@@ -26,8 +26,8 @@ jobs:
 
       - name: Restore & Build Check
         run: |
-          dotnet restore backend/Src/PIED-LMS.API/PIED-LMS.API.csproj
-          dotnet build backend/Src/PIED-LMS.API/PIED-LMS.API.csproj --no-restore --configuration Release
+          dotnet restore backend/Src/PIED_LMS.API/PIED_LMS.API.csproj
+          dotnet build backend/Src/PIED_LMS.API/PIED_LMS.API.csproj --no-restore --configuration Release
 
       # Step 2: Check Dockerfile (build draft to verify syntax)
       - name: Set up Docker Buildx
@@ -37,7 +37,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./backend
-          file: ./backend/Src/PIED-LMS.API/Dockerfile
+          file: ./backend/Dockerfile
           push: false # IMPORTANT: This setting will not push to Hub
           cache-from: type=gha
           cache-to: type=gha,mode=max

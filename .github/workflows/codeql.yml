@@ -78,7 +78,7 @@ jobs:
       run: |
         cd backend
         dotnet restore
-        dotnet build Src/PIED-LMS.API/PIED-LMS.API.csproj --no-restore --configuration Release
+        dotnet build Src/PIED_LMS.API/PIED_LMS.API.csproj --no-restore --configuration Release
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v4

@@ -20,6 +20,7 @@
         <Using Include="System.Linq"/>
         <Using Include="System.Threading.Tasks"/>
         <Using Include="System.Text"/>
+        <Using Include="System.Reflection"/>
     </ItemGroup>
 
     <PropertyGroup>

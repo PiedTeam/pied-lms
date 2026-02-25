@@ -39,8 +39,6 @@ export function ProtectedRoute({
 			// Redirect to appropriate dashboard based on actual role
 			if (user?.role === 'ADMIN') {
 				router.push('/admin')
-			} else if (user?.role === 'MENTOR') {
-				router.push('/mentor')
 			} else {
 				router.push('/dashboard')
 			}

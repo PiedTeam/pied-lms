@@ -1,20 +1,32 @@
-'use client'
+"use client";
 
-import { useGetProfile } from '@/service/student/profile.service'
-import { ProfileView } from '@/components/student/ProfileView'
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/store/auth.store";
+import { StudentProfile } from "@/components/student/StudentProfile";
+import { MentorProfile } from "@/components/mentor/MentorProfile";
 
 export default function StudentProfilePage() {
-	const { data: profile, isLoading, error } = useGetProfile()
+  const router = useRouter();
+  const user = useAuthStore((state) => state.user);
+  const token = useAuthStore((state) => state.token);
 
-	return (
-		<div className="container mx-auto p-4 max-w-4xl">
-			<div className="mb-6">
-				<h1 className="text-2xl font-bold">My Profile</h1>
-				<p className="mt-2 text-muted-foreground">
-					View your profile information
-				</p>
-			</div>
-			<ProfileView profile={profile} isLoading={isLoading} error={error} />
-		</div>
-	)
+  useEffect(() => {
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+
+    if (user?.role === "ADMIN") {
+      router.push("/admin/profile");
+    }
+
+    if (user?.role === "MENTOR") {
+      router.push("/profile");
+    }
+  }, [token, user, router]);
+
+  if (!token) return null;
+
+  return <StudentProfile />;
 }

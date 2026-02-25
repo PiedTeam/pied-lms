@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" />
+        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+        <PackageReference Include="EFCore.NamingConventions" />
+        <PackageReference Include="UUIDNext" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\PIED_LMS.Contract\PIED_LMS.Contract.csproj" />
+        <ProjectReference Include="..\PIED_LMS.Domain\PIED_LMS.Domain.csproj" />
+    </ItemGroup>
+
+</Project>

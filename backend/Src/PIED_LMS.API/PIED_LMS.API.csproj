@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer"/>
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design"/>
+        <PackageReference Include="Serilog.AspNetCore"/>
+        <PackageReference Include="Serilog.Sinks.Console"/>
+        <PackageReference Include="Swashbuckle.AspNetCore"/>
+        <PackageReference Include="System.IdentityModel.Tokens.Jwt"/>
+    </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\PIED_LMS.Application\PIED_LMS.Application.csproj"/>
+        <ProjectReference Include="..\PIED_LMS.Contract\PIED_LMS.Contract.csproj"/>
+        <ProjectReference Include="..\PIED_LMS.Infrastructure\PIED_LMS.Infrastructure.csproj"/>
+        <ProjectReference Include="..\PIED_LMS.Presentation\PIED_LMS.Presentation.csproj"/>
+    </ItemGroup>
+
+</Project>
