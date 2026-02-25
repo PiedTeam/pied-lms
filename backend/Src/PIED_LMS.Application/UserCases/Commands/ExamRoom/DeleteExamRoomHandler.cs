@@ -67,6 +67,7 @@ public class DeleteExamRoomHandler(
 
             // Soft delete exam room
             examRoom.IsDeleted = true;
+            examRoom.DeletedAt = DateTime.UtcNow;
             examRoom.UpdatedAt = DateTime.UtcNow;
 
             await unitOfWork.CommitAsync(cancellationToken);

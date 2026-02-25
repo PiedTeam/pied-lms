@@ -81,6 +81,7 @@ public static class PersistenceExtensions
         services.AddMemoryCache();
         services.AddScoped<IRefreshTokenService, RefreshTokenService>();
         services.AddScoped<IEmailService, SmtpEmailService>();
+        services.AddScoped<IRoomCodeService, Services.RoomCodeService>();
         services.AddScoped<Contract.Abstractions.Excel.IExcelService, Services.ExcelService>();
         services.AddScoped<IQuestionQuizService, Services.QuestionQuizService>();
 

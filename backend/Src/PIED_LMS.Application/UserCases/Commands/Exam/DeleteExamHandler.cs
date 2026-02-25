@@ -55,6 +55,7 @@ public class DeleteExamHandler(
 
             // Soft delete exam
             exam.IsDeleted = true;
+            exam.DeletedAt = DateTime.UtcNow;
             exam.UpdatedAt = DateTime.UtcNow;
 
             await unitOfWork.CommitAsync(cancellationToken);

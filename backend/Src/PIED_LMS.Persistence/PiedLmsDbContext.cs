@@ -12,6 +12,7 @@ public class PiedLmsDbContext(DbContextOptions<PiedLmsDbContext> options) : Iden
     IdentityRoleClaim<Guid>,
     IdentityUserToken<Guid>>(options)
 {
+    public DbSet<ExamRoomEnrollment> ExamRoomEnrollments { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

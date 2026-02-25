@@ -1,40 +1,32 @@
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Contract.Services.ExamRoom;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Abstractions;
 
-
 namespace PIED_LMS.Application.UserCases.Queries.ExamRoom;
 
-public class GetExamRoomsByMentorHandler(
+public class GetAllExamRoomsHandler(
     IUnitOfWork unitOfWork,
-    IHttpContextAccessor httpContextAccessor,
-    ILogger<GetExamRoomsByMentorHandler> logger
-) : IRequestHandler<GetExamRoomsByMentorQuery, ServiceResponse<PaginatedResponse<ExamRoomResponse>>>
+    ILogger<GetAllExamRoomsHandler> logger
+) : IRequestHandler<GetAllExamRoomsQuery, ServiceResponse<PaginatedResponse<ExamRoomResponse>>>
 {
     public async Task<ServiceResponse<PaginatedResponse<ExamRoomResponse>>> Handle(
-        GetExamRoomsByMentorQuery request,
+        GetAllExamRoomsQuery request,
         CancellationToken cancellationToken)
     {
         try
         {
-            // Get current user ID from HttpContext claims
-            var userIdClaim = httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
-            {
-                return new ServiceResponse<PaginatedResponse<ExamRoomResponse>>(
-                    false,
-                    "User not authenticated",
-                    ErrorCode: "UNAUTHORIZED"
-                );
-            }
-
-            // Query exam rooms created by mentor
+            // Query ALL exam rooms (no CreatedBy filter)
             IQueryable<Domain.Entities.ExamRoom> query = unitOfWork.Repository<Domain.Entities.ExamRoom>()
-                .FindAll(er => er.CreatedBy == userId && !er.IsDeleted)
+                .FindAll()
                 .Include(er => er.ExamRoomExams)
                 .ThenInclude(ere => ere.Exam);
+
+            // Handle IncludeDeleted parameter
+            if (!request.IncludeDeleted)
+            {
+                query = query.Where(er => !er.IsDeleted);
+            }
 
             // Filter by status if provided
             var now = DateTime.UtcNow;
@@ -49,24 +41,11 @@ public class GetExamRoomsByMentorHandler(
                 };
             }
 
-            IQueryable<Domain.Entities.ExamRoom> queryTyped = query;
-
-            if (!string.IsNullOrWhiteSpace(request.Status))
-            {
-                queryTyped = request.Status.ToLower() switch
-                {
-                    "upcoming" => queryTyped.Where(er => er.StartTime > now),
-                    "ongoing" => queryTyped.Where(er => er.StartTime <= now && er.EndTime >= now),
-                    "completed" => queryTyped.Where(er => er.EndTime < now),
-                    _ => queryTyped
-                };
-            }
-
             // Get total count
-            var totalCount = await queryTyped.CountAsync(cancellationToken);
+            var totalCount = await query.CountAsync(cancellationToken);
 
             // Apply pagination
-            var examRooms = await queryTyped
+            var examRooms = await query
                 .OrderByDescending(er => er.CreatedAt)
                 .Skip((request.PageNumber - 1) * request.PageSize)
                 .Take(request.PageSize)
@@ -78,7 +57,6 @@ public class GetExamRoomsByMentorHandler(
                 var status = now < er.StartTime ? "Upcoming" :
                             now > er.EndTime ? "Completed" : "Ongoing";
 
-                // Since we included Exams, we can check IsDeleted on the existing navigation property
                 var examCount = er.ExamRoomExams.Count(ere => ere.Exam != null && !ere.Exam.IsDeleted);
 
                 return new ExamRoomResponse(
@@ -105,9 +83,9 @@ public class GetExamRoomsByMentorHandler(
             );
 
             logger.LogInformation(
-                "Exam rooms retrieved successfully for mentor. UserId: {UserId}, Count: {Count}",
-                userId,
-                items.Count
+                "All exam rooms retrieved successfully. Count: {Count}, IncludeDeleted: {IncludeDeleted}",
+                items.Count,
+                request.IncludeDeleted
             );
 
             return new ServiceResponse<PaginatedResponse<ExamRoomResponse>>(
@@ -120,8 +98,7 @@ public class GetExamRoomsByMentorHandler(
         {
             logger.LogError(
                 ex,
-                "Failed to retrieve exam rooms for mentor. UserId: {UserId}",
-                httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                "Failed to retrieve all exam rooms"
             );
             return new ServiceResponse<PaginatedResponse<ExamRoomResponse>>(
                 false,

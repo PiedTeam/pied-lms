@@ -68,9 +68,10 @@ public class ExamEndpoints : ICarterModule
         [AsParameters] GetExamsByMentorRequest request,
         IMediator mediator)
     {
-        var query = new GetExamsByMentorQuery(
+        var query = new GetAllExamsQuery(
             request.PageNumber,
-            request.PageSize
+            request.PageSize,
+            request.IncludeDeleted ?? true
         );
         var result = await mediator.Send(query);
         return Results.Ok(result);
@@ -133,7 +134,8 @@ public class ExamEndpoints : ICarterModule
 // Request DTOs
 public sealed record GetExamsByMentorRequest(
     int PageNumber = 1,
-    int PageSize = 10
+    int PageSize = 10,
+    bool? IncludeDeleted = true
 );
 
 public sealed record UpdateExamRequest(

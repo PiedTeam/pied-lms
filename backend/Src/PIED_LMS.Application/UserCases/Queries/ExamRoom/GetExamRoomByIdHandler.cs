@@ -17,9 +17,9 @@ public class GetExamRoomByIdHandler(
     {
         try
         {
-            // Find exam room by ID with eager loading of exams
+            // Find exam room by ID with eager loading of exams (no IsDeleted filter)
             var examRoom = await unitOfWork.Repository<Domain.Entities.ExamRoom>()
-                .FindAll(er => er.Id == request.Id && !er.IsDeleted)
+                .FindAll(er => er.Id == request.Id)
                 .Include(er => er.ExamRoomExams)
                     .ThenInclude(ere => ere.Exam)
                 .FirstOrDefaultAsync(cancellationToken);
@@ -58,8 +58,11 @@ public class GetExamRoomByIdHandler(
                 examRoom.StartTime,
                 examRoom.EndTime,
                 examRoom.DurationInMinutes,
+                examRoom.RoomCode,
                 status,
                 exams,
+                examRoom.IsDeleted,
+                examRoom.DeletedAt,
                 examRoom.CreatedAt,
                 examRoom.UpdatedAt
             );
