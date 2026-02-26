@@ -319,3 +319,42 @@ export function useCheckExamRoomAccess(
     enabled: enabled && !!roomId,
   });
 }
+
+// Enroll Students to Room (Mentor/Teacher/Admin)
+export function useEnrollStudents() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      roomId,
+      payload,
+    }: {
+      roomId: string;
+      payload: import("@/interface/exam-room/exam-room.interface").EnrollStudentsRequest;
+    }): Promise<
+      import("@/interface/exam-room/exam-room.interface").EnrollmentResultResponse
+    > => {
+      // Convert camelCase to PascalCase for backend
+      const backendPayload = {
+        StudentIds: payload.studentIds,
+      };
+
+      const { data } = await axios.post<
+        ApiResponse<
+          import("@/interface/exam-room/exam-room.interface").EnrollmentResultResponse
+        >
+      >(`/exam-rooms/${roomId}/enroll`, backendPayload);
+
+      if (!data.success || !data.data) {
+        throw new Error(data.message || "Failed to enroll students");
+      }
+
+      return data.data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["exam-room", variables.roomId],
+      });
+    },
+  });
+}
