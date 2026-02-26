@@ -47,8 +47,8 @@ public class QuestionQuizService(IExcelService excelService, IUnitOfWork unitOfW
                         Content = row.Content,
                         Score = 1, // Default score
                         QuestionType = PIED_LMS.Domain.Constants.QuestionType.MultipleChoice,
-                        IsHidden = row.IsHidden,
-                        Level = (int)row.Level,
+                        IsHidden = isHidden,
+                        Level = (int)level,
                         Answers = new List<QuestionAnswer>()
                     };
 
