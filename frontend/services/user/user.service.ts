@@ -78,3 +78,28 @@ export function useGetAllUsers(params: GetAllUsersRequest = {}) {
     staleTime: 30000, // 30 seconds
   });
 }
+
+// Get count of users with student role
+export function useGetStudentCount() {
+  return useQuery({
+    queryKey: ["users", "count", "student"],
+    queryFn: async (): Promise<number> => {
+      const { data } = await axios.get<ApiResponse<GetAllUsersResponse>>(
+        "/auth/students",
+        {
+          params: {
+            pageNumber: 1,
+            pageSize: 10,
+          },
+        },
+      );
+      if (!data.success || !data.data) {
+        throw new Error(data.message || "Failed to load users list");
+      }     
+      console.log(data.data)
+      return data.data.totalCount;
+    },
+    retry: 1,
+    staleTime: 30000,
+  });
+}

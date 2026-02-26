@@ -43,11 +43,11 @@ const menuItems = [
     href: "/mentor/exams",
     icon: FileText,
   },
-  {
-    title: "Timetables",
-    href: "/mentor/timetables",
-    icon: CalendarSearch,
-  },
+  // {
+  //   title: "Timetables",
+  //   href: "/mentor/timetables",
+  //   icon: CalendarSearch,
+  // },
   {
     title: "Quizlets",
     href: "/mentor/quizlets",
@@ -58,16 +58,16 @@ const menuItems = [
     href: "/mentor/testcases",
     icon: TestTube,
   },
-  {
-    title: "Slot Advice",
-    href: "/mentor/slot-advice",
-    icon: Lightbulb,
-  },
-  {
-    title: "History",
-    href: "/mentor/history",
-    icon: History,
-  },
+  // {
+  //   title: "Slot Advice",
+  //   href: "/mentor/slot-advice",
+  //   icon: Lightbulb,
+  // },
+  // {
+  //   title: "History",
+  //   href: "/mentor/history",
+  //   icon: History,
+  // },
 ];
 
 export function MentorSidebar() {

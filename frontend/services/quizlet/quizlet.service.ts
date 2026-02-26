@@ -67,6 +67,23 @@ export function useGetAllQuizlets() {
   });
 }
 
+// Get Quizlets Count (derived from GET /api/quizlets)
+export function useGetQuizletCount() {
+  return useQuery({
+    queryKey: ["quizlets", "count"],
+    queryFn: async (): Promise<number> => {
+      const { data } =
+        await axios.get<ApiResponse<QuizletSummaryResponse[]>>("/quizlets");
+
+      if (!data.success || !data.data) {
+        throw new Error(data.message || QUIZLET_MESSAGES.ERROR.LOAD_FAILED);
+      }
+
+      return data.data.length;
+    },
+  });
+}
+
 // Get Quizlet By ID (GET /api/quizlets/{id})
 export function useGetQuizletById(id: number) {
   return useQuery({

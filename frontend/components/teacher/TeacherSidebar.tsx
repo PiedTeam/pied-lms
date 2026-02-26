@@ -56,11 +56,6 @@ const menuItems = [
   //   href: "/teacher/users",
   //   icon: UserCog,
   // },
-  {
-    title: "Analytics",
-    href: "/teacher/analytics",
-    icon: BarChart3,
-  },
 ];
 
 export function TeacherSidebar() {

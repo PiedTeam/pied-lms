@@ -1,7 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
-import { useQueries } from "@tanstack/react-query";
 import {
   Card,
   CardContent,
@@ -13,7 +11,7 @@ import {
   BookOpen,
   Users,
   FileQuestion,
-  TrendingUp,
+  FileSpreadsheet,
   Loader2,
 } from "lucide-react";
 import {
@@ -31,46 +29,10 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-// TODO: Old project services - need to be replaced or removed
-// import { useGetAdminRooms } from '@/service/admin/room.service'
-// import { useGetAdminQuestions } from '@/service/admin/question.service'
-// import { useGetAdminUsers } from '@/service/admin/user.service'
-import { axiosGeneral as axios } from "@/common/axios";
-
-// Helper function to get month name in English
-const getMonthName = (monthIndex: number) => {
-  const months = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-  ];
-  return months[monthIndex];
-};
-
-// Helper function to format date to relative time in English
-const formatRelativeTime = (dateString: string) => {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-  if (diffInSeconds < 60) return "Just now";
-  if (diffInSeconds < 3600)
-    return `${Math.floor(diffInSeconds / 60)} minutes ago`;
-  if (diffInSeconds < 86400)
-    return `${Math.floor(diffInSeconds / 3600)} hours ago`;
-  if (diffInSeconds < 2592000)
-    return `${Math.floor(diffInSeconds / 86400)} days ago`;
-  return `${Math.floor(diffInSeconds / 2592000)} months ago`;
-};
+import { useGetExamRoomsByAdmin } from "@/services/exam-room/exam-room.service";
+import { useGetExamsByAdmin } from "@/services/exam/exam.service";
+import { useGetQuizletCount } from "@/services/quizlet/quizlet.service";
+import { useGetStudentCount } from "@/services/user/user.service";
 
 const chartConfig = {
   phongThi: {
@@ -87,216 +49,112 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
+// Fallback data when APIs are unavailable (UI demo)
+const FALLBACK_STATS = {
+  totalExamRooms: 24,
+  activeExamRooms: 3,
+  totalExams: 320,
+  totalQuizlets: 12,
+  totalStudents: 128,
+};
+
+// Mocked chart data for last 6 months
+const MOCK_CHART_DATA = [
+  { month: "Jan", phongThi: 3, sinhVien: 25, cauHoi: 40 },
+  { month: "Feb", phongThi: 4, sinhVien: 30, cauHoi: 52 },
+  { month: "Mar", phongThi: 5, sinhVien: 35, cauHoi: 60 },
+  { month: "Apr", phongThi: 3, sinhVien: 28, cauHoi: 48 },
+  { month: "May", phongThi: 4, sinhVien: 32, cauHoi: 55 },
+  { month: "Jun", phongThi: 5, sinhVien: 40, cauHoi: 65 },
+];
+
+// Mocked recent activities
+const MOCK_RECENT_ACTIVITIES = [
+  {
+    type: "room",
+    message: 'Tạo phòng thi mới "Final Exam Room A"',
+    time: "2 hours ago",
+    color: "bg-purple-500",
+  },
+  {
+    type: "question",
+    message: 'Thêm câu hỏi mới vào "Midterm Room B"',
+    time: "Yesterday",
+    color: "bg-blue-500",
+  },
+  {
+    type: "exam",
+    message: 'Phòng thi "Quiz Room C" đã bắt đầu',
+    time: "Đang diễn ra",
+    color: "bg-green-500",
+  },
+  {
+    type: "user",
+    message: "Thêm mới 10 thí sinh vào hệ thống",
+    time: "3 days ago",
+    color: "bg-orange-500",
+  },
+];
+
 export default function AdminDashboardPage() {
-  // TODO: Replace with new services
-  // const { data: roomsData, isLoading: isLoadingRooms } = useGetAdminRooms();
-  // const { data: questionsData, isLoading: isLoadingQuestions } = useGetAdminQuestions();
-  // const { data: usersData, isLoading: isLoadingUsers } = useGetAdminUsers();
-  const roomsData = null;
-  const isLoadingRooms = false;
-  const questionsData = null;
-  const isLoadingQuestions = false;
-  const usersData = null;
-  const isLoadingUsers = false;
-
-  // Get all room UUIDs
-  const roomUuids = useMemo(() => {
-    return (roomsData as any)?.map((room: any) => room.uuid) || [];
-  }, [roomsData]);
-
-  // Fetch participants for all rooms
-  const participantsQueries = useQueries({
-    queries: roomUuids.map((roomId: string) => ({
-      queryKey: ["admin", "room", roomId, "participants"],
-      queryFn: async () => {
-        const { data } = await axios.get(`/admin/room/${roomId}/participants`);
-        return data;
-      },
-      enabled: roomUuids.length > 0,
-      staleTime: 1 * 60 * 1000, // 1 minute
-    })),
+  // Live counts for top-level stats
+  const {
+    data: examRooms,
+    isLoading: isLoadingExamRooms,
+    isError: isExamRoomsError,
+  } = useGetExamRoomsByAdmin({
+    pageNumber: 1,
+    pageSize: 1,
   });
 
-  // Calculate stats
-  const dashboardStats = useMemo(() => {
-    const totalRooms = (roomsData as any)?.length || 0;
-    const totalQuestions = (questionsData as any)?.listQuestion?.length || 0;
-    const totalStudents = (usersData as any)?.length || 0;
+  const {
+    data: activeExamRooms,
+    isLoading: isLoadingActiveExamRooms,
+    isError: isActiveExamRoomsError,
+  } = useGetExamRoomsByAdmin({
+    pageNumber: 1,
+    pageSize: 1,
+    status: "active",
+  });
 
-    // Count active exams (rooms with non-empty participants)
-    const activeExams = participantsQueries.reduce((count, query) => {
-      if (
-        (query.data as any)?.participants &&
-        (query.data as any).participants.length > 0
-      ) {
-        return count + 1;
-      }
-      return count;
-    }, 0);
+  const {
+    data: exams,
+    isLoading: isLoadingExams,
+    isError: isExamsError,
+  } = useGetExamsByAdmin({
+    pageNumber: 1,
+    pageSize: 1,
+  });
 
-    return {
-      totalRooms,
-      totalQuestions,
-      totalStudents,
-      activeExams,
-    };
-  }, [roomsData, questionsData, usersData, participantsQueries]);
+  const {
+    data: quizletCount,
+    isLoading: isLoadingQuizlets,
+    isError: isQuizletsError,
+  } = useGetQuizletCount();
+  const {
+    data: studentCount,
+    isLoading: isLoadingStudents,
+    isError: isStudentsError,
+  } = useGetStudentCount();
 
-  // Calculate chart data from API data (last 6 months)
-  const chartData = useMemo(() => {
-    const now = new Date();
-    const months: {
-      month: string;
-      phongThi: number;
-      sinhVien: number;
-      cauHoi: number;
-    }[] = [];
+  const usingFallback =
+    isExamRoomsError ||
+    isActiveExamRoomsError ||
+    isExamsError ||
+    isQuizletsError ||
+    isStudentsError;
 
-    // Initialize last 6 months
-    for (let i = 5; i >= 0; i--) {
-      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      months.push({
-        month: getMonthName(date.getMonth()),
-        phongThi: 0,
-        sinhVien: 0,
-        cauHoi: 0,
-      });
-    }
+  const dashboardStats = {
+    totalExamRooms: examRooms?.totalCount ?? FALLBACK_STATS.totalExamRooms,
+    activeExamRooms:
+      activeExamRooms?.totalCount ?? FALLBACK_STATS.activeExamRooms,
+    totalExams: exams?.totalCount ?? FALLBACK_STATS.totalExams,
+    totalQuizlets: quizletCount ?? FALLBACK_STATS.totalQuizlets,
+    totalStudents: studentCount ?? FALLBACK_STATS.totalStudents,
+  };
 
-    // Count rooms by month
-    (roomsData as any)?.forEach((room: any) => {
-      if (room.createdAt) {
-        const roomDate = new Date(room.createdAt);
-        const monthsDiff =
-          (now.getFullYear() - roomDate.getFullYear()) * 12 +
-          (now.getMonth() - roomDate.getMonth());
-
-        if (monthsDiff >= 0 && monthsDiff < 6) {
-          const index = 5 - monthsDiff;
-          if (index >= 0 && index < months.length) {
-            months[index].phongThi++;
-          }
-        }
-      }
-    });
-
-    // Count questions by month
-    (questionsData as any)?.listQuestion?.forEach((question: any) => {
-      if (question.createdAt) {
-        const questionDate = new Date(question.createdAt);
-        const monthsDiff =
-          (now.getFullYear() - questionDate.getFullYear()) * 12 +
-          (now.getMonth() - questionDate.getMonth());
-
-        if (monthsDiff >= 0 && monthsDiff < 6) {
-          const index = 5 - monthsDiff;
-          if (index >= 0 && index < months.length) {
-            months[index].cauHoi++;
-          }
-        }
-      }
-    });
-
-    // Count students by month (based on createdAt)
-    (usersData as any)?.forEach((user: any) => {
-      if (user.createdAt) {
-        const userDate = new Date(user.createdAt);
-        const monthsDiff =
-          (now.getFullYear() - userDate.getFullYear()) * 12 +
-          (now.getMonth() - userDate.getMonth());
-
-        if (monthsDiff >= 0 && monthsDiff < 6) {
-          const index = 5 - monthsDiff;
-          if (index >= 0 && index < months.length) {
-            months[index].sinhVien++;
-          }
-        }
-      }
-    });
-
-    return months;
-  }, [roomsData, questionsData, usersData]);
-
-  // Calculate recent activities
-  const recentActivities = useMemo(() => {
-    const activities: Array<{
-      type: "room" | "question" | "user" | "exam";
-      message: string;
-      time: string;
-      color: string;
-    }> = [];
-
-    // Recent rooms
-    (roomsData as any)
-      ?.slice()
-      .sort(
-        (a: any, b: any) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-      )
-      .slice(0, 2)
-      .forEach((room: any) => {
-        activities.push({
-          type: "room",
-          message: `Tạo phòng thi mới "${room.name}"`,
-          time: formatRelativeTime(room.createdAt),
-          color: "bg-purple-500",
-        });
-      });
-
-    // Recent questions
-    (questionsData as any)?.listQuestion
-      ?.slice()
-      .sort(
-        (a: any, b: any) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-      )
-      .slice(0, 1)
-      .forEach((question: any) => {
-        const roomName =
-          (roomsData as any)?.find((r: any) => r.uuid === question.roomId)
-            ?.name || "phòng thi";
-        activities.push({
-          type: "question",
-          message: `Thêm câu hỏi mới vào "${roomName}"`,
-          time: formatRelativeTime(question.createdAt),
-          color: "bg-blue-500",
-        });
-      });
-
-    // Active exams (rooms with participants)
-    participantsQueries.forEach((query) => {
-      if (
-        (query.data as any)?.participants &&
-        (query.data as any).participants.length > 0
-      ) {
-        const roomName = (query.data as any).roomName;
-        activities.push({
-          type: "exam",
-          message: `Phòng thi "${roomName}" đã bắt đầu`,
-          time: "Đang diễn ra",
-          color: "bg-green-500",
-        });
-      }
-    });
-
-    // Sort by time (most recent first) and limit to 4
-    return activities
-      .sort((a, b) => {
-        if (a.time === "Đang diễn ra") return -1;
-        if (b.time === "Đang diễn ra") return 1;
-        return 0;
-      })
-      .slice(0, 4);
-  }, [roomsData, questionsData, participantsQueries]);
-
-  const isLoadingParticipants = participantsQueries.some(
-    (query) => query.isLoading,
-  );
-  const isLoading =
-    isLoadingRooms ||
-    isLoadingQuestions ||
-    isLoadingUsers ||
-    isLoadingParticipants;
+  const chartData = MOCK_CHART_DATA;
+  const recentActivities = MOCK_RECENT_ACTIVITIES;
 
   return (
     <div className="container mx-auto p-6">
@@ -305,6 +163,11 @@ export default function AdminDashboardPage() {
         <p className="text-muted-foreground">
           Tổng quan hệ thống quản lý phòng thi
         </p>
+        {usingFallback && (
+          <p className="mt-1 text-xs text-muted-foreground">
+            Demo data (API unavailable)
+          </p>
+        )}
       </div>
 
       {/* Stats Cards */}
@@ -318,47 +181,67 @@ export default function AdminDashboardPage() {
             <BookOpen className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            {isLoading ? (
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">
-                  {dashboardStats.totalRooms}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {dashboardStats.activeExams} phòng đang hoạt động
-                </p>
-              </>
-            )}
+            <div className="text-2xl font-bold">
+              {isLoadingExamRooms ? (
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              ) : (
+                dashboardStats.totalExamRooms
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {isLoadingActiveExamRooms ? (
+                <span className="inline-flex items-center gap-1">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  Loading active rooms...
+                </span>
+              ) : (
+                `${dashboardStats.activeExamRooms} active exam rooms`
+              )}
+            </p>
           </CardContent>
         </Card>
 
-        {/* Total Questions */}
+        {/* Total Exams */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Total questions
+              Total exams
             </CardTitle>
             <FileQuestion className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            {isLoading ? (
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">
-                  {dashboardStats.totalQuestions}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {dashboardStats.totalRooms > 0
-                    ? `Average ${Math.round(
-                        dashboardStats.totalQuestions /
-                          dashboardStats.totalRooms,
-                      )} questions/room`
-                    : "No rooms yet"}
-                </p>
-              </>
-            )}
+            <div className="text-2xl font-bold">
+              {isLoadingExams ? (
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              ) : (
+                dashboardStats.totalExams
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Exams configured in the system
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Total Quizlets */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Total quizlets
+            </CardTitle>
+            <FileSpreadsheet className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {isLoadingQuizlets ? (
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              ) : (
+                dashboardStats.totalQuizlets
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Total quizlets in system
+            </p>
           </CardContent>
         </Card>
 
@@ -371,42 +254,16 @@ export default function AdminDashboardPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            {isLoading ? (
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">
-                  {dashboardStats.totalStudents}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Đã đăng ký tham gia thi
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Active Exams */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Ongoing exam rooms
-            </CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold text-green-600">
-                  {dashboardStats.activeExams}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Đang có thí sinh làm bài
-                </p>
-              </>
-            )}
+            <div className="text-2xl font-bold text-green-600">
+              {isLoadingStudents ? (
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              ) : (
+                dashboardStats.totalStudents
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Registered candidates
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -525,11 +382,7 @@ export default function AdminDashboardPage() {
             <CardDescription>Latest activities in the system</CardDescription>
           </CardHeader>
           <CardContent>
-            {isLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-              </div>
-            ) : recentActivities.length === 0 ? (
+            {recentActivities.length === 0 ? (
               <div className="py-8 text-center text-muted-foreground">
                 <p>No activity yet</p>
               </div>

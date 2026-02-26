@@ -10,6 +10,8 @@ import {
 } from "@/components/ui/card";
 import { DoorOpen, FileText, FileSpreadsheet, Users } from "lucide-react";
 import { useGetExamRoomsByMentor, useGetExamsByMentor } from "@/service";
+import { useGetQuizletCount } from "@/services/quizlet/quizlet.service";
+import { useGetStudentCount } from "@/services/user/user.service";
 
 export default function MentorDashboardPage() {
   const user = useAuthStore((state) => state.user);
@@ -24,6 +26,8 @@ export default function MentorDashboardPage() {
     pageSize: 10,
   });
 
+  const { data: quizsCount } = useGetQuizletCount();
+  const { data: studentsCount } = useGetStudentCount();
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div>
@@ -66,7 +70,7 @@ export default function MentorDashboardPage() {
             <FileSpreadsheet className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0</div>
+            <div className="text-2xl font-bold">{quizsCount || 0}</div>
             <p className="text-xs text-muted-foreground">Tổng số quizlet</p>
           </CardContent>
         </Card>
@@ -77,7 +81,9 @@ export default function MentorDashboardPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0</div>
+            <div className="text-2xl font-bold">
+              {studentsCount !== undefined ? studentsCount : 0}
+            </div>
             <p className="text-xs text-muted-foreground">Tổng số sinh viên</p>
           </CardContent>
         </Card>
