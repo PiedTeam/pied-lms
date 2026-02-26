@@ -37,7 +37,7 @@ export default function EditQuizletPage() {
   const [title, setTitle] = useState("");
   const [isPublished, setIsPublished] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
-  const [level, setLevel] = useState<QuizletLevel>(0);
+  const [level, setLevel] = useState<QuizletLevel>(1); // Default to Easy
   const [questions, setQuestions] = useState<UpdateQuestionDto[]>([]);
 
   // Initialize state when quizlet data is loaded

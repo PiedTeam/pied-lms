@@ -240,13 +240,18 @@ export function useTogglePublishQuizlet() {
           `/quizlets/${id}`,
           {
             title: quizlet.title,
+            description: quizlet.description || "",
             isPublished: isPublished,
+            isHidden: quizlet.isHidden,
+            level: quizlet.level,
             listQuestion: quizlet.listQuestion.map((q) => ({
               content: q.content,
               score: q.score,
               answers: q.answers,
               correctAnswers: q.correctAnswers,
               questionType: q.type === 0 ? "SingleChoice" : "MultipleChoice",
+              isHidden: q.isHidden,
+              level: q.level,
             })),
           },
         );

@@ -20,6 +20,8 @@ export interface ExamRoomResponse {
   isDeleted: boolean;
   deletedAt: string | null;
   createdAt?: string;
+  exams?: ExamRoomExamResponse[]; // For student exam rooms page
+  roomCode?: string; // For joining rooms
 }
 
 export interface ExamRoomExamResponse {

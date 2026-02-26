@@ -213,6 +213,8 @@ export function QuizletsList({ role }: QuizletsListProps) {
   };
 
   const getLevelBadge = (level: QuizletLevel) => {
+    // For Admin/Teacher/Mentor: ALWAYS show level badge regardless of isHidden
+    // isHidden only affects Student UI
     switch (level) {
       case QuizletLevel.Easy:
         return <Badge className="bg-green-600">Dễ</Badge>;
@@ -221,7 +223,7 @@ export function QuizletsList({ role }: QuizletsListProps) {
       case QuizletLevel.Hard:
         return <Badge className="bg-red-600">Khó</Badge>;
       default:
-        return <Badge variant="outline">{level}</Badge>;
+        return <Badge variant="outline">Level {level}</Badge>;
     }
   };
 

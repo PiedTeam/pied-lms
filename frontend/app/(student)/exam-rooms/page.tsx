@@ -53,7 +53,9 @@ export default function StudentExamRoomsPage() {
     });
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string | undefined) => {
+    if (!status) return <Badge variant="outline">Unknown</Badge>;
+
     switch (status) {
       case "Ongoing":
         return (
@@ -270,7 +272,7 @@ export default function StudentExamRoomsPage() {
                       <div className="flex items-center gap-2 text-sm">
                         <Users className="h-4 w-4 text-muted-foreground" />
                         <span className="text-muted-foreground">
-                          {room.examCount} đề thi
+                          {room.exams?.length || 0} đề thi
                         </span>
                       </div>
                       {room.status === "Ongoing" && (

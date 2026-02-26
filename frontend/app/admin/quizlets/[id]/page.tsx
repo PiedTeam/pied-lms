@@ -85,11 +85,11 @@ export default function ViewQuizletPage() {
             <CardTitle className="text-sm font-medium">Độ khó</CardTitle>
           </CardHeader>
           <CardContent>
-            {quizlet.level === 0 && <Badge className="bg-green-600">Dễ</Badge>}
-            {quizlet.level === 1 && (
+            {quizlet.level === 1 && <Badge className="bg-green-600">Dễ</Badge>}
+            {quizlet.level === 2 && (
               <Badge className="bg-yellow-600">Trung bình</Badge>
             )}
-            {quizlet.level === 2 && <Badge className="bg-red-600">Khó</Badge>}
+            {quizlet.level === 3 && <Badge className="bg-red-600">Khó</Badge>}
             {quizlet.isHidden && (
               <Badge variant="outline" className="ml-2">
                 Level ẩn

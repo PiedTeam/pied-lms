@@ -67,13 +67,13 @@ export function QuizletViewDetail({ quizlet }: QuizletViewDetailProps) {
                     <div className="flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-medium">{question.content}</p>
-                        {question.level === 0 && (
+                        {question.level === 1 && (
                           <Badge className="bg-green-600">Dễ</Badge>
                         )}
-                        {question.level === 1 && (
+                        {question.level === 2 && (
                           <Badge className="bg-yellow-600">Trung bình</Badge>
                         )}
-                        {question.level === 2 && (
+                        {question.level === 3 && (
                           <Badge className="bg-red-600">Khó</Badge>
                         )}
                         {question.isHidden && (

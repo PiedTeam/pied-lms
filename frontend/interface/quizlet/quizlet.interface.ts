@@ -16,7 +16,8 @@ export interface QuestionResponse {
   score: number;
   answers: string[];
   correctAnswers: string[];
-  questionType: string; // "SingleChoice" or "MultipleChoice"
+  type: number; // 0 = SingleChoice, 1 = MultipleChoice (from backend)
+  questionType: string; // "SingleChoice" or "MultipleChoice" (for display)
   isHidden: boolean;
   level: QuizletLevel;
 }
@@ -38,6 +39,7 @@ export interface QuizletSummaryResponse {
 export interface QuizletResponse {
   id: number;
   title: string;
+  description?: string;
   userName: string;
   createdAt: string;
   updatedAt: string;

@@ -165,11 +165,7 @@ export default function QuizResultPage() {
               <div className="text-6xl font-bold text-primary mb-2">
                 {percentage.toFixed(1)}%
               </div>
-              <Progress
-                value={percentage}
-                className="h-4 mt-4"
-                indicatorClassName={isPassed ? "bg-green-600" : "bg-orange-600"}
-              />
+              <Progress value={percentage} className="h-4 mt-4" />
             </div>
           </CardHeader>
         </Card>
