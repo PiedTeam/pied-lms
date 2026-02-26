@@ -23,3 +23,14 @@ public record GetExamsByRoomQuery(
 public record GetExamsInRoomForStudentQuery(
     Guid ExamRoomId
 ) : IRequest<ServiceResponse<List<ExamInRoomResponse>>>;
+
+// Get Exams By Room Code For Student Query
+public record GetExamsByRoomCodeQuery(
+    string RoomCode
+) : IRequest<ServiceResponse<List<ExamInRoomResponse>>>;
+
+// Verify Room Code And Get Exams Query
+public record VerifyRoomCodeAndGetExamsQuery(
+    Guid ExamRoomId,
+    string RoomCode
+) : IRequest<ServiceResponse<List<ExamInRoomResponse>>>;
