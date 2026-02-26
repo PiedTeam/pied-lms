@@ -23,12 +23,20 @@ export interface UpdateExamRequest {
   passingMarks: number;
 }
 
-export interface GetExamsByMentorRequest {
+export interface GetExamsRequest {
   pageNumber?: number;
   pageSize?: number;
 }
 
 export interface GetExamsByMentorResponse {
+  items: ExamResponse[];
+  pageNumber: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+}
+
+export interface GetExamsByAdminResponse {
   items: ExamResponse[];
   pageNumber: number;
   pageSize: number;

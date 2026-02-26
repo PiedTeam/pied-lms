@@ -5,8 +5,9 @@ import type {
   ExamResponse,
   CreateExamRequest,
   UpdateExamRequest,
-  GetExamsByMentorRequest,
   GetExamsByMentorResponse,
+  GetExamsRequest,
+  GetExamsByAdminResponse,
 } from "@/interface/exam/exam.interface";
 
 // Create Exam (Mentor only)
@@ -41,13 +42,41 @@ export function useCreateExam() {
 }
 
 // Get Exams By Mentor
-export function useGetExamsByMentor(params: GetExamsByMentorRequest = {}) {
+export function useGetExamsByMentor(params: GetExamsRequest = {}) {
   const { pageNumber = 1, pageSize = 10 } = params;
 
   return useQuery({
     queryKey: ["exams", pageNumber, pageSize],
     queryFn: async (): Promise<GetExamsByMentorResponse> => {
       const { data } = await axios.get<ApiResponse<GetExamsByMentorResponse>>(
+        "/exams",
+        {
+          params: {
+            pageNumber,
+            pageSize,
+          },
+        },
+      );
+
+      if (!data.success || !data.data) {
+        throw new Error(data.message || "Failed to load exams list");
+      }
+
+      return data.data;
+    },
+    retry: 1,
+    staleTime: 30000,
+  });
+}
+
+// Get Exams By Admin
+export function useGetExamsByAdmin(params: GetExamsRequest = {}) {
+  const { pageNumber = 1, pageSize = 10 } = params;
+
+  return useQuery({
+    queryKey: ["exams", pageNumber, pageSize],
+    queryFn: async (): Promise<GetExamsByAdminResponse> => {
+      const { data } = await axios.get<ApiResponse<GetExamsByAdminResponse>>(
         "/exams",
         {
           params: {
