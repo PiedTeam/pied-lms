@@ -19,61 +19,26 @@ import {
   User,
   Calendar,
 } from "lucide-react";
-// TODO: Old project services - need to be replaced or removed
-// import { useGetRooms } from '@/service/student/room.service'
-// import { useGetProfile } from '@/service/student/profile.service'
 import { useAuthStore } from "@/store/auth.store";
-import { RoomCard } from "@/components/student/RoomCard";
-
-interface Room {
-  roomId: string;
-  name: string;
-  open_time: string | Date;
-  close_time: string | Date;
-}
-
-interface RoomsData {
-  roomList: Room[];
-}
-
-interface Profile {
-  full_name: string;
-}
+import { useGetAvailableExamRooms } from "@/service";
 
 export function StudentDashboard() {
-  // TODO: Replace with new services
-  // const { data: roomsData, isLoading: isLoadingRooms } = useGetRooms()
-  // const { data: profile, isLoading: isLoadingProfile } = useGetProfile()
-  const roomsData = null as RoomsData | null;
-  const isLoadingRooms = false;
-  const profile = null as Profile | null;
-  const isLoadingProfile = false;
   const user = useAuthStore((state) => state.user);
+  const { data: roomsData, isLoading } = useGetAvailableExamRooms({
+    pageNumber: 1,
+    pageSize: 100,
+  });
 
   const dashboardStats = useMemo(() => {
-    const rooms = roomsData?.roomList || [];
-    const now = new Date();
+    const rooms = roomsData?.items || [];
 
-    const totalRooms = rooms.length;
-    const activeExams = rooms.filter((room: Room) => {
-      const openTime =
-        typeof room.open_time === "string"
-          ? new Date(room.open_time)
-          : room.open_time;
-      const closeTime =
-        typeof room.close_time === "string"
-          ? new Date(room.close_time)
-          : room.close_time;
-      return now >= openTime && now <= closeTime;
-    }).length;
-
-    const upcomingExams = rooms.filter((room: Room) => {
-      const openTime =
-        typeof room.open_time === "string"
-          ? new Date(room.open_time)
-          : room.open_time;
-      return now < openTime;
-    }).length;
+    const totalRooms = rooms.filter((room) => !room.isDeleted).length;
+    const activeExams = rooms.filter(
+      (room) => room.status === "Ongoing" && !room.isDeleted,
+    ).length;
+    const upcomingExams = rooms.filter(
+      (room) => room.status === "Upcoming" && !room.isDeleted,
+    ).length;
 
     return {
       totalRooms,
@@ -82,45 +47,13 @@ export function StudentDashboard() {
     };
   }, [roomsData]);
 
-  const recentRooms = useMemo(() => {
-    if (!roomsData?.roomList) return [];
-    return roomsData.roomList.slice(0, 3);
-  }, [roomsData]);
-
-  const upcomingRooms = useMemo(() => {
-    if (!roomsData?.roomList) return [];
-    const now = new Date();
-    return roomsData.roomList
-      .filter((room: Room) => {
-        const openTime =
-          typeof room.open_time === "string"
-            ? new Date(room.open_time)
-            : room.open_time;
-        return now < openTime;
-      })
-      .sort((a: Room, b: Room) => {
-        const aTime =
-          typeof a.open_time === "string"
-            ? new Date(a.open_time).getTime()
-            : a.open_time.getTime();
-        const bTime =
-          typeof b.open_time === "string"
-            ? new Date(b.open_time).getTime()
-            : b.open_time.getTime();
-        return aTime - bTime;
-      })
-      .slice(0, 3);
-  }, [roomsData]);
-
-  const isLoading = isLoadingRooms || isLoadingProfile;
-
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Student Dashboard</h1>
         <p className="mt-2 text-muted-foreground">
-          Welcome back, {profile?.full_name ?? user?.fullName ?? "Student"}!
-          Here&apos;s an overview of your exam activities.
+          Welcome back, {user?.fullName ?? "Student"}! Here&apos;s an overview
+          of your exam activities.
         </p>
       </div>
 
@@ -197,7 +130,7 @@ export function StudentDashboard() {
                   variant="outline"
                   className="h-auto flex-col py-4"
                 >
-                  <Link href="/rooms/join">
+                  <Link href="/exam-rooms">
                     <Plus className="mb-2 h-6 w-6" />
                     <span>Join Room</span>
                   </Link>
@@ -207,7 +140,7 @@ export function StudentDashboard() {
                   variant="outline"
                   className="h-auto flex-col py-4"
                 >
-                  <Link href="/rooms">
+                  <Link href="/exam-rooms">
                     <BookOpen className="mb-2 h-6 w-6" />
                     <span>View All Rooms</span>
                   </Link>
@@ -226,44 +159,6 @@ export function StudentDashboard() {
             </CardContent>
           </Card>
 
-          {recentRooms.length > 0 && (
-            <div>
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-2xl font-semibold">Recent Rooms</h2>
-                <Button asChild variant="ghost">
-                  <Link href="/rooms">
-                    View All
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {recentRooms.map((room: Room) => (
-                  <RoomCard key={room.roomId} room={room} />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {upcomingRooms.length > 0 && (
-            <div>
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-2xl font-semibold">Upcoming Exams</h2>
-                <Button asChild variant="ghost">
-                  <Link href="/rooms">
-                    View All
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {upcomingRooms.map((room: Room) => (
-                  <RoomCard key={room.roomId} room={room} />
-                ))}
-              </div>
-            </div>
-          )}
-
           {dashboardStats.totalRooms === 0 && (
             <Card>
               <CardHeader>
@@ -275,7 +170,7 @@ export function StudentDashboard() {
               </CardHeader>
               <CardContent>
                 <Button asChild>
-                  <Link href="/rooms/join">
+                  <Link href="/exam-rooms">
                     <Plus className="mr-2 h-4 w-4" />
                     Join Your First Room
                   </Link>

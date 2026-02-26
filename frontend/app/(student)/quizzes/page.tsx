@@ -1,7 +1,15 @@
 "use client";
 
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { FileSpreadsheet, Clock, User, Calendar, Award } from "lucide-react";
+import {
+  FileSpreadsheet,
+  Clock,
+  User,
+  Calendar,
+  Award,
+  Search,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,12 +19,16 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { useGetStudentQuizlets } from "@/service";
 import { QuizletLevel } from "@/interface/quizlet/quizlet.interface";
 
 export default function StudentQuizzesPage() {
   const router = useRouter();
   const { data: quizlets, isLoading } = useGetStudentQuizlets();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 4; // 4 quizlets per page
 
   const getLevelBadge = (level: QuizletLevel, isHidden: boolean) => {
     if (isHidden) return null;
@@ -48,6 +60,31 @@ export default function StudentQuizzesPage() {
     }
   };
 
+  // Filter by search query
+  const filteredQuizlets = useMemo(() => {
+    if (!quizlets) return [];
+    if (!searchQuery.trim()) return quizlets;
+
+    return quizlets.filter(
+      (quizlet) =>
+        quizlet.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        quizlet.userName.toLowerCase().includes(searchQuery.toLowerCase()),
+    );
+  }, [quizlets, searchQuery]);
+
+  // Paginate on frontend
+  const totalPages = Math.ceil(filteredQuizlets.length / pageSize);
+  const paginatedQuizlets = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return filteredQuizlets.slice(startIndex, startIndex + pageSize);
+  }, [filteredQuizlets, currentPage, pageSize]);
+
+  // Reset to page 1 when search changes
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    setCurrentPage(1);
+  };
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div>
@@ -57,9 +94,21 @@ export default function StudentQuizzesPage() {
         </p>
       </div>
 
+      <div className="flex items-center gap-4">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Tìm kiếm bộ câu hỏi..."
+            value={searchQuery}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+      </div>
+
       {isLoading ? (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3].map((i) => (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
             <Card key={i} className="animate-pulse">
               <CardHeader>
                 <div className="h-8 bg-gray-200 rounded w-3/4"></div>
@@ -71,69 +120,105 @@ export default function StudentQuizzesPage() {
             </Card>
           ))}
         </div>
-      ) : quizlets && quizlets.length > 0 ? (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {quizlets.map((quizlet) => (
-            <Card
-              key={quizlet.id}
-              className="hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer border-2 hover:border-primary"
-              onClick={() => router.push(`/quizzes/${quizlet.id}`)}
-            >
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="p-3 bg-primary/10 rounded-lg">
-                    <FileSpreadsheet className="h-6 w-6 text-primary" />
+      ) : paginatedQuizlets.length > 0 ? (
+        <>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            {paginatedQuizlets.map((quizlet) => (
+              <Card
+                key={quizlet.id}
+                className="hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer border-2 hover:border-primary"
+                onClick={() => router.push(`/quizzes/${quizlet.id}`)}
+              >
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="p-3 bg-primary/10 rounded-lg">
+                      <FileSpreadsheet className="h-6 w-6 text-primary" />
+                    </div>
+                    <div className="flex flex-col gap-2 items-end">
+                      <Badge variant="default" className="bg-blue-600">
+                        Đã xuất bản
+                      </Badge>
+                      {getLevelBadge(quizlet.level, quizlet.isHidden)}
+                    </div>
                   </div>
-                  <div className="flex flex-col gap-2 items-end">
-                    <Badge variant="default" className="bg-blue-600">
-                      Đã xuất bản
-                    </Badge>
-                    {getLevelBadge(quizlet.level, quizlet.isHidden)}
+                  <CardTitle className="text-xl line-clamp-2">
+                    {quizlet.title}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <User className="h-4 w-4" />
+                      <span className="font-medium">Người tạo:</span>
+                      <span className="truncate">{quizlet.userName}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Calendar className="h-4 w-4" />
+                      <span className="font-medium">Ngày tạo:</span>
+                      <span>
+                        {new Date(quizlet.createdAt).toLocaleDateString(
+                          "vi-VN",
+                        )}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Clock className="h-4 w-4" />
+                      <span className="font-medium">Số câu hỏi:</span>
+                      <span className="font-semibold text-primary">
+                        {quizlet.quantityQuestion}
+                      </span>
+                    </div>
                   </div>
-                </div>
-                <CardTitle className="text-xl line-clamp-2">
-                  {quizlet.title}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <User className="h-4 w-4" />
-                    <span className="font-medium">Người tạo:</span>
-                    <span className="truncate">{quizlet.userName}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Calendar className="h-4 w-4" />
-                    <span className="font-medium">Ngày tạo:</span>
-                    <span>
-                      {new Date(quizlet.createdAt).toLocaleDateString("vi-VN")}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Clock className="h-4 w-4" />
-                    <span className="font-medium">Số câu hỏi:</span>
-                    <span className="font-semibold text-primary">
-                      {quizlet.quantityQuestion}
-                    </span>
-                  </div>
-                </div>
-                <Button className="w-full mt-4 font-semibold" size="lg">
-                  Bắt đầu làm bài
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                  <Button className="w-full mt-4 font-semibold" size="lg">
+                    Bắt đầu làm bài
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-6">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                &lt;
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                Trang {currentPage} / {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(totalPages, p + 1))
+                }
+                disabled={currentPage === totalPages}
+              >
+                &gt;
+              </Button>
+            </div>
+          )}
+        </>
       ) : (
         <Card className="border-dashed border-2">
           <CardContent className="text-center py-16">
             <div className="p-4 bg-muted rounded-full w-fit mx-auto mb-4">
               <FileSpreadsheet className="h-12 w-12 text-muted-foreground" />
             </div>
-            <h3 className="text-xl font-semibold">Chưa có bộ câu hỏi nào</h3>
+            <h3 className="text-xl font-semibold">
+              {searchQuery
+                ? "Không tìm thấy bộ câu hỏi"
+                : "Chưa có bộ câu hỏi nào"}
+            </h3>
             <p className="text-sm text-muted-foreground mt-2">
-              Hiện tại chưa có bộ câu hỏi nào được xuất bản. Vui lòng quay lại
-              sau!
+              {searchQuery
+                ? "Không tìm thấy bộ câu hỏi phù hợp với từ khóa tìm kiếm"
+                : "Hiện tại chưa có bộ câu hỏi nào được xuất bản. Vui lòng quay lại sau!"}
             </p>
           </CardContent>
         </Card>

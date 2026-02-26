@@ -20,12 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import {
-  useGetExamRoomById,
-  useCheckExamRoomAccess,
-  useStartExam,
-} from "@/service";
-import { useState } from "react";
+import { useGetExamRoomById } from "@/service";
 
 export default function StudentExamRoomDetailPage() {
   const params = useParams();
@@ -34,9 +29,6 @@ export default function StudentExamRoomDetailPage() {
   const roomId = params.id as string;
 
   const { data: room, isLoading: isLoadingRoom } = useGetExamRoomById(roomId);
-  const { data: accessData, isLoading: isLoadingAccess } =
-    useCheckExamRoomAccess(roomId);
-  const { mutate: startExam, isPending: isStarting } = useStartExam();
 
   const formatDateTime = (dateString: string) => {
     return new Date(dateString).toLocaleString("vi-VN", {
@@ -66,29 +58,24 @@ export default function StudentExamRoomDetailPage() {
   };
 
   const handleStartExam = (examId: string) => {
-    startExam(
-      { examRoomId: roomId, examId },
-      {
-        onSuccess: (data) => {
-          toast({
-            title: "Thành công",
-            description: "Bắt đầu làm bài thi",
-          });
-          // Navigate to exam taking page
-          router.push(`/exam-rooms/${roomId}/exams/${examId}/take`);
-        },
-        onError: (error: Error) => {
-          toast({
-            title: "Lỗi",
-            description: error.message || "Không thể bắt đầu làm bài",
-            variant: "destructive",
-          });
-        },
-      },
-    );
+    // Save room data to localStorage for time calculation
+    if (room) {
+      localStorage.setItem(
+        `roomData_${roomId}`,
+        JSON.stringify({
+          endTime: room.endTime,
+          startTime: room.startTime,
+          durationInMinutes: room.durationInMinutes,
+        }),
+      );
+    }
+
+    // Simply navigate to exam taking page
+    // No API call here, just show the UI
+    router.push(`/exam-rooms/${roomId}/exams/${examId}/take`);
   };
 
-  if (isLoadingRoom || isLoadingAccess) {
+  if (isLoadingRoom) {
     return (
       <div className="container mx-auto p-6">
         <div className="text-center py-8">Đang tải...</div>
@@ -206,10 +193,9 @@ export default function StudentExamRoomDetailPage() {
                       <Button
                         size="sm"
                         onClick={() => handleStartExam(exam.id)}
-                        disabled={!accessData?.hasAccess || isStarting}
                       >
                         <Play className="mr-2 h-4 w-4" />
-                        {isStarting ? "Đang bắt đầu..." : "Bắt đầu"}
+                        Bắt đầu
                       </Button>
                     </TableCell>
                   </TableRow>

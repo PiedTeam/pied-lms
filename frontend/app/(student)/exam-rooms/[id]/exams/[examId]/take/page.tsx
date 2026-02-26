@@ -33,19 +33,6 @@ interface Exam {
   passingMarks: number;
 }
 
-interface Participation {
-  id: string;
-  examRoomId: string;
-  examRoomName: string;
-  examId: string;
-  examTitle: string;
-  startedAt: string;
-  deadline: string;
-  submittedAt: string | null;
-  score: number | null;
-  isCompleted: boolean;
-}
-
 interface JudgeTestCaseResult {
   testCase: number;
   passed: boolean;
@@ -67,9 +54,6 @@ export default function TakeExamPage() {
   const examId = params.examId as string;
 
   const [exam, setExam] = useState<Exam | null>(null);
-  const [participation, setParticipation] = useState<Participation | null>(
-    null,
-  );
   const [testCases, setTestCases] = useState<TestCase[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [code, setCode] = useState(`#include <stdio.h>
@@ -85,95 +69,41 @@ int main() {
   const [activeTab, setActiveTab] = useState("question");
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
 
-  // Fetch exam details, start participation, and get test cases
+  // Just show the UI, no API calls
   useEffect(() => {
-    const initializeExam = async () => {
+    // Set mock exam data
+    setExam({
+      id: examId,
+      title: "Bài thi lập trình C",
+      description: "Viết chương trình C để giải quyết bài toán",
+      totalMarks: 100,
+      passingMarks: 50,
+    });
+
+    // Calculate time remaining from room's endTime (stored in localStorage when navigating from room detail)
+    const roomDataStr = localStorage.getItem(`roomData_${roomId}`);
+    if (roomDataStr) {
       try {
-        const token = localStorage.getItem("token");
-        const roomCode = localStorage.getItem(`roomCode_${roomId}`);
-
-        if (!token || !roomCode) {
-          toast({
-            title: "Lỗi",
-            description: "Không tìm thấy thông tin xác thực",
-            variant: "destructive",
-          });
-          router.push(`/exam-rooms/${roomId}`);
-          return;
-        }
-
-        // Start exam participation
-        const startResponse = await fetch("/api/participations/start", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            roomCode,
-            examId,
-          }),
-        });
-
-        if (!startResponse.ok) {
-          const errorData = await startResponse.json();
-          toast({
-            title: "Lỗi",
-            description: errorData.message || "Không thể bắt đầu bài thi",
-            variant: "destructive",
-          });
-          router.push(`/exam-rooms/${roomId}`);
-          return;
-        }
-
-        const startData = await startResponse.json();
-        setParticipation(startData.data);
-
-        // Calculate time remaining
-        const deadline = new Date(startData.data.deadline).getTime();
+        const roomData = JSON.parse(roomDataStr);
+        const endTime = new Date(roomData.endTime).getTime();
         const now = Date.now();
-        setTimeRemaining(Math.max(0, Math.floor((deadline - now) / 1000)));
-
-        // Fetch exam details
-        const examResponse = await fetch(`/api/exams/${examId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (examResponse.ok) {
-          const examData = await examResponse.json();
-          setExam(examData.data);
-        }
-
-        // Fetch visible test cases
-        const testCasesResponse = await fetch(
-          `/api/students/testcases/${examId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          },
+        const remainingSeconds = Math.max(
+          0,
+          Math.floor((endTime - now) / 1000),
         );
-
-        if (testCasesResponse.ok) {
-          const testCasesData = await testCasesResponse.json();
-          setTestCases(testCasesData.data || []);
-        }
+        setTimeRemaining(remainingSeconds);
       } catch (error) {
-        console.error("Error initializing exam:", error);
-        toast({
-          title: "Lỗi",
-          description: "Có lỗi xảy ra khi tải bài thi",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
+        console.error("Error parsing room data:", error);
+        // Fallback to 60 minutes if parsing fails
+        setTimeRemaining(60 * 60);
       }
-    };
+    } else {
+      // Fallback to 60 minutes if no room data
+      setTimeRemaining(60 * 60);
+    }
 
-    initializeExam();
-  }, [examId, roomId, router, toast]);
+    setIsLoading(false);
+  }, [examId, roomId]);
 
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
@@ -193,20 +123,50 @@ int main() {
         return;
       }
 
-      if (!participation) {
-        toast({
-          title: "Lỗi",
-          description: "Không tìm thấy thông tin bài thi",
-          variant: "destructive",
-        });
-        return;
-      }
-
       setIsSubmitting(true);
 
       try {
         const token = localStorage.getItem("token");
+        const roomCode = localStorage.getItem(`roomCode_${roomId}`);
 
+        if (!token || !roomCode) {
+          toast({
+            title: "Lỗi",
+            description: "Không tìm thấy thông tin xác thực",
+            variant: "destructive",
+          });
+          setIsSubmitting(false);
+          return;
+        }
+
+        // First, start participation to get participationId
+        const startResponse = await fetch("/api/participations/start", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            roomCode,
+            examId,
+          }),
+        });
+
+        if (!startResponse.ok) {
+          const errorData = await startResponse.json();
+          toast({
+            title: "Lỗi",
+            description: errorData.message || "Không thể bắt đầu bài thi",
+            variant: "destructive",
+          });
+          setIsSubmitting(false);
+          return;
+        }
+
+        const startData = await startResponse.json();
+        const participationId = startData.data.id;
+
+        // Then submit the code
         const response = await fetch("/api/participations/submit", {
           method: "POST",
           headers: {
@@ -214,7 +174,7 @@ int main() {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            participationId: participation.id,
+            participationId: participationId,
             sourceCode: code,
             isFinalSubmission: isFinal,
           }),
@@ -250,19 +210,17 @@ int main() {
         setIsSubmitting(false);
       }
     },
-    [code, participation, toast, router, roomId],
+    [code, toast, router, roomId, examId],
   );
 
   const handleAutoSubmit = useCallback(async () => {
-    if (!participation) return;
-
     toast({
       title: "Hết giờ",
       description: "Bài thi của bạn đã được tự động nộp",
     });
 
     await handleSubmit(true);
-  }, [participation, toast, handleSubmit]);
+  }, [toast, handleSubmit]);
 
   // Countdown timer
   useEffect(() => {
@@ -372,7 +330,7 @@ int main() {
     );
   }
 
-  if (!exam || !participation) {
+  if (!exam) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -542,9 +500,9 @@ int main() {
 
               <TabsContent
                 value="question"
-                className="flex-1 m-0 data-[state=active]:flex flex-col"
+                className="flex-1 m-0 p-0 data-[state=active]:flex data-[state=active]:flex-col"
               >
-                <div className="flex-1 border-t">
+                <div className="flex-1 min-h-[600px]">
                   <Editor
                     height="100%"
                     defaultLanguage="c"
@@ -552,6 +510,11 @@ int main() {
                     onChange={(value) => setCode(value || "")}
                     onMount={handleEditorDidMount}
                     theme="vs-dark"
+                    loading={
+                      <div className="flex items-center justify-center h-full">
+                        Đang tải editor...
+                      </div>
+                    }
                     options={{
                       minimap: { enabled: false },
                       fontSize: 14,

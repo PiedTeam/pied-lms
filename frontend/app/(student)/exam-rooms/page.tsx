@@ -149,6 +149,14 @@ export default function StudentExamRoomsPage() {
       return;
     }
 
+    // Save room code to localStorage for later use when starting exam
+    localStorage.setItem(`roomCode_${selectedRoom.id}`, roomCode.toUpperCase());
+
+    toast({
+      title: "Thành công",
+      description: "Đã vào phòng thi",
+    });
+
     // Navigate to exam room
     router.push(`/exam-rooms/${selectedRoom.id}`);
     setIsJoinDialogOpen(false);

@@ -10,6 +10,8 @@ import {
   Pencil,
   Download,
   FileSpreadsheet,
+  Search,
+  Filter,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -72,17 +74,33 @@ export function QuizletsList({ role }: QuizletsListProps) {
   const [level, setLevel] = useState<QuizletLevel>(QuizletLevel.Easy);
   const [file, setFile] = useState<File | null>(null);
   const [activeTab, setActiveTab] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [levelFilter, setLevelFilter] = useState<string>("all");
 
   const { data: quizlets, isLoading } = useGetAllQuizlets();
   const { mutate: createQuizlet, isPending: isCreating } = useCreateQuizlet();
   const { mutate: togglePublish, isPending: isToggling } =
     useTogglePublishQuizlet();
 
-  // Filter quizlets based on active tab
+  // Filter quizlets based on active tab, search query, and level filter
   const filteredQuizlets = quizlets?.filter((quizlet) => {
-    if (activeTab === "all") return true;
-    if (activeTab === "published") return quizlet.isPublished;
-    if (activeTab === "unpublished") return !quizlet.isPublished;
+    // Filter by tab
+    if (activeTab === "published" && !quizlet.isPublished) return false;
+    if (activeTab === "unpublished" && quizlet.isPublished) return false;
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      const matchesTitle = quizlet.title.toLowerCase().includes(query);
+      const matchesUserName = quizlet.userName?.toLowerCase().includes(query);
+      if (!matchesTitle && !matchesUserName) return false;
+    }
+
+    // Filter by level
+    if (levelFilter !== "all") {
+      if (quizlet.level.toString() !== levelFilter) return false;
+    }
+
     return true;
   });
 
@@ -366,7 +384,9 @@ export function QuizletsList({ role }: QuizletsListProps) {
       <Card>
         <CardHeader>
           <CardTitle>Danh sách Quizlet</CardTitle>
-          <CardDescription>{quizlets?.length || 0} quizlet</CardDescription>
+          <CardDescription>
+            {filteredQuizlets?.length || 0} / {quizlets?.length || 0} quizlet
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -376,7 +396,33 @@ export function QuizletsList({ role }: QuizletsListProps) {
               <TabsTrigger value="unpublished">Hủy xuất bản</TabsTrigger>
             </TabsList>
 
-            <TabsContent value={activeTab} className="mt-6">
+            <div className="flex items-center gap-4 mt-6 mb-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Tìm kiếm theo tiêu đề hoặc người tạo..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-muted-foreground" />
+                <Select value={levelFilter} onValueChange={setLevelFilter}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Độ khó" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tất cả độ khó</SelectItem>
+                    <SelectItem value="1">Dễ</SelectItem>
+                    <SelectItem value="2">Trung bình</SelectItem>
+                    <SelectItem value="3">Khó</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <TabsContent value={activeTab} className="mt-0">
               {isLoading ? (
                 <div className="space-y-4">
                   {[1, 2, 3].map((i) => (
