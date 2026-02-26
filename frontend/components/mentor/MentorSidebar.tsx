@@ -44,6 +44,11 @@ const menuItems = [
     icon: FileText,
   },
   {
+    title: "Học sinh",
+    href: "/mentor/students",
+    icon: Users,
+  },
+  {
     title: "Timetables",
     href: "/mentor/timetables",
     icon: CalendarSearch,

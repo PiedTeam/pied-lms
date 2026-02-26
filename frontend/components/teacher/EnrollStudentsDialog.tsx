@@ -17,7 +17,11 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { useGetAllUsers, useEnrollStudents } from "@/services";
+import {
+  useGetAllStudents,
+  useEnrollStudents,
+  useGetExamRoomEnrollments,
+} from "@/services";
 import { EXAM_ROOM_MESSAGES } from "@/constants/messages.constants";
 import type { UserResponse } from "@/interface/user/user.interface";
 import type { EnrollmentResultResponse } from "@/interface/exam-room/exam-room.interface";
@@ -32,7 +36,14 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
 
-  const { data: usersData, isLoading: isLoadingUsers } = useGetAllUsers({
+  const { data: studentsData, isLoading: isLoadingStudents } =
+    useGetAllStudents({
+      pageNumber: 1,
+      pageSize: 100,
+    });
+
+  const { data: enrollmentsData } = useGetExamRoomEnrollments({
+    examRoomId: roomId,
     pageNumber: 1,
     pageSize: 100,
   });
@@ -40,9 +51,13 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
   const { mutate: enrollStudents, isPending: isEnrolling } =
     useEnrollStudents();
 
-  // Filter only students
-  const students =
-    usersData?.items.filter((user) => user.role === "Student") || [];
+  // All users from this endpoint are students
+  const students = studentsData?.items || [];
+
+  // Get list of already enrolled student IDs
+  const enrolledStudentIds = new Set(
+    enrollmentsData?.items.map((enrollment) => enrollment.studentId) || [],
+  );
 
   // Filter students by search query
   const filteredStudents = students.filter(
@@ -53,7 +68,9 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
         .includes(searchQuery.toLowerCase()),
   );
 
-  const handleToggleStudent = (studentId: string) => {
+  const handleToggleStudent = (studentId: string, isEnrolled: boolean) => {
+    if (isEnrolled) return; // Don't allow toggling enrolled students
+
     setSelectedStudentIds((prev) =>
       prev.includes(studentId)
         ? prev.filter((id) => id !== studentId)
@@ -62,10 +79,15 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
   };
 
   const handleSelectAll = () => {
-    if (selectedStudentIds.length === filteredStudents.length) {
+    // Only select students who are not already enrolled
+    const selectableStudents = filteredStudents.filter(
+      (s) => !enrolledStudentIds.has(s.id),
+    );
+
+    if (selectedStudentIds.length === selectableStudents.length) {
       setSelectedStudentIds([]);
     } else {
-      setSelectedStudentIds(filteredStudents.map((s) => s.id));
+      setSelectedStudentIds(selectableStudents.map((s) => s.id));
     }
   };
 
@@ -177,14 +199,17 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
           <div className="grid gap-2">
             <div className="flex items-center justify-between">
               <Label>Danh sách học sinh</Label>
-              {filteredStudents.length > 0 && (
+              {filteredStudents.filter((s) => !enrolledStudentIds.has(s.id))
+                .length > 0 && (
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={handleSelectAll}
                   className="h-8"
                 >
-                  {selectedStudentIds.length === filteredStudents.length
+                  {selectedStudentIds.length ===
+                  filteredStudents.filter((s) => !enrolledStudentIds.has(s.id))
+                    .length
                     ? "Bỏ chọn tất cả"
                     : "Chọn tất cả"}
                 </Button>
@@ -192,7 +217,7 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
             </div>
 
             <div className="border rounded-lg max-h-[400px] overflow-y-auto">
-              {isLoadingUsers ? (
+              {isLoadingStudents ? (
                 <div className="text-center py-8 text-muted-foreground">
                   Đang tải danh sách học sinh...
                 </div>
@@ -206,36 +231,54 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
                 </div>
               ) : (
                 <div className="divide-y">
-                  {filteredStudents.map((student: UserResponse) => (
-                    <div
-                      key={student.id}
-                      className="p-4 hover:bg-accent cursor-pointer transition-colors"
-                      onClick={() => handleToggleStudent(student.id)}
-                    >
-                      <div className="flex items-start gap-3">
-                        <Checkbox
-                          checked={selectedStudentIds.includes(student.id)}
-                          onCheckedChange={() =>
-                            handleToggleStudent(student.id)
-                          }
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-medium truncate">
-                              {student.firstName} {student.lastName}
-                            </h4>
-                            <Badge variant="outline" className="text-xs">
-                              {student.role}
-                            </Badge>
+                  {filteredStudents.map((student: UserResponse) => {
+                    const isEnrolled = enrolledStudentIds.has(student.id);
+                    const isSelected = selectedStudentIds.includes(student.id);
+
+                    return (
+                      <div
+                        key={student.id}
+                        className={`p-4 transition-colors ${
+                          isEnrolled
+                            ? "opacity-50 cursor-not-allowed bg-muted"
+                            : "hover:bg-accent cursor-pointer"
+                        }`}
+                        onClick={() =>
+                          !isEnrolled &&
+                          handleToggleStudent(student.id, isEnrolled)
+                        }
+                      >
+                        <div className="flex items-start gap-3">
+                          <Checkbox
+                            checked={isSelected}
+                            disabled={isEnrolled}
+                            onCheckedChange={() =>
+                              handleToggleStudent(student.id, isEnrolled)
+                            }
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-medium truncate">
+                                {student.firstName} {student.lastName}
+                              </h4>
+                              <Badge variant="outline" className="text-xs">
+                                {student.role}
+                              </Badge>
+                              {isEnrolled && (
+                                <Badge variant="secondary" className="text-xs">
+                                  Đã thêm
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground truncate mt-1">
+                              {student.email}
+                            </p>
                           </div>
-                          <p className="text-sm text-muted-foreground truncate mt-1">
-                            {student.email}
-                          </p>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>

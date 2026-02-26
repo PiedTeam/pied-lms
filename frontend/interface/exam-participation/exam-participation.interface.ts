@@ -1,23 +1,47 @@
-// Exam Participation Interfaces (for Student - taking exams)
+// Exam Participation Interfaces
 
 export interface ExamParticipationResponse {
   id: string;
-  examId: string;
-  examTitle: string;
   examRoomId: string;
   examRoomName: string;
-  studentId: string;
-  startTime: string;
-  endTime: string | null;
+  examId: string;
+  examTitle: string;
+  startedAt: string;
+  deadline: string;
+  submittedAt: string | null;
   score: number | null;
-  isPassed: boolean | null;
-  status: string; // "InProgress", "Completed", "Abandoned"
-  createdAt: string;
+  isCompleted: boolean;
 }
 
-export interface StartExamRequest {
+export interface ExamRoomAccessResponse {
+  canAccess: boolean;
+  reason: string;
+  availableFrom: string | null;
+  availableUntil: string | null;
+}
+
+export interface ExamRoomEnrollmentResponse {
+  id: string;
+  studentId: string;
+  studentEmail: string;
+  studentFirstName: string;
+  studentLastName: string;
+  enrolledAt: string;
+  emailSent: boolean;
+  emailSentAt: string | null;
+}
+
+export interface GetExamRoomEnrollmentsRequest {
   examRoomId: string;
-  examId: string;
+  pageNumber?: number;
+  pageSize?: number;
+}
+
+export interface PaginatedExamRoomEnrollmentsResponse {
+  items: ExamRoomEnrollmentResponse[];
+  pageNumber: number;
+  pageSize: number;
+  totalCount: number;
 }
 
 export interface GetStudentParticipationsRequest {
@@ -25,21 +49,33 @@ export interface GetStudentParticipationsRequest {
   pageSize?: number;
 }
 
-export interface GetStudentParticipationsResponse {
+export interface PaginatedExamParticipationsResponse {
   items: ExamParticipationResponse[];
   pageNumber: number;
   pageSize: number;
   totalCount: number;
-  totalPages: number;
 }
 
-export interface ExamRoomAccessResponse {
-  hasAccess: boolean;
-  reason: string | null;
-  examRoom: {
-    id: string;
-    name: string;
-    startTime: string;
-    endTime: string;
-  } | null;
+export interface SubmitExamResponse {
+  participationId: string;
+  submittedAt: string;
+  score: number | null;
+  isCompleted: boolean;
+  message: string;
+}
+
+export interface StartExamRequest {
+  examRoomId: string;
+  examId: string;
+}
+
+export interface SubmitExamRequest {
+  participationId: string;
+  answers: ExamAnswer[];
+  isFinal: boolean;
+}
+
+export interface ExamAnswer {
+  questionId: string;
+  answer: string;
 }

@@ -58,6 +58,7 @@ export function ExamsList({ basePath }: ExamsListProps) {
   const [deleteExamId, setDeleteExamId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("active");
   const [pageNumber, setPageNumber] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
   const pageSize = 6; // Fixed page size
   const [formData, setFormData] = useState<CreateExamRequest>({
     title: "",
@@ -79,10 +80,20 @@ export function ExamsList({ basePath }: ExamsListProps) {
 
   // Filter exams by tab (client-side filtering for archived tab)
   const allExams = examsData?.items || [];
+
+  // Apply search filter
+  const filteredExams = searchQuery
+    ? allExams.filter(
+        (exam) =>
+          exam.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          exam.description?.toLowerCase().includes(searchQuery.toLowerCase()),
+      )
+    : allExams;
+
   const currentExams =
     activeTab === "archived"
-      ? allExams.filter((exam) => exam.isDeleted)
-      : allExams;
+      ? filteredExams.filter((exam) => exam.isDeleted)
+      : filteredExams;
 
   // Calculate counts for tabs (from pagination data)
   const totalCount = examsData?.totalCount || 0;
@@ -275,10 +286,22 @@ export function ExamsList({ basePath }: ExamsListProps) {
         <TabsContent value={activeTab} className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Danh Sách Đề Thi</CardTitle>
-              <CardDescription>
-                Trang {pageNumber} / {totalPages} - Tổng: {totalCount}
-              </CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Danh Sách Đề Thi</CardTitle>
+                  <CardDescription>
+                    Trang {pageNumber} / {totalPages} - Tổng: {totalCount}
+                  </CardDescription>
+                </div>
+                <div className="w-72">
+                  <Input
+                    placeholder="Tìm kiếm đề thi..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               {isLoading ? (

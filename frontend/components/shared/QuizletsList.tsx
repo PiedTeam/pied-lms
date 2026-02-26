@@ -2,7 +2,16 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Upload, FileSpreadsheet, Plus } from "lucide-react";
+import {
+  Upload,
+  FileJson,
+  Plus,
+  Eye,
+  Pencil,
+  Trash2,
+  Download,
+  FileSpreadsheet,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -15,6 +24,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -25,6 +41,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Table,
   TableBody,
@@ -38,7 +64,9 @@ import {
   useGetAllQuizlets,
   useCreateQuizlet,
   useTogglePublishQuizlet,
+  useDeleteQuizlet,
 } from "@/service";
+import { QuizletLevel } from "@/interface/quizlet/quizlet.interface";
 
 interface QuizletsListProps {
   role: "admin" | "teacher" | "mentor";
@@ -48,23 +76,31 @@ export function QuizletsList({ role }: QuizletsListProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [deleteQuizletId, setDeleteQuizletId] = useState<number | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [isPublished, setIsPublished] = useState(false);
+  const [isHidden, setIsHidden] = useState(false);
+  const [level, setLevel] = useState<QuizletLevel>(QuizletLevel.Easy);
   const [file, setFile] = useState<File | null>(null);
 
   const { data: quizlets, isLoading } = useGetAllQuizlets();
   const { mutate: createQuizlet, isPending: isCreating } = useCreateQuizlet();
   const { mutate: togglePublish, isPending: isToggling } =
     useTogglePublishQuizlet();
+  const { mutate: deleteQuizlet, isPending: isDeleting } = useDeleteQuizlet();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
-      if (!selectedFile.name.endsWith(".xlsx")) {
+      const validExtensions = [".xlsx", ".xls"];
+      const isValid = validExtensions.some((ext) =>
+        selectedFile.name.toLowerCase().endsWith(ext),
+      );
+      if (!isValid) {
         toast({
           title: "Lỗi",
-          description: "Chỉ chấp nhận file Excel (.xlsx)",
+          description: "Chỉ chấp nhận file Excel (.xlsx, .xls)",
           variant: "destructive",
         });
         e.target.value = "";
@@ -72,6 +108,16 @@ export function QuizletsList({ role }: QuizletsListProps) {
       }
       setFile(selectedFile);
     }
+  };
+
+  const handleDownloadTemplate = () => {
+    // Download the template file from public folder
+    const link = document.createElement("a");
+    link.href = "/templates/quiz_data_with_fields.xlsx";
+    link.download = "quiz_template.xlsx";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -100,6 +146,8 @@ export function QuizletsList({ role }: QuizletsListProps) {
         title,
         description,
         isPublished,
+        isHidden,
+        level,
         listQuestion: file,
       },
       {
@@ -112,6 +160,8 @@ export function QuizletsList({ role }: QuizletsListProps) {
           setTitle("");
           setDescription("");
           setIsPublished(false);
+          setIsHidden(false);
+          setLevel(QuizletLevel.Easy);
           setFile(null);
         },
         onError: (error: Error) => {
@@ -148,6 +198,40 @@ export function QuizletsList({ role }: QuizletsListProps) {
     );
   };
 
+  const handleDelete = () => {
+    if (!deleteQuizletId) return;
+
+    deleteQuizlet(deleteQuizletId, {
+      onSuccess: () => {
+        toast({
+          title: "Thành công",
+          description: "Đã xóa quizlet thành công",
+        });
+        setDeleteQuizletId(null);
+      },
+      onError: (error: Error) => {
+        toast({
+          title: "Lỗi",
+          description: error.message,
+          variant: "destructive",
+        });
+      },
+    });
+  };
+
+  const getLevelBadge = (level: QuizletLevel) => {
+    switch (level) {
+      case QuizletLevel.Easy:
+        return <Badge className="bg-green-600">Dễ</Badge>;
+      case QuizletLevel.Medium:
+        return <Badge className="bg-yellow-600">Trung bình</Badge>;
+      case QuizletLevel.Hard:
+        return <Badge className="bg-red-600">Khó</Badge>;
+      default:
+        return <Badge variant="outline">{level}</Badge>;
+    }
+  };
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -158,105 +242,150 @@ export function QuizletsList({ role }: QuizletsListProps) {
           </p>
         </div>
 
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Tạo Quizlet
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[600px]">
-            <form onSubmit={handleSubmit}>
-              <DialogHeader>
-                <DialogTitle>Tạo Quizlet mới</DialogTitle>
-                <DialogDescription>
-                  Upload file Excel chứa câu hỏi. File phải có định dạng .xlsx
-                </DialogDescription>
-              </DialogHeader>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleDownloadTemplate}>
+            <Download className="mr-2 h-4 w-4" />
+            Tải file mẫu
+          </Button>
+          <Dialog
+            open={isCreateDialogOpen}
+            onOpenChange={setIsCreateDialogOpen}
+          >
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Tạo Quizlet
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[600px]">
+              <form onSubmit={handleSubmit}>
+                <DialogHeader>
+                  <DialogTitle>Tạo Quizlet mới</DialogTitle>
+                  <DialogDescription>
+                    Upload file Excel chứa câu hỏi. File phải có định dạng .xlsx
+                    hoặc .xls
+                  </DialogDescription>
+                </DialogHeader>
 
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="title">
-                    Tiêu đề <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="title"
-                    placeholder="Nhập tiêu đề quizlet"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="description">Mô tả</Label>
-                  <Textarea
-                    id="description"
-                    placeholder="Nhập mô tả (tùy chọn)"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    rows={3}
-                  />
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="file">
-                    File Excel <span className="text-red-500">*</span>
-                  </Label>
-                  <div className="flex items-center gap-2">
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="title">
+                      Tiêu đề <span className="text-red-500">*</span>
+                    </Label>
                     <Input
-                      id="file"
-                      type="file"
-                      accept=".xlsx"
-                      onChange={handleFileChange}
+                      id="title"
+                      placeholder="Nhập tiêu đề quizlet"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
                       required
                     />
-                    <FileSpreadsheet className="h-5 w-5 text-muted-foreground" />
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    File Excel phải có các cột: Content, Option1, Option2,
-                    Option3, Option4, CorrectAnswer
-                  </p>
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="description">
+                      Mô tả <span className="text-red-500">*</span>
+                    </Label>
+                    <Textarea
+                      id="description"
+                      placeholder="Nhập mô tả"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      rows={3}
+                      required
+                    />
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="level">
+                      Độ khó <span className="text-red-500">*</span>
+                    </Label>
+                    <Select
+                      value={level.toString()}
+                      onValueChange={(value) =>
+                        setLevel(parseInt(value) as QuizletLevel)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Chọn độ khó" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="0">Dễ</SelectItem>
+                        <SelectItem value="1">Trung bình</SelectItem>
+                        <SelectItem value="2">Khó</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="file">
+                      File Excel <span className="text-red-500">*</span>
+                    </Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        id="file"
+                        type="file"
+                        accept=".xlsx,.xls"
+                        onChange={handleFileChange}
+                        required
+                      />
+                      <FileSpreadsheet className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      File Excel phải có cấu trúc đúng theo file mẫu. Tải file
+                      mẫu để xem cấu trúc.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="isPublished"
+                      checked={isPublished}
+                      onCheckedChange={setIsPublished}
+                    />
+                    <Label htmlFor="isPublished" className="cursor-pointer">
+                      Xuất bản ngay
+                    </Label>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="isHidden"
+                      checked={isHidden}
+                      onCheckedChange={setIsHidden}
+                    />
+                    <Label htmlFor="isHidden" className="cursor-pointer">
+                      Ẩn level (độ khó) của quizlet
+                    </Label>
+                  </div>
                 </div>
 
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="isPublished"
-                    checked={isPublished}
-                    onCheckedChange={setIsPublished}
-                  />
-                  <Label htmlFor="isPublished" className="cursor-pointer">
-                    Xuất bản ngay
-                  </Label>
-                </div>
-              </div>
-
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsCreateDialogOpen(false)}
-                  disabled={isCreating}
-                >
-                  Hủy
-                </Button>
-                <Button type="submit" disabled={isCreating}>
-                  {isCreating ? (
-                    <>
-                      <Upload className="mr-2 h-4 w-4 animate-spin" />
-                      Đang tạo...
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="mr-2 h-4 w-4" />
-                      Tạo Quizlet
-                    </>
-                  )}
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+                <DialogFooter>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsCreateDialogOpen(false)}
+                    disabled={isCreating}
+                  >
+                    Hủy
+                  </Button>
+                  <Button type="submit" disabled={isCreating}>
+                    {isCreating ? (
+                      <>
+                        <Upload className="mr-2 h-4 w-4 animate-spin" />
+                        Đang tạo...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="mr-2 h-4 w-4" />
+                        Tạo Quizlet
+                      </>
+                    )}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <Card>
@@ -266,8 +395,15 @@ export function QuizletsList({ role }: QuizletsListProps) {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="text-center py-8 text-muted-foreground">
-              Đang tải...
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="flex items-center space-x-4 animate-pulse"
+                >
+                  <div className="h-12 bg-gray-200 rounded w-full"></div>
+                </div>
+              ))}
             </div>
           ) : quizlets && quizlets.length > 0 ? (
             <Table>
@@ -275,6 +411,7 @@ export function QuizletsList({ role }: QuizletsListProps) {
                 <TableRow>
                   <TableHead>Tiêu đề</TableHead>
                   <TableHead>Người tạo</TableHead>
+                  <TableHead>Độ khó</TableHead>
                   <TableHead>Số câu hỏi</TableHead>
                   <TableHead>Trạng thái</TableHead>
                   <TableHead>Ngày tạo</TableHead>
@@ -283,11 +420,20 @@ export function QuizletsList({ role }: QuizletsListProps) {
               </TableHeader>
               <TableBody>
                 {quizlets.map((quizlet) => (
-                  <TableRow key={quizlet.id}>
+                  <TableRow
+                    key={quizlet.id}
+                    className={quizlet.isHidden ? "opacity-60" : ""}
+                  >
                     <TableCell className="font-medium">
                       {quizlet.title}
+                      {quizlet.isHidden && (
+                        <span className="ml-2 text-xs text-muted-foreground">
+                          (Đã ẩn)
+                        </span>
+                      )}
                     </TableCell>
                     <TableCell>{quizlet.userName || "—"}</TableCell>
+                    <TableCell>{getLevelBadge(quizlet.level)}</TableCell>
                     <TableCell>{quizlet.quantityQuestion}</TableCell>
                     <TableCell>
                       {quizlet.isPublished ? (
@@ -303,21 +449,23 @@ export function QuizletsList({ role }: QuizletsListProps) {
                       <div className="flex items-center justify-end gap-2">
                         <Button
                           variant="ghost"
-                          size="sm"
+                          size="icon"
                           onClick={() =>
                             router.push(`/${role}/quizlets/${quizlet.id}`)
                           }
+                          title="Xem chi tiết"
                         >
-                          Xem
+                          <Eye className="h-4 w-4" />
                         </Button>
                         <Button
-                          variant="outline"
-                          size="sm"
+                          variant="ghost"
+                          size="icon"
                           onClick={() =>
                             router.push(`/${role}/quizlets/${quizlet.id}/edit`)
                           }
+                          title="Chỉnh sửa"
                         >
-                          Sửa
+                          <Pencil className="h-4 w-4" />
                         </Button>
                         <Button
                           variant={
@@ -331,6 +479,14 @@ export function QuizletsList({ role }: QuizletsListProps) {
                         >
                           {quizlet.isPublished ? "Hủy xuất bản" : "Xuất bản"}
                         </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setDeleteQuizletId(quizlet.id)}
+                          title="Xóa"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -339,12 +495,12 @@ export function QuizletsList({ role }: QuizletsListProps) {
             </Table>
           ) : (
             <div className="text-center py-12">
-              <FileSpreadsheet className="mx-auto h-12 w-12 text-muted-foreground" />
+              <FileJson className="mx-auto h-12 w-12 text-muted-foreground" />
               <h3 className="mt-4 text-lg font-semibold">
                 Chưa có quizlet nào
               </h3>
               <p className="text-sm text-muted-foreground mt-2">
-                Tạo quizlet đầu tiên bằng cách upload file Excel
+                Tạo quizlet đầu tiên bằng cách upload file JSON
               </p>
               <Button
                 className="mt-4"
@@ -365,54 +521,88 @@ export function QuizletsList({ role }: QuizletsListProps) {
         <CardContent className="space-y-4">
           <div>
             <h4 className="font-medium mb-2">Cấu trúc file Excel:</h4>
-            <div className="bg-muted p-4 rounded-lg font-mono text-sm overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left p-2">Content</th>
-                    <th className="text-left p-2">Option1</th>
-                    <th className="text-left p-2">Option2</th>
-                    <th className="text-left p-2">Option3</th>
-                    <th className="text-left p-2">Option4</th>
-                    <th className="text-left p-2">CorrectAnswer</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td className="p-2">Thủ đô của Việt Nam là gì?</td>
-                    <td className="p-2">Hà Nội</td>
-                    <td className="p-2">Hồ Chí Minh</td>
-                    <td className="p-2">Đà Nẵng</td>
-                    <td className="p-2">Cần Thơ</td>
-                    <td className="p-2">Hà Nội</td>
-                  </tr>
-                  <tr>
-                    <td className="p-2">1 + 1 bằng mấy?</td>
-                    <td className="p-2">1</td>
-                    <td className="p-2">2</td>
-                    <td className="p-2">3</td>
-                    <td className="p-2">4</td>
-                    <td className="p-2">2</td>
-                  </tr>
-                </tbody>
-              </table>
+            <p className="text-sm text-muted-foreground mb-3">
+              File Excel phải có các cột sau (theo thứ tự):
+            </p>
+            <div className="bg-muted p-4 rounded-lg text-sm">
+              <ul className="space-y-2">
+                <li>
+                  <span className="font-medium">Content:</span> Nội dung câu hỏi
+                </li>
+                <li>
+                  <span className="font-medium">
+                    Option1, Option2, Option3, Option4:
+                  </span>{" "}
+                  Các đáp án (tối thiểu 2 đáp án)
+                </li>
+                <li>
+                  <span className="font-medium">CorrectAnswer:</span> Đáp án
+                  đúng (ví dụ: "Ha Noi" hoặc "2" cho nhiều đáp án)
+                </li>
+                <li>
+                  <span className="font-medium">IsHidden:</span> TRUE/FALSE -
+                  ẩn/hiện câu hỏi
+                </li>
+                <li>
+                  <span className="font-medium">Level:</span> 1 = Dễ, 2 = Trung
+                  bình, 3 = Khó
+                </li>
+              </ul>
             </div>
           </div>
 
           <div className="space-y-2">
             <h4 className="font-medium">Lưu ý:</h4>
             <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
-              <li>File phải có định dạng .xlsx (Excel 2007+)</li>
-              <li>Dòng đầu tiên phải là header với tên cột chính xác</li>
-              <li>Content, Option1, Option2, CorrectAnswer là bắt buộc</li>
-              <li>Option3 và Option4 là tùy chọn</li>
+              <li>File phải có định dạng .xlsx hoặc .xls</li>
+              <li>Dòng đầu tiên là tiêu đề các cột</li>
               <li>
-                CorrectAnswer phải khớp chính xác với một trong các Option
+                Đáp án đúng phải khớp chính xác với một trong các Option (phân
+                biệt hoa thường)
               </li>
+              <li>
+                Nếu có nhiều đáp án đúng, phân cách bằng dấu phẩy (ví dụ: "2,3")
+              </li>
+              <li>IsHidden: TRUE để ẩn câu hỏi, FALSE để hiển thị</li>
+              <li>Tải file mẫu để xem cấu trúc chi tiết và ví dụ</li>
             </ul>
           </div>
+
+          <Button
+            variant="outline"
+            onClick={handleDownloadTemplate}
+            className="w-full"
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Tải file mẫu Excel
+          </Button>
         </CardContent>
       </Card>
+
+      <AlertDialog
+        open={!!deleteQuizletId}
+        onOpenChange={() => setDeleteQuizletId(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận xóa quizlet</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn xóa quizlet này? Hành động này không thể
+              hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
+              {isDeleting ? "Đang xóa..." : "Xóa"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

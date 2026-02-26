@@ -78,3 +78,31 @@ export function useGetAllUsers(params: GetAllUsersRequest = {}) {
     staleTime: 30000, // 30 seconds
   });
 }
+
+// Get All Students (for Mentor, Teacher, Admin)
+export function useGetAllStudents(params: GetAllUsersRequest = {}) {
+  const { pageNumber = 1, pageSize = 10 } = params;
+
+  return useQuery({
+    queryKey: ["students", pageNumber, pageSize],
+    queryFn: async (): Promise<GetAllUsersResponse> => {
+      const { data } = await axios.get<ApiResponse<GetAllUsersResponse>>(
+        "/auth/students",
+        {
+          params: {
+            pageNumber,
+            pageSize,
+          },
+        },
+      );
+
+      if (!data.success || !data.data) {
+        throw new Error(data.message || "Failed to load students list");
+      }
+
+      return data.data;
+    },
+    retry: 1, // Only retry once
+    staleTime: 30000, // 30 seconds
+  });
+}

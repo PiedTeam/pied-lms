@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace PIED_LMS.Persistence.Migrations;
 
 /// <inheritdoc />
-public partial class AutoMigration : Migration
+public partial class init : Migration
 {
     /// <inheritdoc />
     protected override void Up(MigrationBuilder migrationBuilder)
@@ -93,10 +93,12 @@ public partial class AutoMigration : Migration
                 start_time = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                 end_time = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                 duration_in_minutes = table.Column<int>(type: "integer", nullable: false),
+                room_code = table.Column<string>(type: "character varying(8)", maxLength: 8, nullable: false),
                 created_by = table.Column<Guid>(type: "uuid", nullable: false),
                 created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                 updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                is_deleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
+                is_deleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                deleted_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
             },
             constraints: table =>
             {
@@ -121,7 +123,8 @@ public partial class AutoMigration : Migration
                 created_by = table.Column<Guid>(type: "uuid", nullable: false),
                 created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                 updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                is_deleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
+                is_deleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                deleted_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
             },
             constraints: table =>
             {
@@ -272,6 +275,34 @@ public partial class AutoMigration : Migration
             });
 
         migrationBuilder.CreateTable(
+            name: "exam_room_enrollments",
+            columns: table => new
+            {
+                id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                exam_room_id = table.Column<Guid>(type: "uuid", nullable: false),
+                student_id = table.Column<Guid>(type: "uuid", nullable: false),
+                enrolled_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                email_sent = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                email_sent_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+            },
+            constraints: table =>
+            {
+                table.PrimaryKey("pk_exam_room_enrollments", x => x.id);
+                table.ForeignKey(
+                    name: "fk_exam_room_enrollments_exam_room_exam_room_id",
+                    column: x => x.exam_room_id,
+                    principalTable: "exam_rooms",
+                    principalColumn: "id",
+                    onDelete: ReferentialAction.Cascade);
+                table.ForeignKey(
+                    name: "fk_exam_room_enrollments_users_student_id",
+                    column: x => x.student_id,
+                    principalTable: "users",
+                    principalColumn: "id",
+                    onDelete: ReferentialAction.Restrict);
+            });
+
+        migrationBuilder.CreateTable(
             name: "exam_participations",
             columns: table => new
             {
@@ -283,7 +314,8 @@ public partial class AutoMigration : Migration
                 submitted_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                 deadline = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                 score = table.Column<int>(type: "integer", nullable: true),
-                is_completed = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
+                is_completed = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                answers_json = table.Column<string>(type: "text", nullable: true)
             },
             constraints: table =>
             {
@@ -362,8 +394,10 @@ public partial class AutoMigration : Migration
                 id = table.Column<int>(type: "integer", nullable: false)
                     .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                 content = table.Column<string>(type: "text", nullable: false),
-                score = table.Column<double>(type: "double precision", nullable: false),
+                score = table.Column<double>(type: "double precision", nullable: false, defaultValue: 0.0),
                 question_type = table.Column<string>(type: "text", nullable: false),
+                is_hidden = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                level = table.Column<int>(type: "integer", nullable: false, defaultValue: 1),
                 quiz_id = table.Column<int>(type: "integer", nullable: false)
             },
             constraints: table =>
@@ -414,6 +448,17 @@ public partial class AutoMigration : Migration
             column: "student_id");
 
         migrationBuilder.CreateIndex(
+            name: "ix_exam_room_enrollments_exam_room_id_student_id",
+            table: "exam_room_enrollments",
+            columns: new[] { "exam_room_id", "student_id" },
+            unique: true);
+
+        migrationBuilder.CreateIndex(
+            name: "ix_exam_room_enrollments_student_id",
+            table: "exam_room_enrollments",
+            column: "student_id");
+
+        migrationBuilder.CreateIndex(
             name: "ix_exam_room_exams_exam_id",
             table: "exam_room_exams",
             column: "exam_id");
@@ -432,6 +477,12 @@ public partial class AutoMigration : Migration
             name: "ix_exam_rooms_is_deleted",
             table: "exam_rooms",
             column: "is_deleted");
+
+        migrationBuilder.CreateIndex(
+            name: "ix_exam_rooms_room_code",
+            table: "exam_rooms",
+            column: "room_code",
+            unique: true);
 
         migrationBuilder.CreateIndex(
             name: "ix_exam_rooms_start_time",
@@ -523,6 +574,9 @@ public partial class AutoMigration : Migration
     {
         migrationBuilder.DropTable(
             name: "exam_participations");
+
+        migrationBuilder.DropTable(
+            name: "exam_room_enrollments");
 
         migrationBuilder.DropTable(
             name: "exam_room_exams");

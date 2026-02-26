@@ -25,11 +25,11 @@ public class QuizletEndpoints : ICarterModule
         // GET /api/quizlets  (Admin, Mentor, Teacher — all quizlets summary)
         group.MapGet("", GetAllQuizlets)
             .WithName("GetAllQuizlets")
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Lecturer"));
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"));
 
         group.MapGet("/{id:int}", GetQuizletById)
             .WithName("GetQuizletById")
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Lecturer"));
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"));
 
         // DELETE /api/quizlets/{id}
         group.MapDelete("/{id}", DeleteQuizlet)

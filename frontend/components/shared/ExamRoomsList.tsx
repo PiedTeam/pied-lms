@@ -64,6 +64,7 @@ export function ExamRoomsList({ basePath }: ExamRoomsListProps) {
   const [deleteRoomId, setDeleteRoomId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("all");
   const [pageNumber, setPageNumber] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
   const pageSize = 6; // Fixed page size
   const [formData, setFormData] = useState<CreateExamRoomRequest>({
     name: "",
@@ -102,10 +103,20 @@ export function ExamRoomsList({ basePath }: ExamRoomsListProps) {
 
   // Filter rooms by tab (client-side filtering for archived tab)
   const allRooms = roomsData?.items || [];
+
+  // Apply search filter
+  const filteredRooms = searchQuery
+    ? allRooms.filter(
+        (room) =>
+          room.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          room.description?.toLowerCase().includes(searchQuery.toLowerCase()),
+      )
+    : allRooms;
+
   const currentRooms =
     activeTab === "archived"
-      ? allRooms.filter((room) => room.isDeleted)
-      : allRooms;
+      ? filteredRooms.filter((room) => room.isDeleted)
+      : filteredRooms;
 
   // Calculate counts for tabs (from pagination data)
   const totalCount = roomsData?.totalCount || 0;
@@ -351,10 +362,22 @@ export function ExamRoomsList({ basePath }: ExamRoomsListProps) {
         <TabsContent value={activeTab} className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Danh Sách Phòng Thi</CardTitle>
-              <CardDescription>
-                Trang {pageNumber} / {totalPages} - Tổng: {totalCount}
-              </CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Danh Sách Phòng Thi</CardTitle>
+                  <CardDescription>
+                    Trang {pageNumber} / {totalPages} - Tổng: {totalCount}
+                  </CardDescription>
+                </div>
+                <div className="w-72">
+                  <Input
+                    placeholder="Tìm kiếm phòng thi..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               {isLoading ? (

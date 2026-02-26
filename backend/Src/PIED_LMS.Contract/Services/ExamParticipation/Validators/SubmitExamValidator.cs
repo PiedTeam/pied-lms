@@ -6,8 +6,5 @@ public class SubmitExamValidator : AbstractValidator<SubmitExamCommand>
     {
         RuleFor(x => x.ParticipationId)
             .NotEmpty().WithMessage("Participation ID is required");
-
-        RuleFor(x => x.Answers)
-            .NotNull().WithMessage("Answers list is required");
     }
 }
