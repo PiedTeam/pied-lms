@@ -1,14 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import {
-  ArrowLeft,
-  Calendar,
-  Clock,
-  FileText,
-  Play,
-  AlertCircle,
-} from "lucide-react";
+import { ArrowLeft, Calendar, Clock, FileText, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -18,7 +11,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Table,
   TableBody,
@@ -124,16 +116,6 @@ export default function StudentExamRoomDetailPage() {
         </div>
         {getStatusBadge(room.status)}
       </div>
-
-      {!accessData?.hasAccess && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Không thể truy cập</AlertTitle>
-          <AlertDescription>
-            {accessData?.reason || "Bạn không có quyền truy cập phòng thi này"}
-          </AlertDescription>
-        </Alert>
-      )}
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card>

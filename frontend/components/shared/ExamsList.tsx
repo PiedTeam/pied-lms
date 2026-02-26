@@ -93,7 +93,7 @@ export function ExamsList({ basePath }: ExamsListProps) {
   const currentExams =
     activeTab === "archived"
       ? filteredExams.filter((exam) => exam.isDeleted)
-      : filteredExams;
+      : filteredExams.filter((exam) => !exam.isDeleted);
 
   // Calculate counts for tabs (from pagination data)
   const totalCount = examsData?.totalCount || 0;

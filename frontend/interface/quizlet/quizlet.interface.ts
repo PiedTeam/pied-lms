@@ -6,9 +6,9 @@ export enum QuestionType {
 }
 
 export enum QuizletLevel {
-  Easy = 0,
-  Medium = 1,
-  Hard = 2,
+  Easy = 1,
+  Medium = 2,
+  Hard = 3,
 }
 
 export interface QuestionResponse {

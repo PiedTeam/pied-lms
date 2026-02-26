@@ -284,9 +284,9 @@ export function QuizletsList({ role }: QuizletsListProps) {
                         <SelectValue placeholder="Chọn độ khó" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="0">Dễ</SelectItem>
-                        <SelectItem value="1">Trung bình</SelectItem>
-                        <SelectItem value="2">Khó</SelectItem>
+                        <SelectItem value="1">Dễ</SelectItem>
+                        <SelectItem value="2">Trung bình</SelectItem>
+                        <SelectItem value="3">Khó</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

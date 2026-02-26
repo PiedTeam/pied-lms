@@ -214,9 +214,9 @@ export function QuizletEditForm({
                             }
                             className="w-full h-10 px-3 rounded-md border border-input bg-background"
                           >
-                            <option value="0">Dễ</option>
-                            <option value="1">Trung bình</option>
-                            <option value="2">Khó</option>
+                            <option value="1">Dễ</option>
+                            <option value="2">Trung bình</option>
+                            <option value="3">Khó</option>
                           </select>
                         </div>
                         <div className="flex items-center space-x-2 pt-8">
