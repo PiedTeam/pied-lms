@@ -34,7 +34,7 @@ public class CheckExamRoomAccessHandler(
             var user = httpContextAccessor.HttpContext?.User;
             var isAdmin = user?.IsInRole("Admin") ?? false;
             var isMentor = user?.IsInRole("Mentor") ?? false;
-            var isTeacher = user?.IsInRole("Teacher") ?? false;
+            var isLecturer = user?.IsInRole("Lecturer") ?? false;
             var isStudent = user?.IsInRole("Student") ?? false;
 
             // Find exam room by ID
@@ -53,8 +53,8 @@ public class CheckExamRoomAccessHandler(
 
             var now = DateTime.UtcNow;
 
-            // If Admin/Mentor/Teacher: grant view access
-            if (isAdmin || isMentor || isTeacher)
+            // If Admin/Mentor/Lecturer: grant view access
+            if (isAdmin || isMentor || isLecturer)
             {
                 var staffResponse = new ExamRoomAccessResponse(
                     true,

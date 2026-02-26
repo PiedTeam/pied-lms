@@ -61,7 +61,7 @@ public class ExamRoomEndpoints : ICarterModule
         group.MapPost("/{id}/enroll", EnrollStudents)
             .WithName("EnrollStudents")
             .WithOpenApi()
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Lecturer"))
             .Produces<ServiceResponse<EnrollmentResultResponse>>()
             .Produces<ServiceResponse<EnrollmentResultResponse>>(StatusCodes.Status400BadRequest)
             .Produces<ServiceResponse<EnrollmentResultResponse>>(StatusCodes.Status403Forbidden);
