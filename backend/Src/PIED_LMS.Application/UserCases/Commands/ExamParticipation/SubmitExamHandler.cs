@@ -77,7 +77,7 @@ public class SubmitExamHandler(
             if (now > participation.Deadline)
             {
                 // Auto-submit as final if deadline passed
-                participation.AnswersJson = JsonSerializer.Serialize(request.Answers);
+                participation.AnswersJson = request.SourceCode;
                 participation.SubmittedAt = now;
                 participation.IsCompleted = true;
                 
@@ -106,7 +106,7 @@ public class SubmitExamHandler(
             }
 
             // Save answers as JSON
-            participation.AnswersJson = JsonSerializer.Serialize(request.Answers);
+            participation.AnswersJson = request.SourceCode;
 
             // If this is final submission, mark as completed
             if (request.IsFinalSubmission)
