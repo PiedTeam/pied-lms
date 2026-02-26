@@ -44,6 +44,8 @@ public class UpdateQuestionQuizHandler(
         // 3. Update Properties
         quiz.Title = request.Title;
         quiz.IsPublished = request.IsPublished;
+        quiz.IsHidden = request.IsHidden;
+        quiz.Level = (int)request.Level;
         quiz.UpdatedAt = DateTime.UtcNow;
 
         // 4. Update Questions (Replace Strategy)
@@ -62,6 +64,8 @@ public class UpdateQuestionQuizHandler(
                 Content = qDto.Content,
                 Score = qDto.Score,
                 QuestionType = ParseQuestionType(qDto.QuestionType),
+                IsHidden = qDto.IsHidden,
+                Level = (int)qDto.Level,
                 Answers = new List<QuestionAnswer>()
             };
 

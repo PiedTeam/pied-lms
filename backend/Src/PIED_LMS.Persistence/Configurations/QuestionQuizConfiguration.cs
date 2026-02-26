@@ -28,6 +28,14 @@ public class QuestionQuizConfiguration : IEntityTypeConfiguration<QuestionQuiz>
         builder.Property(x => x.IsPublished)
             .HasDefaultValue(false);
 
+        builder.Property(x => x.IsHidden)
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(x => x.Level)
+            .IsRequired()
+            .HasDefaultValue(1); // 1 = Easy, 2 = Medium, 3 = Hard (QuizletLevel enum)
+
         // Configure relationship with User
         builder.HasOne(x => x.User)
             .WithMany()

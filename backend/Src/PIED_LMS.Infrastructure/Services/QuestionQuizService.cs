@@ -3,6 +3,7 @@ using PIED_LMS.Contract.Abstractions.Excel;
 using PIED_LMS.Contract.Abstractions.Services;
 using PIED_LMS.Contract.Abstractions.Shared;
 using PIED_LMS.Contract.Services.Identity;
+using PIED_LMS.Contract.Services.QuestionQuiz;
 using PIED_LMS.Domain.Abstractions;
 using PIED_LMS.Domain.Entities;
 
@@ -13,7 +14,9 @@ public class QuestionQuizService(IExcelService excelService, IUnitOfWork unitOfW
     public async Task<ServiceResponse<string>> CreateFromExcelAsync(
         string title, 
         string description, 
-        bool isPublished, 
+        bool isPublished,
+        bool isHidden,
+        QuizletLevel level,
         IFormFile file, 
         Guid userId, 
         CancellationToken cancellationToken = default)
@@ -43,7 +46,9 @@ public class QuestionQuizService(IExcelService excelService, IUnitOfWork unitOfW
                     {
                         Content = row.Content,
                         Score = 1, // Default score
-                        QuestionType = Domain.Constants.QuestionType.MultipleChoice,
+                        QuestionType = PIED_LMS.Domain.Constants.QuestionType.MultipleChoice,
+                        IsHidden = row.IsHidden,
+                        Level = (int)row.Level,
                         Answers = new List<QuestionAnswer>()
                     };
 
@@ -108,6 +113,8 @@ public class QuestionQuizService(IExcelService excelService, IUnitOfWork unitOfW
             Description = description ?? string.Empty,
             UserId = userId,
             IsPublished = isPublished,
+            IsHidden = isHidden,
+            Level = (int)level,
             Questions = questions
         };
 
@@ -135,6 +142,8 @@ public class QuestionQuizService(IExcelService excelService, IUnitOfWork unitOfW
         public string Option3 { get; set; } = string.Empty;
         public string Option4 { get; set; } = string.Empty;
         public string CorrectAnswer { get; set; } = string.Empty;
+        public bool IsHidden { get; set; } = false;
+        public QuizletLevel Level { get; set; } = QuizletLevel.Easy;
     }
 }
 
