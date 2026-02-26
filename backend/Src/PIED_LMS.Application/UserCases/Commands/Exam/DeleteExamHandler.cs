@@ -43,16 +43,6 @@ public class DeleteExamHandler(
                 );
             }
 
-            // Verify user is the creator
-            if (exam.CreatedBy != userId)
-            {
-                return new ServiceResponse<string>(
-                    false,
-                    "You are not authorized to delete this exam",
-                    ErrorCode: "FORBIDDEN"
-                );
-            }
-
             // Soft delete exam
             exam.IsDeleted = true;
             exam.DeletedAt = DateTime.UtcNow;

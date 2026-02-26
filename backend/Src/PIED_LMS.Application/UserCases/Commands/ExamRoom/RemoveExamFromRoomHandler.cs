@@ -30,12 +30,6 @@ public class RemoveExamFromRoomHandler(
                 );
             }
 
-            var userRoles = httpContextAccessor.HttpContext?.User.FindAll(ClaimTypes.Role)
-                .Select(c => c.Value)
-                .ToList() ?? new List<string>();
-
-            var isAdmin = userRoles.Contains("Admin");
-
             // Find exam room by ID
             var examRoom = await unitOfWork.Repository<Domain.Entities.ExamRoom>()
                 .FindAll(er => er.Id == request.ExamRoomId && !er.IsDeleted)
@@ -48,23 +42,6 @@ public class RemoveExamFromRoomHandler(
                     false,
                     "Exam room not found",
                     ErrorCode: "NOT_FOUND"
-                );
-            }
-
-            // Authorization check: Admin has full access, others must be the creator
-            if (!isAdmin && examRoom.CreatedBy != userId)
-            {
-                logger.LogWarning(
-                    "Unauthorized attempt to remove exam from room. UserId: {UserId}, ExamRoomId: {ExamRoomId}, CreatedBy: {CreatedBy}",
-                    userId,
-                    request.ExamRoomId,
-                    examRoom.CreatedBy
-                );
-                
-                return new ServiceResponse<string>(
-                    false,
-                    "You are not authorized to remove exams from this exam room",
-                    ErrorCode: "FORBIDDEN"
                 );
             }
 
@@ -100,11 +77,10 @@ public class RemoveExamFromRoomHandler(
             await unitOfWork.CommitAsync(cancellationToken);
 
             logger.LogInformation(
-                "Exam removed from room successfully. ExamRoomId: {ExamRoomId}, ExamId: {ExamId}, RemovedBy: {UserId}, IsAdmin: {IsAdmin}",
+                "Exam removed from room successfully. ExamRoomId: {ExamRoomId}, ExamId: {ExamId}, RemovedBy: {UserId}",
                 request.ExamRoomId,
                 request.ExamId,
-                userId,
-                isAdmin
+                userId
             );
 
             return new ServiceResponse<string>(

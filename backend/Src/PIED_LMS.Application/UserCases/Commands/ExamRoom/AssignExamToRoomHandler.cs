@@ -29,12 +29,6 @@ public class AssignExamToRoomHandler(
                 );
             }
 
-            var userRoles = httpContextAccessor.HttpContext?.User.FindAll(ClaimTypes.Role)
-                .Select(c => c.Value)
-                .ToList() ?? new List<string>();
-
-            var isAdmin = userRoles.Contains("Admin");
-
             // Find exam room by ID
             var examRoom = await unitOfWork.Repository<Domain.Entities.ExamRoom>()
                 .FindAll(er => er.Id == request.ExamRoomId && !er.IsDeleted)
@@ -49,23 +43,6 @@ public class AssignExamToRoomHandler(
                 );
             }
 
-            // Authorization check: Admin has full access, others must be the creator
-            if (!isAdmin && examRoom.CreatedBy != userId)
-            {
-                logger.LogWarning(
-                    "Unauthorized attempt to assign exam to room. UserId: {UserId}, ExamRoomId: {ExamRoomId}, CreatedBy: {CreatedBy}",
-                    userId,
-                    request.ExamRoomId,
-                    examRoom.CreatedBy
-                );
-                
-                return new ServiceResponse<string>(
-                    false,
-                    "You are not authorized to assign exams to this exam room",
-                    ErrorCode: "FORBIDDEN"
-                );
-            }
-
             // Find exam by ID
             var exam = await unitOfWork.Repository<Domain.Entities.Exam>()
                 .FindAll(e => e.Id == request.ExamId && !e.IsDeleted)
@@ -77,23 +54,6 @@ public class AssignExamToRoomHandler(
                     false,
                     "Exam not found",
                     ErrorCode: "NOT_FOUND"
-                );
-            }
-
-            // Authorization check for exam: Admin has full access, others must be the creator
-            if (!isAdmin && exam.CreatedBy != userId)
-            {
-                logger.LogWarning(
-                    "Unauthorized attempt to assign exam. UserId: {UserId}, ExamId: {ExamId}, CreatedBy: {CreatedBy}",
-                    userId,
-                    request.ExamId,
-                    exam.CreatedBy
-                );
-                
-                return new ServiceResponse<string>(
-                    false,
-                    "You are not authorized to assign this exam",
-                    ErrorCode: "FORBIDDEN"
                 );
             }
 
@@ -123,11 +83,10 @@ public class AssignExamToRoomHandler(
             await unitOfWork.CommitAsync(cancellationToken);
 
             logger.LogInformation(
-                "Exam assigned to room successfully. ExamRoomId: {ExamRoomId}, ExamId: {ExamId}, AssignedBy: {UserId}, IsAdmin: {IsAdmin}",
+                "Exam assigned to room successfully. ExamRoomId: {ExamRoomId}, ExamId: {ExamId}, AssignedBy: {UserId}",
                 request.ExamRoomId,
                 request.ExamId,
-                userId,
-                isAdmin
+                userId
             );
 
             return new ServiceResponse<string>(
