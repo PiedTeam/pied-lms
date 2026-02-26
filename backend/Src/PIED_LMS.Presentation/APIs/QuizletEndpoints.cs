@@ -107,14 +107,18 @@ public class QuizletEndpoints : ICarterModule
     // POST /api/quizlets
     public static async Task<IResult> CreateQuizlet(
         [FromForm] string title,
-        [FromForm] string description,
+        [FromForm] string? description,
         [FromForm] bool isPublished,
         [FromForm] bool isHidden,
-        [FromForm] QuizletLevel level,
+        [FromForm] QuizletLevel? level,
         IFormFile listQuestion,
         ISender sender)
     {
-        var command = new CreateQuestionQuizCommand(title, description, isPublished, isHidden, level, listQuestion);
+        var finalLevel = level.HasValue && Enum.IsDefined(typeof(QuizletLevel), level.Value) 
+            ? level.Value 
+            : QuizletLevel.Easy;
+
+        var command = new CreateQuestionQuizCommand(title, description ?? string.Empty, isPublished, isHidden, finalLevel, listQuestion);
         var result = await sender.Send(command);
         if (result.Success)
             return Results.Ok(result);
