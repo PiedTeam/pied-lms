@@ -18,7 +18,7 @@ public class AssignExamToRoomHandler(
     {
         try
         {
-            // Get current user ID from HttpContext claims
+            // Get current user ID and roles from HttpContext claims
             var userIdClaim = httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier);
             if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
             {
@@ -28,6 +28,12 @@ public class AssignExamToRoomHandler(
                     ErrorCode: "UNAUTHORIZED"
                 );
             }
+
+            var userRoles = httpContextAccessor.HttpContext?.User.FindAll(ClaimTypes.Role)
+                .Select(c => c.Value)
+                .ToList() ?? new List<string>();
+
+            var isAdmin = userRoles.Contains("Admin");
 
             // Find exam room by ID
             var examRoom = await unitOfWork.Repository<Domain.Entities.ExamRoom>()
@@ -43,9 +49,16 @@ public class AssignExamToRoomHandler(
                 );
             }
 
-            // Verify user is the creator of exam room
-            if (examRoom.CreatedBy != userId)
+            // Authorization check: Admin has full access, others must be the creator
+            if (!isAdmin && examRoom.CreatedBy != userId)
             {
+                logger.LogWarning(
+                    "Unauthorized attempt to assign exam to room. UserId: {UserId}, ExamRoomId: {ExamRoomId}, CreatedBy: {CreatedBy}",
+                    userId,
+                    request.ExamRoomId,
+                    examRoom.CreatedBy
+                );
+                
                 return new ServiceResponse<string>(
                     false,
                     "You are not authorized to assign exams to this exam room",
@@ -67,9 +80,16 @@ public class AssignExamToRoomHandler(
                 );
             }
 
-            // Verify user is the creator of the exam
-            if (exam.CreatedBy != userId)
+            // Authorization check for exam: Admin has full access, others must be the creator
+            if (!isAdmin && exam.CreatedBy != userId)
             {
+                logger.LogWarning(
+                    "Unauthorized attempt to assign exam. UserId: {UserId}, ExamId: {ExamId}, CreatedBy: {CreatedBy}",
+                    userId,
+                    request.ExamId,
+                    exam.CreatedBy
+                );
+                
                 return new ServiceResponse<string>(
                     false,
                     "You are not authorized to assign this exam",
@@ -103,10 +123,11 @@ public class AssignExamToRoomHandler(
             await unitOfWork.CommitAsync(cancellationToken);
 
             logger.LogInformation(
-                "Exam assigned to room successfully. ExamRoomId: {ExamRoomId}, ExamId: {ExamId}, AssignedBy: {UserId}",
+                "Exam assigned to room successfully. ExamRoomId: {ExamRoomId}, ExamId: {ExamId}, AssignedBy: {UserId}, IsAdmin: {IsAdmin}",
                 request.ExamRoomId,
                 request.ExamId,
-                userId
+                userId,
+                isAdmin
             );
 
             return new ServiceResponse<string>(

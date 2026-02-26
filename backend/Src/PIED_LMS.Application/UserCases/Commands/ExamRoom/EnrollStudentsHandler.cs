@@ -22,7 +22,7 @@ public class EnrollStudentsHandler(
     {
         try
         {
-            // Get current user ID from HttpContext claims
+            // Get current user ID and roles from HttpContext claims
             var userIdClaim = httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier);
             if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
             {
@@ -32,6 +32,12 @@ public class EnrollStudentsHandler(
                     ErrorCode: "UNAUTHORIZED"
                 );
             }
+
+            var userRoles = httpContextAccessor.HttpContext?.User.FindAll(ClaimTypes.Role)
+                .Select(c => c.Value)
+                .ToList() ?? new List<string>();
+
+            var isAdmin = userRoles.Contains("Admin");
 
             // Find exam room by ID
             var examRoom = await unitOfWork.Repository<Domain.Entities.ExamRoom>()
@@ -47,9 +53,16 @@ public class EnrollStudentsHandler(
                 );
             }
 
-            // Verify user is the creator
-            if (examRoom.CreatedBy != userId)
+            // Authorization check: Admin has full access, others must be the creator
+            if (!isAdmin && examRoom.CreatedBy != userId)
             {
+                logger.LogWarning(
+                    "Unauthorized attempt to enroll students. UserId: {UserId}, ExamRoomId: {ExamRoomId}, CreatedBy: {CreatedBy}",
+                    userId,
+                    request.ExamRoomId,
+                    examRoom.CreatedBy
+                );
+                
                 return new ServiceResponse<EnrollmentResultResponse>(
                     false,
                     "You are not authorized to enroll students in this exam room",
@@ -150,11 +163,13 @@ public class EnrollStudentsHandler(
             await unitOfWork.CommitAsync(cancellationToken);
 
             logger.LogInformation(
-                "Enrollment completed for exam room {ExamRoomId}. Total: {Total}, Successful: {Successful}, Failed: {Failed}",
+                "Enrollment completed for exam room {ExamRoomId}. Total: {Total}, Successful: {Successful}, Failed: {Failed}, EnrolledBy: {UserId}, IsAdmin: {IsAdmin}",
                 request.ExamRoomId,
                 request.StudentIds.Count,
                 successfulEnrollments,
-                errors.Count
+                errors.Count,
+                userId,
+                isAdmin
             );
 
             var response = new EnrollmentResultResponse(
