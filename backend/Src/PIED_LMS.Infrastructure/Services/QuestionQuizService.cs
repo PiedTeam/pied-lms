@@ -47,8 +47,13 @@ public class QuestionQuizService(IExcelService excelService, IUnitOfWork unitOfW
                         Content = row.Content,
                         Score = 1, // Default score
                         QuestionType = PIED_LMS.Domain.Constants.QuestionType.MultipleChoice,
-                        IsHidden = isHidden,
-                        Level = (int)level,
+                        // If Excel row has explicitly mapped them, use them; otherwise, we can fallback to quizlet. 
+                        // But since QuestionImportDto has default false/Easy, we might trust the row if mapped correctly.
+                        // Wait, looking at QuestionImportDto: public bool IsHidden { get; set; } = false; public QuizletLevel Level { get; set; } = QuizletLevel.Easy;
+                        // To allow quizlet level as fallback, we'd need to know if the user actually typed it in excel or if it's default.
+                        // Assuming the requirement is "Excel values override Quizlet values"
+                        IsHidden = row.IsHidden ?? isHidden,
+                        Level = row.Level.HasValue ? (int)row.Level.Value : (int)level,
                         Answers = new List<QuestionAnswer>()
                     };
 
@@ -142,8 +147,8 @@ public class QuestionQuizService(IExcelService excelService, IUnitOfWork unitOfW
         public string Option3 { get; set; } = string.Empty;
         public string Option4 { get; set; } = string.Empty;
         public string CorrectAnswer { get; set; } = string.Empty;
-        public bool IsHidden { get; set; } = false;
-        public QuizletLevel Level { get; set; } = QuizletLevel.Easy;
+        public bool? IsHidden { get; set; }
+        public QuizletLevel? Level { get; set; }
     }
 }
 
