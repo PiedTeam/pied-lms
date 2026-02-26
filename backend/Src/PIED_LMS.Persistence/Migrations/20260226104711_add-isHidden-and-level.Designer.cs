@@ -12,8 +12,8 @@ using PIED_LMS.Persistence;
 namespace PIED_LMS.Persistence.Migrations
 {
     [DbContext(typeof(PiedLmsDbContext))]
-    [Migration("20260213072926_Init-db")]
-    partial class Initdb
+    [Migration("20260226104711_add-isHidden-and-level")]
+    partial class addisHiddenandlevel
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -533,6 +533,18 @@ namespace PIED_LMS.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("content");
 
+                    b.Property<bool>("IsHidden")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_hidden");
+
+                    b.Property<int>("Level")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1)
+                        .HasColumnName("level");
+
                     b.Property<string>("QuestionType")
                         .IsRequired()
                         .HasColumnType("text")
@@ -543,7 +555,9 @@ namespace PIED_LMS.Persistence.Migrations
                         .HasColumnName("quiz_id");
 
                     b.Property<double>("Score")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("double precision")
+                        .HasDefaultValue(0.0)
                         .HasColumnName("score");
 
                     b.HasKey("Id")
@@ -605,11 +619,23 @@ namespace PIED_LMS.Persistence.Migrations
                         .HasColumnType("character varying(1000)")
                         .HasColumnName("description");
 
+                    b.Property<bool>("IsHidden")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_hidden");
+
                     b.Property<bool>("IsPublished")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(false)
                         .HasColumnName("is_published");
+
+                    b.Property<int>("Level")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1)
+                        .HasColumnName("level");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -632,6 +658,50 @@ namespace PIED_LMS.Persistence.Migrations
                         .HasDatabaseName("ix_question_quizs_user_id");
 
                     b.ToTable("question_quizs", (string)null);
+                });
+
+            modelBuilder.Entity("PIED_LMS.Domain.Entities.TestCase", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<Guid>("ExamId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("exam_id");
+
+                    b.Property<int>("Index")
+                        .HasColumnType("integer")
+                        .HasColumnName("index");
+
+                    b.Property<string>("InputPath")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("input_path");
+
+                    b.Property<bool>("IsHidden")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_hidden");
+
+                    b.Property<string>("OutputPath")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("output_path");
+
+                    b.HasKey("Id")
+                        .HasName("pk_test_cases");
+
+                    b.HasIndex("ExamId", "Index")
+                        .IsUnique()
+                        .HasDatabaseName("ix_test_cases_exam_id_index");
+
+                    b.ToTable("test_cases", (string)null);
                 });
 
             modelBuilder.Entity("PIED_LMS.Domain.Entities.TestRoom", b =>
@@ -864,6 +934,18 @@ namespace PIED_LMS.Persistence.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("PIED_LMS.Domain.Entities.TestCase", b =>
+                {
+                    b.HasOne("PIED_LMS.Domain.Entities.Exam", "Exam")
+                        .WithMany("TestCases")
+                        .HasForeignKey("ExamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_test_cases_exams_exam_id");
+
+                    b.Navigation("Exam");
+                });
+
             modelBuilder.Entity("PIED_LMS.Domain.Entities.TestRoom", b =>
                 {
                     b.HasOne("PIED_LMS.Domain.Entities.ApplicationUser", "Creator")
@@ -879,6 +961,8 @@ namespace PIED_LMS.Persistence.Migrations
             modelBuilder.Entity("PIED_LMS.Domain.Entities.Exam", b =>
                 {
                     b.Navigation("ExamRoomExams");
+
+                    b.Navigation("TestCases");
                 });
 
             modelBuilder.Entity("PIED_LMS.Domain.Entities.ExamRoom", b =>

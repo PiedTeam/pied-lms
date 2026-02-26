@@ -46,12 +46,16 @@ public class GetQuizletByIdHandler(
             q.CreatedAt,
             q.UpdatedAt,
             q.IsPublished,
+            q.IsHidden,
+            (QuizletLevel)q.Level,
             q.Questions.Select(ques => new StudentQuestionDto(
                 ques.Content,
                 ques.Score,
                 ques.Answers?.Select(a => a.Content).ToList() ?? [],
                 ques.Answers?.Where(a => a.IsCorrect).Select(a => a.Content).ToList() ?? [],
-                ques.QuestionType.ToString()
+                ques.QuestionType.ToString(),
+                ques.IsHidden,
+                (QuizletLevel)ques.Level
             )).ToList()
         );
 }

@@ -31,6 +31,8 @@ public class GetQuestionQuizsHandler(IUnitOfWork unitOfWork) : IRequestHandler<G
             x.Title,
             x.Description,
             x.IsPublished,
+            x.IsHidden,
+            (QuizletLevel)x.Level,
             $"{x.User?.FirstName} {x.User?.LastName}", 
             x.CreatedAt,
             x.UpdatedAt,
@@ -40,7 +42,9 @@ public class GetQuestionQuizsHandler(IUnitOfWork unitOfWork) : IRequestHandler<G
                 q.Score,
                 (QuestionType)(int)q.QuestionType, 
                 q.Answers?.Select(a => a.Content).ToList() ?? new List<string>(),
-                q.Answers?.Where(a => a.IsCorrect).Select(a => a.Content).ToList() ?? new List<string>()
+                q.Answers?.Where(a => a.IsCorrect).Select(a => a.Content).ToList() ?? new List<string>(),
+                q.IsHidden,
+                (QuizletLevel)q.Level
             )).ToList()
         )).ToList();
         

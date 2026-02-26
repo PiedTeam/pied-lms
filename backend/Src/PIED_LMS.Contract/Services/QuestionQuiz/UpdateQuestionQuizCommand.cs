@@ -7,6 +7,8 @@ public record UpdateQuestionQuizCommand(
     int Id,
     string Title,
     bool IsPublished,
+    bool IsHidden,
+    QuizletLevel Level,
     List<UpdateQuestionDto> ListQuestion
 ) : IRequest<ServiceResponse<string>>;
 
@@ -15,5 +17,7 @@ public record UpdateQuestionDto(
     double Score,
     List<string> Answers,
     List<string> CorrectAnswers,
-    string QuestionType
+    string QuestionType,
+    bool IsHidden,
+    QuizletLevel Level
 );

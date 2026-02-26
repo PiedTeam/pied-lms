@@ -16,6 +16,8 @@ public record QuizletSummaryResponse(
     DateTime CreatedAt,
     DateTime UpdatedAt,
     bool IsPublished,
+    bool IsHidden,
+    QuizletLevel Level,
     int QuantityQuestion
 );
 
@@ -24,6 +26,8 @@ public record QuestionQuizResponse(
     string Title,
     string Description,
     bool IsPublished,
+    bool IsHidden,
+    QuizletLevel Level,
     string UserName,
     DateTime CreatedAt,
     DateTime UpdatedAt,
@@ -36,7 +40,9 @@ public record QuestionResponse(
     double Score,
     QuestionType Type,
     List<string> Options,
-    List<string> CorrectAnswers
+    List<string> CorrectAnswers,
+    bool IsHidden,
+    QuizletLevel Level
 );
 
 public enum QuestionType
