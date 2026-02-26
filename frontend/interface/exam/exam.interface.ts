@@ -31,6 +31,12 @@ export interface GetExamsRequest {
   includeDeleted?: boolean;
 }
 
+export interface GetExamsByMentorRequest {
+  pageNumber?: number;
+  pageSize?: number;
+  includeDeleted?: boolean;
+}
+
 export interface GetExamsByMentorResponse {
   items: ExamResponse[];
   pageNumber: number;

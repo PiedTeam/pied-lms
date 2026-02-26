@@ -106,3 +106,29 @@ export function useGetAllStudents(params: GetAllUsersRequest = {}) {
     staleTime: 30000, // 30 seconds
   });
 }
+
+// Get Student Count (for Dashboard)
+export function useGetStudentCount() {
+  return useQuery({
+    queryKey: ["students", "count"],
+    queryFn: async (): Promise<number> => {
+      const { data } = await axios.get<ApiResponse<GetAllUsersResponse>>(
+        "/auth/students",
+        {
+          params: {
+            pageNumber: 1,
+            pageSize: 1,
+          },
+        },
+      );
+
+      if (!data.success || !data.data) {
+        throw new Error(data.message || "Failed to load student count");
+      }
+
+      return data.data.totalCount;
+    },
+    retry: 1,
+    staleTime: 30000,
+  });
+}
