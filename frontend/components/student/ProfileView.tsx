@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import type { StudentProfileResponse } from "@/interface/student/profile.interface";
 import { Loader2, AlertCircle, Edit } from "lucide-react";
+import { ChangePasswordDialog } from "@/components/common/ChangePasswordDialog";
 
 interface ProfileViewProps {
   profile: StudentProfileResponse | undefined;
@@ -116,19 +117,29 @@ export function ProfileView({ profile, isLoading, error }: ProfileViewProps) {
             </p>
           </div>
 
-          <div className="grid gap-2">
-            <label className="text-sm font-medium text-muted-foreground">
-              Account Created
-            </label>
-            <p className="text-base">{formatDate(profile.created_at)}</p>
-          </div>
+          {profile.created_at && (
+            <div className="grid gap-2">
+              <label className="text-sm font-medium text-muted-foreground">
+                Account Created
+              </label>
+              <p className="text-base">{formatDate(profile.created_at)}</p>
+            </div>
+          )}
 
-          <div className="grid gap-2">
-            <label className="text-sm font-medium text-muted-foreground">
-              Last Updated
-            </label>
-            <p className="text-base">{formatDate(profile.updated_at)}</p>
-          </div>
+          {profile.updated_at && (
+            <div className="grid gap-2">
+              <label className="text-sm font-medium text-muted-foreground">
+                Last Updated
+              </label>
+              <p className="text-base">{formatDate(profile.updated_at)}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Change Password Section */}
+        <div className="pt-4 border-t">
+          <h3 className="text-sm font-medium mb-3">Security</h3>
+          <ChangePasswordDialog />
         </div>
       </CardContent>
     </Card>

@@ -326,6 +326,10 @@ namespace PIED_LMS.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("created_by");
 
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(1000)
@@ -375,6 +379,10 @@ namespace PIED_LMS.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id")
                         .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<string>("AnswersJson")
+                        .HasColumnType("text")
+                        .HasColumnName("answers_json");
 
                     b.Property<DateTime>("Deadline")
                         .HasColumnType("timestamp with time zone")
@@ -441,6 +449,10 @@ namespace PIED_LMS.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("created_by");
 
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(1000)
@@ -467,6 +479,12 @@ namespace PIED_LMS.Persistence.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("name");
 
+                    b.Property<string>("RoomCode")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)")
+                        .HasColumnName("room_code");
+
                     b.Property<DateTime>("StartTime")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("start_time");
@@ -487,10 +505,57 @@ namespace PIED_LMS.Persistence.Migrations
                     b.HasIndex("IsDeleted")
                         .HasDatabaseName("ix_exam_rooms_is_deleted");
 
+                    b.HasIndex("RoomCode")
+                        .IsUnique()
+                        .HasDatabaseName("ix_exam_rooms_room_code");
+
                     b.HasIndex("StartTime")
                         .HasDatabaseName("ix_exam_rooms_start_time");
 
                     b.ToTable("exam_rooms", (string)null);
+                });
+
+            modelBuilder.Entity("PIED_LMS.Domain.Entities.ExamRoomEnrollment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<bool>("EmailSent")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("email_sent");
+
+                    b.Property<DateTime?>("EmailSentAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("email_sent_at");
+
+                    b.Property<DateTime>("EnrolledAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("enrolled_at");
+
+                    b.Property<Guid>("ExamRoomId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("exam_room_id");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("student_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_exam_room_enrollments");
+
+                    b.HasIndex("StudentId")
+                        .HasDatabaseName("ix_exam_room_enrollments_student_id");
+
+                    b.HasIndex("ExamRoomId", "StudentId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_exam_room_enrollments_exam_room_id_student_id");
+
+                    b.ToTable("exam_room_enrollments", (string)null);
                 });
 
             modelBuilder.Entity("PIED_LMS.Domain.Entities.ExamRoomExam", b =>
@@ -874,6 +939,27 @@ namespace PIED_LMS.Persistence.Migrations
                     b.Navigation("Creator");
                 });
 
+            modelBuilder.Entity("PIED_LMS.Domain.Entities.ExamRoomEnrollment", b =>
+                {
+                    b.HasOne("PIED_LMS.Domain.Entities.ExamRoom", "ExamRoom")
+                        .WithMany("Enrollments")
+                        .HasForeignKey("ExamRoomId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_exam_room_enrollments_exam_room_exam_room_id");
+
+                    b.HasOne("PIED_LMS.Domain.Entities.ApplicationUser", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_exam_room_enrollments_users_student_id");
+
+                    b.Navigation("ExamRoom");
+
+                    b.Navigation("Student");
+                });
+
             modelBuilder.Entity("PIED_LMS.Domain.Entities.ExamRoomExam", b =>
                 {
                     b.HasOne("PIED_LMS.Domain.Entities.Exam", "Exam")
@@ -964,6 +1050,8 @@ namespace PIED_LMS.Persistence.Migrations
 
             modelBuilder.Entity("PIED_LMS.Domain.Entities.ExamRoom", b =>
                 {
+                    b.Navigation("Enrollments");
+
                     b.Navigation("ExamRoomExams");
 
                     b.Navigation("Participations");

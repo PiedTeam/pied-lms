@@ -16,7 +16,7 @@ public class ExamEndpoints : ICarterModule
         group.MapPost("", CreateExam)
             .WithName("CreateExam")
             .WithOpenApi()
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Lecturer"))
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
             .Produces<ServiceResponse<ExamResponse>>()
             .Produces<ServiceResponse<ExamResponse>>(StatusCodes.Status400BadRequest);
 
@@ -24,7 +24,7 @@ public class ExamEndpoints : ICarterModule
         group.MapGet("", GetExamsByMentor)
             .WithName("GetExamsByMentor")
             .WithOpenApi()
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Lecturer"))
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
             .Produces<ServiceResponse<PaginatedResponse<ExamResponse>>>();
 
         // GET /api/exams/{id}
@@ -39,7 +39,7 @@ public class ExamEndpoints : ICarterModule
         group.MapPut("/{id}", UpdateExam)
             .WithName("UpdateExam")
             .WithOpenApi()
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Lecturer"))
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
             .Produces<ServiceResponse<ExamResponse>>()
             .Produces<ServiceResponse<ExamResponse>>(StatusCodes.Status400BadRequest)
             .Produces<ServiceResponse<ExamResponse>>(StatusCodes.Status403Forbidden);
@@ -48,10 +48,29 @@ public class ExamEndpoints : ICarterModule
         group.MapDelete("/{id}", DeleteExam)
             .WithName("DeleteExam")
             .WithOpenApi()
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Lecturer"))
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
             .Produces<ServiceResponse<string>>()
             .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest)
             .Produces<ServiceResponse<string>>(StatusCodes.Status403Forbidden);
+
+        // GET /api/exams/by-room-code/{roomCode} - Student gets exams by room code
+        group.MapGet("/by-room-code/{roomCode}", GetExamsByRoomCode)
+            .WithName("GetExamsByRoomCode")
+            .WithOpenApi()
+            .RequireAuthorization(new AuthorizeAttribute { Roles = "Student" })
+            .Produces<ServiceResponse<List<ExamInRoomResponse>>>()
+            .Produces<ServiceResponse<List<ExamInRoomResponse>>>(StatusCodes.Status403Forbidden)
+            .Produces<ServiceResponse<List<ExamInRoomResponse>>>(StatusCodes.Status404NotFound);
+
+        // POST /api/exams/verify-room - Student verifies room code and gets exams
+        group.MapPost("/verify-room", VerifyRoomCodeAndGetExams)
+            .WithName("VerifyRoomCodeAndGetExams")
+            .WithOpenApi()
+            .RequireAuthorization(new AuthorizeAttribute { Roles = "Student" })
+            .Produces<ServiceResponse<List<ExamInRoomResponse>>>()
+            .Produces<ServiceResponse<List<ExamInRoomResponse>>>(StatusCodes.Status400BadRequest)
+            .Produces<ServiceResponse<List<ExamInRoomResponse>>>(StatusCodes.Status403Forbidden)
+            .Produces<ServiceResponse<List<ExamInRoomResponse>>>(StatusCodes.Status404NotFound);
     }
 
     // POST /api/exams
@@ -68,9 +87,10 @@ public class ExamEndpoints : ICarterModule
         [AsParameters] GetExamsByMentorRequest request,
         IMediator mediator)
     {
-        var query = new GetExamsByMentorQuery(
+        var query = new GetAllExamsQuery(
             request.PageNumber,
-            request.PageSize
+            request.PageSize,
+            request.IncludeDeleted ?? true
         );
         var result = await mediator.Send(query);
         return Results.Ok(result);
@@ -128,12 +148,53 @@ public class ExamEndpoints : ICarterModule
         
         return Results.Ok(result);
     }
+
+    // GET /api/exams/by-room-code/{roomCode}
+    private static async Task<IResult> GetExamsByRoomCode(
+        string roomCode,
+        IMediator mediator)
+    {
+        var query = new GetExamsByRoomCodeQuery(roomCode);
+        var result = await mediator.Send(query);
+        
+        if (!result.Success)
+        {
+            return result.ErrorCode == "NOT_FOUND"
+                ? Results.NotFound(result)
+                : result.ErrorCode == "FORBIDDEN" || result.ErrorCode == "ACCESS_DENIED"
+                    ? Results.Json(result, statusCode: StatusCodes.Status403Forbidden)
+                    : Results.BadRequest(result);
+        }
+        
+        return Results.Ok(result);
+    }
+
+    // POST /api/exams/verify-room
+    private static async Task<IResult> VerifyRoomCodeAndGetExams(
+        VerifyRoomCodeRequest request,
+        IMediator mediator)
+    {
+        var query = new VerifyRoomCodeAndGetExamsQuery(request.ExamRoomId, request.RoomCode);
+        var result = await mediator.Send(query);
+        
+        if (!result.Success)
+        {
+            return result.ErrorCode == "NOT_FOUND"
+                ? Results.NotFound(result)
+                : result.ErrorCode == "FORBIDDEN" || result.ErrorCode == "ACCESS_DENIED"
+                    ? Results.Json(result, statusCode: StatusCodes.Status403Forbidden)
+                    : Results.BadRequest(result);
+        }
+        
+        return Results.Ok(result);
+    }
 }
 
 // Request DTOs
 public sealed record GetExamsByMentorRequest(
     int PageNumber = 1,
-    int PageSize = 10
+    int PageSize = 10,
+    bool? IncludeDeleted = true
 );
 
 public sealed record UpdateExamRequest(
@@ -141,4 +202,9 @@ public sealed record UpdateExamRequest(
     string Description,
     int TotalMarks,
     int PassingMarks
+);
+
+public sealed record VerifyRoomCodeRequest(
+    Guid ExamRoomId,
+    string RoomCode
 );

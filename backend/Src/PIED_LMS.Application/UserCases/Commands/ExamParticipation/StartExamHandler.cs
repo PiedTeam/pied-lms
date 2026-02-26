@@ -30,17 +30,31 @@ public class StartExamHandler(
                 );
             }
 
-            // Find exam room by ID
+            // Find exam room by room code
             var examRoom = await unitOfWork.Repository<Domain.Entities.ExamRoom>()
-                .FindAll(er => er.Id == request.ExamRoomId && !er.IsDeleted)
+                .FindAll(er => er.RoomCode == request.RoomCode && !er.IsDeleted)
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (examRoom == null)
             {
                 return new ServiceResponse<ExamParticipationResponse>(
                     false,
-                    "Exam room not found",
+                    "Exam room not found with the provided room code",
                     ErrorCode: "NOT_FOUND"
+                );
+            }
+
+            // Verify student is enrolled in the exam room
+            var enrollment = await unitOfWork.Repository<Domain.Entities.ExamRoomEnrollment>()
+                .FindAll(e => e.ExamRoomId == examRoom.Id && e.StudentId == studentId)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (enrollment == null)
+            {
+                return new ServiceResponse<ExamParticipationResponse>(
+                    false,
+                    "You are not enrolled in this exam room",
+                    ErrorCode: "NOT_ENROLLED"
                 );
             }
 
@@ -60,7 +74,7 @@ public class StartExamHandler(
 
             // Verify exam is assigned to the exam room
             var examRoomExam = await unitOfWork.Repository<Domain.Entities.ExamRoomExam>()
-                .FindAll(ere => ere.ExamRoomId == request.ExamRoomId && ere.ExamId == request.ExamId)
+                .FindAll(ere => ere.ExamRoomId == examRoom.Id && ere.ExamId == request.ExamId)
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (examRoomExam == null)
@@ -95,7 +109,7 @@ public class StartExamHandler(
 
             // Check if student has already completed the exam
             var existingParticipation = await unitOfWork.Repository<Domain.Entities.ExamParticipation>()
-                .FindAll(ep => ep.ExamRoomId == request.ExamRoomId 
+                .FindAll(ep => ep.ExamRoomId == examRoom.Id 
                         && ep.ExamId == request.ExamId 
                         && ep.StudentId == studentId)
                 .FirstOrDefaultAsync(cancellationToken);
@@ -138,7 +152,7 @@ public class StartExamHandler(
             var participation = new Domain.Entities.ExamParticipation
             {
                 Id = Guid.NewGuid(),
-                ExamRoomId = request.ExamRoomId,
+                ExamRoomId = examRoom.Id,
                 ExamId = request.ExamId,
                 StudentId = studentId,
                 StartedAt = now,
@@ -180,8 +194,8 @@ public class StartExamHandler(
         {
             logger.LogError(
                 ex,
-                "Failed to start exam. ExamRoomId: {ExamRoomId}, ExamId: {ExamId}, StudentId: {StudentId}",
-                request.ExamRoomId,
+                "Failed to start exam. RoomCode: {RoomCode}, ExamId: {ExamId}, StudentId: {StudentId}",
+                request.RoomCode,
                 request.ExamId,
                 httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
             );

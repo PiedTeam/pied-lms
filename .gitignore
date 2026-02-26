@@ -19,7 +19,8 @@ yarn-error.log
 .c9/
 *.launch
 .settings/
-*.sublime-workspace
+*.sublime-workspace]
+.kiro
 
 # Visual Studio Code
 !.vscode/settings.json
@@ -88,15 +89,9 @@ project.fragment.lock.json
 TestResults/
 *.dotCover
 *.db
-appsettings.Development.json
 env.local
 
 # --- FIXED SECTION ---
 volume
-backend/AppHost/appsettings.json
 .vscode
-# Corrected folder name (PIED-LMS -> PIED_LMS)
-backend/Src/PIED_LMS.API/appsettings.json
-# Global ignore for any appsettings.json to be safe
-**/appsettings.json
 bin/Debug/

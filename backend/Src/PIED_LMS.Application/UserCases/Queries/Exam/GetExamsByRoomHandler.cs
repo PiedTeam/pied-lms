@@ -27,6 +27,8 @@ public class GetExamsByRoomHandler(
                     ere.Exam.Description,
                     ere.Exam.TotalMarks,
                     ere.Exam.PassingMarks,
+                    ere.Exam.IsDeleted,
+                    ere.Exam.DeletedAt,
                     ere.Exam.CreatedAt
                 ))
                 .ToListAsync(cancellationToken);

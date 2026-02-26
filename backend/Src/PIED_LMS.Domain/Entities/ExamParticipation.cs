@@ -11,6 +11,7 @@ public class ExamParticipation
     public DateTime Deadline { get; set; }
     public int? Score { get; set; }
     public bool IsCompleted { get; set; }
+    public string? AnswersJson { get; set; } // Store student answers as JSON
     
     // Navigation properties
     public ExamRoom ExamRoom { get; set; } = null!;

@@ -19,7 +19,7 @@ public class RemoveExamFromRoomHandler(
     {
         try
         {
-            // Get current user ID from HttpContext claims
+            // Get current user ID and roles from HttpContext claims
             var userIdClaim = httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier);
             if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
             {
@@ -29,6 +29,12 @@ public class RemoveExamFromRoomHandler(
                     ErrorCode: "UNAUTHORIZED"
                 );
             }
+
+            var userRoles = httpContextAccessor.HttpContext?.User.FindAll(ClaimTypes.Role)
+                .Select(c => c.Value)
+                .ToList() ?? new List<string>();
+
+            var isAdmin = userRoles.Contains("Admin");
 
             // Find exam room by ID
             var examRoom = await unitOfWork.Repository<Domain.Entities.ExamRoom>()
@@ -42,16 +48,6 @@ public class RemoveExamFromRoomHandler(
                     false,
                     "Exam room not found",
                     ErrorCode: "NOT_FOUND"
-                );
-            }
-
-            // Verify user is the creator
-            if (examRoom.CreatedBy != userId)
-            {
-                return new ServiceResponse<string>(
-                    false,
-                    "You are not authorized to remove exams from this exam room",
-                    ErrorCode: "FORBIDDEN"
                 );
             }
 
@@ -87,10 +83,11 @@ public class RemoveExamFromRoomHandler(
             await unitOfWork.CommitAsync(cancellationToken);
 
             logger.LogInformation(
-                "Exam removed from room successfully. ExamRoomId: {ExamRoomId}, ExamId: {ExamId}, RemovedBy: {UserId}",
+                "Exam removed from room successfully. ExamRoomId: {ExamRoomId}, ExamId: {ExamId}, RemovedBy: {UserId}, IsAdmin: {IsAdmin}",
                 request.ExamRoomId,
                 request.ExamId,
-                userId
+                userId,
+                isAdmin
             );
 
             return new ServiceResponse<string>(
