@@ -44,16 +44,6 @@ public class DeleteExamRoomHandler(
                 );
             }
 
-            // Verify user is the creator
-            if (examRoom.CreatedBy != userId)
-            {
-                return new ServiceResponse<string>(
-                    false,
-                    "You are not authorized to delete this exam room",
-                    ErrorCode: "FORBIDDEN"
-                );
-            }
-
             // Check for active participations
             var hasActiveParticipations = examRoom.Participations.Any(p => !p.IsCompleted);
             if (hasActiveParticipations)
