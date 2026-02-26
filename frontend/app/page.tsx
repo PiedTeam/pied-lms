@@ -25,7 +25,7 @@ export default function Home() {
 
 		if (!token) {
 			router.push('/login')
-		} else if (user?.role === 'ADMIN') {
+		} else if (user?.role === 'Admin') {
 			router.push('/admin')
 		} else {
 			router.push('/dashboard')

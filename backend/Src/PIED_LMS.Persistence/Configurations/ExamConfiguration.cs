@@ -35,6 +35,9 @@ public class ExamConfiguration : IEntityTypeConfiguration<Exam>
             .IsRequired()
             .HasDefaultValue(false);
 
+        builder.Property(e => e.DeletedAt)
+            .IsRequired(false);
+
         // Indexes
         builder.HasIndex(e => e.CreatedBy);
         builder.HasIndex(e => e.IsDeleted);
@@ -50,7 +53,7 @@ public class ExamConfiguration : IEntityTypeConfiguration<Exam>
             .HasForeignKey(ere => ere.ExamId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Soft delete filter
-        builder.HasQueryFilter(e => !e.IsDeleted);
+        // Soft delete filter - Removed to allow querying deleted items
+        // builder.HasQueryFilter(e => !e.IsDeleted);
     }
 }

@@ -1,12 +1,14 @@
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Contract.Services.ExamRoom;
 using PIED_LMS.Contract.Services.Identity;
-using PIED_LMS.Persistence;
+using PIED_LMS.Domain.Abstractions;
+
 
 namespace PIED_LMS.Application.UserCases.Commands.ExamRoom;
 
 public class UpdateExamRoomHandler(
-    PiedLmsDbContext dbContext,
+    IUnitOfWork unitOfWork,
     IHttpContextAccessor httpContextAccessor,
     ILogger<UpdateExamRoomHandler> logger
 ) : IRequestHandler<UpdateExamRoomCommand, ServiceResponse<ExamRoomResponse>>
@@ -29,9 +31,9 @@ public class UpdateExamRoomHandler(
             }
 
             // Find exam room by ID
-            var examRoom = await dbContext.ExamRooms
-                .Include(er => er.ExamRoomExams)
-                .FirstOrDefaultAsync(er => er.Id == request.Id && !er.IsDeleted, cancellationToken);
+            var examRoom = await unitOfWork.Repository<Domain.Entities.ExamRoom>()
+                .FindAll(er => er.Id == request.Id && !er.IsDeleted, er => er.ExamRoomExams)
+                .FirstOrDefaultAsync(cancellationToken);
 
             if (examRoom == null)
             {
@@ -39,16 +41,6 @@ public class UpdateExamRoomHandler(
                     false,
                     "Exam room not found",
                     ErrorCode: "NOT_FOUND"
-                );
-            }
-
-            // Verify user is the creator
-            if (examRoom.CreatedBy != userId)
-            {
-                return new ServiceResponse<ExamRoomResponse>(
-                    false,
-                    "You are not authorized to update this exam room",
-                    ErrorCode: "FORBIDDEN"
                 );
             }
 
@@ -107,7 +99,7 @@ public class UpdateExamRoomHandler(
             examRoom.DurationInMinutes = request.DurationInMinutes;
             examRoom.UpdatedAt = DateTime.UtcNow;
 
-            await dbContext.SaveChangesAsync(cancellationToken);
+            await unitOfWork.CommitAsync(cancellationToken);
 
             logger.LogInformation(
                 "Exam room updated successfully. Id: {ExamRoomId}, Name: {Name}, UpdatedBy: {UserId}",
@@ -127,8 +119,11 @@ public class UpdateExamRoomHandler(
                 examRoom.StartTime,
                 examRoom.EndTime,
                 examRoom.DurationInMinutes,
+                examRoom.RoomCode,
                 status,
                 examRoom.ExamRoomExams.Count,
+                examRoom.IsDeleted,
+                examRoom.DeletedAt,
                 examRoom.CreatedAt
             );
 

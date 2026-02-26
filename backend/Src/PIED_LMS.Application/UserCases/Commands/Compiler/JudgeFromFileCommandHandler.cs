@@ -31,7 +31,8 @@ public sealed class JudgeFromFileCommandHandler(
                 $"Requested memory limit exceeds container maximum ({_options.ContainerMemoryLimitMb} MB).",
                 null,
                 null,
-                CompilerErrorCode.InvalidRequest);
+                IsNotFound: false,
+                ErrorCode: CompilerErrorCode.InvalidRequest);
 
         var timeLimit = request.TimeLimit ?? _options.DefaultTimeLimitMs;
         var includePrivate = request.IncludePrivate ?? false;
@@ -63,7 +64,8 @@ public sealed class JudgeFromFileCommandHandler(
                 serviceResult.ErrorMessage ?? "Server is busy.",
                 null,
                 null,
-                serviceResult.ErrorCode);
+                IsNotFound: false,
+                ErrorCode: serviceResult.ErrorCode);
         }
 
         return new ServiceResponse<JudgeResult>(
@@ -83,8 +85,9 @@ public sealed class JudgeFromFileCommandHandler(
         return new ServiceResponse<JudgeResult>(
             false,
             "Invalid request",
-            null,
-            errors,
-            CompilerErrorCode.InvalidRequest);
+            Data: null,
+            Errors: errors,
+            IsNotFound: false,
+            ErrorCode: CompilerErrorCode.InvalidRequest);
     }
 }

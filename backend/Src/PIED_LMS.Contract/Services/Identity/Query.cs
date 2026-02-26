@@ -7,6 +7,10 @@ public record GetUserByIdQuery(Guid UserId) : IRequest<ServiceResponse<UserRespo
 public record GetAllUsersQuery(int PageNumber = 1, int PageSize = 10)
     : IRequest<ServiceResponse<PaginatedResponse<UserResponse>>>;
 
+// Get All Students Query (for Mentor/Teacher)
+public record GetAllStudentsQuery(int PageNumber = 1, int PageSize = 10)
+    : IRequest<ServiceResponse<PaginatedResponse<UserResponse>>>;
+
 // Check User Exists Query
 public record CheckUserExistsQuery(string Email) : IRequest<ServiceResponse<bool>>;
 

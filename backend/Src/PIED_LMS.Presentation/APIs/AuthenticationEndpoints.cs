@@ -63,6 +63,12 @@ public class AuthenticationEndpoints : ICarterModule
             .WithOpenApi()
             .RequireAuthorization(new AuthorizeAttribute { Roles = RoleConstants.Administrator })
             .Produces<ServiceResponse<PaginatedResponse<UserResponse>>>();
+
+        group.MapGet("/students", GetAllStudents)
+            .WithName("GetAllStudents")
+            .WithOpenApi()
+            .RequireAuthorization(new AuthorizeAttribute { Roles = $"{RoleConstants.Administrator},{RoleConstants.Mentor},{RoleConstants.Teacher}" })
+            .Produces<ServiceResponse<PaginatedResponse<UserResponse>>>();
     }
 
     private static CookieOptions CreateRefreshTokenCookieOptions(
@@ -106,7 +112,7 @@ public class AuthenticationEndpoints : ICarterModule
         var result = await mediator.Send(request, cancellationToken);
 
         if (!result.Success || result.Data == null)
-            return Results.Unauthorized();
+            return Results.BadRequest(result);
 
         // Extract login result (contains response and refresh token)
         var loginResult = result.Data;
@@ -235,6 +241,16 @@ public class AuthenticationEndpoints : ICarterModule
         var result = await mediator.Send(query, cancellationToken);
         return result.Success ? Results.Ok(result) : Results.BadRequest(result);
     }
+
+    private static async Task<IResult> GetAllStudents(
+        [AsParameters] GetAllStudentsRequest request,
+        IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        var query = new GetAllStudentsQuery(request.PageNumber, request.PageSize);
+        var result = await mediator.Send(query, cancellationToken);
+        return result.Success ? Results.Ok(result) : Results.BadRequest(result);
+    }
 }
 
 public sealed record ChangePasswordRequest(
@@ -249,6 +265,11 @@ public sealed record AssignRoleRequest(
 );
 
 public sealed record GetAllUsersRequest(
+    int PageNumber = 1,
+    int PageSize = 10
+);
+
+public sealed record GetAllStudentsRequest(
     int PageNumber = 1,
     int PageSize = 10
 );

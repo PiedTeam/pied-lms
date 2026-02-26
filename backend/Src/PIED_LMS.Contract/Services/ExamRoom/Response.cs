@@ -8,8 +8,11 @@ public record ExamRoomResponse(
     DateTime StartTime,
     DateTime EndTime,
     int DurationInMinutes,
+    string RoomCode,
     string Status,
     int ExamCount,
+    bool IsDeleted,
+    DateTime? DeletedAt,
     DateTime CreatedAt
 );
 
@@ -21,8 +24,11 @@ public record ExamRoomDetailResponse(
     DateTime StartTime,
     DateTime EndTime,
     int DurationInMinutes,
+    string RoomCode,
     string Status,
     List<ExamRoomExamResponse> Exams,
+    bool IsDeleted,
+    DateTime? DeletedAt,
     DateTime CreatedAt,
     DateTime? UpdatedAt
 );
@@ -43,4 +49,18 @@ public record ExamRoomExamResponse(
     int TotalMarks,
     int PassingMarks,
     DateTime CreatedAt
+);
+
+// Enrollment Result Response
+public record EnrollmentResultResponse(
+    int TotalStudents,
+    int SuccessfulEnrollments,
+    int FailedEnrollments,
+    List<EnrollmentError> Errors
+);
+
+// Enrollment Error
+public record EnrollmentError(
+    Guid StudentId,
+    string Reason
 );

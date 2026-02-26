@@ -11,8 +11,10 @@ public class Exam
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
     public bool IsDeleted { get; set; }
+    public DateTime? DeletedAt { get; set; }
     
     // Navigation properties
     public ApplicationUser Creator { get; set; } = null!;
     public ICollection<ExamRoomExam> ExamRoomExams { get; set; } = new List<ExamRoomExam>();
+    public ICollection<TestCase> TestCases { get; set; } = new List<TestCase>();
 }

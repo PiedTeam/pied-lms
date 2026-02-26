@@ -2,6 +2,9 @@ using PIED_LMS.API.Filters;
 using PIED_LMS.API.Middlewares;
 using PIED_LMS.Application.Options;
 using PIED_LMS.Contract.Services.Compiler.Validators;
+using PIED_LMS.Infrastructure.Compiler;
+using PIED_LMS.Application.Abstractions;
+
 
 
 namespace PIED_LMS.API;
@@ -19,6 +22,37 @@ public static class InfrastructureExtensions
             .Bind(configuration.GetSection("CompilerOptions"))
             .ValidateDataAnnotations()
             .ValidateOnStart();
+
+        var compilerEnabled = configuration.GetValue<bool>("CompilerOptions:Enabled");
+        if (compilerEnabled)
+        {
+            services.AddSingleton<IProcessExecutor, ProcessExecutor>();
+            services.AddSingleton<ContainerPoolManager>();
+            services.AddHostedService<ContainerPoolHostedService>();
+            services.AddHostedService<WorkDirSweeperHostedService>();
+            services.AddSingleton<ICompilerService, DockerCompilerService>();
+        }
+        else
+        {
+            services.AddSingleton<ICompilerService, NoOpCompilerService>();
+        }
+
+        services.AddScoped<ITestCaseProvider, FileSystemTestCaseProvider>();
+
+        // CORS Configuration
+        services.AddCors(options =>
+        {
+            options.AddPolicy("AllowFrontend", policy =>
+            {
+                policy.WithOrigins(
+                    "http://localhost:3000",
+                    "https://localhost:3000"
+                )
+                .AllowAnyMethod()
+                .AllowAnyHeader()
+                .AllowCredentials();
+            });
+        });
 
         // 1. Swagger with JWT Bearer Authentication
         services.AddEndpointsApiExplorer();
@@ -66,8 +100,19 @@ public static class InfrastructureExtensions
         }));
 
        
-        services.AddAuthorization();
+        // 4. CORS
+        services.AddCors(options =>
+        {
+            options.AddPolicy("AllowAll", policy =>
+            {
+                policy
+                    .AllowAnyOrigin()
+                    .AllowAnyHeader()
+                    .AllowAnyMethod();
+            });
+        });
 
+        services.AddAuthorization();
 
         return services;
     }
@@ -76,9 +121,14 @@ public static class InfrastructureExtensions
     {
         app.UseExceptionHandler();
         app.UseSerilogRequestLogging();
+        
+        // Enable CORS - must be before UseAuthentication and UseAuthorization
+        app.UseCors("AllowFrontend");
+        
         app.UseRateLimiter();
         app.UseResponseCaching();
         app.UseHttpsRedirection();
+        app.UseCors("AllowAll");
         app.UseAuthentication();
         app.UseAuthorization();
 

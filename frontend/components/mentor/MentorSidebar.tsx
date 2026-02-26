@@ -11,6 +11,10 @@ import {
   LogOut,
   User,
   ChevronUp,
+  FileSpreadsheet,
+  DoorOpen,
+  FileText,
+  TestTube,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth.store";
@@ -26,29 +30,44 @@ import {
 const menuItems = [
   {
     title: "Dashboard",
-    href: "/dashboard",
+    href: "/mentor/dashboard",
     icon: LayoutDashboard,
   },
   {
-    title: "Timetables",
-    href: "/timetables",
-    icon: CalendarSearch,
+    title: "Phòng thi",
+    href: "/mentor/exam-rooms",
+    icon: DoorOpen,
   },
   {
-    title: "Students",
-    href: "/students",
-    icon: Users,
+    title: "Đề thi",
+    href: "/mentor/exams",
+    icon: FileText,
+  },
+  // {
+  //   title: "Timetables",
+  //   href: "/mentor/timetables",
+  //   icon: CalendarSearch,
+  // },
+  {
+    title: "Quizlets",
+    href: "/mentor/quizlets",
+    icon: FileSpreadsheet,
   },
   {
-    title: "Slot Advice",
-    href: "/slot-advice",
-    icon: Lightbulb,
+    title: "Test Cases",
+    href: "/mentor/testcases",
+    icon: TestTube,
   },
-  {
-    title: "History",
-    href: "/history",
-    icon: History,
-  },
+  // {
+  //   title: "Slot Advice",
+  //   href: "/mentor/slot-advice",
+  //   icon: Lightbulb,
+  // },
+  // {
+  //   title: "History",
+  //   href: "/mentor/history",
+  //   icon: History,
+  // },
 ];
 
 export function MentorSidebar() {
@@ -84,7 +103,8 @@ export function MentorSidebar() {
             const Icon = item.icon;
             const isActive =
               pathname === item.href ||
-              (pathname.startsWith(item.href) && item.href !== "/dashboard");
+              (pathname.startsWith(item.href) &&
+                item.href !== "/mentor/dashboard");
 
             return (
               <Link
@@ -133,7 +153,10 @@ export function MentorSidebar() {
               </div>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link href="/profile" className="flex items-center gap-2">
+                <Link
+                  href="/mentor/profile"
+                  className="flex items-center gap-2"
+                >
                   <User className="h-4 w-4" />
                   <span>Profile</span>
                 </Link>

@@ -1,5 +1,6 @@
-using PIED_LMS.Application.Abstractions;
 using System.Collections.Concurrent;
+using Microsoft.Extensions.Caching.Memory;
+using PIED_LMS.Application.Abstractions;
 
 namespace PIED_LMS.Infrastructure.Authentication;
 
@@ -99,7 +100,7 @@ public class RefreshTokenService(IMemoryCache memoryCache) : IRefreshTokenServic
     public Task RevokeAllRefreshTokenAsync(Guid userId)
     {
         var userTokensKey = $"{_userTokensPrefix}{userId}";
-        List<string> tokensToRevoke = null;
+        List<string> tokensToRevoke = new();
         
         while (true)
         {
@@ -110,7 +111,7 @@ public class RefreshTokenService(IMemoryCache memoryCache) : IRefreshTokenServic
                 {
                     if (_memoryCache.TryGetValue<HashSet<string>>(userTokensKey, out var userTokens) && userTokens != null)
                     {
-                        tokensToRevoke = userTokens.ToList();
+                        tokensToRevoke = userTokens.ToList() ?? new List<string>();
                         _memoryCache.Remove(userTokensKey);
                     }
                     break;

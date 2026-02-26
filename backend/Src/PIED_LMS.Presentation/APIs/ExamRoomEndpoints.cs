@@ -17,14 +17,14 @@ public class ExamRoomEndpoints : ICarterModule
         group.MapPost("", CreateExamRoom)
             .WithName("CreateExamRoom")
             .WithOpenApi()
-            .RequireAuthorization(new AuthorizeAttribute { Roles = "Mentor" })
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
             .Produces<ServiceResponse<ExamRoomResponse>>()
             .Produces<ServiceResponse<ExamRoomResponse>>(StatusCodes.Status400BadRequest);
 
-        group.MapGet("", GetExamRoomsByMentor)
-            .WithName("GetExamRoomsByMentor")
+        group.MapGet("", GetAllExamRooms)
+            .WithName("GetAllExamRooms")
             .WithOpenApi()
-            .RequireAuthorization(new AuthorizeAttribute { Roles = "Mentor" })
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
             .Produces<ServiceResponse<PaginatedResponse<ExamRoomResponse>>>();
 
         group.MapGet("/{id}", GetExamRoomById)
@@ -37,7 +37,7 @@ public class ExamRoomEndpoints : ICarterModule
         group.MapPut("/{id}", UpdateExamRoom)
             .WithName("UpdateExamRoom")
             .WithOpenApi()
-            .RequireAuthorization(new AuthorizeAttribute { Roles = "Mentor" })
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
             .Produces<ServiceResponse<ExamRoomResponse>>()
             .Produces<ServiceResponse<ExamRoomResponse>>(StatusCodes.Status400BadRequest)
             .Produces<ServiceResponse<ExamRoomResponse>>(StatusCodes.Status403Forbidden);
@@ -45,7 +45,7 @@ public class ExamRoomEndpoints : ICarterModule
         group.MapDelete("/{id}", DeleteExamRoom)
             .WithName("DeleteExamRoom")
             .WithOpenApi()
-            .RequireAuthorization(new AuthorizeAttribute { Roles = "Mentor" })
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
             .Produces<ServiceResponse<string>>()
             .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest)
             .Produces<ServiceResponse<string>>(StatusCodes.Status403Forbidden);
@@ -53,30 +53,51 @@ public class ExamRoomEndpoints : ICarterModule
         group.MapPost("/{id}/exams", AssignExamToRoom)
             .WithName("AssignExamToRoom")
             .WithOpenApi()
-            .RequireAuthorization(new AuthorizeAttribute { Roles = "Mentor" })
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
             .Produces<ServiceResponse<string>>()
             .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest)
             .Produces<ServiceResponse<string>>(StatusCodes.Status403Forbidden);
 
+        group.MapPost("/{id}/enroll", EnrollStudents)
+            .WithName("EnrollStudents")
+            .WithOpenApi()
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
+            .Produces<ServiceResponse<EnrollmentResultResponse>>()
+            .Produces<ServiceResponse<EnrollmentResultResponse>>(StatusCodes.Status400BadRequest)
+            .Produces<ServiceResponse<EnrollmentResultResponse>>(StatusCodes.Status403Forbidden);
+
         group.MapDelete("/{roomId}/exams/{examId}", RemoveExamFromRoom)
             .WithName("RemoveExamFromRoom")
             .WithOpenApi()
-            .RequireAuthorization(new AuthorizeAttribute { Roles = "Mentor" })
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
             .Produces<ServiceResponse<string>>()
             .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest)
             .Produces<ServiceResponse<string>>(StatusCodes.Status403Forbidden);
 
         // Student endpoints
+        group.MapGet("/student", GetExamRoomsForStudent)
+            .WithName("GetExamRoomsForStudent")
+            .WithOpenApi()
+            .RequireAuthorization(new AuthorizeAttribute { Roles = "Student" })
+            .Produces<ServiceResponse<PaginatedResponse<ExamRoomResponse>>>();
+
+        group.MapGet("/{roomId}/exams/student", GetExamsInRoomForStudent)
+            .WithName("GetExamsInRoomForStudent")
+            .WithOpenApi()
+            .RequireAuthorization(new AuthorizeAttribute { Roles = "Student" })
+            .Produces<ServiceResponse<List<Contract.Services.Exam.ExamInRoomResponse>>>()
+            .Produces<ServiceResponse<List<Contract.Services.Exam.ExamInRoomResponse>>>(StatusCodes.Status403Forbidden);
+
         group.MapGet("/available", GetAvailableExamRoomsForStudent)
             .WithName("GetAvailableExamRoomsForStudent")
             .WithOpenApi()
-            .RequireAuthorization(new AuthorizeAttribute { Roles = "Student" })
+            .RequireAuthorization()
             .Produces<ServiceResponse<PaginatedResponse<ExamRoomResponse>>>();
 
         group.MapGet("/{id}/access", CheckExamRoomAccess)
             .WithName("CheckExamRoomAccess")
             .WithOpenApi()
-            .RequireAuthorization(new AuthorizeAttribute { Roles = "Student" })
+            .RequireAuthorization()
             .Produces<ServiceResponse<Contract.Services.ExamParticipation.ExamRoomAccessResponse>>();
     }
 
@@ -90,14 +111,15 @@ public class ExamRoomEndpoints : ICarterModule
     }
 
     // GET /api/exam-rooms
-    private static async Task<IResult> GetExamRoomsByMentor(
-        [AsParameters] GetExamRoomsByMentorRequest request,
+    private static async Task<IResult> GetAllExamRooms(
+        [AsParameters] GetAllExamRoomsRequest request,
         IMediator mediator)
     {
-        var query = new GetExamRoomsByMentorQuery(
+        var query = new GetAllExamRoomsQuery(
             request.PageNumber,
             request.PageSize,
-            request.Status
+            request.Status,
+            request.IncludeDeleted
         );
         var result = await mediator.Send(query);
         return Results.Ok(result);
@@ -176,6 +198,25 @@ public class ExamRoomEndpoints : ICarterModule
         return Results.Ok(result);
     }
 
+    // POST /api/exam-rooms/{id}/enroll
+    private static async Task<IResult> EnrollStudents(
+        Guid id,
+        EnrollStudentsRequest request,
+        IMediator mediator)
+    {
+        var command = new EnrollStudentsCommand(id, request.StudentIds);
+        var result = await mediator.Send(command);
+        
+        if (!result.Success)
+        {
+            return result.Message.Contains("authorized") || result.Message.Contains("permission")
+                ? Results.Json(result, statusCode: StatusCodes.Status403Forbidden)
+                : Results.BadRequest(result);
+        }
+        
+        return Results.Ok(result);
+    }
+
     // DELETE /api/exam-rooms/{roomId}/exams/{examId}
     private static async Task<IResult> RemoveExamFromRoom(
         Guid roomId,
@@ -188,6 +229,37 @@ public class ExamRoomEndpoints : ICarterModule
         if (!result.Success)
         {
             return result.Message.Contains("authorized") || result.Message.Contains("permission")
+                ? Results.Json(result, statusCode: StatusCodes.Status403Forbidden)
+                : Results.BadRequest(result);
+        }
+        
+        return Results.Ok(result);
+    }
+
+    // GET /api/exam-rooms/student
+    private static async Task<IResult> GetExamRoomsForStudent(
+        [AsParameters] GetExamRoomsForStudentRequest request,
+        IMediator mediator)
+    {
+        var query = new GetExamRoomsForStudentQuery(
+            request.PageNumber,
+            request.PageSize
+        );
+        var result = await mediator.Send(query);
+        return Results.Ok(result);
+    }
+
+    // GET /api/exam-rooms/{roomId}/exams/student
+    private static async Task<IResult> GetExamsInRoomForStudent(
+        Guid roomId,
+        IMediator mediator)
+    {
+        var query = new Contract.Services.Exam.GetExamsInRoomForStudentQuery(roomId);
+        var result = await mediator.Send(query);
+        
+        if (!result.Success)
+        {
+            return result.Message.Contains("authorized") || result.Message.Contains("not enrolled")
                 ? Results.Json(result, statusCode: StatusCodes.Status403Forbidden)
                 : Results.BadRequest(result);
         }
@@ -220,10 +292,11 @@ public class ExamRoomEndpoints : ICarterModule
 }
 
 // Request DTOs
-public sealed record GetExamRoomsByMentorRequest(
+public sealed record GetAllExamRoomsRequest(
     int PageNumber = 1,
     int PageSize = 10,
-    string? Status = null
+    string? Status = null,
+    bool IncludeDeleted = true
 );
 
 public sealed record UpdateExamRoomRequest(
@@ -236,6 +309,15 @@ public sealed record UpdateExamRoomRequest(
 
 public sealed record AssignExamToRoomRequest(
     Guid ExamId
+);
+
+public sealed record EnrollStudentsRequest(
+    List<Guid> StudentIds
+);
+
+public sealed record GetExamRoomsForStudentRequest(
+    int PageNumber = 1,
+    int PageSize = 10
 );
 
 public sealed record GetAvailableExamRoomsRequest(
