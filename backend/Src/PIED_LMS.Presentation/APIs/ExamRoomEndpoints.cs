@@ -17,14 +17,14 @@ public class ExamRoomEndpoints : ICarterModule
         group.MapPost("", CreateExamRoom)
             .WithName("CreateExamRoom")
             .WithOpenApi()
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Lecturer"))
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
             .Produces<ServiceResponse<ExamRoomResponse>>()
             .Produces<ServiceResponse<ExamRoomResponse>>(StatusCodes.Status400BadRequest);
 
         group.MapGet("", GetAllExamRooms)
             .WithName("GetAllExamRooms")
             .WithOpenApi()
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Lecturer"))
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
             .Produces<ServiceResponse<PaginatedResponse<ExamRoomResponse>>>();
 
         group.MapGet("/{id}", GetExamRoomById)
@@ -37,7 +37,7 @@ public class ExamRoomEndpoints : ICarterModule
         group.MapPut("/{id}", UpdateExamRoom)
             .WithName("UpdateExamRoom")
             .WithOpenApi()
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Lecturer"))
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
             .Produces<ServiceResponse<ExamRoomResponse>>()
             .Produces<ServiceResponse<ExamRoomResponse>>(StatusCodes.Status400BadRequest)
             .Produces<ServiceResponse<ExamRoomResponse>>(StatusCodes.Status403Forbidden);
@@ -45,7 +45,7 @@ public class ExamRoomEndpoints : ICarterModule
         group.MapDelete("/{id}", DeleteExamRoom)
             .WithName("DeleteExamRoom")
             .WithOpenApi()
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Lecturer"))
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
             .Produces<ServiceResponse<string>>()
             .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest)
             .Produces<ServiceResponse<string>>(StatusCodes.Status403Forbidden);
@@ -53,7 +53,7 @@ public class ExamRoomEndpoints : ICarterModule
         group.MapPost("/{id}/exams", AssignExamToRoom)
             .WithName("AssignExamToRoom")
             .WithOpenApi()
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Lecturer"))
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
             .Produces<ServiceResponse<string>>()
             .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest)
             .Produces<ServiceResponse<string>>(StatusCodes.Status403Forbidden);
@@ -69,7 +69,7 @@ public class ExamRoomEndpoints : ICarterModule
         group.MapDelete("/{roomId}/exams/{examId}", RemoveExamFromRoom)
             .WithName("RemoveExamFromRoom")
             .WithOpenApi()
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Lecturer"))
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
             .Produces<ServiceResponse<string>>()
             .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest)
             .Produces<ServiceResponse<string>>(StatusCodes.Status403Forbidden);

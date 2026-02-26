@@ -43,16 +43,6 @@ public class UpdateExamHandler(
                 );
             }
 
-            // Verify user is the creator
-            if (exam.CreatedBy != userId)
-            {
-                return new ServiceResponse<ExamResponse>(
-                    false,
-                    "You are not authorized to update this exam",
-                    ErrorCode: "FORBIDDEN"
-                );
-            }
-
             // Validate passing marks <= total marks
             if (request.PassingMarks > request.TotalMarks)
             {

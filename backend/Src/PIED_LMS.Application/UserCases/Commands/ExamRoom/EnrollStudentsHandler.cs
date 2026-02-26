@@ -33,12 +33,6 @@ public class EnrollStudentsHandler(
                 );
             }
 
-            var userRoles = httpContextAccessor.HttpContext?.User.FindAll(ClaimTypes.Role)
-                .Select(c => c.Value)
-                .ToList() ?? new List<string>();
-
-            var isAdmin = userRoles.Contains("Admin");
-
             // Find exam room by ID
             var examRoom = await unitOfWork.Repository<Domain.Entities.ExamRoom>()
                 .FindAll(er => er.Id == request.ExamRoomId && !er.IsDeleted)
@@ -50,23 +44,6 @@ public class EnrollStudentsHandler(
                     false,
                     "Exam room not found",
                     ErrorCode: "NOT_FOUND"
-                );
-            }
-
-            // Authorization check: Admin has full access, others must be the creator
-            if (!isAdmin && examRoom.CreatedBy != userId)
-            {
-                logger.LogWarning(
-                    "Unauthorized attempt to enroll students. UserId: {UserId}, ExamRoomId: {ExamRoomId}, CreatedBy: {CreatedBy}",
-                    userId,
-                    request.ExamRoomId,
-                    examRoom.CreatedBy
-                );
-                
-                return new ServiceResponse<EnrollmentResultResponse>(
-                    false,
-                    "You are not authorized to enroll students in this exam room",
-                    ErrorCode: "FORBIDDEN"
                 );
             }
 
@@ -163,13 +140,12 @@ public class EnrollStudentsHandler(
             await unitOfWork.CommitAsync(cancellationToken);
 
             logger.LogInformation(
-                "Enrollment completed for exam room {ExamRoomId}. Total: {Total}, Successful: {Successful}, Failed: {Failed}, EnrolledBy: {UserId}, IsAdmin: {IsAdmin}",
+                "Enrollment completed for exam room {ExamRoomId}. Total: {Total}, Successful: {Successful}, Failed: {Failed}, EnrolledBy: {UserId}",
                 request.ExamRoomId,
                 request.StudentIds.Count,
                 successfulEnrollments,
                 errors.Count,
-                userId,
-                isAdmin
+                userId
             );
 
             var response = new EnrollmentResultResponse(

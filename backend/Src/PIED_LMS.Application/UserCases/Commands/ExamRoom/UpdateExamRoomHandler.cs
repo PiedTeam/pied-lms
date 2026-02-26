@@ -44,16 +44,6 @@ public class UpdateExamRoomHandler(
                 );
             }
 
-            // Verify user is the creator
-            if (examRoom.CreatedBy != userId)
-            {
-                return new ServiceResponse<ExamRoomResponse>(
-                    false,
-                    "You are not authorized to update this exam room",
-                    ErrorCode: "FORBIDDEN"
-                );
-            }
-
             // Check if exam room has started
             var now = DateTime.UtcNow;
             var hasStarted = now >= examRoom.StartTime;
