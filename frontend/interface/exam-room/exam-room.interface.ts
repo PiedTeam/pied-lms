@@ -52,6 +52,12 @@ export interface GetExamRoomsByMentorRequest {
   includeDeleted?: boolean;
 }
 
+export interface GetExamRoomsByAdminRequest {
+  pageNumber?: number;
+  pageSize?: number;
+  status?: string; // active, upcoming, closed
+}
+
 export interface UpdateExamRoomRequest {
   name: string;
   description: string;

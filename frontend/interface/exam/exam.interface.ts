@@ -25,7 +25,7 @@ export interface UpdateExamRequest {
   passingMarks: number;
 }
 
-export interface GetExamsByMentorRequest {
+export interface GetExamsRequest {
   pageNumber?: number;
   pageSize?: number;
   includeDeleted?: boolean;
@@ -36,4 +36,12 @@ export interface GetExamsByMentorResponse {
   pageNumber: number;
   pageSize: number;
   totalCount: number;
+}
+
+export interface GetExamsByAdminResponse {
+  items: ExamResponse[];
+  pageNumber: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
 }
