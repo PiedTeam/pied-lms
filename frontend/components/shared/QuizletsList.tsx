@@ -8,7 +8,6 @@ import {
   Plus,
   Eye,
   Pencil,
-  Trash2,
   Download,
   FileSpreadsheet,
 } from "lucide-react";
@@ -31,6 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -41,16 +41,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import {
   Table,
   TableBody,
@@ -64,7 +54,6 @@ import {
   useGetAllQuizlets,
   useCreateQuizlet,
   useTogglePublishQuizlet,
-  useDeleteQuizlet,
 } from "@/service";
 import { QuizletLevel } from "@/interface/quizlet/quizlet.interface";
 
@@ -76,19 +65,26 @@ export function QuizletsList({ role }: QuizletsListProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [deleteQuizletId, setDeleteQuizletId] = useState<number | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [isPublished, setIsPublished] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
   const [level, setLevel] = useState<QuizletLevel>(QuizletLevel.Easy);
   const [file, setFile] = useState<File | null>(null);
+  const [activeTab, setActiveTab] = useState("all");
 
   const { data: quizlets, isLoading } = useGetAllQuizlets();
   const { mutate: createQuizlet, isPending: isCreating } = useCreateQuizlet();
   const { mutate: togglePublish, isPending: isToggling } =
     useTogglePublishQuizlet();
-  const { mutate: deleteQuizlet, isPending: isDeleting } = useDeleteQuizlet();
+
+  // Filter quizlets based on active tab
+  const filteredQuizlets = quizlets?.filter((quizlet) => {
+    if (activeTab === "all") return true;
+    if (activeTab === "published") return quizlet.isPublished;
+    if (activeTab === "unpublished") return !quizlet.isPublished;
+    return true;
+  });
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -196,27 +192,6 @@ export function QuizletsList({ role }: QuizletsListProps) {
         },
       },
     );
-  };
-
-  const handleDelete = () => {
-    if (!deleteQuizletId) return;
-
-    deleteQuizlet(deleteQuizletId, {
-      onSuccess: () => {
-        toast({
-          title: "Thành công",
-          description: "Đã xóa quizlet thành công",
-        });
-        setDeleteQuizletId(null);
-      },
-      onError: (error: Error) => {
-        toast({
-          title: "Lỗi",
-          description: error.message,
-          variant: "destructive",
-        });
-      },
-    });
   };
 
   const getLevelBadge = (level: QuizletLevel) => {
@@ -394,123 +369,138 @@ export function QuizletsList({ role }: QuizletsListProps) {
           <CardDescription>{quizlets?.length || 0} quizlet</CardDescription>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className="flex items-center space-x-4 animate-pulse"
-                >
-                  <div className="h-12 bg-gray-200 rounded w-full"></div>
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="all">Tất cả</TabsTrigger>
+              <TabsTrigger value="published">Xuất bản</TabsTrigger>
+              <TabsTrigger value="unpublished">Hủy xuất bản</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value={activeTab} className="mt-6">
+              {isLoading ? (
+                <div className="space-y-4">
+                  {[1, 2, 3].map((i) => (
+                    <div
+                      key={i}
+                      className="flex items-center space-x-4 animate-pulse"
+                    >
+                      <div className="h-12 bg-gray-200 rounded w-full"></div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          ) : quizlets && quizlets.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Tiêu đề</TableHead>
-                  <TableHead>Người tạo</TableHead>
-                  <TableHead>Độ khó</TableHead>
-                  <TableHead>Số câu hỏi</TableHead>
-                  <TableHead>Trạng thái</TableHead>
-                  <TableHead>Ngày tạo</TableHead>
-                  <TableHead className="text-right">Thao tác</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {quizlets.map((quizlet) => (
-                  <TableRow
-                    key={quizlet.id}
-                    className={quizlet.isHidden ? "opacity-60" : ""}
+              ) : filteredQuizlets && filteredQuizlets.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Tiêu đề</TableHead>
+                      <TableHead>Người tạo</TableHead>
+                      <TableHead>Độ khó</TableHead>
+                      <TableHead>Số câu hỏi</TableHead>
+                      <TableHead>Trạng thái</TableHead>
+                      <TableHead>Ngày tạo</TableHead>
+                      <TableHead className="text-right">Thao tác</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredQuizlets.map((quizlet) => (
+                      <TableRow
+                        key={quizlet.id}
+                        className={quizlet.isHidden ? "opacity-60" : ""}
+                      >
+                        <TableCell className="font-medium">
+                          {quizlet.title}
+                          {quizlet.isHidden && (
+                            <span className="ml-2 text-xs text-muted-foreground">
+                              (Đã ẩn)
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell>{quizlet.userName || "—"}</TableCell>
+                        <TableCell>{getLevelBadge(quizlet.level)}</TableCell>
+                        <TableCell>{quizlet.quantityQuestion}</TableCell>
+                        <TableCell>
+                          {quizlet.isPublished ? (
+                            <Badge variant="default">Đã xuất bản</Badge>
+                          ) : (
+                            <Badge variant="secondary">Nháp</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {new Date(quizlet.createdAt).toLocaleDateString(
+                            "vi-VN",
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() =>
+                                router.push(`/${role}/quizlets/${quizlet.id}`)
+                              }
+                              title="Xem chi tiết"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() =>
+                                router.push(
+                                  `/${role}/quizlets/${quizlet.id}/edit`,
+                                )
+                              }
+                              title="Chỉnh sửa"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant={
+                                quizlet.isPublished ? "secondary" : "default"
+                              }
+                              size="sm"
+                              onClick={() =>
+                                handleTogglePublish(
+                                  quizlet.id,
+                                  quizlet.isPublished,
+                                )
+                              }
+                              disabled={isToggling}
+                            >
+                              {quizlet.isPublished
+                                ? "Hủy xuất bản"
+                                : "Xuất bản"}
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="text-center py-12">
+                  <FileJson className="mx-auto h-12 w-12 text-muted-foreground" />
+                  <h3 className="mt-4 text-lg font-semibold">
+                    Chưa có quizlet nào
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    {activeTab === "published"
+                      ? "Chưa có quizlet nào được xuất bản"
+                      : activeTab === "unpublished"
+                        ? "Chưa có quizlet nào hủy xuất bản"
+                        : "Tạo quizlet đầu tiên bằng cách upload file Excel"}
+                  </p>
+                  <Button
+                    className="mt-4"
+                    onClick={() => setIsCreateDialogOpen(true)}
                   >
-                    <TableCell className="font-medium">
-                      {quizlet.title}
-                      {quizlet.isHidden && (
-                        <span className="ml-2 text-xs text-muted-foreground">
-                          (Đã ẩn)
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell>{quizlet.userName || "—"}</TableCell>
-                    <TableCell>{getLevelBadge(quizlet.level)}</TableCell>
-                    <TableCell>{quizlet.quantityQuestion}</TableCell>
-                    <TableCell>
-                      {quizlet.isPublished ? (
-                        <Badge variant="default">Đã xuất bản</Badge>
-                      ) : (
-                        <Badge variant="secondary">Nháp</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {new Date(quizlet.createdAt).toLocaleDateString("vi-VN")}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() =>
-                            router.push(`/${role}/quizlets/${quizlet.id}`)
-                          }
-                          title="Xem chi tiết"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() =>
-                            router.push(`/${role}/quizlets/${quizlet.id}/edit`)
-                          }
-                          title="Chỉnh sửa"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant={
-                            quizlet.isPublished ? "secondary" : "default"
-                          }
-                          size="sm"
-                          onClick={() =>
-                            handleTogglePublish(quizlet.id, quizlet.isPublished)
-                          }
-                          disabled={isToggling}
-                        >
-                          {quizlet.isPublished ? "Hủy xuất bản" : "Xuất bản"}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setDeleteQuizletId(quizlet.id)}
-                          title="Xóa"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <div className="text-center py-12">
-              <FileJson className="mx-auto h-12 w-12 text-muted-foreground" />
-              <h3 className="mt-4 text-lg font-semibold">
-                Chưa có quizlet nào
-              </h3>
-              <p className="text-sm text-muted-foreground mt-2">
-                Tạo quizlet đầu tiên bằng cách upload file JSON
-              </p>
-              <Button
-                className="mt-4"
-                onClick={() => setIsCreateDialogOpen(true)}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Tạo Quizlet
-              </Button>
-            </div>
-          )}
+                    <Plus className="mr-2 h-4 w-4" />
+                    Tạo Quizlet
+                  </Button>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
 
@@ -541,7 +531,7 @@ export function QuizletsList({ role }: QuizletsListProps) {
                 </li>
                 <li>
                   <span className="font-medium">IsHidden:</span> TRUE/FALSE -
-                  ẩn/hiện câu hỏi
+                  ẩn/hiện level (độ khó) của câu hỏi
                 </li>
                 <li>
                   <span className="font-medium">Level:</span> 1 = Dễ, 2 = Trung
@@ -563,7 +553,10 @@ export function QuizletsList({ role }: QuizletsListProps) {
               <li>
                 Nếu có nhiều đáp án đúng, phân cách bằng dấu phẩy (ví dụ: "2,3")
               </li>
-              <li>IsHidden: TRUE để ẩn câu hỏi, FALSE để hiển thị</li>
+              <li>
+                IsHidden: TRUE để ẩn level (độ khó) của câu hỏi, FALSE để hiển
+                thị level
+              </li>
               <li>Tải file mẫu để xem cấu trúc chi tiết và ví dụ</li>
             </ul>
           </div>
@@ -578,31 +571,6 @@ export function QuizletsList({ role }: QuizletsListProps) {
           </Button>
         </CardContent>
       </Card>
-
-      <AlertDialog
-        open={!!deleteQuizletId}
-        onOpenChange={() => setDeleteQuizletId(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận xóa quizlet</AlertDialogTitle>
-            <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa quizlet này? Hành động này không thể
-              hoàn tác.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Hủy</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              disabled={isDeleting}
-              className="bg-red-600 text-white hover:bg-red-700"
-            >
-              {isDeleting ? "Đang xóa..." : "Xóa"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

@@ -3,17 +3,10 @@
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, FileSpreadsheet, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { useGetQuizletById } from "@/service";
-import type { QuizletResponse } from "@/interface/quizlet/quizlet.interface";
+import { QuizletViewDetail } from "@/components/shared/QuizletViewDetail";
 
 export default function ViewQuizletPage() {
   const params = useParams();
@@ -121,95 +114,7 @@ export default function ViewQuizletPage() {
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            Câu hỏi ({quizlet.quantityQuestion || quizlet.listQuestion.length})
-          </CardTitle>
-          <CardDescription>Danh sách các câu hỏi trong quizlet</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {quizlet.listQuestion && quizlet.listQuestion.length > 0 ? (
-            quizlet.listQuestion.map((question, index) => (
-              <div key={index} className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <Badge variant="outline" className="mt-1">
-                    {index + 1}
-                  </Badge>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-medium">{question.content}</p>
-                      {question.level === 1 && (
-                        <Badge className="bg-green-600">Dễ</Badge>
-                      )}
-                      {question.level === 2 && (
-                        <Badge className="bg-yellow-600">Trung bình</Badge>
-                      )}
-                      {question.level === 3 && (
-                        <Badge className="bg-red-600">Khó</Badge>
-                      )}
-                      {question.isHidden && (
-                        <Badge variant="outline">Level ẩn</Badge>
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Điểm: {question.score} | Loại:{" "}
-                      {question.questionType === "SingleChoice"
-                        ? "Một đáp án"
-                        : "Nhiều đáp án"}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="ml-10 space-y-2">
-                  {question.answers && question.answers.length > 0 ? (
-                    question.answers.map((answer, optIndex) => {
-                      const isCorrect =
-                        question.correctAnswers?.includes(answer);
-                      return (
-                        <div
-                          key={optIndex}
-                          className={`flex items-center gap-2 p-2 rounded ${
-                            isCorrect
-                              ? "bg-green-50 border border-green-200"
-                              : "bg-muted"
-                          }`}
-                        >
-                          <span className="font-mono text-sm">
-                            {String.fromCharCode(65 + optIndex)}.
-                          </span>
-                          <span
-                            className={
-                              isCorrect ? "font-medium text-green-700" : ""
-                            }
-                          >
-                            {answer}
-                          </span>
-                          {isCorrect && (
-                            <Badge variant="default" className="ml-auto">
-                              Đáp án đúng
-                            </Badge>
-                          )}
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      Không có đáp án
-                    </p>
-                  )}
-                </div>
-
-                {index < quizlet.listQuestion.length - 1 && <Separator />}
-              </div>
-            ))
-          ) : (
-            <p className="text-center text-muted-foreground">
-              Không có câu hỏi nào
-            </p>
-          )}
-        </CardContent>
-      </Card>
+      <QuizletViewDetail quizlet={quizlet} />
     </div>
   );
 }

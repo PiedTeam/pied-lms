@@ -8,12 +8,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useGetQuizletById, useUpdateQuizlet } from "@/service";
-import type { UpdateQuestionDto } from "@/interface/quizlet/quizlet.interface";
+import { QuizletEditForm } from "@/components/shared/QuizletEditForm";
+import type {
+  UpdateQuestionDto,
+  QuizletLevel,
+} from "@/interface/quizlet/quizlet.interface";
 
 export default function EditQuizletPage() {
   const params = useParams();
@@ -28,6 +36,8 @@ export default function EditQuizletPage() {
 
   const [title, setTitle] = useState("");
   const [isPublished, setIsPublished] = useState(false);
+  const [isHidden, setIsHidden] = useState(false);
+  const [level, setLevel] = useState<QuizletLevel>(0);
   const [questions, setQuestions] = useState<UpdateQuestionDto[]>([]);
 
   // Initialize state when quizlet data is loaded
@@ -35,63 +45,25 @@ export default function EditQuizletPage() {
     if (quizlet) {
       const initialTitle = quizlet.title;
       const initialIsPublished = quizlet.isPublished;
+      const initialIsHidden = quizlet.isHidden;
+      const initialLevel = quizlet.level;
       const initialQuestions = quizlet.listQuestion.map((q) => ({
         content: q.content,
         score: q.score,
-        answers: q.answers || [], // Backend returns 'answers'
+        answers: q.answers || [],
         correctAnswers: q.correctAnswers || [],
-        questionType: q.type === 0 ? "SingleChoice" : "MultipleChoice",
+        questionType: q.questionType === "SingleChoice" ? 0 : 1,
+        isHidden: q.isHidden,
+        level: q.level,
       }));
 
       setTitle(initialTitle);
       setIsPublished(initialIsPublished);
+      setIsHidden(initialIsHidden);
+      setLevel(initialLevel);
       setQuestions(initialQuestions);
     }
   }, [quizlet]);
-
-  const handleQuestionChange = (
-    index: number,
-    field: keyof UpdateQuestionDto,
-    value: string | number,
-  ) => {
-    const newQuestions = [...questions];
-    newQuestions[index] = { ...newQuestions[index], [field]: value };
-    setQuestions(newQuestions);
-  };
-
-  const handleAnswerChange = (
-    questionIndex: number,
-    answerIndex: number,
-    value: string,
-  ) => {
-    const newQuestions = [...questions];
-    const newAnswers = [...newQuestions[questionIndex].answers];
-    newAnswers[answerIndex] = value;
-    newQuestions[questionIndex] = {
-      ...newQuestions[questionIndex],
-      answers: newAnswers,
-    };
-    setQuestions(newQuestions);
-  };
-
-  const toggleCorrectAnswer = (questionIndex: number, answer: string) => {
-    const newQuestions = [...questions];
-    const currentCorrect = newQuestions[questionIndex].correctAnswers;
-    const isCurrentlyCorrect = currentCorrect.includes(answer);
-
-    if (isCurrentlyCorrect) {
-      newQuestions[questionIndex] = {
-        ...newQuestions[questionIndex],
-        correctAnswers: currentCorrect.filter((a) => a !== answer),
-      };
-    } else {
-      newQuestions[questionIndex] = {
-        ...newQuestions[questionIndex],
-        correctAnswers: [...currentCorrect, answer],
-      };
-    }
-    setQuestions(newQuestions);
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -148,6 +120,8 @@ export default function EditQuizletPage() {
         payload: {
           title,
           isPublished,
+          isHidden,
+          level,
           listQuestion: questions,
         },
       },
@@ -224,6 +198,27 @@ export default function EditQuizletPage() {
               />
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="level">
+                Độ khó <span className="text-red-500">*</span>
+              </Label>
+              <Select
+                value={level.toString()}
+                onValueChange={(value) =>
+                  setLevel(parseInt(value) as QuizletLevel)
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Chọn độ khó" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">Dễ</SelectItem>
+                  <SelectItem value="1">Trung bình</SelectItem>
+                  <SelectItem value="2">Khó</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="flex items-center space-x-2">
               <Switch
                 id="isPublished"
@@ -234,123 +229,24 @@ export default function EditQuizletPage() {
                 Xuất bản
               </Label>
             </div>
+
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="isHidden"
+                checked={isHidden}
+                onCheckedChange={setIsHidden}
+              />
+              <Label htmlFor="isHidden" className="cursor-pointer">
+                Ẩn level (độ khó) của quizlet
+              </Label>
+            </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Câu hỏi ({questions.length})</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {questions.map((question, qIndex) => (
-              <div key={qIndex} className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <Badge variant="outline" className="mt-2">
-                    {qIndex + 1}
-                  </Badge>
-                  <div className="flex-1 space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor={`question-${qIndex}`}>
-                        Nội dung câu hỏi <span className="text-red-500">*</span>
-                      </Label>
-                      <Textarea
-                        id={`question-${qIndex}`}
-                        value={question.content}
-                        onChange={(e) =>
-                          handleQuestionChange(
-                            qIndex,
-                            "content",
-                            e.target.value,
-                          )
-                        }
-                        placeholder="Nhập nội dung câu hỏi"
-                        rows={2}
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor={`score-${qIndex}`}>Điểm số</Label>
-                        <Input
-                          id={`score-${qIndex}`}
-                          type="number"
-                          step="0.1"
-                          min="0"
-                          value={question.score}
-                          onChange={(e) =>
-                            handleQuestionChange(
-                              qIndex,
-                              "score",
-                              parseFloat(e.target.value) || 0,
-                            )
-                          }
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor={`type-${qIndex}`}>Loại câu hỏi</Label>
-                        <select
-                          id={`type-${qIndex}`}
-                          value={question.questionType}
-                          onChange={(e) =>
-                            handleQuestionChange(
-                              qIndex,
-                              "questionType",
-                              e.target.value,
-                            )
-                          }
-                          className="w-full h-10 px-3 rounded-md border border-input bg-background"
-                        >
-                          <option value="SingleChoice">Một đáp án</option>
-                          <option value="MultipleChoice">Nhiều đáp án</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>
-                        Đáp án <span className="text-red-500">*</span>
-                      </Label>
-                      <div className="space-y-2">
-                        {question.answers.map((answer, aIndex) => (
-                          <div key={aIndex} className="flex items-center gap-2">
-                            <input
-                              type="checkbox"
-                              checked={question.correctAnswers.includes(answer)}
-                              onChange={() =>
-                                toggleCorrectAnswer(qIndex, answer)
-                              }
-                              className="h-4 w-4"
-                            />
-                            <span className="font-mono text-sm w-6">
-                              {String.fromCharCode(65 + aIndex)}.
-                            </span>
-                            <Input
-                              value={answer}
-                              onChange={(e) =>
-                                handleAnswerChange(
-                                  qIndex,
-                                  aIndex,
-                                  e.target.value,
-                                )
-                              }
-                              placeholder={`Đáp án ${String.fromCharCode(65 + aIndex)}`}
-                              className="flex-1"
-                            />
-                          </div>
-                        ))}
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        Chọn checkbox để đánh dấu đáp án đúng
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {qIndex < questions.length - 1 && <Separator />}
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+        <QuizletEditForm
+          questions={questions}
+          onQuestionsChange={setQuestions}
+        />
 
         <div className="flex gap-4">
           <Button

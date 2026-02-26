@@ -6,6 +6,7 @@ import {
   ArrowLeft,
   Calendar,
   Clock,
+  Eye,
   FileText,
   Plus,
   Trash2,
@@ -486,14 +487,27 @@ export default function ExamRoomDetailPage() {
                         <TableCell>{exam.totalMarks}</TableCell>
                         <TableCell>{exam.passingMarks}</TableCell>
                         <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleRemoveExam(exam.id)}
-                            disabled={isRemoving}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() =>
+                                router.push(`/mentor/exams/${exam.id}`)
+                              }
+                              title="Xem chi tiết"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleRemoveExam(exam.id)}
+                              disabled={isRemoving}
+                              title="Xóa khỏi phòng"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}

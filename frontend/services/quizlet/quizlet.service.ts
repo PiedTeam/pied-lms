@@ -170,7 +170,16 @@ export function useUpdateQuizlet() {
             IsPublished: payload.isPublished,
             IsHidden: payload.isHidden,
             Level: payload.level,
-            ListQuestion: payload.listQuestion,
+            ListQuestion: payload.listQuestion.map((q) => ({
+              Content: q.content,
+              Score: q.score,
+              Answers: q.answers,
+              CorrectAnswers: q.correctAnswers,
+              QuestionType:
+                q.questionType === 0 ? "SingleChoice" : "MultipleChoice",
+              IsHidden: q.isHidden,
+              Level: q.level,
+            })),
           },
         );
 
