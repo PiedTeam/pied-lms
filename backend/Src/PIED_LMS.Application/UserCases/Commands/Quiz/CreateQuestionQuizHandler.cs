@@ -25,6 +25,8 @@ public class CreateQuestionQuizHandler(
             request.Title,
             request.Description,
             request.IsPublished,
+            request.IsHidden,
+            request.Level,
             request.ListQuestion,
             userId,
             cancellationToken);

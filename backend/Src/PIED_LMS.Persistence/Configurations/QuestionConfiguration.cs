@@ -19,8 +19,17 @@ public class QuestionConfiguration : IEntityTypeConfiguration<Question>
             .IsRequired();
 
         builder.Property(x => x.Score)
-            .IsRequired();
+            .IsRequired()
+            .HasDefaultValue(0);
         
+        builder.Property(x => x.IsHidden)
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(x => x.Level)
+            .IsRequired()
+            .HasDefaultValue(1); // 1 = Easy
+
         builder.Property(x => x.QuestionType)
             .HasConversion<string>()
             .IsRequired();

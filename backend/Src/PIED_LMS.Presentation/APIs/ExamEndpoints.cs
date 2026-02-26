@@ -52,6 +52,25 @@ public class ExamEndpoints : ICarterModule
             .Produces<ServiceResponse<string>>()
             .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest)
             .Produces<ServiceResponse<string>>(StatusCodes.Status403Forbidden);
+
+        // GET /api/exams/by-room-code/{roomCode} - Student gets exams by room code
+        group.MapGet("/by-room-code/{roomCode}", GetExamsByRoomCode)
+            .WithName("GetExamsByRoomCode")
+            .WithOpenApi()
+            .RequireAuthorization(new AuthorizeAttribute { Roles = "Student" })
+            .Produces<ServiceResponse<List<ExamInRoomResponse>>>()
+            .Produces<ServiceResponse<List<ExamInRoomResponse>>>(StatusCodes.Status403Forbidden)
+            .Produces<ServiceResponse<List<ExamInRoomResponse>>>(StatusCodes.Status404NotFound);
+
+        // POST /api/exams/verify-room - Student verifies room code and gets exams
+        group.MapPost("/verify-room", VerifyRoomCodeAndGetExams)
+            .WithName("VerifyRoomCodeAndGetExams")
+            .WithOpenApi()
+            .RequireAuthorization(new AuthorizeAttribute { Roles = "Student" })
+            .Produces<ServiceResponse<List<ExamInRoomResponse>>>()
+            .Produces<ServiceResponse<List<ExamInRoomResponse>>>(StatusCodes.Status400BadRequest)
+            .Produces<ServiceResponse<List<ExamInRoomResponse>>>(StatusCodes.Status403Forbidden)
+            .Produces<ServiceResponse<List<ExamInRoomResponse>>>(StatusCodes.Status404NotFound);
     }
 
     // POST /api/exams
@@ -129,6 +148,46 @@ public class ExamEndpoints : ICarterModule
         
         return Results.Ok(result);
     }
+
+    // GET /api/exams/by-room-code/{roomCode}
+    private static async Task<IResult> GetExamsByRoomCode(
+        string roomCode,
+        IMediator mediator)
+    {
+        var query = new GetExamsByRoomCodeQuery(roomCode);
+        var result = await mediator.Send(query);
+        
+        if (!result.Success)
+        {
+            return result.ErrorCode == "NOT_FOUND"
+                ? Results.NotFound(result)
+                : result.ErrorCode == "FORBIDDEN" || result.ErrorCode == "ACCESS_DENIED"
+                    ? Results.Json(result, statusCode: StatusCodes.Status403Forbidden)
+                    : Results.BadRequest(result);
+        }
+        
+        return Results.Ok(result);
+    }
+
+    // POST /api/exams/verify-room
+    private static async Task<IResult> VerifyRoomCodeAndGetExams(
+        VerifyRoomCodeRequest request,
+        IMediator mediator)
+    {
+        var query = new VerifyRoomCodeAndGetExamsQuery(request.ExamRoomId, request.RoomCode);
+        var result = await mediator.Send(query);
+        
+        if (!result.Success)
+        {
+            return result.ErrorCode == "NOT_FOUND"
+                ? Results.NotFound(result)
+                : result.ErrorCode == "FORBIDDEN" || result.ErrorCode == "ACCESS_DENIED"
+                    ? Results.Json(result, statusCode: StatusCodes.Status403Forbidden)
+                    : Results.BadRequest(result);
+        }
+        
+        return Results.Ok(result);
+    }
 }
 
 // Request DTOs
@@ -143,4 +202,9 @@ public sealed record UpdateExamRequest(
     string Description,
     int TotalMarks,
     int PassingMarks
+);
+
+public sealed record VerifyRoomCodeRequest(
+    Guid ExamRoomId,
+    string RoomCode
 );

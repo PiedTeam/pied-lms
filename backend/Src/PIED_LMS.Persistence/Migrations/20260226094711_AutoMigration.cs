@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace PIED_LMS.Persistence.Migrations;
 
 /// <inheritdoc />
-public partial class Initdb : Migration
+public partial class AutoMigration : Migration
 {
     /// <inheritdoc />
     protected override void Up(MigrationBuilder migrationBuilder)
@@ -143,6 +143,8 @@ public partial class Initdb : Migration
                 title = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                 description = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: false),
                 is_published = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                is_hidden = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                level = table.Column<int>(type: "integer", nullable: false, defaultValue: 1),
                 user_id = table.Column<Guid>(type: "uuid", nullable: false),
                 created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                 updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
@@ -332,6 +334,28 @@ public partial class Initdb : Migration
             });
 
         migrationBuilder.CreateTable(
+            name: "test_cases",
+            columns: table => new
+            {
+                id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                exam_id = table.Column<Guid>(type: "uuid", nullable: false),
+                index = table.Column<int>(type: "integer", nullable: false),
+                input_path = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                output_path = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                is_hidden = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
+            },
+            constraints: table =>
+            {
+                table.PrimaryKey("pk_test_cases", x => x.id);
+                table.ForeignKey(
+                    name: "fk_test_cases_exams_exam_id",
+                    column: x => x.exam_id,
+                    principalTable: "exams",
+                    principalColumn: "id",
+                    onDelete: ReferentialAction.Cascade);
+            });
+
+        migrationBuilder.CreateTable(
             name: "questions",
             columns: table => new
             {
@@ -451,6 +475,12 @@ public partial class Initdb : Migration
             unique: true);
 
         migrationBuilder.CreateIndex(
+            name: "ix_test_cases_exam_id_index",
+            table: "test_cases",
+            columns: new[] { "exam_id", "index" },
+            unique: true);
+
+        migrationBuilder.CreateIndex(
             name: "ix_test_room_created_by",
             table: "test_room",
             column: "created_by");
@@ -504,6 +534,9 @@ public partial class Initdb : Migration
             name: "role_claims");
 
         migrationBuilder.DropTable(
+            name: "test_cases");
+
+        migrationBuilder.DropTable(
             name: "test_room");
 
         migrationBuilder.DropTable(
@@ -522,10 +555,10 @@ public partial class Initdb : Migration
             name: "exam_rooms");
 
         migrationBuilder.DropTable(
-            name: "exams");
+            name: "questions");
 
         migrationBuilder.DropTable(
-            name: "questions");
+            name: "exams");
 
         migrationBuilder.DropTable(
             name: "roles");

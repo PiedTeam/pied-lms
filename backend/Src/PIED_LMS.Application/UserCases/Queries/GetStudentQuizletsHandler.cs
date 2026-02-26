@@ -33,6 +33,8 @@ public class GetStudentQuizletsHandler(
                 x.CreatedAt,
                 x.UpdatedAt,
                 x.IsPublished,
+                x.IsHidden,
+                (QuizletLevel)x.Level,
                 x.Questions.Count
             ))
             .ToListAsync(cancellationToken);
