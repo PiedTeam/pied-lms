@@ -55,10 +55,17 @@ export function useCreateExamRoom() {
 export function useGetExamRoomsByMentor(
   params: GetExamRoomsByMentorRequest = {},
 ) {
-  const { pageNumber = 1, pageSize = 10, status } = params;
+  const { pageNumber = 1, pageSize = 10, status, includeDeleted } = params;
 
   return useQuery({
-    queryKey: ["exam-rooms", "mentor", pageNumber, pageSize, status],
+    queryKey: [
+      "exam-rooms",
+      "mentor",
+      pageNumber,
+      pageSize,
+      status,
+      includeDeleted,
+    ],
     queryFn: async (): Promise<PaginatedExamRoomsResponse> => {
       const { data } = await axios.get<ApiResponse<PaginatedExamRoomsResponse>>(
         "/exam-rooms",
@@ -67,6 +74,7 @@ export function useGetExamRoomsByMentor(
             pageNumber,
             pageSize,
             ...(status && { status }),
+            ...(includeDeleted !== undefined && { includeDeleted }),
           },
         },
       );
@@ -77,6 +85,8 @@ export function useGetExamRoomsByMentor(
 
       return data.data;
     },
+    retry: 1, // Only retry once on failure
+    staleTime: 30000, // Cache for 30 seconds
   });
 }
 

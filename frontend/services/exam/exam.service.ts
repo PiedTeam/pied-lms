@@ -42,10 +42,10 @@ export function useCreateExam() {
 
 // Get Exams By Mentor
 export function useGetExamsByMentor(params: GetExamsByMentorRequest = {}) {
-  const { pageNumber = 1, pageSize = 10 } = params;
+  const { pageNumber = 1, pageSize = 10, includeDeleted } = params;
 
   return useQuery({
-    queryKey: ["exams", pageNumber, pageSize],
+    queryKey: ["exams", pageNumber, pageSize, includeDeleted],
     queryFn: async (): Promise<GetExamsByMentorResponse> => {
       const { data } = await axios.get<ApiResponse<GetExamsByMentorResponse>>(
         "/exams",
@@ -53,6 +53,7 @@ export function useGetExamsByMentor(params: GetExamsByMentorRequest = {}) {
           params: {
             pageNumber,
             pageSize,
+            ...(includeDeleted !== undefined && { includeDeleted }),
           },
         },
       );
