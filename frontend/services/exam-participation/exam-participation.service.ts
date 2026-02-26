@@ -5,7 +5,9 @@ import type {
   ExamParticipationResponse,
   StartExamRequest,
   GetStudentParticipationsRequest,
-  GetStudentParticipationsResponse,
+  PaginatedExamParticipationsResponse,
+  GetExamRoomEnrollmentsRequest,
+  PaginatedExamRoomEnrollmentsResponse,
 } from "@/interface/exam-participation/exam-participation.interface";
 
 // Start Exam (Student only)
@@ -51,9 +53,9 @@ export function useGetStudentParticipations(
 
   return useQuery({
     queryKey: ["participations", pageNumber, pageSize],
-    queryFn: async (): Promise<GetStudentParticipationsResponse> => {
+    queryFn: async (): Promise<PaginatedExamParticipationsResponse> => {
       const { data } = await axios.get<
-        ApiResponse<GetStudentParticipationsResponse>
+        ApiResponse<PaginatedExamParticipationsResponse>
       >("/participations", {
         params: {
           pageNumber,
@@ -67,6 +69,37 @@ export function useGetStudentParticipations(
 
       return data.data;
     },
+    retry: 1,
+    staleTime: 30000,
+  });
+}
+
+// Get Exam Room Enrollments (Admin, Mentor, Teacher)
+export function useGetExamRoomEnrollments(
+  params: GetExamRoomEnrollmentsRequest,
+  enabled: boolean = true,
+) {
+  const { examRoomId, pageNumber = 1, pageSize = 100 } = params;
+
+  return useQuery({
+    queryKey: ["exam-room-enrollments", examRoomId, pageNumber, pageSize],
+    queryFn: async (): Promise<PaginatedExamRoomEnrollmentsResponse> => {
+      const { data } = await axios.get<
+        ApiResponse<PaginatedExamRoomEnrollmentsResponse>
+      >(`/participations/room/${examRoomId}`, {
+        params: {
+          pageNumber,
+          pageSize,
+        },
+      });
+
+      if (!data.success || !data.data) {
+        throw new Error(data.message || "Failed to load room enrollments");
+      }
+
+      return data.data;
+    },
+    enabled: enabled && !!examRoomId,
     retry: 1,
     staleTime: 30000,
   });

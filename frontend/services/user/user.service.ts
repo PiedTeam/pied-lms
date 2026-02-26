@@ -79,24 +79,53 @@ export function useGetAllUsers(params: GetAllUsersRequest = {}) {
   });
 }
 
-// Get count of users with student role
+// Get All Students (for Mentor, Teacher, Admin)
+export function useGetAllStudents(params: GetAllUsersRequest = {}) {
+  const { pageNumber = 1, pageSize = 10 } = params;
+
+  return useQuery({
+    queryKey: ["students", pageNumber, pageSize],
+    queryFn: async (): Promise<GetAllUsersResponse> => {
+      const { data } = await axios.get<ApiResponse<GetAllUsersResponse>>(
+        "/auth/students",
+        {
+          params: {
+            pageNumber,
+            pageSize,
+          },
+        },
+      );
+
+      if (!data.success || !data.data) {
+        throw new Error(data.message || "Failed to load students list");
+      }
+
+      return data.data;
+    },
+    retry: 1, // Only retry once
+    staleTime: 30000, // 30 seconds
+  });
+}
+
+// Get Student Count (for Dashboard)
 export function useGetStudentCount() {
   return useQuery({
-    queryKey: ["users", "count", "student"],
+    queryKey: ["students", "count"],
     queryFn: async (): Promise<number> => {
       const { data } = await axios.get<ApiResponse<GetAllUsersResponse>>(
         "/auth/students",
         {
           params: {
             pageNumber: 1,
-            pageSize: 10,
+            pageSize: 1,
           },
         },
       );
+
       if (!data.success || !data.data) {
-        throw new Error(data.message || "Failed to load users list");
-      }     
-      console.log(data.data)
+        throw new Error(data.message || "Failed to load student count");
+      }
+
       return data.data.totalCount;
     },
     retry: 1,

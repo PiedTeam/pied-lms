@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Eye, Pencil, Trash2, Calendar, Clock } from "lucide-react";
+import { Plus, Eye, Pencil, Archive, Calendar, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -61,6 +62,10 @@ export function ExamRoomsList({ basePath }: ExamRoomsListProps) {
   const { toast } = useToast();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [deleteRoomId, setDeleteRoomId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("all");
+  const [pageNumber, setPageNumber] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
+  const pageSize = 6; // Fixed page size
   const [formData, setFormData] = useState<CreateExamRoomRequest>({
     name: "",
     description: "",
@@ -69,12 +74,73 @@ export function ExamRoomsList({ basePath }: ExamRoomsListProps) {
     durationInMinutes: 60,
   });
 
+  // Determine query parameters based on active tab
+  const getQueryParams = () => {
+    switch (activeTab) {
+      case "upcoming":
+        return { status: "Upcoming", includeDeleted: false };
+      case "ongoing":
+        return { status: "Ongoing", includeDeleted: false };
+      case "completed":
+        return { status: "Completed", includeDeleted: false };
+      case "archived":
+        return { includeDeleted: true };
+      case "all":
+      default:
+        return { includeDeleted: false };
+    }
+  };
+
+  const queryParams = getQueryParams();
+
   const { data: roomsData, isLoading } = useGetExamRoomsByMentor({
-    pageNumber: 1,
-    pageSize: 50,
+    pageNumber,
+    pageSize,
+    ...queryParams,
   });
   const { mutate: createRoom, isPending: isCreating } = useCreateExamRoom();
   const { mutate: deleteRoom, isPending: isDeleting } = useDeleteExamRoom();
+
+  // Filter rooms by tab (client-side filtering for archived tab)
+  const allRooms = roomsData?.items || [];
+
+  // Apply search filter
+  const filteredRooms = searchQuery
+    ? allRooms.filter(
+        (room) =>
+          room.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          room.description?.toLowerCase().includes(searchQuery.toLowerCase()),
+      )
+    : allRooms;
+
+  const currentRooms =
+    activeTab === "archived"
+      ? filteredRooms.filter((room) => room.isDeleted)
+      : filteredRooms;
+
+  // Calculate counts for tabs (from pagination data)
+  const totalCount = roomsData?.totalCount || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  // Reset page number when changing tabs
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    setPageNumber(1);
+  };
+
+  // Handle next page
+  const handleNextPage = () => {
+    if (pageNumber < totalPages) {
+      setPageNumber((prev) => prev + 1);
+    }
+  };
+
+  // Handle previous page
+  const handlePrevPage = () => {
+    if (pageNumber > 1) {
+      setPageNumber((prev) => prev - 1);
+    }
+  };
 
   const handleCreateSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,14 +177,14 @@ export function ExamRoomsList({ basePath }: ExamRoomsListProps) {
       onSuccess: () => {
         toast({
           title: "Thành công",
-          description: EXAM_ROOM_MESSAGES.SUCCESS.DELETED,
+          description: "Phòng thi đã được ẩn thành công",
         });
         setDeleteRoomId(null);
       },
       onError: (error: Error) => {
         toast({
           title: "Lỗi",
-          description: error.message || EXAM_ROOM_MESSAGES.ERROR.DELETE_FAILED,
+          description: error.message || "Không thể ẩn phòng thi",
           variant: "destructive",
         });
       },
@@ -127,15 +193,36 @@ export function ExamRoomsList({ basePath }: ExamRoomsListProps) {
 
   const getStatusBadge = (status: string) => {
     switch (status?.toLowerCase()) {
-      case "active":
-        return <Badge variant="default">Active</Badge>;
+      case "ongoing":
+        return (
+          <Badge className="bg-green-600 hover:bg-green-700">
+            Đang diễn ra
+          </Badge>
+        );
       case "upcoming":
-        return <Badge variant="secondary">Upcoming</Badge>;
-      case "closed":
-        return <Badge variant="outline">Closed</Badge>;
+        return (
+          <Badge className="bg-blue-600 hover:bg-blue-700">Sắp diễn ra</Badge>
+        );
+      case "completed":
+        return (
+          <Badge variant="outline" className="text-gray-600">
+            Đã kết thúc
+          </Badge>
+        );
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
+  };
+
+  // Check if room can be edited (Upcoming and Completed rooms can be edited)
+  const canEdit = (status: string) => {
+    const statusLower = status?.toLowerCase();
+    return statusLower === "upcoming" || statusLower === "completed";
+  };
+
+  // Check if room can be archived (not Ongoing)
+  const canArchive = (status: string) => {
+    return status?.toLowerCase() !== "ongoing";
   };
 
   const formatDateTime = (dateString: string) => {
@@ -152,32 +239,30 @@ export function ExamRoomsList({ basePath }: ExamRoomsListProps) {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Exam Rooms</h1>
-          <p className="text-muted-foreground">Manage your exam rooms</p>
+          <h1 className="text-3xl font-bold tracking-tight">Phòng Thi</h1>
+          <p className="text-muted-foreground">Quản lý phòng thi</p>
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="mr-2 h-4 w-4" />
-              Create Exam Room
+              Tạo Phòng Thi
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[600px]">
             <form onSubmit={handleCreateSubmit}>
               <DialogHeader>
-                <DialogTitle>Create New Exam Room</DialogTitle>
-                <DialogDescription>
-                  Enter exam room information
-                </DialogDescription>
+                <DialogTitle>Tạo Phòng Thi Mới</DialogTitle>
+                <DialogDescription>Nhập thông tin phòng thi</DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
                   <Label htmlFor="name">
-                    Exam Room Name <span className="text-red-500">*</span>
+                    Tên Phòng Thi <span className="text-red-500">*</span>
                   </Label>
                   <Input
                     id="name"
-                    placeholder="e.g., Midterm Exam Room"
+                    placeholder="VD: Phòng thi giữa kỳ"
                     value={formData.name}
                     onChange={(e) =>
                       setFormData({ ...formData, name: e.target.value })
@@ -186,10 +271,10 @@ export function ExamRoomsList({ basePath }: ExamRoomsListProps) {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="description">Description</Label>
+                  <Label htmlFor="description">Mô Tả</Label>
                   <Textarea
                     id="description"
-                    placeholder="Description of the exam room"
+                    placeholder="Mô tả về phòng thi"
                     value={formData.description}
                     onChange={(e) =>
                       setFormData({ ...formData, description: e.target.value })
@@ -200,32 +285,32 @@ export function ExamRoomsList({ basePath }: ExamRoomsListProps) {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
                     <Label htmlFor="startTime">
-                      Start Time <span className="text-red-500">*</span>
+                      Thời Gian Bắt Đầu <span className="text-red-500">*</span>
                     </Label>
                     <DateTimePicker
                       value={formData.startTime}
                       onChange={(value) =>
                         setFormData({ ...formData, startTime: value })
                       }
-                      placeholder="Select start time"
+                      placeholder="Chọn thời gian bắt đầu"
                     />
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="endTime">
-                      End Time <span className="text-red-500">*</span>
+                      Thời Gian Kết Thúc <span className="text-red-500">*</span>
                     </Label>
                     <DateTimePicker
                       value={formData.endTime}
                       onChange={(value) =>
                         setFormData({ ...formData, endTime: value })
                       }
-                      placeholder="Select end time"
+                      placeholder="Chọn thời gian kết thúc"
                     />
                   </div>
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="duration">
-                    Duration (minutes) <span className="text-red-500">*</span>
+                    Thời Lượng (phút) <span className="text-red-500">*</span>
                   </Label>
                   <Input
                     id="duration"
@@ -250,10 +335,10 @@ export function ExamRoomsList({ basePath }: ExamRoomsListProps) {
                   onClick={() => setIsCreateDialogOpen(false)}
                   disabled={isCreating}
                 >
-                  Cancel
+                  Hủy
                 </Button>
                 <Button type="submit" disabled={isCreating}>
-                  {isCreating ? "Creating..." : "Create Exam Room"}
+                  {isCreating ? "Đang tạo..." : "Tạo Phòng Thi"}
                 </Button>
               </DialogFooter>
             </form>
@@ -261,92 +346,186 @@ export function ExamRoomsList({ basePath }: ExamRoomsListProps) {
         </Dialog>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Exam Room List</CardTitle>
-          <CardDescription>
-            {roomsData?.items.length || 0} exam rooms
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="text-center py-8">Loading...</div>
-          ) : !roomsData?.items.length ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No exam rooms yet. Create your first exam room!
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Room Name</TableHead>
-                  <TableHead>Time</TableHead>
-                  <TableHead>Duration</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {roomsData.items.map((room) => (
-                  <TableRow key={room.id}>
-                    <TableCell className="font-medium">{room.name}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-col gap-1 text-sm">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {formatDateTime(room.startTime)}
-                        </div>
-                        <div className="flex items-center gap-1 text-muted-foreground">
-                          <Calendar className="h-3 w-3" />
-                          {formatDateTime(room.endTime)}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" />
-                        {room.durationInMinutes} minutes
-                      </div>
-                    </TableCell>
-                    <TableCell>{getStatusBadge(room.status || "")}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() =>
-                            router.push(`${basePath}/exam-rooms/${room.id}`)
-                          }
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() =>
-                            router.push(
-                              `${basePath}/exam-rooms/${room.id}/edit`,
-                            )
-                          }
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setDeleteRoomId(room.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+      <Tabs
+        value={activeTab}
+        onValueChange={handleTabChange}
+        className="space-y-6"
+      >
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="all">Tất cả</TabsTrigger>
+          <TabsTrigger value="upcoming">Sắp diễn ra</TabsTrigger>
+          <TabsTrigger value="ongoing">Đang diễn ra</TabsTrigger>
+          <TabsTrigger value="completed">Đã kết thúc</TabsTrigger>
+          <TabsTrigger value="archived">Đã ẩn</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value={activeTab} className="space-y-4">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Danh Sách Phòng Thi</CardTitle>
+                  <CardDescription>
+                    Trang {pageNumber} / {totalPages} - Tổng: {totalCount}
+                  </CardDescription>
+                </div>
+                <div className="w-72">
+                  <Input
+                    placeholder="Tìm kiếm phòng thi..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="space-y-4">
+                  {/* Loading skeleton */}
+                  {[1, 2, 3].map((i) => (
+                    <div
+                      key={i}
+                      className="flex items-center space-x-4 animate-pulse"
+                    >
+                      <div className="h-12 bg-gray-200 rounded w-full"></div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <>
+                  {!currentRooms.length ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      Không có phòng thi nào trong danh mục này.
+                    </div>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Tên Phòng Thi</TableHead>
+                          <TableHead>Thời Gian</TableHead>
+                          <TableHead>Thời Lượng</TableHead>
+                          <TableHead>Trạng Thái</TableHead>
+                          <TableHead className="text-right">Thao Tác</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {currentRooms.map((room) => {
+                          const canEditRoom = canEdit(room.status || "");
+                          const canBeArchived = canArchive(room.status || "");
+                          const isArchived = room.isDeleted;
+
+                          return (
+                            <TableRow
+                              key={room.id}
+                              className={isArchived ? "opacity-60" : ""}
+                            >
+                              <TableCell className="font-medium">
+                                {room.name}
+                                {isArchived && (
+                                  <span className="ml-2 text-xs text-muted-foreground">
+                                    (Đã ẩn)
+                                  </span>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex flex-col gap-1 text-sm">
+                                  <div className="flex items-center gap-1">
+                                    <Calendar className="h-3 w-3" />
+                                    {formatDateTime(room.startTime)}
+                                  </div>
+                                  <div className="flex items-center gap-1 text-muted-foreground">
+                                    <Calendar className="h-3 w-3" />
+                                    {formatDateTime(room.endTime)}
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-1">
+                                  <Clock className="h-4 w-4" />
+                                  {room.durationInMinutes} phút
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                {getStatusBadge(room.status || "")}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex items-center justify-end gap-2">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() =>
+                                      router.push(
+                                        `${basePath}/exam-rooms/${room.id}`,
+                                      )
+                                    }
+                                    title="Xem chi tiết"
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
+                                  {!isArchived && canEditRoom && (
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() =>
+                                        router.push(
+                                          `${basePath}/exam-rooms/${room.id}/edit`,
+                                        )
+                                      }
+                                      title="Chỉnh sửa"
+                                    >
+                                      <Pencil className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                  {!isArchived && canBeArchived && (
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => setDeleteRoomId(room.id)}
+                                      title="Ẩn phòng thi (không thể ẩn phòng đang diễn ra)"
+                                    >
+                                      <Archive className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  )}
+
+                  {/* Pagination Controls - Always show if totalPages > 1 */}
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-center gap-2 mt-6">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={handlePrevPage}
+                        disabled={pageNumber === 1 || isLoading}
+                        title="Trang trước"
+                      >
+                        &lt;
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={handleNextPage}
+                        disabled={pageNumber >= totalPages || isLoading}
+                        title="Trang sau"
+                      >
+                        &gt;
+                      </Button>
+                    </div>
+                  )}
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       <AlertDialog
         open={!!deleteRoomId}
@@ -354,20 +533,21 @@ export function ExamRoomsList({ basePath }: ExamRoomsListProps) {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirm Delete</AlertDialogTitle>
+            <AlertDialogTitle>Xác nhận ẩn phòng thi</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this exam room? This action cannot
-              be undone.
+              Bạn có chắc chắn muốn ẩn phòng thi này? Phòng thi sẽ không hiển
+              thị trong danh sách nhưng dữ liệu vẫn được lưu trữ. Admin có thể
+              khôi phục lại sau này nếu cần.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>Hủy</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-orange-600 text-white hover:bg-orange-700"
             >
-              {isDeleting ? "Deleting..." : "Delete"}
+              {isDeleting ? "Đang ẩn..." : "Ẩn phòng thi"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

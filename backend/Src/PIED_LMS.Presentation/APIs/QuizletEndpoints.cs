@@ -25,11 +25,11 @@ public class QuizletEndpoints : ICarterModule
         // GET /api/quizlets  (Admin, Mentor, Teacher — all quizlets summary)
         group.MapGet("", GetAllQuizlets)
             .WithName("GetAllQuizlets")
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Lecturer"));
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"));
 
         group.MapGet("/{id:int}", GetQuizletById)
             .WithName("GetQuizletById")
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Lecturer"));
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"));
 
         // DELETE /api/quizlets/{id}
         group.MapDelete("/{id}", DeleteQuizlet)
@@ -109,10 +109,12 @@ public class QuizletEndpoints : ICarterModule
         [FromForm] string title,
         [FromForm] string description,
         [FromForm] bool isPublished,
+        [FromForm] bool isHidden,
+        [FromForm] QuizletLevel level,
         IFormFile listQuestion,
         ISender sender)
     {
-        var command = new CreateQuestionQuizCommand(title, description, isPublished, listQuestion);
+        var command = new CreateQuestionQuizCommand(title, description, isPublished, isHidden, level, listQuestion);
         var result = await sender.Send(command);
         if (result.Success)
             return Results.Ok(result);
@@ -134,7 +136,7 @@ public class QuizletEndpoints : ICarterModule
         [FromBody] UpdateQuestionQuizRequest request,
         ISender sender)
     {
-        var command = new UpdateQuestionQuizCommand(id, request.Title, request.IsPublished, request.ListQuestion);
+        var command = new UpdateQuestionQuizCommand(id, request.Title, request.IsPublished, request.IsHidden, request.Level, request.ListQuestion);
         var result = await sender.Send(command);
         if (result.Success)
             return Results.Ok(result);
@@ -145,5 +147,7 @@ public class QuizletEndpoints : ICarterModule
 public record UpdateQuestionQuizRequest(
     string Title,
     bool IsPublished,
+    bool IsHidden,
+    QuizletLevel Level,
     List<UpdateQuestionDto> ListQuestion
 );

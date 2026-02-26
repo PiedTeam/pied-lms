@@ -7,6 +7,7 @@ import {
   BarChart3,
   LogOut,
   User,
+  Users,
   ChevronUp,
   FileSpreadsheet,
   DoorOpen,
@@ -39,6 +40,11 @@ const menuItems = [
     title: "Exams",
     href: "/teacher/exams",
     icon: FileText,
+  },
+  {
+    title: "Students",
+    href: "/teacher/students",
+    icon: Users,
   },
   {
     title: "Quizlets",

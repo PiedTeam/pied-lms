@@ -6,6 +6,8 @@ export interface ExamResponse {
   description: string;
   totalMarks: number;
   passingMarks: number;
+  isDeleted: boolean;
+  deletedAt: string | null;
   createdAt: string;
 }
 
@@ -26,9 +28,23 @@ export interface UpdateExamRequest {
 export interface GetExamsRequest {
   pageNumber?: number;
   pageSize?: number;
+  includeDeleted?: boolean;
+}
+
+export interface GetExamsByMentorRequest {
+  pageNumber?: number;
+  pageSize?: number;
+  includeDeleted?: boolean;
 }
 
 export interface GetExamsByMentorResponse {
+  items: ExamResponse[];
+  pageNumber: number;
+  pageSize: number;
+  totalCount: number;
+}
+
+export interface GetExamsByAdminResponse {
   items: ExamResponse[];
   pageNumber: number;
   pageSize: number;

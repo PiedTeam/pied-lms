@@ -11,6 +11,7 @@ export {
   useChangePassword,
   useGetUserById,
   useGetAllUsers,
+  useGetAllStudents,
 } from "./user/user.service";
 
 // Admin Services
@@ -52,6 +53,7 @@ export {
 export {
   useStartExam,
   useGetStudentParticipations,
+  useGetExamRoomEnrollments,
 } from "./exam-participation/exam-participation.service";
 
 // Quizlet Services

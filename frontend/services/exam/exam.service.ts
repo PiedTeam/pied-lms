@@ -7,7 +7,6 @@ import type {
   UpdateExamRequest,
   GetExamsByMentorResponse,
   GetExamsRequest,
-  GetExamsByAdminResponse,
 } from "@/interface/exam/exam.interface";
 
 // Create Exam (Mentor only)
@@ -75,8 +74,8 @@ export function useGetExamsByAdmin(params: GetExamsRequest = {}) {
 
   return useQuery({
     queryKey: ["exams", pageNumber, pageSize],
-    queryFn: async (): Promise<GetExamsByAdminResponse> => {
-      const { data } = await axios.get<ApiResponse<GetExamsByAdminResponse>>(
+    queryFn: async (): Promise<GetExamsByMentorResponse> => {
+      const { data } = await axios.get<ApiResponse<GetExamsByMentorResponse>>(
         "/exams",
         {
           params: {

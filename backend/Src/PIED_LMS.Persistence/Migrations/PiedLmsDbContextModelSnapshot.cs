@@ -595,6 +595,18 @@ namespace PIED_LMS.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("content");
 
+                    b.Property<bool>("IsHidden")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_hidden");
+
+                    b.Property<int>("Level")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1)
+                        .HasColumnName("level");
+
                     b.Property<string>("QuestionType")
                         .IsRequired()
                         .HasColumnType("text")
@@ -605,7 +617,9 @@ namespace PIED_LMS.Persistence.Migrations
                         .HasColumnName("quiz_id");
 
                     b.Property<double>("Score")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("double precision")
+                        .HasDefaultValue(0.0)
                         .HasColumnName("score");
 
                     b.HasKey("Id")
@@ -667,11 +681,23 @@ namespace PIED_LMS.Persistence.Migrations
                         .HasColumnType("character varying(1000)")
                         .HasColumnName("description");
 
+                    b.Property<bool>("IsHidden")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_hidden");
+
                     b.Property<bool>("IsPublished")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(false)
                         .HasColumnName("is_published");
+
+                    b.Property<int>("Level")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1)
+                        .HasColumnName("level");
 
                     b.Property<string>("Title")
                         .IsRequired()

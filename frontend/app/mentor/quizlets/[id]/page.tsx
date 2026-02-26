@@ -71,7 +71,7 @@ export default function ViewQuizletPage() {
         </Button>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Trạng thái</CardTitle>
@@ -88,6 +88,24 @@ export default function ViewQuizletPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Độ khó</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {quizlet.level === 0 && <Badge className="bg-green-600">Dễ</Badge>}
+            {quizlet.level === 1 && (
+              <Badge className="bg-yellow-600">Trung bình</Badge>
+            )}
+            {quizlet.level === 2 && <Badge className="bg-red-600">Khó</Badge>}
+            {quizlet.isHidden && (
+              <Badge variant="outline" className="ml-2">
+                Level ẩn
+              </Badge>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Ngày tạo</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
@@ -95,13 +113,18 @@ export default function ViewQuizletPage() {
             <div className="text-2xl font-bold">
               {new Date(quizlet.createdAt).toLocaleDateString("vi-VN")}
             </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Bởi: {quizlet.userName || "—"}
+            </p>
           </CardContent>
         </Card>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Câu hỏi ({quizlet.listQuestion.length})</CardTitle>
+          <CardTitle>
+            Câu hỏi ({quizlet.quantityQuestion || quizlet.listQuestion.length})
+          </CardTitle>
           <CardDescription>Danh sách các câu hỏi trong quizlet</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -113,18 +136,31 @@ export default function ViewQuizletPage() {
                     {index + 1}
                   </Badge>
                   <div className="flex-1">
-                    <p className="font-medium">{question.content}</p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-medium">{question.content}</p>
+                      {question.level === 1 && (
+                        <Badge className="bg-green-600">Dễ</Badge>
+                      )}
+                      {question.level === 2 && (
+                        <Badge className="bg-yellow-600">Trung bình</Badge>
+                      )}
+                      {question.level === 3 && (
+                        <Badge className="bg-red-600">Khó</Badge>
+                      )}
+                      {question.isHidden && (
+                        <Badge variant="outline">Level ẩn</Badge>
+                      )}
+                    </div>
                     <p className="text-sm text-muted-foreground mt-1">
                       Điểm: {question.score} | Loại:{" "}
-                      {question.type === 0 ? "Một đáp án" : "Nhiều đáp án"}
+                      {question.questionType === "SingleChoice"
+                        ? "Một đáp án"
+                        : "Nhiều đáp án"}
                     </p>
                   </div>
                 </div>
 
                 <div className="ml-10 space-y-2">
-                  <p className="text-xs text-blue-500">
-                    Debug: Answers length = {question.answers?.length || 0}
-                  </p>
                   {question.answers && question.answers.length > 0 ? (
                     question.answers.map((answer, optIndex) => {
                       const isCorrect =

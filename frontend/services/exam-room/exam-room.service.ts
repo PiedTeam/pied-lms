@@ -11,7 +11,6 @@ import type {
   GetAvailableExamRoomsRequest,
   ExamRoomAccessResponse,
   PaginatedExamRoomsResponse,
-  GetExamRoomsByAdminRequest,
 } from "@/interface/exam-room/exam-room.interface";
 
 // Create Exam Room (Mentor)
@@ -83,7 +82,7 @@ export function useGetExamRoomsByMentor(
 
 // Get Exam Rooms By Admin
 export function useGetExamRoomsByAdmin(
-  params: GetExamRoomsByAdminRequest = {},
+  params: GetExamRoomsByMentorRequest = {},
 ) {
   const { pageNumber = 1, pageSize = 10, status } = params;
 

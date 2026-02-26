@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
-
 namespace PIED_LMS.Domain.Entities;
 
 public class QuestionQuiz
@@ -13,6 +9,10 @@ public class QuestionQuiz
     public string Description { get; set; } = string.Empty;
 
     public bool IsPublished { get; set; }
+
+    public bool IsHidden { get; set; }
+
+    public int Level { get; set; }
 
     public Guid UserId { get; set; }
 

@@ -113,6 +113,8 @@ export function useCreateQuizlet() {
       formData.append("title", payload.title);
       formData.append("description", payload.description);
       formData.append("isPublished", payload.isPublished.toString());
+      formData.append("isHidden", payload.isHidden.toString());
+      formData.append("level", payload.level.toString());
       formData.append("listQuestion", payload.listQuestion);
 
       try {
@@ -163,7 +165,13 @@ export function useUpdateQuizlet() {
       try {
         const { data } = await axios.put<ApiResponse<string>>(
           `/quizlets/${id}`,
-          payload,
+          {
+            Title: payload.title,
+            IsPublished: payload.isPublished,
+            IsHidden: payload.isHidden,
+            Level: payload.level,
+            ListQuestion: payload.listQuestion,
+          },
         );
 
         if (!data.success) {
@@ -173,10 +181,8 @@ export function useUpdateQuizlet() {
         return data.message || QUIZLET_MESSAGES.SUCCESS.UPDATED;
       } catch (err) {
         const error = err as AxiosError;
-        // Handle 400 Bad Request - Permission denied
-        if (error.response?.status === 400) {
+        if (error.response?.status === 400 || error.response?.status === 403) {
           const errorMessage = error.response?.data?.message || "";
-          // Check if it's a permission error
           if (
             errorMessage.toLowerCase().includes("permission") ||
             errorMessage.toLowerCase().includes("quyền") ||

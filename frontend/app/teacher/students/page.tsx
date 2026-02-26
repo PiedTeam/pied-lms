@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { useGetAllStudents } from "@/services";
 
-export default function MentorStudentsPage() {
+export default function TeacherStudentsPage() {
   const [pageNumber, setPageNumber] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const pageSize = 10;

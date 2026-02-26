@@ -17,6 +17,8 @@ export interface ExamRoomResponse {
   durationInMinutes: number;
   status?: string;
   createdBy?: string;
+  isDeleted: boolean;
+  deletedAt: string | null;
   createdAt?: string;
 }
 
@@ -44,6 +46,13 @@ export interface ExamRoomDetailResponse {
 }
 
 export interface GetExamRoomsByMentorRequest {
+  pageNumber?: number;
+  pageSize?: number;
+  status?: string; // active, upcoming, closed
+  includeDeleted?: boolean;
+}
+
+export interface GetExamRoomsByAdminRequest {
   pageNumber?: number;
   pageSize?: number;
   status?: string; // active, upcoming, closed
@@ -88,7 +97,6 @@ export interface PaginatedExamRoomsResponse {
   pageNumber: number;
   pageSize: number;
   totalCount: number;
-  totalPages: number;
 }
 
 export interface EnrollStudentsRequest {

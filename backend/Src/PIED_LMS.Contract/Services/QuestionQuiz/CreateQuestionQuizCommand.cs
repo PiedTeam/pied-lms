@@ -9,5 +9,7 @@ public record CreateQuestionQuizCommand(
     string Title,
     string Description,
     bool IsPublished,
+    bool IsHidden,
+    QuizletLevel Level,
     IFormFile ListQuestion
 ) : IRequest<ServiceResponse<string>>;

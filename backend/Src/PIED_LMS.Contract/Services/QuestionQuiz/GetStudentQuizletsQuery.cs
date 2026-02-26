@@ -20,6 +20,8 @@ public record QuizletDetailResponse(
     DateTime CreatedAt,
     DateTime UpdatedAt,
     bool IsPublished,
+    bool IsHidden,
+    QuizletLevel Level,
     List<StudentQuestionDto> ListQuestion
 );
 
@@ -37,5 +39,7 @@ public record StudentQuestionDto(
     double Score,
     List<string> Answers,
     List<string> CorrectAnswers,
-    string QuestionType
+    string QuestionType,
+    bool IsHidden,
+    QuizletLevel Level
 );
