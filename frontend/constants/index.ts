@@ -2,7 +2,7 @@
 export const API_ENDPOINTS = {
   COMPILE: "/api/compile",
   // Add more endpoints here
-} as const
+} as const;
 
 // Application constants
 export const APP_CONFIG = {
@@ -13,10 +13,13 @@ int main() {
     return 0;
 }`,
   EDITOR_HEIGHT: "600px",
-} as const
+} as const;
 
 // Query keys for React Query
 export const QUERY_KEYS = {
   COMPILE: (code: string) => ["compile", code] as const,
   // Add more query keys here
-} as const
+} as const;
+
+// Export message constants
+export * from "./messages.constants";

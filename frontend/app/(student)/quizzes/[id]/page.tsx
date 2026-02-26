@@ -1,395 +1,278 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useRouter, useParams } from 'next/navigation'
+import { useParams, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { ArrowLeft, Clock, CheckCircle2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
-	ArrowLeft,
-	Send,
-	Loader2,
-	AlertCircle,
-	CheckCircle2,
-	Trophy,
-	RotateCcw,
-	ListChecks,
-	ToggleLeft
-} from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle
-} from '@/components/ui/card'
-import { Checkbox } from '@/components/ui/checkbox'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { Badge } from '@/components/ui/badge'
-import { Label } from '@/components/ui/label'
-import { useGetQuiz, useSubmitQuiz } from '@/service/student/quiz.service'
-import type { SubmitBody } from '@/interface/admin/quiz.interface'
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { useToast } from "@/hooks/use-toast";
+import { useGetStudentQuizletById } from "@/service";
+
+interface Answer {
+  questionIndex: number;
+  selectedAnswers: string[];
+}
 
 export default function TakeQuizPage() {
-	const router = useRouter()
-	const params = useParams()
-	const quizId = params.id as string
+  const params = useParams();
+  const router = useRouter();
+  const { toast } = useToast();
+  const id = parseInt(params.id as string);
 
-	const { data: quiz, isLoading, error } = useGetQuiz(quizId)
-	const { mutate: submitQuiz, isPending: isSubmitting } = useSubmitQuiz()
+  const { data: quizlet } = useGetStudentQuizletById(id);
 
-	const [selectedAnswers, setSelectedAnswers] = useState<
-		Record<string, string[]>
-	>({})
-	const [submitted, setSubmitted] = useState(false)
-	const [result, setResult] = useState<{
-		score: number
-		totalPoints: number
-		percentage: number
-		grade: string
-	} | null>(null)
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [answers, setAnswers] = useState<Answer[]>([]);
+  const [timeElapsed, setTimeElapsed] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-	const handleRetry = () => {
-		setSelectedAnswers({})
-		setSubmitted(false)
-		setResult(null)
-	}
+  // Timer
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeElapsed((prev) => prev + 1);
+    }, 1000);
 
-	const handleAnswerChange = (
-		questionUuid: string,
-		answerUuid: string,
-		checked: boolean,
-		isSingleChoice: boolean = false
-	) => {
-		if (submitted) return // Prevent changes after submission
+    return () => clearInterval(timer);
+  }, []);
 
-		setSelectedAnswers(prev => {
-			// For single choice (TRUE_FALSE), replace the selection
-			if (isSingleChoice) {
-				return {
-					...prev,
-					[questionUuid]: checked ? [answerUuid] : []
-				}
-			}
+  if (!quizlet) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="text-center py-12">
+          <p className="text-destructive">Quiz not found</p>
+          <Button className="mt-4" onClick={() => router.back()}>
+            Go Back
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
-			// For multiple choice, toggle the selection
-			const current = prev[questionUuid] || []
-			if (checked) {
-				return {
-					...prev,
-					[questionUuid]: [...current, answerUuid]
-				}
-			} else {
-				return {
-					...prev,
-					[questionUuid]: current.filter(id => id !== answerUuid)
-				}
-			}
-		})
-	}
+  const question = quizlet.listQuestion[currentQuestion];
+  const totalQuestions = quizlet.listQuestion.length;
+  const progress = ((currentQuestion + 1) / totalQuestions) * 100;
 
-	// Helper to get question type label and check if single choice
-	const getQuestionTypeInfo = (type: string) => {
-		const normalizedType = type?.toUpperCase() || 'MULTIPLE_CHOICE'
-		if (normalizedType === 'TRUE_FALSE' || normalizedType === 'TRUEFALSE') {
-			return { label: 'True / False', isSingleChoice: true, icon: ToggleLeft }
-		}
-		return { label: 'Multiple Choice', isSingleChoice: false, icon: ListChecks }
-	}
+  const currentAnswer = answers.find(
+    (a) => a.questionIndex === currentQuestion,
+  );
+  const selectedAnswers = currentAnswer?.selectedAnswers || [];
 
-	const handleSubmit = () => {
-		if (!quiz || !quiz.questions) return
+  const handleAnswerToggle = (answer: string) => {
+    const isSingleChoice = question.questionType === "SingleChoice";
 
-		const payload: SubmitBody = {
-			answers: quiz.questions.map(question => ({
-				questionUuid: question.uuid,
-				selectedAnswerUuids: selectedAnswers[question.uuid] || []
-			}))
-		}
+    let newSelectedAnswers: string[];
+    if (isSingleChoice) {
+      newSelectedAnswers = [answer];
+    } else {
+      if (selectedAnswers.includes(answer)) {
+        newSelectedAnswers = selectedAnswers.filter((a) => a !== answer);
+      } else {
+        newSelectedAnswers = [...selectedAnswers, answer];
+      }
+    }
 
-		submitQuiz(
-			{ id: quizId, payload },
-			{
-				onSuccess: data => {
-					setSubmitted(true)
-					setResult(data)
-				},
-				onError: (err: Error) => {
-					alert(`Failed to submit quiz: ${err.message}`)
-				}
-			}
-		)
-	}
+    const newAnswers = answers.filter(
+      (a) => a.questionIndex !== currentQuestion,
+    );
+    newAnswers.push({
+      questionIndex: currentQuestion,
+      selectedAnswers: newSelectedAnswers,
+    });
+    setAnswers(newAnswers);
+  };
 
-	if (isLoading) {
-		return (
-			<div className="container mx-auto max-w-4xl p-6">
-				<div className="flex items-center justify-center py-12">
-					<Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-				</div>
-			</div>
-		)
-	}
+  const handleNext = () => {
+    if (selectedAnswers.length === 0) {
+      toast({
+        title: "Please select an answer",
+        description: "You must select at least one answer before proceeding",
+        variant: "destructive",
+      });
+      return;
+    }
 
-	if (error || !quiz) {
-		return (
-			<div className="container mx-auto max-w-4xl p-6">
-				<div className="rounded-md bg-destructive/10 p-4 text-center text-destructive">
-					{error?.message || 'Failed to load quiz'}
-				</div>
-				<Button
-					variant="outline"
-					className="mt-4"
-					onClick={() => router.back()}
-				>
-					<ArrowLeft className="mr-2 h-4 w-4" />
-					Go Back
-				</Button>
-			</div>
-		)
-	}
+    if (currentQuestion < totalQuestions - 1) {
+      setCurrentQuestion(currentQuestion + 1);
+    }
+  };
 
-	const questions = quiz.questions || []
-	const allQuestionsAnswered = questions.every(
-		q => selectedAnswers[q.uuid] && selectedAnswers[q.uuid].length > 0
-	)
+  const handlePrevious = () => {
+    if (currentQuestion > 0) {
+      setCurrentQuestion(currentQuestion - 1);
+    }
+  };
 
-	return (
-		<div className="container mx-auto max-w-4xl p-6">
-			{/* Header */}
-			<div className="mb-6">
-				<Button variant="ghost" onClick={() => router.back()} className="mb-4">
-					<ArrowLeft className="mr-2 h-4 w-4" />
-					Back
-				</Button>
-				<div>
-					<h1 className="text-2xl font-bold">{quiz.title}</h1>
-					{quiz.description && (
-						<p className="text-muted-foreground mt-2">{quiz.description}</p>
-					)}
-				</div>
-			</div>
+  const handleSubmit = () => {
+    if (answers.length < totalQuestions) {
+      toast({
+        title: "Incomplete quiz",
+        description: "Please answer all questions before submitting",
+        variant: "destructive",
+      });
+      return;
+    }
 
-			{/* Result Card (shown after submission) */}
-			{submitted && result && (
-				<Card className="mb-6 border-2 border-primary">
-					<CardHeader>
-						<CardTitle className="flex items-center gap-2">
-							<Trophy className="h-5 w-5 text-yellow-500" />
-							Quiz Results
-						</CardTitle>
-					</CardHeader>
-					<CardContent className="space-y-4">
-						<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-							<div>
-								<p className="text-sm text-muted-foreground">Score</p>
-								<p className="text-2xl font-bold">
-									{result.score} / {result.totalPoints}
-								</p>
-							</div>
-							<div>
-								<p className="text-sm text-muted-foreground">Percentage</p>
-								<p className="text-2xl font-bold">
-									{result.percentage.toFixed(1)}%
-								</p>
-							</div>
-							<div>
-								<p className="text-sm text-muted-foreground">Grade</p>
-								<Badge variant="default" className="text-lg px-3 py-1">
-									{result.grade}
-								</Badge>
-							</div>
-							<div>
-								<p className="text-sm text-muted-foreground">Status</p>
-								<div className="flex items-center gap-2">
-									<CheckCircle2 className="h-5 w-5 text-green-500" />
-									<span className="font-medium">Completed</span>
-								</div>
-							</div>
-						</div>
-						<div className="pt-4 border-t">
-							<Button
-								onClick={handleRetry}
-								variant="outline"
-								className="w-full sm:w-auto"
-							>
-								<RotateCcw className="mr-2 h-4 w-4" />
-								Retry Quiz
-							</Button>
-						</div>
-					</CardContent>
-				</Card>
-			)}
+    setIsSubmitting(true);
 
-			{/* Questions */}
-			<div className="space-y-6 mb-6">
-				{questions.map((question, index) => {
-					const typeInfo = getQuestionTypeInfo(question.type)
-					const TypeIcon = typeInfo.icon
+    // Calculate score
+    let correctCount = 0;
+    let totalScore = 0;
+    let earnedScore = 0;
 
-					return (
-						<Card key={question.uuid}>
-							<CardHeader>
-								<div className="flex items-center justify-between">
-									<CardTitle className="text-lg">
-										Question {index + 1}
-										{question.points && (
-											<span className="ml-2 text-sm font-normal text-muted-foreground">
-												({question.points} point
-												{question.points !== 1 ? 's' : ''})
-											</span>
-										)}
-									</CardTitle>
-									<Badge variant="outline" className="flex items-center gap-1">
-										<TypeIcon className="h-3 w-3" />
-										{typeInfo.label}
-									</Badge>
-								</div>
-								<CardDescription className="text-base text-foreground">
-									{question.content}
-								</CardDescription>
-							</CardHeader>
-							<CardContent className="space-y-3">
-								{question.answers && question.answers.length > 0 ? (
-									typeInfo.isSingleChoice ? (
-										// Single choice (True/False) - use Radio
-										<RadioGroup
-											value={selectedAnswers[question.uuid]?.[0] || ''}
-											onValueChange={value => {
-												if (!submitted) {
-													handleAnswerChange(question.uuid, value, true, true)
-												}
-											}}
-											disabled={submitted}
-										>
-											{question.answers.map(answer => (
-												<div
-													key={answer.uuid}
-													className={`flex items-center gap-3 rounded-md border p-3 transition-colors ${
-														submitted
-															? 'opacity-60 cursor-not-allowed'
-															: 'hover:bg-accent cursor-pointer'
-													}`}
-													onClick={() => {
-														if (!submitted) {
-															handleAnswerChange(
-																question.uuid,
-																answer.uuid,
-																true,
-																true
-															)
-														}
-													}}
-												>
-													<RadioGroupItem
-														value={answer.uuid}
-														id={answer.uuid}
-														disabled={submitted}
-													/>
-													<Label
-														htmlFor={answer.uuid}
-														className="flex-1 cursor-pointer"
-													>
-														{answer.content}
-													</Label>
-												</div>
-											))}
-										</RadioGroup>
-									) : (
-										// Multiple choice - use Checkbox
-										question.answers.map(answer => {
-											const isSelected =
-												selectedAnswers[question.uuid]?.includes(answer.uuid) ||
-												false
-											return (
-												<div
-													key={answer.uuid}
-													className={`flex items-start gap-3 rounded-md border p-3 transition-colors ${
-														submitted
-															? 'opacity-60 cursor-not-allowed'
-															: 'hover:bg-accent cursor-pointer'
-													}`}
-													onClick={() => {
-														if (!submitted) {
-															handleAnswerChange(
-																question.uuid,
-																answer.uuid,
-																!isSelected,
-																false
-															)
-														}
-													}}
-												>
-													<Checkbox
-														checked={isSelected}
-														onCheckedChange={checked =>
-															!submitted &&
-															handleAnswerChange(
-																question.uuid,
-																answer.uuid,
-																!!checked,
-																false
-															)
-														}
-														disabled={submitted}
-														className="mt-1"
-													/>
-													<label className="flex-1 cursor-pointer">
-														{answer.content}
-													</label>
-												</div>
-											)
-										})
-									)
-								) : (
-									<p className="text-sm text-muted-foreground">
-										No answers available
-									</p>
-								)}
-							</CardContent>
-						</Card>
-					)
-				})}
-			</div>
+    quizlet.listQuestion.forEach((q, index) => {
+      totalScore += q.score;
+      const userAnswer = answers.find((a) => a.questionIndex === index);
 
-			{/* Submit Section */}
-			{!submitted && (
-				<Card className="sticky bottom-0 bg-background border-t-2">
-					<CardContent className="pt-6">
-						<div className="flex items-center justify-between">
-							<div>
-								{!allQuestionsAnswered && (
-									<div className="flex items-center gap-2 text-sm text-muted-foreground">
-										<AlertCircle className="h-4 w-4" />
-										<span>Please answer all questions before submitting</span>
-									</div>
-								)}
-								{allQuestionsAnswered && (
-									<div className="flex items-center gap-2 text-sm text-green-600">
-										<CheckCircle2 className="h-4 w-4" />
-										<span>All questions answered</span>
-									</div>
-								)}
-							</div>
-							<Button
-								onClick={handleSubmit}
-								disabled={!allQuestionsAnswered || isSubmitting}
-								className="bg-[#40E0D0] hover:bg-[#40E0D0]/90 text-white"
-							>
-								{isSubmitting ? (
-									<>
-										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-										Submitting...
-									</>
-								) : (
-									<>
-										<Send className="mr-2 h-4 w-4" />
-										Submit Quiz
-									</>
-								)}
-							</Button>
-						</div>
-					</CardContent>
-				</Card>
-			)}
-		</div>
-	)
+      if (userAnswer) {
+        const correctAnswers = q.correctAnswers.sort();
+        const userAnswers = userAnswer.selectedAnswers.sort();
+
+        if (JSON.stringify(correctAnswers) === JSON.stringify(userAnswers)) {
+          correctCount++;
+          earnedScore += q.score;
+        }
+      }
+    });
+
+    // Navigate to result page with data
+    const resultData = {
+      quizletId: id,
+      quizletTitle: quizlet.title,
+      totalQuestions,
+      correctCount,
+      totalScore,
+      earnedScore,
+      timeElapsed,
+      answers,
+      questions: quizlet.listQuestion,
+    };
+
+    sessionStorage.setItem(`quiz-result-${id}`, JSON.stringify(resultData));
+    router.push(`/quizzes/${id}/result`);
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  return (
+    <div className="container mx-auto p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => router.back()}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold">{quizlet.title}</h1>
+            <p className="text-sm text-muted-foreground">
+              Question {currentQuestion + 1} of {totalQuestions}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Clock className="h-5 w-5" />
+          <span className="font-mono text-lg">{formatTime(timeElapsed)}</span>
+        </div>
+      </div>
+
+      <Progress value={progress} className="h-2" />
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <CardTitle className="text-xl">{question.content}</CardTitle>
+              <CardDescription className="mt-2">
+                {question.questionType === "SingleChoice"
+                  ? "Select one answer"
+                  : "Select all correct answers"}
+              </CardDescription>
+            </div>
+            <Badge variant="outline">{question.score} points</Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {question.answers.map((answer, index) => {
+            const isSelected = selectedAnswers.includes(answer);
+            return (
+              <button
+                key={index}
+                onClick={() => handleAnswerToggle(answer)}
+                className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
+                  isSelected
+                    ? "border-primary bg-primary/10"
+                    : "border-border hover:border-primary/50"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                      isSelected ? "border-primary bg-primary" : "border-border"
+                    }`}
+                  >
+                    {isSelected && (
+                      <CheckCircle2 className="h-4 w-4 text-primary-foreground" />
+                    )}
+                  </div>
+                  <span className="font-mono text-sm font-medium mr-2">
+                    {String.fromCharCode(65 + index)}.
+                  </span>
+                  <span className="flex-1">{answer}</span>
+                </div>
+              </button>
+            );
+          })}
+        </CardContent>
+      </Card>
+
+      <div className="flex items-center justify-between">
+        <Button
+          variant="outline"
+          onClick={handlePrevious}
+          disabled={currentQuestion === 0}
+        >
+          Previous
+        </Button>
+
+        <div className="flex gap-2">
+          {Array.from({ length: totalQuestions }).map((_, index) => {
+            const hasAnswer = answers.some((a) => a.questionIndex === index);
+            return (
+              <button
+                key={index}
+                onClick={() => setCurrentQuestion(index)}
+                className={`w-8 h-8 rounded-full text-sm font-medium transition-colors ${
+                  index === currentQuestion
+                    ? "bg-primary text-primary-foreground"
+                    : hasAnswer
+                      ? "bg-green-100 text-green-700 border border-green-300"
+                      : "bg-muted text-muted-foreground"
+                }`}
+              >
+                {index + 1}
+              </button>
+            );
+          })}
+        </div>
+
+        {currentQuestion === totalQuestions - 1 ? (
+          <Button onClick={handleSubmit} disabled={isSubmitting}>
+            {isSubmitting ? "Submitting..." : "Submit Quiz"}
+          </Button>
+        ) : (
+          <Button onClick={handleNext}>Next</Button>
+        )}
+      </div>
+    </div>
+  );
 }

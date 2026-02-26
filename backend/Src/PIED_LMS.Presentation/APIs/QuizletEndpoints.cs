@@ -19,8 +19,10 @@ public class QuizletEndpoints : ICarterModule
         // POST /api/quizlets
         group.MapPost("", CreateQuizlet)
             .WithName("CreateQuizlet")
-            .DisableAntiforgery();
+            .DisableAntiforgery()
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher")); 
 
+        // GET /api/quizlets  (Admin, Mentor, Teacher — all quizlets summary)
         group.MapGet("", GetAllQuizlets)
             .WithName("GetAllQuizlets")
             .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Lecturer"));
@@ -31,11 +33,13 @@ public class QuizletEndpoints : ICarterModule
 
         // DELETE /api/quizlets/{id}
         group.MapDelete("/{id}", DeleteQuizlet)
-            .WithName("DeleteQuizlet");
+            .WithName("DeleteQuizlet")
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher")); ;
 
         // PUT /api/quizlets/{id}
         group.MapPut("/{id}", UpdateQuizlet)
-            .WithName("UpdateQuizlet");
+            .WithName("UpdateQuizlet")
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher")); ;
 
         // GET /api/students/quizlets  (Student — published only, summary)
         app.MapGet("/api/students/quizlets", GetStudentQuizlets)

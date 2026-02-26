@@ -88,8 +88,11 @@ public class GetExamRoomsByMentorHandler(
                     er.StartTime,
                     er.EndTime,
                     er.DurationInMinutes,
+                    er.RoomCode,
                     status,
                     examCount,
+                    er.IsDeleted,
+                    er.DeletedAt,
                     er.CreatedAt
                 );
             }).ToList();

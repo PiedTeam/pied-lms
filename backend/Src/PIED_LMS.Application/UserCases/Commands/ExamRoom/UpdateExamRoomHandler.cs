@@ -129,8 +129,11 @@ public class UpdateExamRoomHandler(
                 examRoom.StartTime,
                 examRoom.EndTime,
                 examRoom.DurationInMinutes,
+                examRoom.RoomCode,
                 status,
                 examRoom.ExamRoomExams.Count,
+                examRoom.IsDeleted,
+                examRoom.DeletedAt,
                 examRoom.CreatedAt
             );
 

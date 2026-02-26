@@ -21,3 +21,24 @@ public record ExamRoomAccessResponse(
     DateTime? AvailableFrom,
     DateTime? AvailableUntil
 );
+
+// ExamRoom Enrollment Response (for Admin/Mentor/Teacher)
+public record ExamRoomEnrollmentResponse(
+    Guid Id,
+    Guid StudentId,
+    string StudentEmail,
+    string StudentFirstName,
+    string StudentLastName,
+    DateTime EnrolledAt,
+    bool EmailSent,
+    DateTime? EmailSentAt
+);
+
+// Submit Exam Response
+public record SubmitExamResponse(
+    Guid ParticipationId,
+    DateTime SubmittedAt,
+    int? Score,
+    bool IsCompleted,
+    string Message
+);
