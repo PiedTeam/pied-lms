@@ -126,6 +126,7 @@ export const EXAM_ROOM_MESSAGES = {
     DELETED: "Xóa phòng thi thành công",
     EXAM_ASSIGNED: "Gán bài thi vào phòng thành công",
     EXAM_REMOVED: "Xóa bài thi khỏi phòng thành công",
+    STUDENTS_ENROLLED: "Thêm học sinh vào phòng thi thành công",
   },
   ERROR: {
     CREATE_FAILED: "Tạo phòng thi thất bại",
@@ -135,6 +136,8 @@ export const EXAM_ROOM_MESSAGES = {
     NO_ACCESS: "Bạn không có quyền truy cập phòng thi này",
     ASSIGN_EXAM_FAILED: "Gán bài thi vào phòng thất bại",
     REMOVE_EXAM_FAILED: "Xóa bài thi khỏi phòng thất bại",
+    ENROLL_STUDENTS_FAILED: "Thêm học sinh vào phòng thi thất bại",
+    NO_STUDENTS_SELECTED: "Vui lòng chọn ít nhất một học sinh",
   },
 } as const;
 

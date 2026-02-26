@@ -29,6 +29,12 @@ public class AssignExamToRoomHandler(
                 );
             }
 
+            var userRoles = httpContextAccessor.HttpContext?.User.FindAll(ClaimTypes.Role)
+                .Select(c => c.Value)
+                .ToList() ?? new List<string>();
+
+            var isAdmin = userRoles.Contains("Admin");
+
             // Find exam room by ID
             var examRoom = await unitOfWork.Repository<Domain.Entities.ExamRoom>()
                 .FindAll(er => er.Id == request.ExamRoomId && !er.IsDeleted)
@@ -83,10 +89,11 @@ public class AssignExamToRoomHandler(
             await unitOfWork.CommitAsync(cancellationToken);
 
             logger.LogInformation(
-                "Exam assigned to room successfully. ExamRoomId: {ExamRoomId}, ExamId: {ExamId}, AssignedBy: {UserId}",
+                "Exam assigned to room successfully. ExamRoomId: {ExamRoomId}, ExamId: {ExamId}, AssignedBy: {UserId}, IsAdmin: {IsAdmin}",
                 request.ExamRoomId,
                 request.ExamId,
-                userId
+                userId,
+                isAdmin
             );
 
             return new ServiceResponse<string>(

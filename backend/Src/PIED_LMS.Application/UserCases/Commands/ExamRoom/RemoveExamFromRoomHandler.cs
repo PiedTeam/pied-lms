@@ -30,6 +30,12 @@ public class RemoveExamFromRoomHandler(
                 );
             }
 
+            var userRoles = httpContextAccessor.HttpContext?.User.FindAll(ClaimTypes.Role)
+                .Select(c => c.Value)
+                .ToList() ?? new List<string>();
+
+            var isAdmin = userRoles.Contains("Admin");
+
             // Find exam room by ID
             var examRoom = await unitOfWork.Repository<Domain.Entities.ExamRoom>()
                 .FindAll(er => er.Id == request.ExamRoomId && !er.IsDeleted)
@@ -77,10 +83,11 @@ public class RemoveExamFromRoomHandler(
             await unitOfWork.CommitAsync(cancellationToken);
 
             logger.LogInformation(
-                "Exam removed from room successfully. ExamRoomId: {ExamRoomId}, ExamId: {ExamId}, RemovedBy: {UserId}",
+                "Exam removed from room successfully. ExamRoomId: {ExamRoomId}, ExamId: {ExamId}, RemovedBy: {UserId}, IsAdmin: {IsAdmin}",
                 request.ExamRoomId,
                 request.ExamId,
-                userId
+                userId,
+                isAdmin
             );
 
             return new ServiceResponse<string>(

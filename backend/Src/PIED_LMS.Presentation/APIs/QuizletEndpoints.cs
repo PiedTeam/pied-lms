@@ -22,14 +22,14 @@ public class QuizletEndpoints : ICarterModule
             .DisableAntiforgery()
             .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher")); 
 
-        // GET /api/quizlets  (Admin, Mentor, Lecturer — all quizlets summary)
+        // GET /api/quizlets  (Admin, Mentor, Teacher — all quizlets summary)
         group.MapGet("", GetAllQuizlets)
             .WithName("GetAllQuizlets")
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"));
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Lecturer"));
 
         group.MapGet("/{id:int}", GetQuizletById)
             .WithName("GetQuizletById")
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"));
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Lecturer"));
 
         // DELETE /api/quizlets/{id}
         group.MapDelete("/{id}", DeleteQuizlet)

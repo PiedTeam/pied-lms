@@ -8,6 +8,7 @@ import {
   FileText,
   Plus,
   Trash2,
+  Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -43,8 +44,9 @@ import {
   useGetExamsByMentor,
   useAssignExamToRoom,
   useRemoveExamFromRoom,
-} from "@/service";
+} from "@/services";
 import { EXAM_ROOM_MESSAGES } from "@/constants/messages.constants";
+import { EnrollStudentsDialog } from "@/components/admin/EnrollStudentsDialog";
 import { useState } from "react";
 
 export default function ExamRoomDetailPage() {
@@ -184,7 +186,7 @@ export default function ExamRoomDetailPage() {
         </Button>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-3">
         <Card>
           <CardHeader>
             <CardTitle>Thông tin phòng thi</CardTitle>
@@ -238,6 +240,23 @@ export default function ExamRoomDetailPage() {
             </p>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Học sinh
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {room.enrolledStudentsCount || 0}
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Số học sinh đã đăng ký
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       <Card>
@@ -252,133 +271,140 @@ export default function ExamRoomDetailPage() {
                 {room.exams?.length || 0} đề thi
               </CardDescription>
             </div>
-            <Dialog
-              open={isAssignDialogOpen}
-              onOpenChange={setIsAssignDialogOpen}
-            >
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Gán đề thi
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[80vh]">
-                <DialogHeader>
-                  <DialogTitle>Gán đề thi vào phòng</DialogTitle>
-                  <DialogDescription>
-                    Tìm kiếm và chọn đề thi để gán vào phòng thi này
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="search">Tìm kiếm đề thi</Label>
-                    <Input
-                      id="search"
-                      placeholder="Nhập tên đề thi..."
-                      value={examSearchQuery}
-                      onChange={(e) => setExamSearchQuery(e.target.value)}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label>Danh sách đề thi</Label>
-                    <div className="border rounded-lg max-h-[400px] overflow-y-auto">
-                      {!examsData?.items.length ? (
-                        <div className="text-center py-8 text-muted-foreground">
-                          Không có đề thi nào
-                        </div>
-                      ) : filteredExams.length === 0 ? (
-                        <div className="text-center py-8 text-muted-foreground">
-                          Không tìm thấy đề thi phù hợp
-                        </div>
-                      ) : (
-                        <div className="divide-y">
-                          {filteredExams.map((exam) => {
-                            const isAssigned = room.exams?.some(
-                              (e) => e.id === exam.id,
-                            );
-                            return (
-                              <div
-                                key={exam.id}
-                                className={`p-4 hover:bg-accent cursor-pointer transition-colors ${
-                                  selectedExamId === exam.id ? "bg-accent" : ""
-                                } ${isAssigned ? "opacity-50" : ""}`}
-                                onClick={() =>
-                                  !isAssigned && setSelectedExamId(exam.id)
-                                }
-                              >
-                                <div className="flex items-start justify-between">
-                                  <div className="flex-1">
-                                    <div className="flex items-center gap-2">
-                                      <h4 className="font-medium">
-                                        {exam.title}
-                                      </h4>
-                                      {isAssigned && (
-                                        <Badge
-                                          variant="secondary"
-                                          className="text-xs"
-                                        >
-                                          Đã gán
-                                        </Badge>
-                                      )}
-                                    </div>
-                                    <p className="text-sm text-muted-foreground mt-1">
-                                      {exam.description}
-                                    </p>
-                                    <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                                      <span>
-                                        Điểm tối đa: {exam.totalMarks}
-                                      </span>
-                                      <span>Điểm đạt: {exam.passingMarks}</span>
-                                    </div>
-                                  </div>
-                                  {selectedExamId === exam.id &&
-                                    !isAssigned && (
-                                      <div className="ml-2">
-                                        <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center">
-                                          <svg
-                                            className="h-3 w-3 text-primary-foreground"
-                                            fill="none"
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth="2"
-                                            viewBox="0 0 24 24"
-                                            stroke="currentColor"
+            <div className="flex items-center gap-2">
+              <EnrollStudentsDialog roomId={roomId} />
+              <Dialog
+                open={isAssignDialogOpen}
+                onOpenChange={setIsAssignDialogOpen}
+              >
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Gán đề thi
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl max-h-[80vh]">
+                  <DialogHeader>
+                    <DialogTitle>Gán đề thi vào phòng</DialogTitle>
+                    <DialogDescription>
+                      Tìm kiếm và chọn đề thi để gán vào phòng thi này
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="search">Tìm kiếm đề thi</Label>
+                      <Input
+                        id="search"
+                        placeholder="Nhập tên đề thi..."
+                        value={examSearchQuery}
+                        onChange={(e) => setExamSearchQuery(e.target.value)}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label>Danh sách đề thi</Label>
+                      <div className="border rounded-lg max-h-[400px] overflow-y-auto">
+                        {!examsData?.items.length ? (
+                          <div className="text-center py-8 text-muted-foreground">
+                            Không có đề thi nào
+                          </div>
+                        ) : filteredExams.length === 0 ? (
+                          <div className="text-center py-8 text-muted-foreground">
+                            Không tìm thấy đề thi phù hợp
+                          </div>
+                        ) : (
+                          <div className="divide-y">
+                            {filteredExams.map((exam) => {
+                              const isAssigned = room.exams?.some(
+                                (e) => e.id === exam.id,
+                              );
+                              return (
+                                <div
+                                  key={exam.id}
+                                  className={`p-4 hover:bg-accent cursor-pointer transition-colors ${
+                                    selectedExamId === exam.id
+                                      ? "bg-accent"
+                                      : ""
+                                  } ${isAssigned ? "opacity-50" : ""}`}
+                                  onClick={() =>
+                                    !isAssigned && setSelectedExamId(exam.id)
+                                  }
+                                >
+                                  <div className="flex items-start justify-between">
+                                    <div className="flex-1">
+                                      <div className="flex items-center gap-2">
+                                        <h4 className="font-medium">
+                                          {exam.title}
+                                        </h4>
+                                        {isAssigned && (
+                                          <Badge
+                                            variant="secondary"
+                                            className="text-xs"
                                           >
-                                            <path d="M5 13l4 4L19 7"></path>
-                                          </svg>
-                                        </div>
+                                            Đã gán
+                                          </Badge>
+                                        )}
                                       </div>
-                                    )}
+                                      <p className="text-sm text-muted-foreground mt-1">
+                                        {exam.description}
+                                      </p>
+                                      <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                                        <span>
+                                          Điểm tối đa: {exam.totalMarks}
+                                        </span>
+                                        <span>
+                                          Điểm đạt: {exam.passingMarks}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    {selectedExamId === exam.id &&
+                                      !isAssigned && (
+                                        <div className="ml-2">
+                                          <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center">
+                                            <svg
+                                              className="h-3 w-3 text-primary-foreground"
+                                              fill="none"
+                                              strokeLinecap="round"
+                                              strokeLinejoin="round"
+                                              strokeWidth="2"
+                                              viewBox="0 0 24 24"
+                                              stroke="currentColor"
+                                            >
+                                              <path d="M5 13l4 4L19 7"></path>
+                                            </svg>
+                                          </div>
+                                        </div>
+                                      )}
+                                  </div>
                                 </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-                <DialogFooter>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setIsAssignDialogOpen(false);
-                      setSelectedExamId("");
-                      setExamSearchQuery("");
-                    }}
-                    disabled={isAssigning}
-                  >
-                    Hủy
-                  </Button>
-                  <Button
-                    onClick={handleAssignExam}
-                    disabled={isAssigning || !selectedExamId}
-                  >
-                    {isAssigning ? "Đang gán..." : "Gán đề thi"}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+                  <DialogFooter>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setIsAssignDialogOpen(false);
+                        setSelectedExamId("");
+                        setExamSearchQuery("");
+                      }}
+                      disabled={isAssigning}
+                    >
+                      Hủy
+                    </Button>
+                    <Button
+                      onClick={handleAssignExam}
+                      disabled={isAssigning || !selectedExamId}
+                    >
+                      {isAssigning ? "Đang gán..." : "Gán đề thi"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
         </CardHeader>
         <CardContent>

@@ -18,8 +18,9 @@ public class GetExamsByRoomHandler(
         {
             // Query exams assigned to exam room via ExamRoomExam join table
             var exams = await unitOfWork.Repository<Domain.Entities.ExamRoomExam>()
-                .FindAll(ere => ere.ExamRoomId == request.ExamRoomId && !ere.Exam.IsDeleted)
+                .FindAll(ere => ere.ExamRoomId == request.ExamRoomId)
                 .Include(ere => ere.Exam)
+                .Where(ere => !ere.Exam.IsDeleted)
                 .Select(ere => new ExamResponse(
                     ere.Exam.Id,
                     ere.Exam.Title,
