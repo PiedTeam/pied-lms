@@ -11,7 +11,6 @@ import type {
   GetAvailableExamRoomsRequest,
   ExamRoomAccessResponse,
   PaginatedExamRoomsResponse,
-  GetExamRoomsByAdminRequest,
 } from "@/interface/exam-room/exam-room.interface";
 
 // Create Exam Room (Mentor)
@@ -56,17 +55,10 @@ export function useCreateExamRoom() {
 export function useGetExamRoomsByMentor(
   params: GetExamRoomsByMentorRequest = {},
 ) {
-  const { pageNumber = 1, pageSize = 10, status, includeDeleted } = params;
+  const { pageNumber = 1, pageSize = 10, status } = params;
 
   return useQuery({
-    queryKey: [
-      "exam-rooms",
-      "mentor",
-      pageNumber,
-      pageSize,
-      status,
-      includeDeleted,
-    ],
+    queryKey: ["exam-rooms", "mentor", pageNumber, pageSize, status],
     queryFn: async (): Promise<PaginatedExamRoomsResponse> => {
       const { data } = await axios.get<ApiResponse<PaginatedExamRoomsResponse>>(
         "/exam-rooms",
@@ -75,7 +67,6 @@ export function useGetExamRoomsByMentor(
             pageNumber,
             pageSize,
             ...(status && { status }),
-            ...(includeDeleted !== undefined && { includeDeleted }),
           },
         },
       );
@@ -86,14 +77,12 @@ export function useGetExamRoomsByMentor(
 
       return data.data;
     },
-    retry: 1, // Only retry once on failure
-    staleTime: 30000, // Cache for 30 seconds
   });
 }
 
 // Get Exam Rooms By Admin
 export function useGetExamRoomsByAdmin(
-  params: GetExamRoomsByAdminRequest = {},
+  params: GetExamRoomsByMentorRequest = {},
 ) {
   const { pageNumber = 1, pageSize = 10, status } = params;
 

@@ -51,3 +51,11 @@ export interface GetExamsByAdminResponse {
   totalCount: number;
   totalPages: number;
 }
+
+export interface GetExamsByAdminResponse {
+  items: ExamResponse[];
+  pageNumber: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+}

@@ -7,8 +7,6 @@ import type {
   UpdateExamRequest,
   GetExamsByMentorResponse,
   GetExamsRequest,
-  GetExamsByAdminResponse,
-  GetExamsByMentorRequest,
 } from "@/interface/exam/exam.interface";
 
 // Create Exam (Mentor only)
@@ -43,11 +41,11 @@ export function useCreateExam() {
 }
 
 // Get Exams By Mentor
-export function useGetExamsByMentor(params: GetExamsByMentorRequest = {}) {
-  const { pageNumber = 1, pageSize = 10, includeDeleted } = params;
+export function useGetExamsByMentor(params: GetExamsRequest = {}) {
+  const { pageNumber = 1, pageSize = 10 } = params;
 
   return useQuery({
-    queryKey: ["exams", pageNumber, pageSize, includeDeleted],
+    queryKey: ["exams", pageNumber, pageSize],
     queryFn: async (): Promise<GetExamsByMentorResponse> => {
       const { data } = await axios.get<ApiResponse<GetExamsByMentorResponse>>(
         "/exams",
@@ -55,7 +53,6 @@ export function useGetExamsByMentor(params: GetExamsByMentorRequest = {}) {
           params: {
             pageNumber,
             pageSize,
-            ...(includeDeleted !== undefined && { includeDeleted }),
           },
         },
       );
@@ -73,18 +70,17 @@ export function useGetExamsByMentor(params: GetExamsByMentorRequest = {}) {
 
 // Get Exams By Admin
 export function useGetExamsByAdmin(params: GetExamsRequest = {}) {
-  const { pageNumber = 1, pageSize = 10, includeDeleted } = params;
+  const { pageNumber = 1, pageSize = 10 } = params;
 
   return useQuery({
-    queryKey: ["exams", pageNumber, pageSize, includeDeleted],
-    queryFn: async (): Promise<GetExamsByAdminResponse> => {
-      const { data } = await axios.get<ApiResponse<GetExamsByAdminResponse>>(
+    queryKey: ["exams", pageNumber, pageSize],
+    queryFn: async (): Promise<GetExamsByMentorResponse> => {
+      const { data } = await axios.get<ApiResponse<GetExamsByMentorResponse>>(
         "/exams",
         {
           params: {
             pageNumber,
             pageSize,
-            ...(includeDeleted !== undefined && { includeDeleted }),
           },
         },
       );
