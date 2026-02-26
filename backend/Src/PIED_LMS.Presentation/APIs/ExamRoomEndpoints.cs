@@ -53,7 +53,7 @@ public class ExamRoomEndpoints : ICarterModule
         group.MapPost("/{id}/exams", AssignExamToRoom)
             .WithName("AssignExamToRoom")
             .WithOpenApi()
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Lecturer"))
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
             .Produces<ServiceResponse<string>>()
             .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest)
             .Produces<ServiceResponse<string>>(StatusCodes.Status403Forbidden);
