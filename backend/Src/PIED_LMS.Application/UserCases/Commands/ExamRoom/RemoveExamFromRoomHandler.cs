@@ -51,23 +51,6 @@ public class RemoveExamFromRoomHandler(
                 );
             }
 
-            // Authorization check: Admin has full access, others must be the creator
-            if (!isAdmin && examRoom.CreatedBy != userId)
-            {
-                logger.LogWarning(
-                    "Unauthorized attempt to remove exam from room. UserId: {UserId}, ExamRoomId: {ExamRoomId}, CreatedBy: {CreatedBy}",
-                    userId,
-                    request.ExamRoomId,
-                    examRoom.CreatedBy
-                );
-                
-                return new ServiceResponse<string>(
-                    false,
-                    "You are not authorized to remove exams from this exam room",
-                    ErrorCode: "FORBIDDEN"
-                );
-            }
-
             // Check if exam room has started and students have begun taking the exam
             var now = DateTime.UtcNow;
             var hasStarted = now >= examRoom.StartTime;
