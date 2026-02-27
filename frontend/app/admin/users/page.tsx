@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Users, Search } from "lucide-react";
+import { Users, Search, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -28,6 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useGetAllUsers } from "@/service";
 
 export default function UsersPage() {
@@ -36,19 +37,30 @@ export default function UsersPage() {
   const [pageSize, setPageSize] = useState(10);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { data: usersData, isLoading } = useGetAllUsers({
+  const {
+    data: usersData,
+    isLoading,
+    error,
+  } = useGetAllUsers({
     pageNumber,
     pageSize,
   });
 
-  const filteredUsers = usersData?.items.filter(
+  const filteredUsers = usersData?.items?.filter(
     (user) =>
       user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.firstName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.lastName?.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  const getRoleBadgeVariant = (role: string) => {
+  // Calculate total pages
+  const totalPages = usersData?.totalCount
+    ? Math.ceil(usersData.totalCount / pageSize)
+    : 1;
+
+  const getRoleBadgeVariant = (roles: string[]) => {
+    // Get the first role (primary role)
+    const role = roles[0] || "";
     switch (role) {
       case "Admin":
         return "destructive";
@@ -75,6 +87,15 @@ export default function UsersPage() {
           </p>
         </div>
       </div>
+
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Không thể tải danh sách người dùng. Vui lòng thử lại sau.
+          </AlertDescription>
+        </Alert>
+      )}
 
       <Card>
         <CardHeader>
@@ -111,8 +132,8 @@ export default function UsersPage() {
                     <TableHead>Email</TableHead>
                     <TableHead>Họ tên</TableHead>
                     <TableHead>Vai trò</TableHead>
+                    <TableHead>Trạng thái</TableHead>
                     <TableHead>Ngày tạo</TableHead>
-                    <TableHead>Đăng nhập cuối</TableHead>
                     <TableHead className="text-right">Thao tác</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -126,17 +147,26 @@ export default function UsersPage() {
                         {user.firstName} {user.lastName}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={getRoleBadgeVariant(user.role)}>
-                          {user.role}
+                        <div className="flex flex-wrap gap-1">
+                          {user.roles.map((role) => (
+                            <Badge
+                              key={role}
+                              variant={getRoleBadgeVariant(user.roles)}
+                            >
+                              {role}
+                            </Badge>
+                          ))}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={user.isActive ? "default" : "secondary"}
+                        >
+                          {user.isActive ? "Hoạt động" : "Không hoạt động"}
                         </Badge>
                       </TableCell>
                       <TableCell>
                         {new Date(user.createdAt).toLocaleDateString("vi-VN")}
-                      </TableCell>
-                      <TableCell>
-                        {user.lastLogin
-                          ? new Date(user.lastLogin).toLocaleDateString("vi-VN")
-                          : "Chưa đăng nhập"}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
@@ -188,18 +218,18 @@ export default function UsersPage() {
                     }
                     disabled={pageNumber === 1}
                   >
-                    Trước
+                    &lt;
                   </Button>
-                  <span className="text-sm">
-                    Trang {pageNumber} / {usersData?.totalPages || 1}
+                  <span className="text-sm text-muted-foreground">
+                    Trang {pageNumber} / {totalPages}
                   </span>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setPageNumber((prev) => prev + 1)}
-                    disabled={pageNumber >= (usersData?.totalPages || 1)}
+                    disabled={pageNumber >= totalPages}
                   >
-                    Sau
+                    &gt;
                   </Button>
                 </div>
               </div>

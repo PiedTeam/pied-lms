@@ -57,9 +57,10 @@ export default function TakeExamPage() {
   const [testCases, setTestCases] = useState<TestCase[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [code, setCode] = useState(`#include <stdio.h>
+#include <stdlib.h>
 
 int main() {
-    // Viết code của bạn ở đây
+    // Write your code here
     
     return 0;
 }`);
@@ -500,19 +501,25 @@ int main() {
 
               <TabsContent
                 value="question"
-                className="flex-1 m-0 p-0 data-[state=active]:flex data-[state=active]:flex-col"
+                className="flex-1 m-0 p-0 data-[state=active]:flex data-[state=active]:flex-col overflow-hidden"
               >
-                <div className="flex-1 min-h-[600px]">
+                <div className="flex-1 w-full h-full min-h-[600px]">
                   <Editor
                     height="100%"
+                    width="100%"
                     defaultLanguage="c"
                     value={code}
                     onChange={(value) => setCode(value || "")}
                     onMount={handleEditorDidMount}
                     theme="vs-dark"
                     loading={
-                      <div className="flex items-center justify-center h-full">
-                        Đang tải editor...
+                      <div className="flex items-center justify-center h-full bg-[#1e1e1e]">
+                        <div className="text-center">
+                          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-blue-500" />
+                          <p className="text-gray-300 text-sm">
+                            Loading &lt;Stdlib&gt;
+                          </p>
+                        </div>
                       </div>
                     }
                     options={{

@@ -173,6 +173,11 @@ export default function AdminToolsPage() {
               description:
                 response.message || ADMIN_MESSAGES.SUCCESS.STUDENTS_IMPORTED,
             });
+            toast({
+              title: "Email đã được gửi",
+              description:
+                "Mỗi học sinh sẽ nhận được email với link để đặt mật khẩu.",
+            });
             setIsImportDialogOpen(false);
             setFile(null);
           },
@@ -220,6 +225,11 @@ export default function AdminToolsPage() {
             title: "Thành công",
             description:
               response.message || ADMIN_MESSAGES.SUCCESS.STUDENTS_IMPORTED,
+          });
+          toast({
+            title: "Email đã được gửi",
+            description:
+              "Mỗi học sinh sẽ nhận được email với link để đặt mật khẩu.",
           });
           setIsManualDialogOpen(false);
           setManualStudents([{ email: "", firstName: "", lastName: "" }]);
@@ -303,7 +313,8 @@ export default function AdminToolsPage() {
     });
   };
 
-  const getRoleBadgeVariant = (role: string) => {
+  const getRoleBadgeVariant = (roles: string[]) => {
+    const role = roles[0] || "";
     switch (role) {
       case "Admin":
         return "destructive";
@@ -662,10 +673,12 @@ export default function AdminToolsPage() {
                                     </TableCell>
                                     <TableCell>
                                       <Badge
-                                        variant={getRoleBadgeVariant(user.role)}
+                                        variant={getRoleBadgeVariant(
+                                          user.roles,
+                                        )}
                                         className="text-xs"
                                       >
-                                        {user.role}
+                                        {user.roles[0] || "N/A"}
                                       </Badge>
                                     </TableCell>
                                     <TableCell className="text-right">

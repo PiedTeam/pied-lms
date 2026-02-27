@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/card";
 import { AlertCircle, Eye, EyeOff } from "lucide-react";
 import { useRegister } from "@/service";
-import { useAuthStore } from "@/store/auth.store";
 
 export function RegisterForm() {
   const router = useRouter();
@@ -101,15 +100,15 @@ export function RegisterForm() {
       {
         email,
         password,
-        firstName: firstName || undefined,
-        lastName: lastName || undefined,
+        firstName: firstName || "", // Send empty string instead of undefined
+        lastName: lastName || "", // Send empty string instead of undefined
         confirmPassword,
       },
       {
         onSuccess: () => {
           // Show success message
           setSuccessMessage(
-            "Đăng ký thành công! Đang chuyển đến trang đăng nhập...",
+            "Registration successful! Redirecting to login page...",
           );
           setErrors({});
 
@@ -121,7 +120,7 @@ export function RegisterForm() {
         onError: (error: Error) => {
           setSuccessMessage("");
           setErrors({
-            general: error.message || "Đăng ký thất bại. Vui lòng thử lại.",
+            general: error.message || "Registration failed. Please try again.",
           });
         },
       },
@@ -129,9 +128,9 @@ export function RegisterForm() {
   };
 
   return (
-    <Card className="w-full max-w-md">
+    <Card className="w-full max-w-md shadow-xl">
       <CardHeader>
-        <CardTitle>Register</CardTitle>
+        <CardTitle className="text-2xl">Register</CardTitle>
         <CardDescription>Create a new account to get started</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
@@ -218,9 +217,9 @@ export function RegisterForm() {
                 tabIndex={-1}
               >
                 {showPassword ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
                   <Eye className="h-4 w-4" />
+                ) : (
+                  <EyeOff className="h-4 w-4" />
                 )}
               </button>
             </div>
@@ -236,7 +235,7 @@ export function RegisterForm() {
               <Input
                 id="confirmPassword"
                 type={showConfirmPassword ? "text" : "password"}
-                placeholder="Confirm your password"
+                placeholder="Re-enter your password"
                 value={confirmPassword}
                 onChange={(e) => {
                   setConfirmPassword(e.target.value);
@@ -255,9 +254,9 @@ export function RegisterForm() {
                 tabIndex={-1}
               >
                 {showConfirmPassword ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
                   <Eye className="h-4 w-4" />
+                ) : (
+                  <EyeOff className="h-4 w-4" />
                 )}
               </button>
             </div>

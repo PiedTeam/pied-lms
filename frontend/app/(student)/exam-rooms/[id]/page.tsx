@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { useGetExamRoomById } from "@/service";
+import { useState, useEffect } from "react";
 
 export default function StudentExamRoomDetailPage() {
   const params = useParams();
@@ -29,6 +30,47 @@ export default function StudentExamRoomDetailPage() {
   const roomId = params.id as string;
 
   const { data: room, isLoading: isLoadingRoom } = useGetExamRoomById(roomId);
+  const [timeRemaining, setTimeRemaining] = useState<string>("");
+
+  // Calculate time remaining until end time
+  useEffect(() => {
+    if (!room?.endTime) return;
+
+    const calculateTimeRemaining = () => {
+      const now = new Date().getTime();
+      const endTime = new Date(room.endTime).getTime();
+      const diff = endTime - now;
+
+      if (diff <= 0) {
+        setTimeRemaining("Đã kết thúc");
+        return;
+      }
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor(
+        (diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
+      );
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+      if (days > 0) {
+        setTimeRemaining(
+          `${days} ngày ${hours} giờ ${minutes} phút ${seconds} giây`,
+        );
+      } else if (hours > 0) {
+        setTimeRemaining(`${hours} giờ ${minutes} phút ${seconds} giây`);
+      } else if (minutes > 0) {
+        setTimeRemaining(`${minutes} phút ${seconds} giây`);
+      } else {
+        setTimeRemaining(`${seconds} giây`);
+      }
+    };
+
+    calculateTimeRemaining();
+    const interval = setInterval(calculateTimeRemaining, 1000); // Update every second
+
+    return () => clearInterval(interval);
+  }, [room?.endTime]);
 
   const formatDateTime = (dateString: string) => {
     return new Date(dateString).toLocaleString("vi-VN", {
@@ -131,9 +173,9 @@ export default function StudentExamRoomDetailPage() {
             <div className="flex items-start gap-2">
               <Clock className="h-4 w-4 mt-0.5 text-muted-foreground" />
               <div className="flex-1">
-                <p className="text-sm font-medium">Thời lượng</p>
+                <p className="text-sm font-medium">Thời gian còn lại</p>
                 <p className="text-sm text-muted-foreground">
-                  {room.durationInMinutes} phút
+                  {timeRemaining || "Đang tính..."}
                 </p>
               </div>
             </div>

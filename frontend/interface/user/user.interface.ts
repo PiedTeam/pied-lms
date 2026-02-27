@@ -16,9 +16,9 @@ export interface UserResponse {
   email: string;
   firstName: string;
   lastName: string;
-  role: string;
+  roles: string[]; // Backend returns array of roles
+  isActive: boolean;
   createdAt: string;
-  lastLogin: string | null;
 }
 
 export interface GetAllUsersRequest {
@@ -31,5 +31,4 @@ export interface GetAllUsersResponse {
   pageNumber: number;
   pageSize: number;
   totalCount: number;
-  totalPages: number;
 }

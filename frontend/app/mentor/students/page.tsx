@@ -104,8 +104,8 @@ export default function MentorStudentsPage() {
                     <TableHead>Họ và tên</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Vai trò</TableHead>
+                    <TableHead>Trạng thái</TableHead>
                     <TableHead>Ngày tạo</TableHead>
-                    <TableHead>Đăng nhập lần cuối</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -116,10 +116,18 @@ export default function MentorStudentsPage() {
                       </TableCell>
                       <TableCell>{student.email}</TableCell>
                       <TableCell>
-                        <Badge variant="outline">{student.role}</Badge>
+                        <Badge variant="outline">
+                          {student.roles[0] || "N/A"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={student.isActive ? "default" : "secondary"}
+                        >
+                          {student.isActive ? "Hoạt động" : "Không hoạt động"}
+                        </Badge>
                       </TableCell>
                       <TableCell>{formatDateTime(student.createdAt)}</TableCell>
-                      <TableCell>{formatDateTime(student.lastLogin)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

@@ -263,7 +263,7 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
                                 {student.firstName} {student.lastName}
                               </h4>
                               <Badge variant="outline" className="text-xs">
-                                {student.role}
+                                {student.roles[0] || "N/A"}
                               </Badge>
                               {isEnrolled && (
                                 <Badge variant="secondary" className="text-xs">

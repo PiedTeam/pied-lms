@@ -4,9 +4,9 @@
 export interface RegisterRequest {
   email: string;
   password: string;
-  firstName?: string;
-  lastName?: string;
-  confirmPassword?: string;
+  firstName: string;
+  lastName: string;
+  confirmPassword: string;
 }
 
 export interface RegisterResponse {
