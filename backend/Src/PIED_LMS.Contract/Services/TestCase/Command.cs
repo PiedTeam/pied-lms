@@ -6,8 +6,8 @@ namespace PIED_LMS.Contract.Services.TestCase;
 public record CreateTestCaseCommand(
     Guid ExamId,
     int Index,
-    string InputPath,
-    string OutputPath,
+    string Input,
+    string Output,
     bool IsHidden
 ) : IRequest<ServiceResponse<TestCaseResponse>>;
 
@@ -15,8 +15,8 @@ public record UpdateTestCaseCommand(
     Guid TestCaseId,
     Guid ExamId,
     int Index,
-    string InputPath,
-    string OutputPath,
+    string Input,
+    string Output,
     bool IsHidden
 ) : IRequest<ServiceResponse<TestCaseResponse>>;
 

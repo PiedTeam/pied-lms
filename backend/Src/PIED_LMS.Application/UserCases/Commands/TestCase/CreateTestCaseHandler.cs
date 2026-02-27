@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http;
+using PIED_LMS.Application.Abstractions;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Contract.Services.TestCase;
 using PIED_LMS.Domain.Abstractions;
@@ -7,6 +8,7 @@ namespace PIED_LMS.Application.UserCases.Commands.TestCase;
 
 public class CreateTestCaseHandler(
     IUnitOfWork unitOfWork,
+    ITestCaseStorageService storageService,
     IHttpContextAccessor httpContextAccessor,
     ILogger<CreateTestCaseHandler> logger
 ) : IRequestHandler<CreateTestCaseCommand, ServiceResponse<TestCaseResponse>>
@@ -41,14 +43,24 @@ public class CreateTestCaseHandler(
                 );
             }
 
-            // Create TestCase entity
+            // Save test case files to file system first
+            // This ensures consistency - if file write fails, we don't update DB
+            var (inputPath, outputPath) = await storageService.SaveTestCaseAsync(
+                request.ExamId,
+                request.Index,
+                request.Input,
+                request.Output,
+                request.IsHidden,
+                cancellationToken);
+
+            // Create TestCase entity with file paths
             var testCase = new Domain.Entities.TestCase
             {
                 Id = Guid.NewGuid(),
                 ExamId = request.ExamId,
                 Index = request.Index,
-                InputPath = request.InputPath,
-                OutputPath = request.OutputPath,
+                InputPath = inputPath,
+                OutputPath = outputPath,
                 IsHidden = request.IsHidden
             };
 
@@ -56,9 +68,10 @@ public class CreateTestCaseHandler(
             await unitOfWork.CommitAsync(cancellationToken);
 
             logger.LogInformation(
-                "TestCase created. Id: {TestCaseId}, ExamId: {ExamId}, CreatedBy: {UserId}",
+                "TestCase created. Id: {TestCaseId}, ExamId: {ExamId}, Index: {Index}, CreatedBy: {UserId}",
                 testCase.Id,
                 testCase.ExamId,
+                testCase.Index,
                 userId
             );
 
@@ -75,6 +88,20 @@ public class CreateTestCaseHandler(
                 true,
                 "success",
                 response
+            );
+        }
+        catch (InvalidOperationException ex)
+        {
+            logger.LogError(
+                ex,
+                "Failed to save test case files. ExamId: {ExamId}, Index: {Index}",
+                request.ExamId,
+                request.Index
+            );
+            return new ServiceResponse<TestCaseResponse>(
+                false,
+                "Failed to save test case files",
+                ErrorCode: "FILE_STORAGE_ERROR"
             );
         }
         catch (Exception ex)

@@ -95,3 +95,4 @@ env.local
 volume
 .vscode
 bin/Debug/
+backend/Src/PIED_LMS.API/storage

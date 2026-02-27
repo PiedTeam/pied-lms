@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http;
+using PIED_LMS.Application.Abstractions;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Contract.Services.TestCase;
 using PIED_LMS.Domain.Abstractions;
@@ -7,6 +8,7 @@ namespace PIED_LMS.Application.UserCases.Commands.TestCase;
 
 public class DeleteTestCaseHandler(
     IUnitOfWork unitOfWork,
+    ITestCaseStorageService storageService,
     IHttpContextAccessor httpContextAccessor,
     ILogger<DeleteTestCaseHandler> logger
 ) : IRequestHandler<DeleteTestCaseCommand, ServiceResponse<string>>
@@ -41,12 +43,34 @@ public class DeleteTestCaseHandler(
                 );
             }
 
+            // Store exam id and index for file deletion
+            var examId = testCase.ExamId;
+            var index = testCase.Index;
+
+            // Delete from database first
             unitOfWork.Repository<Domain.Entities.TestCase>().Remove(testCase);
             await unitOfWork.CommitAsync(cancellationToken);
 
+            // Then delete files (best effort - log error if fails but don't fail the operation)
+            try
+            {
+                await storageService.DeleteTestCaseAsync(examId, index, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(
+                    ex,
+                    "Failed to delete test case files, but database record was deleted. ExamId: {ExamId}, Index: {Index}",
+                    examId,
+                    index
+                );
+            }
+
             logger.LogInformation(
-                "TestCase deleted. Id: {TestCaseId}, DeletedBy: {UserId}",
+                "TestCase deleted. Id: {TestCaseId}, ExamId: {ExamId}, Index: {Index}, DeletedBy: {UserId}",
                 request.TestCaseId,
+                examId,
+                index,
                 userId
             );
 

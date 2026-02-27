@@ -84,6 +84,7 @@ public static class PersistenceExtensions
         services.AddScoped<IRoomCodeService, Services.RoomCodeService>();
         services.AddScoped<Contract.Abstractions.Excel.IExcelService, Services.ExcelService>();
         services.AddScoped<IQuestionQuizService, Services.QuestionQuizService>();
+        services.AddScoped<ITestCaseStorageService, Services.TestCaseStorageService>();
 
         services.AddAuthentication(options =>
         {
