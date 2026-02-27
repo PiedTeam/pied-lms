@@ -14,7 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Loader2, AlertCircle, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { useResetPassword } from "@/services/auth/auth.service";
 
 interface PasswordResetFormData {
@@ -29,6 +29,8 @@ function ResetPasswordForm() {
   const email = searchParams.get("email") || "";
   const token = searchParams.get("token") || "";
   const [successMessage, setSuccessMessage] = useState<string>("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const {
     register,
@@ -57,16 +59,16 @@ function ResetPasswordForm() {
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle>Liên kết không hợp lệ</CardTitle>
-            <CardDescription>Không thể đặt lại mật khẩu</CardDescription>
+            <CardTitle>Invalid Reset Link</CardTitle>
+            <CardDescription>Unable to reset password</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Lỗi</AlertTitle>
+              <AlertTitle>Error</AlertTitle>
               <AlertDescription>
-                Liên kết đặt lại mật khẩu không hợp lệ. Thiếu email hoặc token.
-                Vui lòng sử dụng liên kết từ email của bạn hoặc liên hệ hỗ trợ.
+                Invalid reset link. The email or token parameter is missing.
+                Please use the link from your email or contact support.
               </AlertDescription>
             </Alert>
             <Button
@@ -75,7 +77,7 @@ function ResetPasswordForm() {
               onClick={() => router.push("/login")}
               className="w-full"
             >
-              Quay lại đăng nhập
+              Back to Login
             </Button>
           </CardContent>
         </Card>
@@ -114,14 +116,14 @@ function ResetPasswordForm() {
     <div className="min-h-screen flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Đặt lại mật khẩu</CardTitle>
-          <CardDescription>Nhập mật khẩu mới của bạn</CardDescription>
+          <CardTitle>Reset Password</CardTitle>
+          <CardDescription>Enter your new password</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {successMessage && (
             <Alert className="bg-green-50 border-green-200">
               <CheckCircle2 className="h-4 w-4 text-green-600" />
-              <AlertTitle className="text-green-900">Thành công</AlertTitle>
+              <AlertTitle className="text-green-900">Success</AlertTitle>
               <AlertDescription className="text-green-800">
                 {successMessage}
               </AlertDescription>
@@ -131,10 +133,9 @@ function ResetPasswordForm() {
           {isError && error && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Lỗi</AlertTitle>
+              <AlertTitle>Error</AlertTitle>
               <AlertDescription>
-                {error.message ||
-                  "Đặt lại mật khẩu thất bại. Vui lòng thử lại."}
+                {error.message || "Password reset failed. Please try again."}
               </AlertDescription>
             </Alert>
           )}
@@ -154,21 +155,38 @@ function ResetPasswordForm() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="newPassword">Mật khẩu mới</Label>
-              <Input
-                id="newPassword"
-                type="password"
-                {...register("newPassword", {
-                  required: "Mật khẩu mới là bắt buộc",
-                })}
-                disabled={isPending}
-                aria-label="New password"
-                aria-required="true"
-                aria-invalid={!!errors.newPassword}
-                aria-describedby={
-                  errors.newPassword ? "newPassword-error" : undefined
-                }
-              />
+              <Label htmlFor="newPassword">New Password</Label>
+              <div className="relative">
+                <Input
+                  id="newPassword"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="new-password"
+                  {...register("newPassword", {
+                    required: "New password is required",
+                  })}
+                  disabled={isPending}
+                  className="pr-10"
+                  aria-label="New password"
+                  aria-required="true"
+                  aria-invalid={!!errors.newPassword}
+                  aria-describedby={
+                    errors.newPassword ? "newPassword-error" : undefined
+                  }
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 z-20 bg-white dark:bg-gray-950 p-1.5 rounded"
+                  tabIndex={-1}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
               {errors.newPassword && (
                 <p
                   id="newPassword-error"
@@ -182,23 +200,42 @@ function ResetPasswordForm() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Xác nhận mật khẩu</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                {...register("confirmPassword", {
-                  required: "Vui lòng xác nhận mật khẩu của bạn",
-                  validate: (value) =>
-                    value === newPassword || "Mật khẩu không khớp",
-                })}
-                disabled={isPending}
-                aria-label="Confirm password"
-                aria-required="true"
-                aria-invalid={!!errors.confirmPassword}
-                aria-describedby={
-                  errors.confirmPassword ? "confirmPassword-error" : undefined
-                }
-              />
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  autoComplete="new-password"
+                  {...register("confirmPassword", {
+                    required: "Please confirm your password",
+                    validate: (value) =>
+                      value === newPassword || "Passwords do not match",
+                  })}
+                  disabled={isPending}
+                  className="pr-10"
+                  aria-label="Confirm password"
+                  aria-required="true"
+                  aria-invalid={!!errors.confirmPassword}
+                  aria-describedby={
+                    errors.confirmPassword ? "confirmPassword-error" : undefined
+                  }
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 z-20 bg-white dark:bg-gray-950 p-1.5 rounded"
+                  tabIndex={-1}
+                  aria-label={
+                    showConfirmPassword ? "Hide password" : "Show password"
+                  }
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
               {errors.confirmPassword && (
                 <p
                   id="confirmPassword-error"
@@ -221,10 +258,10 @@ function ResetPasswordForm() {
               {isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Đang xử lý...
+                  Processing...
                 </>
               ) : (
-                "Đặt lại mật khẩu"
+                "Reset Password"
               )}
             </Button>
           </form>
@@ -236,7 +273,7 @@ function ResetPasswordForm() {
               onClick={() => router.push("/login")}
               disabled={isPending}
             >
-              Quay lại đăng nhập
+              Back to Login
             </Button>
           </div>
         </CardContent>

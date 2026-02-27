@@ -12,6 +12,7 @@ export const AUTH_MESSAGES = {
     REGISTER_FAILED: "Đăng ký thất bại. Vui lòng thử lại.",
     LOGOUT_FAILED: "Đăng xuất thất bại. Vui lòng thử lại.",
     TOKEN_REFRESH_FAILED: "Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.",
+    PASSWORD_RESET_FAILED: "Đặt lại mật khẩu thất bại. Vui lòng thử lại.",
     INVALID_CREDENTIALS: "Email hoặc mật khẩu không đúng",
     EMAIL_EXISTS: "Email đã được đăng ký",
     ACCOUNT_BANNED:
