@@ -2,14 +2,16 @@ using PIED_LMS.Application.Abstractions;
 using PIED_LMS.Application.Options;
 using PIED_LMS.Contract.Services.Compiler;
 using PIED_LMS.Contract.Services.Identity;
+using PIED_LMS.Domain.Abstractions;
 using ValidationResult = FluentValidation.Results.ValidationResult;
 
 namespace PIED_LMS.Application.UserCases.Commands.Compiler;
 
 public sealed class JudgeFromFileCommandHandler(
     ICompilerService compilerService,
-    ITestCaseProvider testCaseProvider,
+    ITestCaseStorageService storageService,
     IValidator<JudgeFromFileCommand> validator,
+    IUnitOfWork unitOfWork,
     IOptions<CompilerOption> options,
     ILogger<JudgeFromFileCommandHandler> logger)
     : IRequestHandler<JudgeFromFileCommand, ServiceResponse<JudgeResult>>
@@ -35,11 +37,25 @@ public sealed class JudgeFromFileCommandHandler(
                 ErrorCode: CompilerErrorCode.InvalidRequest);
 
         var timeLimit = request.TimeLimit ?? _options.DefaultTimeLimitMs;
-        var includePrivate = request.IncludePrivate ?? false;
-        var testCases = await testCaseProvider.LoadAsync(
-            request.RoomId,
-            request.QuestionId,
-            includePrivate,
+
+        // Verify exam exists
+        var exam = await unitOfWork.Repository<Domain.Entities.Exam>()
+            .GetByIdAsync(request.ExamId, cancellationToken);
+
+        if (exam == null)
+        {
+            return new ServiceResponse<JudgeResult>(
+                false,
+                $"Exam with id '{request.ExamId}' not found",
+                null,
+                null,
+                IsNotFound: true,
+                ErrorCode: CompilerErrorCode.InvalidRequest);
+        }
+
+        // Load test cases from file system
+        var testCases = await storageService.LoadTestCasesForExamAsync(
+            request.ExamId,
             cancellationToken);
 
         if (testCases.Count == 0)

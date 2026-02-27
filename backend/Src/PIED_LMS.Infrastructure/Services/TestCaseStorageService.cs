@@ -174,6 +174,62 @@ public class TestCaseStorageService : ITestCaseStorageService
     return await File.ReadAllTextAsync(fullPath, cancellationToken);
   }
 
+  public async Task<IReadOnlyList<Domain.Compiler.TestCase>> LoadTestCasesForExamAsync(
+      Guid examId,
+      CancellationToken cancellationToken = default)
+  {
+    try
+    {
+      var examDir = Path.Combine(_storageBasePath, examId.ToString());
+
+      if (!Directory.Exists(examDir))
+      {
+        _logger.LogWarning("Exam directory not found: {Path}", examDir);
+        return Array.Empty<Domain.Compiler.TestCase>();
+      }
+
+      var testCases = new List<Domain.Compiler.TestCase>();
+      var testCaseDirs = Directory.GetDirectories(examDir, "tc_*")
+          .Select(path => (Path: path, Index: ParseTestCaseIndex(path)))
+          .Where(item => item.Index.HasValue)
+          .OrderBy(item => item.Index!.Value)
+          .ToList();
+
+      foreach (var testCaseDir in testCaseDirs)
+      {
+        var inputPath = Path.Combine(testCaseDir.Path, "input.txt");
+        var outputPath = Path.Combine(testCaseDir.Path, "output.txt");
+
+        if (!File.Exists(inputPath) || !File.Exists(outputPath))
+        {
+          _logger.LogWarning(
+              "Test case files not found. ExamId: {ExamId}, Index: {Index}",
+              examId,
+              testCaseDir.Index);
+          continue;
+        }
+
+        var input = await File.ReadAllTextAsync(inputPath, cancellationToken);
+        var output = await File.ReadAllTextAsync(outputPath, cancellationToken);
+
+        testCases.Add(new Domain.Compiler.TestCase(input, output));
+      }
+
+      _logger.LogInformation(
+          "Loaded {Count} test cases for exam: {ExamId}",
+          testCases.Count,
+          examId);
+
+      return testCases;
+    }
+    catch (Exception ex)
+    {
+      _logger.LogError(ex, "Failed to load test cases for exam: {ExamId}", examId);
+      throw new InvalidOperationException(
+          $"Failed to load test cases for exam {examId}", ex);
+    }
+  }
+
   /// <summary>
   /// Gets the full directory path for a test case
   /// </summary>
@@ -191,6 +247,18 @@ public class TestCaseStorageService : ITestCaseStorageService
     return Path.Combine(examId.ToString(), $"tc_{index}", fileName);
   }
 
+  /// <summary>
+  /// Parses test case index from directory name (tc_0 -> 0)
+  /// </summary>
+  private static int? ParseTestCaseIndex(string directoryPath)
+  {
+    var dirName = Path.GetFileName(directoryPath);
+    if (!dirName.StartsWith("tc_"))
+      return null;
+
+    var indexPart = dirName.Substring("tc_".Length);
+    return int.TryParse(indexPart, out var index) ? index : null;
+  }
   /// <summary>
   /// Metadata stored alongside test case files
   /// </summary>

@@ -71,4 +71,14 @@ public interface ITestCaseStorageService
     Task<string> ReadOutputAsync(
         string outputPath,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Loads all test cases for an exam from file system
+    /// </summary>
+    /// <param name="examId">The exam identifier</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>A list of test cases sorted by index</returns>
+    Task<IReadOnlyList<Domain.Compiler.TestCase>> LoadTestCasesForExamAsync(
+        Guid examId,
+        CancellationToken cancellationToken = default);
 }

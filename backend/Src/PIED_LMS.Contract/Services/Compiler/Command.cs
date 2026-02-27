@@ -25,9 +25,7 @@ public sealed record JudgeCommand(
 
 public sealed record JudgeFromFileCommand(
     string Code,
-    string RoomId,
-    string QuestionId,
-    bool? IncludePrivate,
+    Guid ExamId,
     int? TimeLimit,
     int? MemoryLimit,
     OptimizationLevel? OptimizationLevel
