@@ -75,8 +75,8 @@ int main() {
     // Set mock exam data
     setExam({
       id: examId,
-      title: "Bài thi lập trình C",
-      description: "Viết chương trình C để giải quyết bài toán",
+      title: "C Programming Exam",
+      description: "Write a C program to solve the given problem",
       totalMarks: 100,
       passingMarks: 50,
     });
@@ -117,8 +117,8 @@ int main() {
     async (isFinal: boolean = true) => {
       if (!code.trim()) {
         toast({
-          title: "Lỗi",
-          description: "Vui lòng viết code trước khi nộp bài",
+          title: "Error",
+          description: "Please write code before submitting",
           variant: "destructive",
         });
         return;
@@ -132,8 +132,8 @@ int main() {
 
         if (!token || !roomCode) {
           toast({
-            title: "Lỗi",
-            description: "Không tìm thấy thông tin xác thực",
+            title: "Error",
+            description: "Authentication information not found",
             variant: "destructive",
           });
           setIsSubmitting(false);
@@ -156,8 +156,8 @@ int main() {
         if (!startResponse.ok) {
           const errorData = await startResponse.json();
           toast({
-            title: "Lỗi",
-            description: errorData.message || "Không thể bắt đầu bài thi",
+            title: "Error",
+            description: errorData.message || "Could not start the exam",
             variant: "destructive",
           });
           setIsSubmitting(false);
@@ -185,7 +185,7 @@ int main() {
 
         if (data.success) {
           toast({
-            title: isFinal ? "Nộp bài thành công" : "Lưu bài thành công",
+            title: isFinal ? "Submitted successfully" : "Saved successfully",
             description: data.message,
           });
 
@@ -195,16 +195,16 @@ int main() {
           }
         } else {
           toast({
-            title: "Lỗi",
-            description: data.message || "Không thể nộp bài",
+            title: "Error",
+            description: data.message || "Could not submit",
             variant: "destructive",
           });
         }
       } catch (error) {
         console.error("Error submitting exam:", error);
         toast({
-          title: "Lỗi",
-          description: "Có lỗi xảy ra khi nộp bài",
+          title: "Error",
+          description: "An error occurred while submitting",
           variant: "destructive",
         });
       } finally {
@@ -216,8 +216,8 @@ int main() {
 
   const handleAutoSubmit = useCallback(async () => {
     toast({
-      title: "Hết giờ",
-      description: "Bài thi của bạn đã được tự động nộp",
+      title: "Time is up",
+      description: "Your exam has been automatically submitted",
     });
 
     await handleSubmit(true);
@@ -248,8 +248,8 @@ int main() {
   const handleTestCode = async () => {
     if (!code.trim()) {
       toast({
-        title: "Lỗi",
-        description: "Vui lòng viết code trước khi test",
+        title: "Error",
+        description: "Please write code before testing",
         variant: "destructive",
       });
       return;
@@ -298,21 +298,21 @@ int main() {
         setTestResults(results);
 
         toast({
-          title: "Test hoàn tất",
+          title: "Test completed",
           description: `${data.data.passed}/${data.data.total} test cases passed`,
         });
       } else {
         toast({
-          title: "Lỗi",
-          description: data.message || "Không thể test code",
+          title: "Error",
+          description: data.message || "Could not test code",
           variant: "destructive",
         });
       }
     } catch (error) {
       console.error("Error testing code:", error);
       toast({
-        title: "Lỗi",
-        description: "Có lỗi xảy ra khi test code",
+        title: "Error",
+        description: "An error occurred while testing code",
         variant: "destructive",
       });
     } finally {
@@ -325,7 +325,7 @@ int main() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Đang tải bài thi...</p>
+          <p className="text-muted-foreground">Loading exam...</p>
         </div>
       </div>
     );
@@ -335,12 +335,12 @@ int main() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <p className="text-muted-foreground">Không tìm thấy bài thi</p>
+          <p className="text-muted-foreground">Exam not found</p>
           <Button
             className="mt-4"
             onClick={() => router.push(`/exam-rooms/${roomId}`)}
           >
-            Quay lại
+            Go back
           </Button>
         </div>
       </div>
@@ -379,7 +379,7 @@ int main() {
                 onClick={() => handleSubmit(false)}
                 disabled={isTestingCode || isSubmitting}
               >
-                Lưu tạm
+                Save Draft
               </Button>
               <Button
                 variant="outline"
@@ -389,7 +389,7 @@ int main() {
                 {isTestingCode ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Đang test...
+                    Testing...
                   </>
                 ) : (
                   <>
@@ -405,12 +405,12 @@ int main() {
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Đang nộp...
+                    Submitting...
                   </>
                 ) : (
                   <>
                     <Send className="mr-2 h-4 w-4" />
-                    Nộp bài
+                    Submit
                   </>
                 )}
               </Button>
@@ -424,14 +424,14 @@ int main() {
           {/* Left Panel - Exam Info */}
           <Card className="overflow-hidden flex flex-col">
             <CardHeader className="border-b">
-              <CardTitle>Thông tin bài thi</CardTitle>
+              <CardTitle>Exam Information</CardTitle>
               <CardDescription>
-                Tổng điểm: {exam.totalMarks} | Điểm đạt: {exam.passingMarks}
+                Total Score: {exam.totalMarks} | Passing Score: {exam.passingMarks}
               </CardDescription>
             </CardHeader>
             <CardContent className="flex-1 overflow-y-auto p-6 space-y-6">
               <div>
-                <h3 className="font-semibold mb-2">Mô tả:</h3>
+                <h3 className="font-semibold mb-2">Description:</h3>
                 <p className="text-sm text-muted-foreground">
                   {exam.description}
                 </p>
@@ -440,11 +440,11 @@ int main() {
               {testCases.length > 0 && (
                 <div>
                   <h3 className="font-semibold mb-2">
-                    Test cases mẫu ({testCases.length}):
+                    Sample test cases ({testCases.length}):
                   </h3>
                   <p className="text-sm text-muted-foreground mb-2">
-                    Bạn có thể xem các test case mẫu để hiểu rõ hơn về đầu vào
-                    và đầu ra mong đợi.
+                    You can view sample test cases to better understand the
+                    expected input and output.
                   </p>
                   <div className="space-y-2">
                     {testCases.slice(0, 2).map((tc, index) => (
@@ -463,17 +463,17 @@ int main() {
               )}
 
               <div>
-                <h3 className="font-semibold mb-2">Hướng dẫn:</h3>
+                <h3 className="font-semibold mb-2">Instructions:</h3>
                 <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-                  <li>Viết code C của bạn trong editor bên phải</li>
+                  <li>Write your C code in the editor on the right</li>
                   <li>
-                    Nhấn &quot;Test Code&quot; để kiểm tra với test cases mẫu
+                    Click &quot;Test Code&quot; to check with sample test cases
                   </li>
                   <li>
-                    Nhấn &quot;Lưu tạm&quot; để lưu code (có thể tiếp tục sau)
+                    Click &quot;Save Draft&quot; to save code (can continue later)
                   </li>
-                  <li>Nhấn &quot;Nộp bài&quot; để nộp bài cuối cùng</li>
-                  <li>Lưu ý: Sau khi nộp bài, bạn không thể chỉnh sửa</li>
+                  <li>Click &quot;Submit&quot; to submit your final answer</li>
+                  <li>Note: After submitting, you cannot edit your code</li>
                 </ul>
               </div>
             </CardContent>
@@ -489,7 +489,7 @@ int main() {
               <TabsList className="w-full justify-start rounded-none border-b">
                 <TabsTrigger value="question">Code Editor</TabsTrigger>
                 <TabsTrigger value="results">
-                  Kết quả Test
+                  Test Results
                   {testResults.length > 0 && (
                     <Badge className="ml-2" variant="secondary">
                       {testResults.filter((r) => r.passed).length}/
@@ -543,7 +543,7 @@ int main() {
                     <div className="text-center">
                       <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
                       <p className="text-muted-foreground">
-                        Đang chạy test cases...
+                        Running test cases...
                       </p>
                     </div>
                   </div>
@@ -552,14 +552,14 @@ int main() {
                     <div className="text-center">
                       <Play className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                       <p className="text-muted-foreground">
-                        Nhấn &quot;Test Code&quot; để chạy test cases
+                        Click &quot;Test Code&quot; to run test cases
                       </p>
                     </div>
                   </div>
                 ) : (
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <h3 className="font-semibold">Kết quả Test</h3>
+                      <h3 className="font-semibold">Test Results</h3>
                       <Badge
                         variant={
                           testResults.every((r) => r.passed)
@@ -607,7 +607,7 @@ int main() {
                           {result.error && (
                             <div>
                               <p className="text-sm font-medium text-red-600">
-                                Lỗi:
+                                Error:
                               </p>
                               <pre className="bg-red-50 text-red-900 p-2 rounded text-sm mt-1 whitespace-pre-wrap">
                                 {result.error}
@@ -634,11 +634,10 @@ int main() {
                                 Your Output:
                               </p>
                               <pre
-                                className={`p-2 rounded text-sm mt-1 ${
-                                  result.passed
+                                className={`p-2 rounded text-sm mt-1 ${result.passed
                                     ? "bg-green-50 text-green-900"
                                     : "bg-red-50 text-red-900"
-                                }`}
+                                  }`}
                               >
                                 {result.actualOutput}
                               </pre>

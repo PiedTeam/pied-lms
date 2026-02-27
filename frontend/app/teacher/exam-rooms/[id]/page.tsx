@@ -89,14 +89,14 @@ export default function ExamRoomDetailPage() {
   const assignedExams = room?.exams || [];
   const filteredAssignedExams = examListSearchQuery
     ? assignedExams.filter(
-        (exam) =>
-          exam.title
-            .toLowerCase()
-            .includes(examListSearchQuery.toLowerCase()) ||
-          exam.description
-            ?.toLowerCase()
-            .includes(examListSearchQuery.toLowerCase()),
-      )
+      (exam) =>
+        exam.title
+          .toLowerCase()
+          .includes(examListSearchQuery.toLowerCase()) ||
+        exam.description
+          ?.toLowerCase()
+          .includes(examListSearchQuery.toLowerCase()),
+    )
     : assignedExams;
 
   const filteredStudents = enrolledStudents.filter(
@@ -110,7 +110,7 @@ export default function ExamRoomDetailPage() {
   );
 
   const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString("vi-VN", {
+    return new Date(dateString).toLocaleString("en-US", {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
@@ -122,11 +122,11 @@ export default function ExamRoomDetailPage() {
   const getStatusBadge = (status: string) => {
     switch (status?.toLowerCase()) {
       case "active":
-        return <Badge variant="default">Đang diễn ra</Badge>;
+        return <Badge variant="default">Ongoing</Badge>;
       case "upcoming":
-        return <Badge variant="secondary">Sắp diễn ra</Badge>;
+        return <Badge variant="secondary">Upcoming</Badge>;
       case "closed":
-        return <Badge variant="outline">Đã kết thúc</Badge>;
+        return <Badge variant="outline">Completed</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -135,8 +135,8 @@ export default function ExamRoomDetailPage() {
   const handleAssignExam = () => {
     if (!selectedExamId) {
       toast({
-        title: "Lỗi",
-        description: "Vui lòng chọn đề thi",
+        title: "Error",
+        description: "Please select an exam",
         variant: "destructive",
       });
       return;
@@ -147,7 +147,7 @@ export default function ExamRoomDetailPage() {
       {
         onSuccess: () => {
           toast({
-            title: "Thành công",
+            title: "Success",
             description: EXAM_ROOM_MESSAGES.SUCCESS.EXAM_ASSIGNED,
           });
           setIsAssignDialogOpen(false);
@@ -156,7 +156,7 @@ export default function ExamRoomDetailPage() {
         },
         onError: (error: Error) => {
           toast({
-            title: "Lỗi",
+            title: "Error",
             description:
               error.message || EXAM_ROOM_MESSAGES.ERROR.ASSIGN_EXAM_FAILED,
             variant: "destructive",
@@ -172,13 +172,13 @@ export default function ExamRoomDetailPage() {
       {
         onSuccess: () => {
           toast({
-            title: "Thành công",
+            title: "Success",
             description: EXAM_ROOM_MESSAGES.SUCCESS.EXAM_REMOVED,
           });
         },
         onError: (error: Error) => {
           toast({
-            title: "Lỗi",
+            title: "Error",
             description:
               error.message || EXAM_ROOM_MESSAGES.ERROR.REMOVE_EXAM_FAILED,
             variant: "destructive",
@@ -191,7 +191,7 @@ export default function ExamRoomDetailPage() {
   if (isLoading) {
     return (
       <div className="container mx-auto p-6">
-        <div className="text-center py-8">Đang tải...</div>
+        <div className="text-center py-8">Loading...</div>
       </div>
     );
   }
@@ -199,7 +199,7 @@ export default function ExamRoomDetailPage() {
   if (!room) {
     return (
       <div className="container mx-auto p-6">
-        <div className="text-center py-8">Không tìm thấy phòng thi</div>
+        <div className="text-center py-8">Exam room not found</div>
       </div>
     );
   }
@@ -221,24 +221,24 @@ export default function ExamRoomDetailPage() {
         <Button
           onClick={() => router.push(`/teacher/exam-rooms/${roomId}/edit`)}
         >
-          Chỉnh sửa
+          Edit
         </Button>
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">
         <Card>
           <CardHeader>
-            <CardTitle>Thông tin phòng thi</CardTitle>
+            <CardTitle>Exam Room Info</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Trạng thái</span>
+              <span className="text-sm text-muted-foreground">Status</span>
               {getStatusBadge(room.status)}
             </div>
             <div className="flex items-start gap-2">
               <Calendar className="h-4 w-4 mt-0.5 text-muted-foreground" />
               <div className="flex-1">
-                <p className="text-sm font-medium">Thời gian bắt đầu</p>
+                <p className="text-sm font-medium">Start Time</p>
                 <p className="text-sm text-muted-foreground">
                   {formatDateTime(room.startTime)}
                 </p>
@@ -247,7 +247,7 @@ export default function ExamRoomDetailPage() {
             <div className="flex items-start gap-2">
               <Calendar className="h-4 w-4 mt-0.5 text-muted-foreground" />
               <div className="flex-1">
-                <p className="text-sm font-medium">Thời gian kết thúc</p>
+                <p className="text-sm font-medium">End Time</p>
                 <p className="text-sm text-muted-foreground">
                   {formatDateTime(room.endTime)}
                 </p>
@@ -256,9 +256,9 @@ export default function ExamRoomDetailPage() {
             <div className="flex items-start gap-2">
               <Clock className="h-4 w-4 mt-0.5 text-muted-foreground" />
               <div className="flex-1">
-                <p className="text-sm font-medium">Thời lượng</p>
+                <p className="text-sm font-medium">Duration</p>
                 <p className="text-sm text-muted-foreground">
-                  {room.durationInMinutes} phút
+                  {room.durationInMinutes} minutes
                 </p>
               </div>
             </div>
@@ -269,13 +269,13 @@ export default function ExamRoomDetailPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
-              Đề thi
+              Exams
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{room.exams?.length || 0}</div>
             <p className="text-sm text-muted-foreground">
-              Tổng số đề thi trong phòng
+              Total exams in room
             </p>
           </CardContent>
         </Card>
@@ -284,7 +284,7 @@ export default function ExamRoomDetailPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
-              Học sinh
+              Students
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -292,7 +292,7 @@ export default function ExamRoomDetailPage() {
               {room.enrolledStudentsCount || 0}
             </div>
             <p className="text-sm text-muted-foreground">
-              Số học sinh đã đăng ký
+              Number of enrolled students
             </p>
           </CardContent>
         </Card>
@@ -300,8 +300,8 @@ export default function ExamRoomDetailPage() {
 
       <Tabs defaultValue="exams" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="exams">Đề thi</TabsTrigger>
-          <TabsTrigger value="students">Học sinh</TabsTrigger>
+          <TabsTrigger value="exams">Exams</TabsTrigger>
+          <TabsTrigger value="students">Students</TabsTrigger>
         </TabsList>
 
         <TabsContent value="exams" className="mt-6">
@@ -311,15 +311,15 @@ export default function ExamRoomDetailPage() {
                 <div>
                   <CardTitle className="flex items-center gap-2">
                     <FileText className="h-5 w-5" />
-                    Danh sách đề thi
+                    Exam List
                   </CardTitle>
                   <CardDescription>
-                    {room.exams?.length || 0} đề thi
+                    {room.exams?.length || 0} exams
                   </CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
                   <Input
-                    placeholder="Tìm kiếm đề thi..."
+                    placeholder="Search exams..."
                     value={examListSearchQuery}
                     onChange={(e) => setExamListSearchQuery(e.target.value)}
                     className="w-64"
@@ -331,36 +331,36 @@ export default function ExamRoomDetailPage() {
                     <DialogTrigger asChild>
                       <Button>
                         <Plus className="mr-2 h-4 w-4" />
-                        Gán đề thi
+                        Assign exam
                       </Button>
                     </DialogTrigger>
                     <DialogContent className="max-w-2xl max-h-[80vh]">
                       <DialogHeader>
-                        <DialogTitle>Gán đề thi vào phòng</DialogTitle>
+                        <DialogTitle>Assign exam to room</DialogTitle>
                         <DialogDescription>
-                          Tìm kiếm và chọn đề thi để gán vào phòng thi này
+                          Search and select an exam to assign to this room
                         </DialogDescription>
                       </DialogHeader>
                       <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
-                          <Label htmlFor="search">Tìm kiếm đề thi</Label>
+                          <Label htmlFor="search">Search exams</Label>
                           <Input
                             id="search"
-                            placeholder="Nhập tên đề thi..."
+                            placeholder="Enter exam title..."
                             value={examSearchQuery}
                             onChange={(e) => setExamSearchQuery(e.target.value)}
                           />
                         </div>
                         <div className="grid gap-2">
-                          <Label>Danh sách đề thi</Label>
+                          <Label>Exam List</Label>
                           <div className="border rounded-lg max-h-[400px] overflow-y-auto">
                             {!examsData?.items.length ? (
                               <div className="text-center py-8 text-muted-foreground">
-                                Không có đề thi nào
+                                No exams available
                               </div>
                             ) : filteredExams.length === 0 ? (
                               <div className="text-center py-8 text-muted-foreground">
-                                Không tìm thấy đề thi phù hợp
+                                No matching exams found
                               </div>
                             ) : (
                               <div className="divide-y">
@@ -371,11 +371,10 @@ export default function ExamRoomDetailPage() {
                                   return (
                                     <div
                                       key={exam.id}
-                                      className={`p-4 hover:bg-accent cursor-pointer transition-colors ${
-                                        selectedExamId === exam.id
+                                      className={`p-4 hover:bg-accent cursor-pointer transition-colors ${selectedExamId === exam.id
                                           ? "bg-accent"
                                           : ""
-                                      } ${isAssigned ? "opacity-50" : ""}`}
+                                        } ${isAssigned ? "opacity-50" : ""}`}
                                       onClick={() =>
                                         !isAssigned &&
                                         setSelectedExamId(exam.id)
@@ -392,7 +391,7 @@ export default function ExamRoomDetailPage() {
                                                 variant="secondary"
                                                 className="text-xs"
                                               >
-                                                Đã gán
+                                                Assigned
                                               </Badge>
                                             )}
                                           </div>
@@ -401,10 +400,10 @@ export default function ExamRoomDetailPage() {
                                           </p>
                                           <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
                                             <span>
-                                              Điểm tối đa: {exam.totalMarks}
+                                              Max score: {exam.totalMarks}
                                             </span>
                                             <span>
-                                              Điểm đạt: {exam.passingMarks}
+                                              Passing score: {exam.passingMarks}
                                             </span>
                                           </div>
                                         </div>
@@ -445,13 +444,13 @@ export default function ExamRoomDetailPage() {
                           }}
                           disabled={isAssigning}
                         >
-                          Hủy
+                          Cancel
                         </Button>
                         <Button
                           onClick={handleAssignExam}
                           disabled={isAssigning || !selectedExamId}
                         >
-                          {isAssigning ? "Đang gán..." : "Gán đề thi"}
+                          {isAssigning ? "Assigning..." : "Assign exam"}
                         </Button>
                       </DialogFooter>
                     </DialogContent>
@@ -463,18 +462,18 @@ export default function ExamRoomDetailPage() {
               {!filteredAssignedExams.length ? (
                 <div className="text-center py-8 text-muted-foreground">
                   {examListSearchQuery
-                    ? "Không tìm thấy đề thi phù hợp"
-                    : "Chưa có đề thi nào. Gán đề thi vào phòng!"}
+                    ? "No matching exams found"
+                    : "No exams yet. Assign an exam to the room!"}
                 </div>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Tên đề thi</TableHead>
-                      <TableHead>Mô tả</TableHead>
-                      <TableHead>Điểm tối đa</TableHead>
-                      <TableHead>Điểm đạt</TableHead>
-                      <TableHead className="text-right">Thao tác</TableHead>
+                      <TableHead>Exam Title</TableHead>
+                      <TableHead>Description</TableHead>
+                      <TableHead>Max Score</TableHead>
+                      <TableHead>Passing Score</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -496,7 +495,7 @@ export default function ExamRoomDetailPage() {
                               onClick={() =>
                                 router.push(`/teacher/exams/${exam.id}`)
                               }
-                              title="Xem chi tiết"
+                              title="View details"
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
@@ -505,7 +504,7 @@ export default function ExamRoomDetailPage() {
                               size="icon"
                               onClick={() => handleRemoveExam(exam.id)}
                               disabled={isRemoving}
-                              title="Xóa khỏi phòng"
+                              title="Remove from room"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -527,10 +526,10 @@ export default function ExamRoomDetailPage() {
                 <div>
                   <CardTitle className="flex items-center gap-2">
                     <Users className="h-5 w-5" />
-                    Danh sách học sinh
+                    Student List
                   </CardTitle>
                   <CardDescription>
-                    {room.enrolledStudentsCount || 0} học sinh đã đăng ký
+                    {room.enrolledStudentsCount || 0} enrolled students
                   </CardDescription>
                 </div>
                 <EnrollStudentsDialog roomId={roomId} />
@@ -539,7 +538,7 @@ export default function ExamRoomDetailPage() {
             <CardContent>
               <div className="mb-4">
                 <Input
-                  placeholder="Tìm kiếm học sinh theo tên hoặc email..."
+                  placeholder="Search students by name or email..."
                   value={studentSearchQuery}
                   onChange={(e) => setStudentSearchQuery(e.target.value)}
                 />
@@ -555,20 +554,20 @@ export default function ExamRoomDetailPage() {
                 </div>
               ) : !enrolledStudents.length ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  Chưa có học sinh nào đăng ký phòng thi này
+                  No students have enrolled in this exam room yet
                 </div>
               ) : filteredStudents.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  Không tìm thấy học sinh phù hợp
+                  No matching students found
                 </div>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Họ và tên</TableHead>
+                      <TableHead>Full Name</TableHead>
                       <TableHead>Email</TableHead>
-                      <TableHead>Ngày đăng ký</TableHead>
-                      <TableHead>Trạng thái email</TableHead>
+                      <TableHead>Enrollment Date</TableHead>
+                      <TableHead>Email Status</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -584,9 +583,9 @@ export default function ExamRoomDetailPage() {
                         </TableCell>
                         <TableCell>
                           {enrollment.emailSent ? (
-                            <Badge variant="default">Đã gửi</Badge>
+                            <Badge variant="default">Sent</Badge>
                           ) : (
-                            <Badge variant="outline">Chưa gửi</Badge>
+                            <Badge variant="outline">Not Sent</Badge>
                           )}
                         </TableCell>
                       </TableRow>

@@ -80,10 +80,10 @@ export default function UsersPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            Quản lý người dùng
+            User Management
           </h1>
           <p className="text-muted-foreground">
-            Xem và quản lý tất cả người dùng trong hệ thống
+            View and manage all users in the system
           </p>
         </div>
       </div>
@@ -92,7 +92,7 @@ export default function UsersPage() {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Không thể tải danh sách người dùng. Vui lòng thử lại sau.
+            Failed to load user list. Please try again later.
           </AlertDescription>
         </Alert>
       )}
@@ -101,16 +101,16 @@ export default function UsersPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Danh sách người dùng</CardTitle>
+              <CardTitle>User List</CardTitle>
               <CardDescription>
-                {usersData?.totalCount || 0} người dùng
+                {usersData?.totalCount || 0} users
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
               <div className="relative w-64">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Tìm kiếm..."
+                  placeholder="Search..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-8"
@@ -122,7 +122,7 @@ export default function UsersPage() {
         <CardContent>
           {isLoading ? (
             <div className="text-center py-8 text-muted-foreground">
-              Đang tải...
+              Loading...
             </div>
           ) : filteredUsers && filteredUsers.length > 0 ? (
             <>
@@ -130,11 +130,11 @@ export default function UsersPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Email</TableHead>
-                    <TableHead>Họ tên</TableHead>
-                    <TableHead>Vai trò</TableHead>
-                    <TableHead>Trạng thái</TableHead>
-                    <TableHead>Ngày tạo</TableHead>
-                    <TableHead className="text-right">Thao tác</TableHead>
+                    <TableHead>Full Name</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Created At</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -162,11 +162,11 @@ export default function UsersPage() {
                         <Badge
                           variant={user.isActive ? "default" : "secondary"}
                         >
-                          {user.isActive ? "Hoạt động" : "Không hoạt động"}
+                          {user.isActive ? "Active" : "Inactive"}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {new Date(user.createdAt).toLocaleDateString("vi-VN")}
+                        {new Date(user.createdAt).toLocaleDateString("en-US")}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
@@ -174,7 +174,7 @@ export default function UsersPage() {
                           size="sm"
                           onClick={() => router.push(`/admin/users/${user.id}`)}
                         >
-                          Xem chi tiết
+                          View details
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -185,7 +185,7 @@ export default function UsersPage() {
               <div className="flex items-center justify-between mt-4">
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-muted-foreground">
-                    Hiển thị
+                    Show
                   </span>
                   <Select
                     value={pageSize.toString()}
@@ -205,7 +205,7 @@ export default function UsersPage() {
                     </SelectContent>
                   </Select>
                   <span className="text-sm text-muted-foreground">
-                    trên trang
+                    per page
                   </span>
                 </div>
 
@@ -221,7 +221,7 @@ export default function UsersPage() {
                     &lt;
                   </Button>
                   <span className="text-sm text-muted-foreground">
-                    Trang {pageNumber} / {totalPages}
+                    Page {pageNumber} / {totalPages}
                   </span>
                   <Button
                     variant="outline"
@@ -238,12 +238,12 @@ export default function UsersPage() {
             <div className="text-center py-12">
               <Users className="mx-auto h-12 w-12 text-muted-foreground" />
               <h3 className="mt-4 text-lg font-semibold">
-                Không tìm thấy người dùng
+                No users found
               </h3>
               <p className="text-sm text-muted-foreground mt-2">
                 {searchQuery
-                  ? "Thử tìm kiếm với từ khóa khác"
-                  : "Chưa có người dùng nào trong hệ thống"}
+                  ? "Try searching with a different keyword"
+                  : "No users in the system yet"}
               </p>
             </div>
           )}

@@ -94,7 +94,7 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
   const handleEnrollStudents = () => {
     if (selectedStudentIds.length === 0) {
       toast({
-        title: "Lỗi",
+        title: "Error",
         description: EXAM_ROOM_MESSAGES.ERROR.NO_STUDENTS_SELECTED,
         variant: "destructive",
       });
@@ -113,14 +113,14 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
           if (hasErrors) {
             // Show partial success with details
             toast({
-              title: "Thêm học sinh hoàn tất",
-              description: `Thành công: ${result.successfulEnrollments}/${result.totalStudents}. Thất bại: ${result.failedEnrollments}`,
+              title: "Student enrollment complete",
+              description: `Success: ${result.successfulEnrollments}/${result.totalStudents}. Failed: ${result.failedEnrollments}`,
               variant: "default",
             });
           } else {
             // Show full success
             toast({
-              title: "Thành công",
+              title: "Success",
               description: EXAM_ROOM_MESSAGES.SUCCESS.STUDENTS_ENROLLED,
             });
           }
@@ -131,7 +131,7 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
         },
         onError: (error: Error) => {
           toast({
-            title: "Lỗi",
+            title: "Error",
             description:
               error.message || EXAM_ROOM_MESSAGES.ERROR.ENROLL_STUDENTS_FAILED,
             variant: "destructive",
@@ -152,26 +152,26 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
       <DialogTrigger asChild>
         <Button>
           <UserPlus className="mr-2 h-4 w-4" />
-          Thêm học sinh
+          Add Students
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[80vh]">
         <DialogHeader>
-          <DialogTitle>Thêm học sinh vào phòng thi</DialogTitle>
+          <DialogTitle>Add Students to Exam Room</DialogTitle>
           <DialogDescription>
-            Chọn học sinh để thêm vào phòng thi này
+            Select students to add to this exam room
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
           {/* Search Input */}
           <div className="grid gap-2">
-            <Label htmlFor="search-students">Tìm kiếm học sinh</Label>
+            <Label htmlFor="search-students">Search Students</Label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 id="search-students"
-                placeholder="Nhập tên hoặc email học sinh..."
+                placeholder="Enter student name or email..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
@@ -183,14 +183,14 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
           {selectedStudentIds.length > 0 && (
             <div className="flex items-center justify-between px-1">
               <Badge variant="secondary">
-                Đã chọn: {selectedStudentIds.length}
+                Selected: {selectedStudentIds.length}
               </Badge>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setSelectedStudentIds([])}
               >
-                Bỏ chọn tất cả
+                Deselect All
               </Button>
             </div>
           )}
@@ -198,36 +198,36 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
           {/* Students List */}
           <div className="grid gap-2">
             <div className="flex items-center justify-between">
-              <Label>Danh sách học sinh</Label>
+              <Label>Student List</Label>
               {filteredStudents.filter((s) => !enrolledStudentIds.has(s.id))
                 .length > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleSelectAll}
-                  className="h-8"
-                >
-                  {selectedStudentIds.length ===
-                  filteredStudents.filter((s) => !enrolledStudentIds.has(s.id))
-                    .length
-                    ? "Bỏ chọn tất cả"
-                    : "Chọn tất cả"}
-                </Button>
-              )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleSelectAll}
+                    className="h-8"
+                  >
+                    {selectedStudentIds.length ===
+                      filteredStudents.filter((s) => !enrolledStudentIds.has(s.id))
+                        .length
+                      ? "Deselect All"
+                      : "Select All"}
+                  </Button>
+                )}
             </div>
 
             <div className="border rounded-lg max-h-[400px] overflow-y-auto">
               {isLoadingStudents ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  Đang tải danh sách học sinh...
+                  Loading student list...
                 </div>
               ) : students.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  Không có học sinh nào trong hệ thống
+                  No students in the system
                 </div>
               ) : filteredStudents.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  Không tìm thấy học sinh phù hợp
+                  No matching students found
                 </div>
               ) : (
                 <div className="divide-y">
@@ -238,11 +238,10 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
                     return (
                       <div
                         key={student.id}
-                        className={`p-4 transition-colors ${
-                          isEnrolled
+                        className={`p-4 transition-colors ${isEnrolled
                             ? "opacity-50 cursor-not-allowed bg-muted"
                             : "hover:bg-accent cursor-pointer"
-                        }`}
+                          }`}
                         onClick={() =>
                           !isEnrolled &&
                           handleToggleStudent(student.id, isEnrolled)
@@ -267,7 +266,7 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
                               </Badge>
                               {isEnrolled && (
                                 <Badge variant="secondary" className="text-xs">
-                                  Đã thêm
+                                  Enrolled
                                 </Badge>
                               )}
                             </div>
@@ -291,15 +290,15 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
             onClick={handleClose}
             disabled={isEnrolling}
           >
-            Hủy
+            Cancel
           </Button>
           <Button
             onClick={handleEnrollStudents}
             disabled={isEnrolling || selectedStudentIds.length === 0}
           >
             {isEnrolling
-              ? "Đang thêm..."
-              : `Thêm ${selectedStudentIds.length > 0 ? `(${selectedStudentIds.length})` : ""}`}
+              ? "Adding..."
+              : `Add ${selectedStudentIds.length > 0 ? `(${selectedStudentIds.length})` : ""}`}
           </Button>
         </DialogFooter>
       </DialogContent>

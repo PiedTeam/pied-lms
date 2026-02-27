@@ -113,8 +113,8 @@ export function QuizletsList({ role }: QuizletsListProps) {
       );
       if (!isValid) {
         toast({
-          title: "Lỗi",
-          description: "Chỉ chấp nhận file Excel (.xlsx, .xls)",
+          title: "Error",
+          description: "Only Excel files (.xlsx, .xls) are accepted",
           variant: "destructive",
         });
         e.target.value = "";
@@ -139,8 +139,8 @@ export function QuizletsList({ role }: QuizletsListProps) {
 
     if (!title.trim()) {
       toast({
-        title: "Lỗi",
-        description: "Vui lòng nhập tiêu đề",
+        title: "Error",
+        description: "Please enter a title",
         variant: "destructive",
       });
       return;
@@ -148,8 +148,8 @@ export function QuizletsList({ role }: QuizletsListProps) {
 
     if (!file) {
       toast({
-        title: "Lỗi",
-        description: "Vui lòng chọn file Excel",
+        title: "Error",
+        description: "Please select an Excel file",
         variant: "destructive",
       });
       return;
@@ -167,7 +167,7 @@ export function QuizletsList({ role }: QuizletsListProps) {
       {
         onSuccess: (message) => {
           toast({
-            title: "Thành công",
+            title: "Success",
             description: message,
           });
           setIsCreateDialogOpen(false);
@@ -195,15 +195,15 @@ export function QuizletsList({ role }: QuizletsListProps) {
       {
         onSuccess: () => {
           toast({
-            title: "Thành công",
+            title: "Success",
             description: !currentStatus
-              ? "Đã xuất bản quizlet"
-              : "Đã hủy xuất bản quizlet",
+              ? "Quizlet published"
+              : "Quizlet unpublished",
           });
         },
         onError: (error: Error) => {
           toast({
-            title: "Lỗi",
+            title: "Error",
             description: error.message,
             variant: "destructive",
           });
@@ -217,11 +217,11 @@ export function QuizletsList({ role }: QuizletsListProps) {
     // isHidden only affects Student UI
     switch (level) {
       case QuizletLevel.Easy:
-        return <Badge className="bg-green-600">Dễ</Badge>;
+        return <Badge className="bg-green-600">Easy</Badge>;
       case QuizletLevel.Medium:
-        return <Badge className="bg-yellow-600">Trung bình</Badge>;
+        return <Badge className="bg-yellow-600">Medium</Badge>;
       case QuizletLevel.Hard:
-        return <Badge className="bg-red-600">Khó</Badge>;
+        return <Badge className="bg-red-600">Hard</Badge>;
       default:
         return <Badge variant="outline">Level {level}</Badge>;
     }
@@ -231,16 +231,16 @@ export function QuizletsList({ role }: QuizletsListProps) {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Quản lý Quizlet</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Quizlet Management</h1>
           <p className="text-muted-foreground">
-            Tạo và quản lý các bộ câu hỏi từ file Excel
+            Create and manage question sets from Excel files
           </p>
         </div>
 
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleDownloadTemplate}>
             <Download className="mr-2 h-4 w-4" />
-            Tải file mẫu
+            Download Template
           </Button>
           <Dialog
             open={isCreateDialogOpen}
@@ -249,27 +249,27 @@ export function QuizletsList({ role }: QuizletsListProps) {
             <DialogTrigger asChild>
               <Button>
                 <Plus className="mr-2 h-4 w-4" />
-                Tạo Quizlet
+                Create Quizlet
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[600px]">
               <form onSubmit={handleSubmit}>
                 <DialogHeader>
-                  <DialogTitle>Tạo Quizlet mới</DialogTitle>
+                  <DialogTitle>Create New Quizlet</DialogTitle>
                   <DialogDescription>
-                    Upload file Excel chứa câu hỏi. File phải có định dạng .xlsx
-                    hoặc .xls
+                    Upload an Excel file containing questions. File must be .xlsx
+                    or .xls format
                   </DialogDescription>
                 </DialogHeader>
 
                 <div className="grid gap-4 py-4">
                   <div className="grid gap-2">
                     <Label htmlFor="title">
-                      Tiêu đề <span className="text-red-500">*</span>
+                      Title <span className="text-red-500">*</span>
                     </Label>
                     <Input
                       id="title"
-                      placeholder="Nhập tiêu đề quizlet"
+                      placeholder="Enter quizlet title"
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
                       required
@@ -278,11 +278,11 @@ export function QuizletsList({ role }: QuizletsListProps) {
 
                   <div className="grid gap-2">
                     <Label htmlFor="description">
-                      Mô tả <span className="text-red-500">*</span>
+                      Description <span className="text-red-500">*</span>
                     </Label>
                     <Textarea
                       id="description"
-                      placeholder="Nhập mô tả"
+                      placeholder="Enter description"
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                       rows={3}
@@ -292,7 +292,7 @@ export function QuizletsList({ role }: QuizletsListProps) {
 
                   <div className="grid gap-2">
                     <Label htmlFor="level">
-                      Độ khó <span className="text-red-500">*</span>
+                      Difficulty <span className="text-red-500">*</span>
                     </Label>
                     <Select
                       value={level.toString()}
@@ -301,12 +301,12 @@ export function QuizletsList({ role }: QuizletsListProps) {
                       }
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Chọn độ khó" />
+                        <SelectValue placeholder="Select difficulty" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="1">Dễ</SelectItem>
-                        <SelectItem value="2">Trung bình</SelectItem>
-                        <SelectItem value="3">Khó</SelectItem>
+                        <SelectItem value="1">Easy</SelectItem>
+                        <SelectItem value="2">Medium</SelectItem>
+                        <SelectItem value="3">Hard</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -326,8 +326,8 @@ export function QuizletsList({ role }: QuizletsListProps) {
                       <FileSpreadsheet className="h-5 w-5 text-muted-foreground" />
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      File Excel phải có cấu trúc đúng theo file mẫu. Tải file
-                      mẫu để xem cấu trúc.
+                      The Excel file must follow the template structure. Download
+                      the template to see the structure.
                     </p>
                   </div>
 
@@ -338,7 +338,7 @@ export function QuizletsList({ role }: QuizletsListProps) {
                       onCheckedChange={setIsPublished}
                     />
                     <Label htmlFor="isPublished" className="cursor-pointer">
-                      Xuất bản ngay
+                      Publish immediately
                     </Label>
                   </div>
 
@@ -349,7 +349,7 @@ export function QuizletsList({ role }: QuizletsListProps) {
                       onCheckedChange={setIsHidden}
                     />
                     <Label htmlFor="isHidden" className="cursor-pointer">
-                      Ẩn level (độ khó) của quizlet
+                      Hide quizlet difficulty level
                     </Label>
                   </div>
                 </div>
@@ -361,18 +361,18 @@ export function QuizletsList({ role }: QuizletsListProps) {
                     onClick={() => setIsCreateDialogOpen(false)}
                     disabled={isCreating}
                   >
-                    Hủy
+                    Cancel
                   </Button>
                   <Button type="submit" disabled={isCreating}>
                     {isCreating ? (
                       <>
                         <Upload className="mr-2 h-4 w-4 animate-spin" />
-                        Đang tạo...
+                        Creating...
                       </>
                     ) : (
                       <>
                         <Upload className="mr-2 h-4 w-4" />
-                        Tạo Quizlet
+                        Create Quizlet
                       </>
                     )}
                   </Button>
@@ -385,7 +385,7 @@ export function QuizletsList({ role }: QuizletsListProps) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Danh sách Quizlet</CardTitle>
+          <CardTitle>Quizlet List</CardTitle>
           <CardDescription>
             {filteredQuizlets?.length || 0} / {quizlets?.length || 0} quizlet
           </CardDescription>
@@ -393,16 +393,16 @@ export function QuizletsList({ role }: QuizletsListProps) {
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="all">Tất cả</TabsTrigger>
-              <TabsTrigger value="published">Xuất bản</TabsTrigger>
-              <TabsTrigger value="unpublished">Hủy xuất bản</TabsTrigger>
+              <TabsTrigger value="all">All</TabsTrigger>
+              <TabsTrigger value="published">Published</TabsTrigger>
+              <TabsTrigger value="unpublished">Unpublished</TabsTrigger>
             </TabsList>
 
             <div className="flex items-center gap-4 mt-6 mb-4">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Tìm kiếm theo tiêu đề hoặc người tạo..."
+                  placeholder="Search by title or creator..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
@@ -412,13 +412,13 @@ export function QuizletsList({ role }: QuizletsListProps) {
                 <Filter className="h-4 w-4 text-muted-foreground" />
                 <Select value={levelFilter} onValueChange={setLevelFilter}>
                   <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Độ khó" />
+                    <SelectValue placeholder="Difficulty" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Tất cả độ khó</SelectItem>
-                    <SelectItem value="1">Dễ</SelectItem>
-                    <SelectItem value="2">Trung bình</SelectItem>
-                    <SelectItem value="3">Khó</SelectItem>
+                    <SelectItem value="all">All Difficulties</SelectItem>
+                    <SelectItem value="1">Easy</SelectItem>
+                    <SelectItem value="2">Medium</SelectItem>
+                    <SelectItem value="3">Hard</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -440,13 +440,13 @@ export function QuizletsList({ role }: QuizletsListProps) {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Tiêu đề</TableHead>
-                      <TableHead>Người tạo</TableHead>
-                      <TableHead>Độ khó</TableHead>
-                      <TableHead>Số câu hỏi</TableHead>
-                      <TableHead>Trạng thái</TableHead>
-                      <TableHead>Ngày tạo</TableHead>
-                      <TableHead className="text-right">Thao tác</TableHead>
+                      <TableHead>Title</TableHead>
+                      <TableHead>Creator</TableHead>
+                      <TableHead>Difficulty</TableHead>
+                      <TableHead>Questions</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Created At</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -459,7 +459,7 @@ export function QuizletsList({ role }: QuizletsListProps) {
                           {quizlet.title}
                           {quizlet.isHidden && (
                             <span className="ml-2 text-xs text-muted-foreground">
-                              (Đã ẩn)
+                              (Hidden)
                             </span>
                           )}
                         </TableCell>
@@ -468,14 +468,14 @@ export function QuizletsList({ role }: QuizletsListProps) {
                         <TableCell>{quizlet.quantityQuestion}</TableCell>
                         <TableCell>
                           {quizlet.isPublished ? (
-                            <Badge variant="default">Đã xuất bản</Badge>
+                            <Badge variant="default">Published</Badge>
                           ) : (
-                            <Badge variant="secondary">Nháp</Badge>
+                            <Badge variant="secondary">Draft</Badge>
                           )}
                         </TableCell>
                         <TableCell>
                           {new Date(quizlet.createdAt).toLocaleDateString(
-                            "vi-VN",
+                            "en-US",
                           )}
                         </TableCell>
                         <TableCell className="text-right">
@@ -486,7 +486,7 @@ export function QuizletsList({ role }: QuizletsListProps) {
                               onClick={() =>
                                 router.push(`/${role}/quizlets/${quizlet.id}`)
                               }
-                              title="Xem chi tiết"
+                              title="View details"
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
@@ -498,7 +498,7 @@ export function QuizletsList({ role }: QuizletsListProps) {
                                   `/${role}/quizlets/${quizlet.id}/edit`,
                                 )
                               }
-                              title="Chỉnh sửa"
+                              title="Edit"
                             >
                               <Pencil className="h-4 w-4" />
                             </Button>
@@ -516,8 +516,8 @@ export function QuizletsList({ role }: QuizletsListProps) {
                               disabled={isToggling}
                             >
                               {quizlet.isPublished
-                                ? "Hủy xuất bản"
-                                : "Xuất bản"}
+                                ? "Unpublish"
+                                : "Publish"}
                             </Button>
                           </div>
                         </TableCell>
@@ -529,21 +529,21 @@ export function QuizletsList({ role }: QuizletsListProps) {
                 <div className="text-center py-12">
                   <FileJson className="mx-auto h-12 w-12 text-muted-foreground" />
                   <h3 className="mt-4 text-lg font-semibold">
-                    Chưa có quizlet nào
+                    No quizlets yet
                   </h3>
                   <p className="text-sm text-muted-foreground mt-2">
                     {activeTab === "published"
-                      ? "Chưa có quizlet nào được xuất bản"
+                      ? "No published quizlets yet"
                       : activeTab === "unpublished"
-                        ? "Chưa có quizlet nào hủy xuất bản"
-                        : "Tạo quizlet đầu tiên bằng cách upload file Excel"}
+                        ? "No unpublished quizlets"
+                        : "Create your first quizlet by uploading an Excel file"}
                   </p>
                   <Button
                     className="mt-4"
                     onClick={() => setIsCreateDialogOpen(true)}
                   >
                     <Plus className="mr-2 h-4 w-4" />
-                    Tạo Quizlet
+                    Create Quizlet
                   </Button>
                 </div>
               )}
@@ -554,58 +554,58 @@ export function QuizletsList({ role }: QuizletsListProps) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Hướng dẫn tạo file Excel</CardTitle>
+          <CardTitle>Excel File Creation Guide</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <h4 className="font-medium mb-2">Cấu trúc file Excel:</h4>
+            <h4 className="font-medium mb-2">Excel File Structure:</h4>
             <p className="text-sm text-muted-foreground mb-3">
-              File Excel phải có các cột sau (theo thứ tự):
+              The Excel file must have the following columns (in order):
             </p>
             <div className="bg-muted p-4 rounded-lg text-sm">
               <ul className="space-y-2">
                 <li>
-                  <span className="font-medium">Content:</span> Nội dung câu hỏi
+                  <span className="font-medium">Content:</span> Question content
                 </li>
                 <li>
                   <span className="font-medium">
                     Option1, Option2, Option3, Option4:
                   </span>{" "}
-                  Các đáp án (tối thiểu 2 đáp án)
+                  Answer choices (minimum 2 answers)
                 </li>
                 <li>
-                  <span className="font-medium">CorrectAnswer:</span> Đáp án
-                  đúng (ví dụ: "Ha Noi" hoặc "2" cho nhiều đáp án)
+                  <span className="font-medium">CorrectAnswer:</span> Correct
+                  answer (e.g. "Ha Noi" or "2" for multiple answers)
                 </li>
                 <li>
                   <span className="font-medium">IsHidden:</span> TRUE/FALSE -
-                  ẩn/hiện level (độ khó) của câu hỏi
+                  hide/show the difficulty level of the question
                 </li>
                 <li>
-                  <span className="font-medium">Level:</span> 1 = Dễ, 2 = Trung
-                  bình, 3 = Khó
+                  <span className="font-medium">Level:</span> 1 = Easy, 2 = Medium,
+                  3 = Hard
                 </li>
               </ul>
             </div>
           </div>
 
           <div className="space-y-2">
-            <h4 className="font-medium">Lưu ý:</h4>
+            <h4 className="font-medium">Notes:</h4>
             <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
-              <li>File phải có định dạng .xlsx hoặc .xls</li>
-              <li>Dòng đầu tiên là tiêu đề các cột</li>
+              <li>File must be .xlsx or .xls format</li>
+              <li>First row must be column headers</li>
               <li>
-                Đáp án đúng phải khớp chính xác với một trong các Option (phân
-                biệt hoa thường)
+                Correct answer must exactly match one of the Options (case
+                sensitive)
               </li>
               <li>
-                Nếu có nhiều đáp án đúng, phân cách bằng dấu phẩy (ví dụ: "2,3")
+                For multiple correct answers, separate with commas (e.g. "2,3")
               </li>
               <li>
-                IsHidden: TRUE để ẩn level (độ khó) của câu hỏi, FALSE để hiển
-                thị level
+                IsHidden: TRUE to hide difficulty level of question, FALSE to
+                show level
               </li>
-              <li>Tải file mẫu để xem cấu trúc chi tiết và ví dụ</li>
+              <li>Download the template to see detailed structure and examples</li>
             </ul>
           </div>
 
@@ -615,7 +615,7 @@ export function QuizletsList({ role }: QuizletsListProps) {
             className="w-full"
           >
             <Download className="mr-2 h-4 w-4" />
-            Tải file mẫu Excel
+            Download Sample Excel File
           </Button>
         </CardContent>
       </Card>

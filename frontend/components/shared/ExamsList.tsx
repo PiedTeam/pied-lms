@@ -84,10 +84,10 @@ export function ExamsList({ basePath }: ExamsListProps) {
   // Apply search filter
   const filteredExams = searchQuery
     ? allExams.filter(
-        (exam) =>
-          exam.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          exam.description?.toLowerCase().includes(searchQuery.toLowerCase()),
-      )
+      (exam) =>
+        exam.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        exam.description?.toLowerCase().includes(searchQuery.toLowerCase()),
+    )
     : allExams;
 
   const currentExams =
@@ -125,8 +125,8 @@ export function ExamsList({ basePath }: ExamsListProps) {
     createExam(formData, {
       onSuccess: () => {
         toast({
-          title: "Thành công",
-          description: "Đề thi đã được tạo thành công",
+          title: "Success",
+          description: "Exam created successfully",
         });
         setIsCreateDialogOpen(false);
         setFormData({
@@ -138,8 +138,8 @@ export function ExamsList({ basePath }: ExamsListProps) {
       },
       onError: (error: Error) => {
         toast({
-          title: "Lỗi",
-          description: error.message || "Không thể tạo đề thi",
+          title: "Error",
+          description: error.message || "Failed to create exam",
           variant: "destructive",
         });
       },
@@ -152,15 +152,15 @@ export function ExamsList({ basePath }: ExamsListProps) {
     deleteExam(deleteExamId, {
       onSuccess: () => {
         toast({
-          title: "Thành công",
-          description: "Đề thi đã được ẩn thành công",
+          title: "Success",
+          description: "Exam hidden successfully",
         });
         setDeleteExamId(null);
       },
       onError: (error: Error) => {
         toast({
-          title: "Lỗi",
-          description: error.message || "Không thể ẩn đề thi",
+          title: "Error",
+          description: error.message || "Failed to hide exam",
           variant: "destructive",
         });
       },
@@ -171,30 +171,30 @@ export function ExamsList({ basePath }: ExamsListProps) {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Đề Thi</h1>
-          <p className="text-muted-foreground">Quản lý các đề thi</p>
+          <h1 className="text-3xl font-bold tracking-tight">Exams</h1>
+          <p className="text-muted-foreground">Manage exams</p>
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="mr-2 h-4 w-4" />
-              Tạo Đề Thi
+              Create Exam
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[600px]">
             <form onSubmit={handleCreateSubmit}>
               <DialogHeader>
-                <DialogTitle>Tạo Đề Thi Mới</DialogTitle>
-                <DialogDescription>Nhập thông tin đề thi</DialogDescription>
+                <DialogTitle>Create New Exam</DialogTitle>
+                <DialogDescription>Enter exam information</DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
                   <Label htmlFor="title">
-                    Tên Đề Thi <span className="text-red-500">*</span>
+                    Exam Title <span className="text-red-500">*</span>
                   </Label>
                   <Input
                     id="title"
-                    placeholder="VD: Đề thi giữa kỳ"
+                    placeholder="e.g. Midterm Exam"
                     value={formData.title}
                     onChange={(e) =>
                       setFormData({ ...formData, title: e.target.value })
@@ -203,10 +203,10 @@ export function ExamsList({ basePath }: ExamsListProps) {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="description">Mô Tả</Label>
+                  <Label htmlFor="description">Description</Label>
                   <Textarea
                     id="description"
-                    placeholder="Mô tả về đề thi"
+                    placeholder="Exam description"
                     value={formData.description}
                     onChange={(e) =>
                       setFormData({ ...formData, description: e.target.value })
@@ -217,7 +217,7 @@ export function ExamsList({ basePath }: ExamsListProps) {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
                     <Label htmlFor="totalMarks">
-                      Tổng Điểm <span className="text-red-500">*</span>
+                      Total Score <span className="text-red-500">*</span>
                     </Label>
                     <Input
                       id="totalMarks"
@@ -236,7 +236,7 @@ export function ExamsList({ basePath }: ExamsListProps) {
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="passingMarks">
-                      Điểm Đạt <span className="text-red-500">*</span>
+                      Passing Score <span className="text-red-500">*</span>
                     </Label>
                     <Input
                       id="passingMarks"
@@ -262,10 +262,10 @@ export function ExamsList({ basePath }: ExamsListProps) {
                   onClick={() => setIsCreateDialogOpen(false)}
                   disabled={isCreating}
                 >
-                  Hủy
+                  Cancel
                 </Button>
                 <Button type="submit" disabled={isCreating}>
-                  {isCreating ? "Đang tạo..." : "Tạo Đề Thi"}
+                  {isCreating ? "Creating..." : "Create Exam"}
                 </Button>
               </DialogFooter>
             </form>
@@ -279,8 +279,8 @@ export function ExamsList({ basePath }: ExamsListProps) {
         className="space-y-6"
       >
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="active">Đang hoạt động</TabsTrigger>
-          <TabsTrigger value="archived">Đã ẩn</TabsTrigger>
+          <TabsTrigger value="active">Active</TabsTrigger>
+          <TabsTrigger value="archived">Hidden</TabsTrigger>
         </TabsList>
 
         <TabsContent value={activeTab} className="space-y-4">
@@ -288,14 +288,14 @@ export function ExamsList({ basePath }: ExamsListProps) {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Danh Sách Đề Thi</CardTitle>
+                  <CardTitle>Exam List</CardTitle>
                   <CardDescription>
-                    Trang {pageNumber} / {totalPages} - Tổng: {totalCount}
+                    Page {pageNumber} / {totalPages} - Total: {totalCount}
                   </CardDescription>
                 </div>
                 <div className="w-72">
                   <Input
-                    placeholder="Tìm kiếm đề thi..."
+                    placeholder="Search exams..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full"
@@ -321,17 +321,17 @@ export function ExamsList({ basePath }: ExamsListProps) {
                   {!currentExams.length ? (
                     <div className="text-center py-8 text-muted-foreground">
                       {activeTab === "active"
-                        ? "Chưa có đề thi nào. Tạo đề thi đầu tiên!"
-                        : "Không có đề thi nào đã ẩn."}
+                        ? "No exams yet. Create your first exam!"
+                        : "No hidden exams."}
                     </div>
                   ) : (
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Tên Đề Thi</TableHead>
-                          <TableHead>Mô Tả</TableHead>
-                          <TableHead>Điểm</TableHead>
-                          <TableHead className="text-right">Thao Tác</TableHead>
+                          <TableHead>Exam Title</TableHead>
+                          <TableHead>Description</TableHead>
+                          <TableHead>Score</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -347,7 +347,7 @@ export function ExamsList({ basePath }: ExamsListProps) {
                                 {exam.title}
                                 {isArchived && (
                                   <span className="ml-2 text-xs text-muted-foreground">
-                                    (Đã ẩn)
+                                    (Hidden)
                                   </span>
                                 )}
                               </TableCell>
@@ -357,10 +357,10 @@ export function ExamsList({ basePath }: ExamsListProps) {
                               <TableCell>
                                 <div className="flex items-center gap-2">
                                   <Badge variant="outline">
-                                    Tổng: {exam.totalMarks}
+                                    Total: {exam.totalMarks}
                                   </Badge>
                                   <Badge variant="secondary">
-                                    Đạt: {exam.passingMarks}
+                                    Pass: {exam.passingMarks}
                                   </Badge>
                                 </div>
                               </TableCell>
@@ -374,7 +374,7 @@ export function ExamsList({ basePath }: ExamsListProps) {
                                         `${basePath}/exams/${exam.id}`,
                                       )
                                     }
-                                    title="Xem chi tiết"
+                                    title="View details"
                                   >
                                     <Eye className="h-4 w-4" />
                                   </Button>
@@ -388,7 +388,7 @@ export function ExamsList({ basePath }: ExamsListProps) {
                                             `${basePath}/exams/${exam.id}/edit`,
                                           )
                                         }
-                                        title="Chỉnh sửa"
+                                        title="Edit"
                                       >
                                         <Pencil className="h-4 w-4" />
                                       </Button>
@@ -396,7 +396,7 @@ export function ExamsList({ basePath }: ExamsListProps) {
                                         variant="ghost"
                                         size="icon"
                                         onClick={() => setDeleteExamId(exam.id)}
-                                        title="Ẩn đề thi"
+                                        title="Hide exam"
                                       >
                                         <Archive className="h-4 w-4" />
                                       </Button>
@@ -419,7 +419,7 @@ export function ExamsList({ basePath }: ExamsListProps) {
                         size="icon"
                         onClick={handlePrevPage}
                         disabled={pageNumber === 1 || isLoading}
-                        title="Trang trước"
+                        title="Previous page"
                       >
                         &lt;
                       </Button>
@@ -429,7 +429,7 @@ export function ExamsList({ basePath }: ExamsListProps) {
                         size="icon"
                         onClick={handleNextPage}
                         disabled={pageNumber >= totalPages || isLoading}
-                        title="Trang sau"
+                        title="Next page"
                       >
                         &gt;
                       </Button>
@@ -448,21 +448,21 @@ export function ExamsList({ basePath }: ExamsListProps) {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận ẩn đề thi</AlertDialogTitle>
+            <AlertDialogTitle>Confirm Hide Exam</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn ẩn đề thi này? Đề thi sẽ không hiển thị
-              trong danh sách nhưng dữ liệu vẫn được lưu trữ. Admin có thể khôi
-              phục lại sau này nếu cần.
+              Are you sure you want to hide this exam? The exam will not appear
+              in the list but data will still be stored. Admin can restore it
+              later if needed.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Hủy</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               disabled={isDeleting}
               className="bg-orange-600 text-white hover:bg-orange-700"
             >
-              {isDeleting ? "Đang ẩn..." : "Ẩn đề thi"}
+              {isDeleting ? "Hiding..." : "Hide Exam"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

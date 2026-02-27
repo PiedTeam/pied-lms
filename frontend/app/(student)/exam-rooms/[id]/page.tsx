@@ -42,7 +42,7 @@ export default function StudentExamRoomDetailPage() {
       const diff = endTime - now;
 
       if (diff <= 0) {
-        setTimeRemaining("Đã kết thúc");
+        setTimeRemaining("Finished");
         return;
       }
 
@@ -55,14 +55,14 @@ export default function StudentExamRoomDetailPage() {
 
       if (days > 0) {
         setTimeRemaining(
-          `${days} ngày ${hours} giờ ${minutes} phút ${seconds} giây`,
+          `${days}d ${hours}h ${minutes}m ${seconds}s`,
         );
       } else if (hours > 0) {
-        setTimeRemaining(`${hours} giờ ${minutes} phút ${seconds} giây`);
+        setTimeRemaining(`${hours}h ${minutes}m ${seconds}s`);
       } else if (minutes > 0) {
-        setTimeRemaining(`${minutes} phút ${seconds} giây`);
+        setTimeRemaining(`${minutes}m ${seconds}s`);
       } else {
-        setTimeRemaining(`${seconds} giây`);
+        setTimeRemaining(`${seconds}s`);
       }
     };
 
@@ -73,7 +73,7 @@ export default function StudentExamRoomDetailPage() {
   }, [room?.endTime]);
 
   const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString("vi-VN", {
+    return new Date(dateString).toLocaleString("en-US", {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
@@ -87,13 +87,13 @@ export default function StudentExamRoomDetailPage() {
       case "active":
         return (
           <Badge variant="default" className="bg-green-500">
-            Đang diễn ra
+            Ongoing
           </Badge>
         );
       case "upcoming":
-        return <Badge variant="secondary">Sắp diễn ra</Badge>;
+        return <Badge variant="secondary">Upcoming</Badge>;
       case "closed":
-        return <Badge variant="outline">Đã kết thúc</Badge>;
+        return <Badge variant="outline">Finished</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -120,7 +120,7 @@ export default function StudentExamRoomDetailPage() {
   if (isLoadingRoom) {
     return (
       <div className="container mx-auto p-6">
-        <div className="text-center py-8">Đang tải...</div>
+        <div className="text-center py-8">Loading...</div>
       </div>
     );
   }
@@ -128,7 +128,7 @@ export default function StudentExamRoomDetailPage() {
   if (!room) {
     return (
       <div className="container mx-auto p-6">
-        <div className="text-center py-8">Không tìm thấy phòng thi</div>
+        <div className="text-center py-8">Exam room not found</div>
       </div>
     );
   }
@@ -149,13 +149,13 @@ export default function StudentExamRoomDetailPage() {
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Thông tin phòng thi</CardTitle>
+            <CardTitle>Exam Room Information</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-start gap-2">
               <Calendar className="h-4 w-4 mt-0.5 text-muted-foreground" />
               <div className="flex-1">
-                <p className="text-sm font-medium">Thời gian bắt đầu</p>
+                <p className="text-sm font-medium">Start Time</p>
                 <p className="text-sm text-muted-foreground">
                   {formatDateTime(room.startTime)}
                 </p>
@@ -164,7 +164,7 @@ export default function StudentExamRoomDetailPage() {
             <div className="flex items-start gap-2">
               <Calendar className="h-4 w-4 mt-0.5 text-muted-foreground" />
               <div className="flex-1">
-                <p className="text-sm font-medium">Thời gian kết thúc</p>
+                <p className="text-sm font-medium">End Time</p>
                 <p className="text-sm text-muted-foreground">
                   {formatDateTime(room.endTime)}
                 </p>
@@ -173,9 +173,9 @@ export default function StudentExamRoomDetailPage() {
             <div className="flex items-start gap-2">
               <Clock className="h-4 w-4 mt-0.5 text-muted-foreground" />
               <div className="flex-1">
-                <p className="text-sm font-medium">Thời gian còn lại</p>
+                <p className="text-sm font-medium">Time Remaining</p>
                 <p className="text-sm text-muted-foreground">
-                  {timeRemaining || "Đang tính..."}
+                  {timeRemaining || "Calculating..."}
                 </p>
               </div>
             </div>
@@ -186,13 +186,13 @@ export default function StudentExamRoomDetailPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
-              Đề thi
+              Exams
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{room.exams?.length || 0}</div>
             <p className="text-sm text-muted-foreground">
-              Tổng số đề thi trong phòng
+              Total exams in room
             </p>
           </CardContent>
         </Card>
@@ -202,24 +202,24 @@ export default function StudentExamRoomDetailPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
-            Danh sách đề thi
+            Exam List
           </CardTitle>
-          <CardDescription>{room.exams?.length || 0} đề thi</CardDescription>
+          <CardDescription>{room.exams?.length || 0} exams</CardDescription>
         </CardHeader>
         <CardContent>
           {!room.exams?.length ? (
             <div className="text-center py-8 text-muted-foreground">
-              Chưa có đề thi nào trong phòng
+              No exams available in this room
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Tên đề thi</TableHead>
-                  <TableHead>Mô tả</TableHead>
-                  <TableHead>Điểm tối đa</TableHead>
-                  <TableHead>Điểm đạt</TableHead>
-                  <TableHead className="text-right">Thao tác</TableHead>
+                  <TableHead>Exam Name</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead>Max Score</TableHead>
+                  <TableHead>Passing Score</TableHead>
+                  <TableHead className="text-right">Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -237,7 +237,7 @@ export default function StudentExamRoomDetailPage() {
                         onClick={() => handleStartExam(exam.id)}
                       >
                         <Play className="mr-2 h-4 w-4" />
-                        Bắt đầu
+                        Start
                       </Button>
                     </TableCell>
                   </TableRow>

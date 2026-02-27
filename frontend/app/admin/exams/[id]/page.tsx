@@ -14,7 +14,7 @@ export default function ExamDetailPage() {
   const { data: exam, isLoading } = useGetExamById(examId);
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("vi-VN", {
+    return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
@@ -26,7 +26,7 @@ export default function ExamDetailPage() {
   if (isLoading) {
     return (
       <div className="container mx-auto p-6">
-        <div className="text-center py-8">Đang tải...</div>
+        <div className="text-center py-8">Loading...</div>
       </div>
     );
   }
@@ -34,7 +34,7 @@ export default function ExamDetailPage() {
   if (!exam) {
     return (
       <div className="container mx-auto p-6">
-        <div className="text-center py-8">Không tìm thấy đề thi</div>
+        <div className="text-center py-8">Exam not found</div>
       </div>
     );
   }
@@ -50,7 +50,7 @@ export default function ExamDetailPage() {
           <p className="text-muted-foreground">{exam.description}</p>
         </div>
         <Button onClick={() => router.push(`/admin/exams/${examId}/edit`)}>
-          Chỉnh sửa
+          Edit
         </Button>
       </div>
 
@@ -59,12 +59,12 @@ export default function ExamDetailPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <FileText className="h-4 w-4" />
-              Điểm tối đa
+              Max Score
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{exam.totalMarks}</div>
-            <p className="text-sm text-muted-foreground">điểm</p>
+            <p className="text-sm text-muted-foreground">points</p>
           </CardContent>
         </Card>
 
@@ -72,12 +72,12 @@ export default function ExamDetailPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <FileText className="h-4 w-4" />
-              Điểm đạt
+              Passing Score
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{exam.passingMarks}</div>
-            <p className="text-sm text-muted-foreground">điểm</p>
+            <p className="text-sm text-muted-foreground">points</p>
           </CardContent>
         </Card>
 
@@ -85,7 +85,7 @@ export default function ExamDetailPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Calendar className="h-4 w-4" />
-              Ngày tạo
+              Created At
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -96,31 +96,32 @@ export default function ExamDetailPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Thông tin chi tiết</CardTitle>
+          <CardTitle>Exam Details</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
             <p className="text-sm font-medium text-muted-foreground">
-              Tên đề thi
+              Exam Title
             </p>
             <p className="text-base">{exam.title}</p>
           </div>
           <div>
-            <p className="text-sm font-medium text-muted-foreground">Mô tả</p>
-            <p className="text-base">{exam.description || "Không có mô tả"}</p>
+            <p className="text-sm font-medium text-muted-foreground">              Description
+            </p>
+            <p className="text-base">{exam.description || "No description"}</p>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <p className="text-sm font-medium text-muted-foreground">
-                Điểm tối đa
+                Max Score
               </p>
-              <p className="text-base">{exam.totalMarks} điểm</p>
+              <p className="text-base">{exam.totalMarks} points</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">
-                Điểm đạt
+                Passing Score
               </p>
-              <p className="text-base">{exam.passingMarks} điểm</p>
+              <p className="text-base">{exam.passingMarks} points</p>
             </div>
           </div>
         </CardContent>

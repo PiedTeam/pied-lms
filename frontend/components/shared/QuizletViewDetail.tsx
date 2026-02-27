@@ -38,11 +38,11 @@ export function QuizletViewDetail({ quizlet }: QuizletViewDetailProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Câu hỏi ({quizlet.listQuestion.length})</CardTitle>
-        <CardDescription>Danh sách các câu hỏi trong quizlet</CardDescription>
+        <CardTitle>Questions ({quizlet.listQuestion.length})</CardTitle>
+        <CardDescription>List of questions in the quizlet</CardDescription>
         <div className="pt-4">
           <Input
-            placeholder="Tìm kiếm câu hỏi..."
+            placeholder="Search questions..."
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
@@ -68,23 +68,23 @@ export function QuizletViewDetail({ quizlet }: QuizletViewDetailProps) {
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-medium">{question.content}</p>
                         {question.level === 1 && (
-                          <Badge className="bg-green-600">Dễ</Badge>
+                          <Badge className="bg-green-600">Easy</Badge>
                         )}
                         {question.level === 2 && (
-                          <Badge className="bg-yellow-600">Trung bình</Badge>
+                          <Badge className="bg-yellow-600">Medium</Badge>
                         )}
                         {question.level === 3 && (
-                          <Badge className="bg-red-600">Khó</Badge>
+                          <Badge className="bg-red-600">Hard</Badge>
                         )}
                         {question.isHidden && (
-                          <Badge variant="outline">Level ẩn</Badge>
+                          <Badge variant="outline">Hidden level</Badge>
                         )}
                       </div>
                       <p className="text-sm text-muted-foreground mt-1">
-                        Điểm: {question.score} | Loại:{" "}
+                        Score: {question.score} | Type:{" "}
                         {question.questionType === "SingleChoice"
-                          ? "Một đáp án"
-                          : "Nhiều đáp án"}
+                          ? "Single Choice"
+                          : "Multiple Choice"}
                       </p>
                     </div>
                   </div>
@@ -97,11 +97,10 @@ export function QuizletViewDetail({ quizlet }: QuizletViewDetailProps) {
                         return (
                           <div
                             key={optIndex}
-                            className={`flex items-center gap-2 p-2 rounded ${
-                              isCorrect
+                            className={`flex items-center gap-2 p-2 rounded ${isCorrect
                                 ? "bg-green-50 border border-green-200"
                                 : "bg-muted"
-                            }`}
+                              }`}
                           >
                             <span className="font-mono text-sm">
                               {String.fromCharCode(65 + optIndex)}.
@@ -115,7 +114,7 @@ export function QuizletViewDetail({ quizlet }: QuizletViewDetailProps) {
                             </span>
                             {isCorrect && (
                               <Badge variant="default" className="ml-auto">
-                                Đáp án đúng
+                                Correct Answer
                               </Badge>
                             )}
                           </div>
@@ -123,7 +122,7 @@ export function QuizletViewDetail({ quizlet }: QuizletViewDetailProps) {
                       })
                     ) : (
                       <p className="text-sm text-muted-foreground">
-                        Không có đáp án
+                        No answers provided
                       </p>
                     )}
                   </div>
@@ -146,7 +145,7 @@ export function QuizletViewDetail({ quizlet }: QuizletViewDetailProps) {
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
                 <span className="text-sm text-muted-foreground">
-                  Trang {currentPage} / {totalPages}
+                  Page {currentPage} / {totalPages}
                 </span>
                 <Button
                   variant="outline"
@@ -164,8 +163,8 @@ export function QuizletViewDetail({ quizlet }: QuizletViewDetailProps) {
         ) : (
           <p className="text-center text-muted-foreground">
             {searchQuery
-              ? "Không tìm thấy câu hỏi phù hợp"
-              : "Không có câu hỏi nào"}
+              ? "No matching questions found"
+              : "No questions available"}
           </p>
         )}
       </CardContent>
