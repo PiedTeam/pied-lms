@@ -15,6 +15,6 @@ public class Exam
     
     // Navigation properties
     public ApplicationUser Creator { get; set; } = null!;
-    public ICollection<ExamRoomExam> ExamRoomExams { get; set; } = new List<ExamRoomExam>();
-    public ICollection<TestCase> TestCases { get; set; } = new List<TestCase>();
+    public ICollection<ExamRoomExam> ExamRoomExams { get; set; } = [];
+    public ICollection<TestCase> TestCases { get; set; } = [];
 }

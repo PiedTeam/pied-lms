@@ -31,7 +31,7 @@ public class AssignExamToRoomHandler(
 
             var userRoles = httpContextAccessor.HttpContext?.User.FindAll(ClaimTypes.Role)
                 .Select(c => c.Value)
-                .ToList() ?? new List<string>();
+                .ToList() ?? [];
 
             var isAdmin = userRoles.Contains("Admin");
 

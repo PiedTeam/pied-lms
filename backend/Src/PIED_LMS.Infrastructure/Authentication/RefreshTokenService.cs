@@ -100,7 +100,7 @@ public class RefreshTokenService(IMemoryCache memoryCache) : IRefreshTokenServic
     public Task RevokeAllRefreshTokenAsync(Guid userId)
     {
         var userTokensKey = $"{_userTokensPrefix}{userId}";
-        List<string> tokensToRevoke = new();
+        List<string> tokensToRevoke = [];
         
         while (true)
         {
@@ -111,7 +111,7 @@ public class RefreshTokenService(IMemoryCache memoryCache) : IRefreshTokenServic
                 {
                     if (_memoryCache.TryGetValue<HashSet<string>>(userTokensKey, out var userTokens) && userTokens != null)
                     {
-                        tokensToRevoke = userTokens.ToList() ?? new List<string>();
+                        tokensToRevoke = userTokens.ToList() ?? [];
                         _memoryCache.Remove(userTokensKey);
                     }
                     break;
