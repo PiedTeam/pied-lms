@@ -16,12 +16,12 @@ public sealed class CompilerEndpoints : ICarterModule
             .WithOpenApi()
             .Produces<ServiceResponse<CompileResult>>();
 
-        group.MapPost("/api/judge", Judge)
+        group.MapPost("/judge", Judge)
             .WithName("Judge")
             .WithOpenApi()
             .Produces<ServiceResponse<JudgeResult>>();
 
-        group.MapPost("/api/judge-from-file", JudgeFromFile)
+        group.MapPost("/judge-from-file", JudgeFromFile)
             .WithName("JudgeFromFile")
             .WithOpenApi()
             .Produces<ServiceResponse<JudgeResult>>();
