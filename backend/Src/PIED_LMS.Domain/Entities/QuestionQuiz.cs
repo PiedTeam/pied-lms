@@ -24,7 +24,7 @@ public class QuestionQuiz
     public virtual ApplicationUser User { get; set; } = null!;
     public QuestionQuiz()
     {
-        Questions = new List<Question>();
+        Questions = [];
     }
 
 }

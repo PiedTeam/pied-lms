@@ -10,7 +10,7 @@ public class ExcelService : IExcelService
     {
         if (file == null || file.Length == 0)
         {
-            return new List<T>();
+            return [];
         }
 
         var result = new List<T>();

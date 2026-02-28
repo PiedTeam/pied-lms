@@ -18,6 +18,6 @@ public class Question
     public virtual QuestionQuiz Quizlet { get; set; } = null!;   
     public Question()
     {
-        Answers = new List<QuestionAnswer>();
+        Answers = [];
     }
 }

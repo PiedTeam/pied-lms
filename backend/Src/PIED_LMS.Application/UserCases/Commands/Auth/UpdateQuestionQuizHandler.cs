@@ -66,7 +66,7 @@ public class UpdateQuestionQuizHandler(
                 QuestionType = ParseQuestionType(qDto.QuestionType),
                 IsHidden = qDto.IsHidden,
                 Level = (int)qDto.Level,
-                Answers = new List<QuestionAnswer>()
+                Answers = []
             };
 
             if (qDto.Answers != null)
