@@ -197,6 +197,9 @@ public class JudgeFromFileCommandValidator : AbstractValidator<JudgeFromFileComm
         RuleFor(x => x.ExamId)
             .NotEmpty().WithMessage("ExamId is required");
 
+        RuleFor(x => x.ParticipationId)
+            .NotEmpty().WithMessage("ParticipationId is required");
+
         RuleFor(x => x.TimeLimit)
             .GreaterThan(0).When(x => x.TimeLimit.HasValue)
             .WithMessage("Time limit must be greater than 0");

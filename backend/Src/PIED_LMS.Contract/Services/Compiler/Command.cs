@@ -26,6 +26,7 @@ public sealed record JudgeCommand(
 public sealed record JudgeFromFileCommand(
     string Code,
     Guid ExamId,
+    Guid ParticipationId,
     int? TimeLimit,
     int? MemoryLimit,
     OptimizationLevel? OptimizationLevel
