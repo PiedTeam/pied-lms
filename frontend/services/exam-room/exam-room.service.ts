@@ -410,6 +410,9 @@ export function useEnrollStudents() {
       queryClient.invalidateQueries({
         queryKey: ["exam-room", variables.roomId],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["exam-room-enrollments", variables.roomId],
+      });
     },
   });
 }

@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AlertCircle, Key } from "lucide-react";
+import { AlertCircle, Key, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export function ChangePasswordDialog() {
@@ -22,6 +22,9 @@ export function ChangePasswordDialog() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<{
     currentPassword?: string;
     newPassword?: string;
@@ -47,13 +50,17 @@ export function ChangePasswordDialog() {
         passwordErrors.push("Password must be at least 8 characters");
       }
       if (!/[^a-zA-Z0-9]/.test(newPassword)) {
-        passwordErrors.push("Password must contain at least 1 special character");
+        passwordErrors.push(
+          "Password must contain at least 1 special character",
+        );
       }
       if (!/\d/.test(newPassword)) {
         passwordErrors.push("Password must contain at least 1 digit");
       }
       if (!/[A-Z]/.test(newPassword)) {
-        passwordErrors.push("Password must contain at least 1 uppercase letter");
+        passwordErrors.push(
+          "Password must contain at least 1 uppercase letter",
+        );
       }
 
       if (passwordErrors.length > 0) {
@@ -125,19 +132,43 @@ export function ChangePasswordDialog() {
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="currentPassword">Current Password</Label>
-              <Input
-                id="currentPassword"
-                type="password"
-                value={currentPassword}
-                onChange={(e) => {
-                  setCurrentPassword(e.target.value);
-                  if (errors.currentPassword) {
-                    setErrors({ ...errors, currentPassword: undefined });
+              <div className="relative">
+                <Input
+                  id="currentPassword"
+                  type={showCurrentPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  value={currentPassword}
+                  onChange={(e) => {
+                    setCurrentPassword(e.target.value);
+                    if (errors.currentPassword) {
+                      setErrors({ ...errors, currentPassword: undefined });
+                    }
+                  }}
+                  disabled={isPending}
+                  className={
+                    errors.currentPassword
+                      ? "border-destructive pr-10"
+                      : "pr-10"
                   }
-                }}
-                disabled={isPending}
-                className={errors.currentPassword ? "border-destructive" : ""}
-              />
+                  style={
+                    {
+                      WebkitTextSecurity: showCurrentPassword ? "none" : "disc",
+                    } as React.CSSProperties
+                  }
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors z-20 bg-background"
+                  tabIndex={-1}
+                >
+                  {showCurrentPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
               {errors.currentPassword && (
                 <p className="text-sm text-destructive flex items-center gap-1">
                   <AlertCircle className="h-3 w-3" />
@@ -148,19 +179,41 @@ export function ChangePasswordDialog() {
 
             <div className="grid gap-2">
               <Label htmlFor="newPassword">New Password</Label>
-              <Input
-                id="newPassword"
-                type="password"
-                value={newPassword}
-                onChange={(e) => {
-                  setNewPassword(e.target.value);
-                  if (errors.newPassword) {
-                    setErrors({ ...errors, newPassword: undefined });
+              <div className="relative">
+                <Input
+                  id="newPassword"
+                  type={showNewPassword ? "text" : "password"}
+                  autoComplete="new-password"
+                  value={newPassword}
+                  onChange={(e) => {
+                    setNewPassword(e.target.value);
+                    if (errors.newPassword) {
+                      setErrors({ ...errors, newPassword: undefined });
+                    }
+                  }}
+                  disabled={isPending}
+                  className={
+                    errors.newPassword ? "border-destructive pr-10" : "pr-10"
                   }
-                }}
-                disabled={isPending}
-                className={errors.newPassword ? "border-destructive" : ""}
-              />
+                  style={
+                    {
+                      WebkitTextSecurity: showNewPassword ? "none" : "disc",
+                    } as React.CSSProperties
+                  }
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors z-20 bg-background"
+                  tabIndex={-1}
+                >
+                  {showNewPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
               {errors.newPassword && (
                 <p className="text-sm text-destructive flex items-center gap-1">
                   <AlertCircle className="h-3 w-3" />
@@ -171,19 +224,43 @@ export function ChangePasswordDialog() {
 
             <div className="grid gap-2">
               <Label htmlFor="confirmPassword">Confirm New Password</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => {
-                  setConfirmPassword(e.target.value);
-                  if (errors.confirmPassword) {
-                    setErrors({ ...errors, confirmPassword: undefined });
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  autoComplete="new-password"
+                  value={confirmPassword}
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value);
+                    if (errors.confirmPassword) {
+                      setErrors({ ...errors, confirmPassword: undefined });
+                    }
+                  }}
+                  disabled={isPending}
+                  className={
+                    errors.confirmPassword
+                      ? "border-destructive pr-10"
+                      : "pr-10"
                   }
-                }}
-                disabled={isPending}
-                className={errors.confirmPassword ? "border-destructive" : ""}
-              />
+                  style={
+                    {
+                      WebkitTextSecurity: showConfirmPassword ? "none" : "disc",
+                    } as React.CSSProperties
+                  }
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors z-20 bg-background"
+                  tabIndex={-1}
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
               {errors.confirmPassword && (
                 <p className="text-sm text-destructive flex items-center gap-1">
                   <AlertCircle className="h-3 w-3" />

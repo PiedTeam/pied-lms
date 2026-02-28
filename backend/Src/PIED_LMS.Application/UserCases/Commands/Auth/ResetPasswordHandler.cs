@@ -17,7 +17,11 @@ public class ResetPasswordCommandHandler(
             if (user is null)
                 return new ServiceResponse<string>(false, "Invalid user");
 
-            var result = await userManager.ResetPasswordAsync(user, request.Token, request.NewPassword);
+            // Decode the Base64Url encoded token
+            var tokenBytes = Microsoft.AspNetCore.WebUtilities.WebEncoders.Base64UrlDecode(request.Token);
+            var decodedToken = System.Text.Encoding.UTF8.GetString(tokenBytes);
+
+            var result = await userManager.ResetPasswordAsync(user, decodedToken, request.NewPassword);
 
             if (!result.Succeeded)
             {
