@@ -330,10 +330,10 @@ export function useGetAvailableExamRooms(
   const { pageNumber = 1, pageSize = 10 } = params;
 
   return useQuery({
-    queryKey: ["exam-rooms", "available", pageNumber, pageSize],
+    queryKey: ["exam-rooms", "student", pageNumber, pageSize],
     queryFn: async (): Promise<PaginatedExamRoomsResponse> => {
       const { data } = await axios.get<ApiResponse<PaginatedExamRoomsResponse>>(
-        "/exam-rooms/available",
+        "/exam-rooms/student",
         {
           params: {
             pageNumber,

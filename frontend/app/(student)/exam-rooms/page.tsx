@@ -2,7 +2,14 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Calendar, Clock, Users, ArrowRight, Search, Key } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  ArrowRight,
+  Search,
+  Key,
+  FileText,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -26,6 +33,7 @@ import {
 import { useGetAvailableExamRooms } from "@/service";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import type { ExamRoomResponse } from "@/interface/exam-room/exam-room.interface";
 
 export default function StudentExamRoomsPage() {
   const router = useRouter();
@@ -34,7 +42,9 @@ export default function StudentExamRoomsPage() {
   const [activeTab, setActiveTab] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [isJoinDialogOpen, setIsJoinDialogOpen] = useState(false);
-  const [selectedRoom, setSelectedRoom] = useState<any>(null);
+  const [selectedRoom, setSelectedRoom] = useState<ExamRoomResponse | null>(
+    null,
+  );
   const [roomCode, setRoomCode] = useState("");
   const pageSize = 5; // 5 rooms per page
 
@@ -58,9 +68,7 @@ export default function StudentExamRoomsPage() {
 
     switch (status) {
       case "Ongoing":
-        return (
-          <Badge className="bg-blue-600 hover:bg-blue-700">Ongoing</Badge>
-        );
+        return <Badge className="bg-blue-600 hover:bg-blue-700">Ongoing</Badge>;
       case "Upcoming":
         return (
           <Badge className="bg-green-600 hover:bg-green-700">Upcoming</Badge>
@@ -93,11 +101,17 @@ export default function StudentExamRoomsPage() {
 
     if (activeTab === "all") return activeRooms;
     if (activeTab === "upcoming")
-      return activeRooms.filter((room) => room.status === "Upcoming");
+      return activeRooms.filter(
+        (room) => room.status?.toLowerCase() === "upcoming",
+      );
     if (activeTab === "ongoing")
-      return activeRooms.filter((room) => room.status === "Ongoing");
+      return activeRooms.filter(
+        (room) => room.status?.toLowerCase() === "ongoing",
+      );
     if (activeTab === "completed")
-      return activeRooms.filter((room) => room.status === "Completed");
+      return activeRooms.filter(
+        (room) => room.status?.toLowerCase() === "completed",
+      );
     return activeRooms;
   }, [searchedRooms, activeTab]);
 
@@ -119,8 +133,8 @@ export default function StudentExamRoomsPage() {
     setCurrentPage(1);
   };
 
-  const handleJoinRoom = (room: any) => {
-    if (room.status !== "Ongoing") {
+  const handleJoinRoom = (room: ExamRoomResponse) => {
+    if (room.status?.toLowerCase() !== "ongoing") {
       toast({
         title: "Cannot enter room",
         description: "You can only join exam rooms that are ongoing",
@@ -169,9 +183,7 @@ export default function StudentExamRoomsPage() {
     <div className="container mx-auto p-6 space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Exam Rooms</h1>
-        <p className="text-muted-foreground">
-          List of available exam rooms
-        </p>
+        <p className="text-muted-foreground">List of available exam rooms</p>
       </div>
 
       <div className="flex items-center gap-4">
@@ -270,12 +282,12 @@ export default function StudentExamRoomsPage() {
                         </span>
                       </div>
                       <div className="flex items-center gap-2 text-sm">
-                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <FileText className="h-4 w-4 text-muted-foreground" />
                         <span className="text-muted-foreground">
-                          {room.exams?.length || 0} exams
+                          {room.examCount || 0} exams
                         </span>
                       </div>
-                      {room.status === "Ongoing" && (
+                      {room.status?.toLowerCase() === "ongoing" && (
                         <Button
                           className="w-full mt-4"
                           size="sm"
@@ -285,7 +297,7 @@ export default function StudentExamRoomsPage() {
                           Join Exam Room
                         </Button>
                       )}
-                      {room.status === "Upcoming" && (
+                      {room.status?.toLowerCase() === "upcoming" && (
                         <Button
                           className="w-full mt-4"
                           size="sm"
@@ -295,7 +307,7 @@ export default function StudentExamRoomsPage() {
                           Not started yet
                         </Button>
                       )}
-                      {room.status === "Completed" && (
+                      {room.status?.toLowerCase() === "completed" && (
                         <Button
                           className="w-full mt-4"
                           size="sm"
@@ -348,7 +360,8 @@ export default function StudentExamRoomsPage() {
           <DialogHeader>
             <DialogTitle>Enter Room Code</DialogTitle>
             <DialogDescription>
-              Please enter the room code to join the exam room: {selectedRoom?.name}
+              Please enter the room code to join the exam room:{" "}
+              {selectedRoom?.name}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">

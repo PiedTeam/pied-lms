@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Play, CheckCircle, XCircle, Clock, HardDrive } from "lucide-react";
+import { Play, CheckCircle, XCircle, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -25,15 +25,17 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useRunTestCase } from "@/service";
-import { TESTCASE_MESSAGES } from "@/constants/messages.constants";
+import { TESTCASE_MESSAGES, COMPILER_MESSAGES } from "@/constants/messages";
+import { useCompileCode } from "@/service";
 import type {
   TestCaseResponse,
   RunTestCaseResponse,
 } from "@/interface/testcase/testcase.interface";
+import type { CompileCodeResponse } from "@/interface/compiler/compiler.interface";
 
 interface RunTestCaseFormData {
   code: string;
-  language: "python" | "java" | "cpp" | "javascript";
+  language: "c" | "python" | "java" | "cpp" | "javascript";
 }
 
 interface TestCaseRunnerProps {
@@ -43,15 +45,21 @@ interface TestCaseRunnerProps {
 
 export function TestCaseRunner({ testCase, onClose }: TestCaseRunnerProps) {
   const { toast } = useToast();
-  const [result, setResult] = useState<RunTestCaseResponse | null>(null);
-  const [isRunning, setIsRunning] = useState(false);
+  const [result, setResult] = useState<CompileCodeResponse | null>(null);
 
-  const { mutate: runTestCase } = useRunTestCase();
+  const { mutate: compileCode, isPending: isRunning } = useCompileCode();
 
   const form = useForm<RunTestCaseFormData>({
     defaultValues: {
-      code: "",
-      language: "python",
+      code: `#include <stdio.h>
+#include <stdlib.h>
+
+int main() {
+    // Write your code here
+    
+    return 0;
+}`,
+      language: "c",
     },
   });
 
@@ -60,59 +68,95 @@ export function TestCaseRunner({ testCase, onClose }: TestCaseRunnerProps) {
     if (!data.code.trim()) {
       toast({
         title: "Lỗi",
-        description: TESTCASE_MESSAGES.VALIDATION.CODE_REQUIRED,
+        description: COMPILER_MESSAGES.VALIDATION.CODE_REQUIRED,
         variant: "destructive",
       });
       return;
     }
 
-    if (!data.language) {
+    if (data.code.trim().length < 10) {
       toast({
         title: "Lỗi",
-        description: TESTCASE_MESSAGES.VALIDATION.LANGUAGE_REQUIRED,
+        description: COMPILER_MESSAGES.VALIDATION.CODE_MIN_LENGTH,
         variant: "destructive",
       });
       return;
     }
 
-    setIsRunning(true);
+    // Only support C language for now
+    if (data.language !== "c") {
+      toast({
+        title: "Lỗi",
+        description: "Hiện tại chỉ hỗ trợ ngôn ngữ C",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setResult(null);
 
-    runTestCase(
+    toast({
+      title: COMPILER_MESSAGES.INFO.COMPILING,
+      description: COMPILER_MESSAGES.INFO.EXECUTING,
+    });
+
+    // Read input from testCase.inputPath (this should be the actual input content)
+    // For now, we'll use empty string as input since we don't have the actual file content
+    const input = ""; // TODO: Read from file or pass as prop
+
+    compileCode(
       {
-        id: testCase.testCaseId,
-        payload: {
-          code: data.code,
-          language: data.language,
-        },
+        code: data.code,
+        input: input,
+        timeLimit: 2000, // 2 seconds
+        memoryLimit: 128, // 128 MB
+        optimizationLevel: "2",
       },
       {
         onSuccess: (response) => {
-          setResult(response);
+          if (response.success && response.data) {
+            setResult(response.data);
+
+            if (response.data.success) {
+              toast({
+                title: COMPILER_MESSAGES.SUCCESS.EXECUTED,
+                description: `Execution time: ${response.data.executionTime}ms`,
+              });
+            } else {
+              // Compilation or runtime error
+              toast({
+                title: COMPILER_MESSAGES.ERROR.EXECUTION_FAILED,
+                description:
+                  response.data.error || COMPILER_MESSAGES.ERROR.RUNTIME_ERROR,
+                variant: "destructive",
+              });
+            }
+          } else {
+            toast({
+              title: COMPILER_MESSAGES.ERROR.COMPILE_FAILED,
+              description:
+                response.message || COMPILER_MESSAGES.ERROR.EXECUTION_FAILED,
+              variant: "destructive",
+            });
+          }
         },
         onError: (error: Error) => {
           toast({
-            title: "Lỗi thực thi",
-            description: error.message,
+            title: COMPILER_MESSAGES.ERROR.EXECUTION_FAILED,
+            description: error.message || COMPILER_MESSAGES.ERROR.RUNTIME_ERROR,
             variant: "destructive",
           });
-        },
-        onSettled: () => {
-          setIsRunning(false);
         },
       },
     );
   };
 
-  const formatTime = (ms: number) => {
+  const formatTime = (ms: number | null) => {
+    if (!ms) return "N/A";
     if (ms >= 1000) {
       return `${(ms / 1000).toFixed(2)}s`;
     }
     return `${ms}ms`;
-  };
-
-  const formatMemory = (mb: number) => {
-    return `${mb.toFixed(2)}MB`;
   };
 
   return (
@@ -169,10 +213,19 @@ export function TestCaseRunner({ testCase, onClose }: TestCaseRunnerProps) {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="python">Python</SelectItem>
-                    <SelectItem value="java">Java</SelectItem>
-                    <SelectItem value="cpp">C++</SelectItem>
-                    <SelectItem value="javascript">JavaScript</SelectItem>
+                    <SelectItem value="c">C</SelectItem>
+                    <SelectItem value="python" disabled>
+                      Python (Coming soon)
+                    </SelectItem>
+                    <SelectItem value="java" disabled>
+                      Java (Coming soon)
+                    </SelectItem>
+                    <SelectItem value="cpp" disabled>
+                      C++ (Coming soon)
+                    </SelectItem>
+                    <SelectItem value="javascript" disabled>
+                      JavaScript (Coming soon)
+                    </SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -224,19 +277,19 @@ export function TestCaseRunner({ testCase, onClose }: TestCaseRunnerProps) {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              {result.passed ? (
+              {result.success ? (
                 <>
                   <CheckCircle className="h-5 w-5 text-green-500" />
-                  Test Passed
+                  Execution Successful
                 </>
               ) : (
                 <>
                   <XCircle className="h-5 w-5 text-red-500" />
-                  Test Failed
+                  Execution Failed
                 </>
               )}
-              <Badge variant={result.passed ? "default" : "destructive"}>
-                {result.passed ? "PASS" : "FAIL"}
+              <Badge variant={result.success ? "default" : "destructive"}>
+                {result.success ? "SUCCESS" : "FAILED"}
               </Badge>
             </CardTitle>
           </CardHeader>
@@ -245,40 +298,48 @@ export function TestCaseRunner({ testCase, onClose }: TestCaseRunnerProps) {
             <div className="flex items-center gap-4 text-sm">
               <div className="flex items-center gap-1">
                 <Clock className="h-4 w-4" />
-                Execution Time: {formatTime(result.executionTime)}
+                Compilation Time: {formatTime(result.compilationTime)}
               </div>
-              <div className="flex items-center gap-1">
-                <HardDrive className="h-4 w-4" />
-                Memory Used: {formatMemory(result.memoryUsed)}
-              </div>
+              {result.executionTime && (
+                <div className="flex items-center gap-1">
+                  <Clock className="h-4 w-4" />
+                  Execution Time: {formatTime(result.executionTime)}
+                </div>
+              )}
             </div>
 
             <Separator />
 
-            {/* Output Comparison */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Output */}
+            {result.output && (
               <div>
-                <h4 className="font-medium mb-2 text-green-700">
-                  Expected Output:
-                </h4>
+                <h4 className="font-medium mb-2 text-green-700">Output:</h4>
                 <pre className="bg-green-50 border border-green-200 p-3 rounded-md text-sm font-mono whitespace-pre-wrap max-h-40 overflow-auto">
-                  {result.expectedOutput || "No expected output"}
+                  {result.output}
                 </pre>
               </div>
-              <div>
-                <h4 className="font-medium mb-2 text-blue-700">Your Output:</h4>
-                <pre className="bg-blue-50 border border-blue-200 p-3 rounded-md text-sm font-mono whitespace-pre-wrap max-h-40 overflow-auto">
-                  {result.actualOutput || "No output"}
-                </pre>
-              </div>
-            </div>
+            )}
 
             {/* Error Message */}
             {result.error && (
               <div>
-                <h4 className="font-medium mb-2 text-red-700">Error:</h4>
+                <h4 className="font-medium mb-2 text-red-700">
+                  Error ({result.errorCode}):
+                </h4>
                 <pre className="bg-red-50 border border-red-200 p-3 rounded-md text-sm font-mono whitespace-pre-wrap max-h-32 overflow-auto">
                   {result.error}
+                </pre>
+              </div>
+            )}
+
+            {/* Error Details */}
+            {result.errorDetails && (
+              <div>
+                <h4 className="font-medium mb-2 text-red-700">
+                  Error Details:
+                </h4>
+                <pre className="bg-red-50 border border-red-200 p-3 rounded-md text-sm font-mono whitespace-pre-wrap max-h-32 overflow-auto">
+                  {result.errorDetails}
                 </pre>
               </div>
             )}

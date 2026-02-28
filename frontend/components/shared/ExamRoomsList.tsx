@@ -50,7 +50,7 @@ import {
   useCreateExamRoom,
   useDeleteExamRoom,
 } from "@/service";
-import { EXAM_ROOM_MESSAGES } from "@/constants/messages.constants";
+import { EXAM_ROOM_MESSAGES } from "@/constants/messages";
 import type { CreateExamRoomRequest } from "@/interface/exam-room/exam-room.interface";
 
 interface ExamRoomsListProps {
@@ -125,10 +125,10 @@ export function ExamRoomsList({ basePath }: ExamRoomsListProps) {
   // Apply search filter
   const filteredRooms = searchQuery
     ? allRooms.filter(
-      (room) =>
-        room.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        room.description?.toLowerCase().includes(searchQuery.toLowerCase()),
-    )
+        (room) =>
+          room.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          room.description?.toLowerCase().includes(searchQuery.toLowerCase()),
+      )
     : allRooms;
 
   const currentRooms =
@@ -237,9 +237,7 @@ export function ExamRoomsList({ basePath }: ExamRoomsListProps) {
     switch (status?.toLowerCase()) {
       case "ongoing":
         return (
-          <Badge className="bg-green-600 hover:bg-green-700">
-            Ongoing
-          </Badge>
+          <Badge className="bg-green-600 hover:bg-green-700">Ongoing</Badge>
         );
       case "upcoming":
         return (
@@ -295,7 +293,9 @@ export function ExamRoomsList({ basePath }: ExamRoomsListProps) {
             <form onSubmit={handleCreateSubmit}>
               <DialogHeader>
                 <DialogTitle>Create New Exam Room</DialogTitle>
-                <DialogDescription>Enter exam room information</DialogDescription>
+                <DialogDescription>
+                  Enter exam room information
+                </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">

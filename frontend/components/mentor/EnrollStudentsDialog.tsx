@@ -22,7 +22,7 @@ import {
   useEnrollStudents,
   useGetExamRoomEnrollments,
 } from "@/services";
-import { EXAM_ROOM_MESSAGES } from "@/constants/messages.constants";
+import { EXAM_ROOM_MESSAGES } from "@/constants/messages";
 import type { UserResponse } from "@/interface/user/user.interface";
 import type { EnrollmentResultResponse } from "@/interface/exam-room/exam-room.interface";
 
@@ -201,19 +201,19 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
               <Label>Student List</Label>
               {filteredStudents.filter((s) => !enrolledStudentIds.has(s.id))
                 .length > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleSelectAll}
-                    className="h-8"
-                  >
-                    {selectedStudentIds.length ===
-                      filteredStudents.filter((s) => !enrolledStudentIds.has(s.id))
-                        .length
-                      ? "Deselect All"
-                      : "Select All"}
-                  </Button>
-                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleSelectAll}
+                  className="h-8"
+                >
+                  {selectedStudentIds.length ===
+                  filteredStudents.filter((s) => !enrolledStudentIds.has(s.id))
+                    .length
+                    ? "Deselect All"
+                    : "Select All"}
+                </Button>
+              )}
             </div>
 
             <div className="border rounded-lg max-h-[400px] overflow-y-auto">
@@ -238,10 +238,11 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
                     return (
                       <div
                         key={student.id}
-                        className={`p-4 transition-colors ${isEnrolled
+                        className={`p-4 transition-colors ${
+                          isEnrolled
                             ? "opacity-50 cursor-not-allowed bg-muted"
                             : "hover:bg-accent cursor-pointer"
-                          }`}
+                        }`}
                         onClick={() =>
                           !isEnrolled &&
                           handleToggleStudent(student.id, isEnrolled)

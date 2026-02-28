@@ -118,25 +118,27 @@ export function TestCasesList({
               Tạo Test Case
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
+          <DialogContent className="sm:max-w-[600px] max-h-[85vh] flex flex-col">
+            <DialogHeader className="flex-shrink-0">
               <DialogTitle>Tạo Test Case mới</DialogTitle>
               <DialogDescription>
                 Tạo test case để kiểm tra tính đúng đắn của code
               </DialogDescription>
             </DialogHeader>
-            <TestCaseForm
-              examId={examId} // Changed from questionId
-              existingTestCases={testCases || []} // Pass existing test cases
-              onSuccess={() => {
-                setIsCreateDialogOpen(false);
-                toast({
-                  title: "Thành công",
-                  description: "Test case đã được tạo",
-                });
-              }}
-              onCancel={() => setIsCreateDialogOpen(false)}
-            />
+            <div className="overflow-y-auto flex-1 pr-2">
+              <TestCaseForm
+                examId={examId} // Changed from questionId
+                existingTestCases={testCases || []} // Pass existing test cases
+                onSuccess={() => {
+                  setIsCreateDialogOpen(false);
+                  toast({
+                    title: "Thành công",
+                    description: "Test case đã được tạo",
+                  });
+                }}
+                onCancel={() => setIsCreateDialogOpen(false)}
+              />
+            </div>
           </DialogContent>
         </Dialog>
       </div>
@@ -280,26 +282,28 @@ export function TestCasesList({
           open={!!editingTestCase}
           onOpenChange={() => setEditingTestCase(null)}
         >
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
+          <DialogContent className="sm:max-w-[600px] max-h-[85vh] flex flex-col">
+            <DialogHeader className="flex-shrink-0">
               <DialogTitle>Chỉnh sửa Test Case</DialogTitle>
               <DialogDescription>
                 Cập nhật thông tin test case
               </DialogDescription>
             </DialogHeader>
-            <TestCaseForm
-              examId={examId} // Changed from questionId
-              testCase={editingTestCase}
-              existingTestCases={testCases || []} // Pass existing test cases
-              onSuccess={() => {
-                setEditingTestCase(null);
-                toast({
-                  title: "Thành công",
-                  description: "Test case đã được cập nhật",
-                });
-              }}
-              onCancel={() => setEditingTestCase(null)}
-            />
+            <div className="overflow-y-auto flex-1 pr-2">
+              <TestCaseForm
+                examId={examId} // Changed from questionId
+                testCase={editingTestCase}
+                existingTestCases={testCases || []} // Pass existing test cases
+                onSuccess={() => {
+                  setEditingTestCase(null);
+                  toast({
+                    title: "Thành công",
+                    description: "Test case đã được cập nhật",
+                  });
+                }}
+                onCancel={() => setEditingTestCase(null)}
+              />
+            </div>
           </DialogContent>
         </Dialog>
       )}

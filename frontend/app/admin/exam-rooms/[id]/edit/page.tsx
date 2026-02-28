@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { useToast } from "@/hooks/use-toast";
 import { useGetExamRoomById, useUpdateExamRoom } from "@/service";
-import { EXAM_ROOM_MESSAGES } from "@/constants/messages.constants";
+import { EXAM_ROOM_MESSAGES } from "@/constants/messages";
 import { useEffect, useState } from "react";
 import type { UpdateExamRoomRequest } from "@/interface/exam-room/exam-room.interface";
 
@@ -150,9 +150,7 @@ export default function EditExamRoomPage() {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            Edit Exam Room
-          </h1>
+          <h1 className="text-3xl font-bold tracking-tight">Edit Exam Room</h1>
           <p className="text-muted-foreground">Update exam room information</p>
         </div>
       </div>

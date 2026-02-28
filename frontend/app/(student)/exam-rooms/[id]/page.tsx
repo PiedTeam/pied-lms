@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Calendar, Clock, FileText, Play } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, FileText, Play, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -29,8 +29,13 @@ export default function StudentExamRoomDetailPage() {
   const { toast } = useToast();
   const roomId = params.id as string;
 
-  const { data: room, isLoading: isLoadingRoom } = useGetExamRoomById(roomId);
+  const {
+    data: room,
+    isLoading: isLoadingRoom,
+    refetch,
+  } = useGetExamRoomById(roomId);
   const [timeRemaining, setTimeRemaining] = useState<string>("");
+  const [hasAutoRedirected, setHasAutoRedirected] = useState(false);
 
   // Calculate time remaining until end time
   useEffect(() => {
@@ -41,8 +46,35 @@ export default function StudentExamRoomDetailPage() {
       const endTime = new Date(room.endTime).getTime();
       const diff = endTime - now;
 
+      // Check if room is already closed/finished - don't auto redirect
+      const isClosed = room.status?.toLowerCase() === "completed";
+
       if (diff <= 0) {
-        setTimeRemaining("Finished");
+        setTimeRemaining("Exam time has ended");
+
+        // Only auto redirect if room is still ongoing and hasn't redirected yet
+        if (
+          !isClosed &&
+          !hasAutoRedirected &&
+          room.status?.toLowerCase() === "ongoing"
+        ) {
+          setHasAutoRedirected(true);
+
+          toast({
+            title: "Exam Room Closed",
+            description: "The exam room time has ended. Redirecting...",
+            variant: "default",
+          });
+
+          // Refetch to update status
+          refetch();
+
+          // Redirect after 2 seconds
+          setTimeout(() => {
+            router.push("/exam-rooms");
+          }, 2000);
+        }
+
         return;
       }
 
@@ -54,9 +86,7 @@ export default function StudentExamRoomDetailPage() {
       const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
       if (days > 0) {
-        setTimeRemaining(
-          `${days}d ${hours}h ${minutes}m ${seconds}s`,
-        );
+        setTimeRemaining(`${days}d ${hours}h ${minutes}m ${seconds}s`);
       } else if (hours > 0) {
         setTimeRemaining(`${hours}h ${minutes}m ${seconds}s`);
       } else if (minutes > 0) {
@@ -70,7 +100,7 @@ export default function StudentExamRoomDetailPage() {
     const interval = setInterval(calculateTimeRemaining, 1000); // Update every second
 
     return () => clearInterval(interval);
-  }, [room?.endTime]);
+  }, [room?.endTime, room?.status, router, toast, hasAutoRedirected, refetch]);
 
   const formatDateTime = (dateString: string) => {
     return new Date(dateString).toLocaleString("en-US", {
@@ -84,7 +114,7 @@ export default function StudentExamRoomDetailPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status?.toLowerCase()) {
-      case "active":
+      case "ongoing":
         return (
           <Badge variant="default" className="bg-green-500">
             Ongoing
@@ -92,7 +122,7 @@ export default function StudentExamRoomDetailPage() {
         );
       case "upcoming":
         return <Badge variant="secondary">Upcoming</Badge>;
-      case "closed":
+      case "completed":
         return <Badge variant="outline">Finished</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
@@ -100,6 +130,17 @@ export default function StudentExamRoomDetailPage() {
   };
 
   const handleStartExam = (examId: string) => {
+    const isClosed = room?.status?.toLowerCase() === "completed";
+
+    // If room is closed, just view the exam (read-only mode)
+    if (isClosed) {
+      toast({
+        title: "View Only",
+        description: "This exam room has ended. You can only view the exam.",
+        variant: "default",
+      });
+    }
+
     // Save room data to localStorage for time calculation
     if (room) {
       localStorage.setItem(
@@ -108,6 +149,7 @@ export default function StudentExamRoomDetailPage() {
           endTime: room.endTime,
           startTime: room.startTime,
           durationInMinutes: room.durationInMinutes,
+          isClosed: isClosed,
         }),
       );
     }
@@ -191,9 +233,7 @@ export default function StudentExamRoomDetailPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{room.exams?.length || 0}</div>
-            <p className="text-sm text-muted-foreground">
-              Total exams in room
-            </p>
+            <p className="text-sm text-muted-foreground">Total exams in room</p>
           </CardContent>
         </Card>
       </div>
@@ -223,25 +263,41 @@ export default function StudentExamRoomDetailPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {room.exams.map((exam) => (
-                  <TableRow key={exam.id}>
-                    <TableCell className="font-medium">{exam.title}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {exam.description}
-                    </TableCell>
-                    <TableCell>{exam.totalMarks}</TableCell>
-                    <TableCell>{exam.passingMarks}</TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        size="sm"
-                        onClick={() => handleStartExam(exam.id)}
-                      >
-                        <Play className="mr-2 h-4 w-4" />
-                        Start
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {room.exams.map((exam) => {
+                  const isClosed = room.status?.toLowerCase() === "completed";
+
+                  return (
+                    <TableRow key={exam.id}>
+                      <TableCell className="font-medium">
+                        {exam.title}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {exam.description}
+                      </TableCell>
+                      <TableCell>{exam.totalMarks}</TableCell>
+                      <TableCell>{exam.passingMarks}</TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          size="sm"
+                          variant={isClosed ? "outline" : "default"}
+                          onClick={() => handleStartExam(exam.id)}
+                        >
+                          {isClosed ? (
+                            <>
+                              <Eye className="mr-2 h-4 w-4" />
+                              View
+                            </>
+                          ) : (
+                            <>
+                              <Play className="mr-2 h-4 w-4" />
+                              Start
+                            </>
+                          )}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           )}

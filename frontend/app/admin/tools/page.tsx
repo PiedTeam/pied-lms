@@ -2,14 +2,13 @@
 
 import { useState } from "react";
 import {
-  Upload,
   UserCheck,
   Download,
   Copy,
   Check,
   Search,
+  Upload,
   Plus,
-  Trash2,
   UserPlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -42,30 +41,25 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useImportStudents, useApproveMentor, useGetAllUsers } from "@/service";
-import { ADMIN_MESSAGES } from "@/constants/messages.constants";
+import { useApproveMentor, useGetAllUsers } from "@/service";
+import { ADMIN_MESSAGES } from "@/constants/messages";
 import * as XLSX from "xlsx";
-import type { StudentImportDto } from "@/interface/admin/admin.interface";
+import { ExcelImportInlineForm } from "@/components/admin/ExcelImportInlineForm";
+import { ManualImportInlineForm } from "@/components/admin/ManualImportInlineForm";
 
 export default function AdminToolsPage() {
   const { toast } = useToast();
-  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
-  const [isManualDialogOpen, setIsManualDialogOpen] = useState(false);
+  const [showExcelForm, setShowExcelForm] = useState(false);
+  const [showManualForm, setShowManualForm] = useState(false);
   const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
   const [mentorUserId, setMentorUserId] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [manualStudents, setManualStudents] = useState<StudentImportDto[]>([
-    { email: "", firstName: "", lastName: "" },
-  ]);
 
   const { data: usersData, isError } = useGetAllUsers({
     pageNumber: 1,
     pageSize: 100,
   });
-  const { mutate: importStudents, isPending: isImporting } =
-    useImportStudents();
   const { mutate: approveMentor, isPending: isApproving } = useApproveMentor();
 
   const filteredUsers =
@@ -91,182 +85,6 @@ export default function AdminToolsPage() {
     XLSX.writeFile(wb, "student_import_template.xlsx");
 
     toast({ title: "Success", description: "Template file downloaded" });
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (selectedFile) {
-      const validExtensions = [".xlsx", ".xls"];
-      const fileExtension = selectedFile.name
-        .substring(selectedFile.name.lastIndexOf("."))
-        .toLowerCase();
-
-      if (!validExtensions.includes(fileExtension)) {
-        toast({
-          title: "Error",
-          description: "Only Excel files (.xlsx, .xls) are accepted",
-          variant: "destructive",
-        });
-        e.target.value = "";
-        return;
-      }
-      setFile(selectedFile);
-    }
-  };
-
-  const handleImportSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!file) {
-      toast({
-        title: "Error",
-        description: "Please select a file",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const fileBuffer = await file.arrayBuffer();
-      const workbook = XLSX.read(fileBuffer, { type: "array" });
-      const sheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[sheetName];
-      const jsonData = XLSX.utils.sheet_to_json<{
-        Email: string;
-        FirstName: string;
-        LastName: string;
-      }>(worksheet);
-
-      if (jsonData.length === 0) {
-        toast({
-          title: "Error",
-          description: "Excel file has no data",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const students = jsonData.map((row) => ({
-        email: row.Email,
-        firstName: row.FirstName,
-        lastName: row.LastName,
-      }));
-
-      const invalidRows = students.filter(
-        (s) => !s.email || !s.firstName || !s.lastName,
-      );
-      if (invalidRows.length > 0) {
-        toast({
-          title: "Error",
-          description:
-            "Excel file has rows with missing information (Email, FirstName, LastName)",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      importStudents(
-        { students },
-        {
-          onSuccess: (response) => {
-            toast({
-              title: "Success",
-              description:
-                response.message || ADMIN_MESSAGES.SUCCESS.STUDENTS_IMPORTED,
-            });
-            toast({
-              title: "Emails sent",
-              description:
-                "Each student will receive an email with a link to set their password.",
-            });
-            setIsImportDialogOpen(false);
-            setFile(null);
-          },
-          onError: (error: Error) => {
-            toast({
-              title: "Error",
-              description:
-                error.message || ADMIN_MESSAGES.ERROR.IMPORT_STUDENTS_FAILED,
-              variant: "destructive",
-            });
-          },
-        },
-      );
-    } catch (error) {
-      toast({
-        title: "Error",
-        description:
-          "Unable to read Excel file. Please check the file format.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleManualSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const validStudents = manualStudents.filter(
-      (s) => s.email && s.firstName && s.lastName,
-    );
-
-    if (validStudents.length === 0) {
-      toast({
-        title: "Error",
-        description: "Please enter at least one student",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    importStudents(
-      { students: validStudents },
-      {
-        onSuccess: (response) => {
-          toast({
-            title: "Thành công",
-            description:
-              response.message || ADMIN_MESSAGES.SUCCESS.STUDENTS_IMPORTED,
-          });
-          toast({
-            title: "Email đã được gửi",
-            description:
-              "Mỗi học sinh sẽ nhận được email với link để đặt mật khẩu.",
-          });
-          setIsManualDialogOpen(false);
-          setManualStudents([{ email: "", firstName: "", lastName: "" }]);
-        },
-        onError: (error: Error) => {
-          toast({
-            title: "Lỗi",
-            description:
-              error.message || ADMIN_MESSAGES.ERROR.IMPORT_STUDENTS_FAILED,
-            variant: "destructive",
-          });
-        },
-      },
-    );
-  };
-
-  const addManualStudent = () => {
-    setManualStudents([
-      ...manualStudents,
-      { email: "", firstName: "", lastName: "" },
-    ]);
-  };
-
-  const removeManualStudent = (index: number) => {
-    if (manualStudents.length > 1) {
-      setManualStudents(manualStudents.filter((_, i) => i !== index));
-    }
-  };
-
-  const updateManualStudent = (
-    index: number,
-    field: keyof StudentImportDto,
-    value: string,
-  ) => {
-    const updated = [...manualStudents];
-    updated[index][field] = value;
-    setManualStudents(updated);
   };
 
   const handleCopyId = (id: string) => {
@@ -333,9 +151,7 @@ export default function AdminToolsPage() {
     <div className="container mx-auto p-6 space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Admin Tools</h1>
-        <p className="text-muted-foreground">
-          Tools for administrators
-        </p>
+        <p className="text-muted-foreground">Tools for administrators</p>
       </div>
 
       <Tabs defaultValue="students" className="w-full">
@@ -360,203 +176,40 @@ export default function AdminToolsPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-3 sm:grid-cols-2">
-                <Dialog
-                  open={isImportDialogOpen}
-                  onOpenChange={setIsImportDialogOpen}
+                <Button
+                  className="w-full"
+                  size="lg"
+                  onClick={() => setShowExcelForm(true)}
                 >
-                  <DialogTrigger asChild>
-                    <Button className="w-full" size="lg">
-                      <Upload className="mr-2 h-5 w-5" />
-                      Import from Excel
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-[500px]">
-                    <form onSubmit={handleImportSubmit}>
-                      <DialogHeader>
-                        <DialogTitle>Import from Excel File</DialogTitle>
-                        <DialogDescription>
-                          Upload an Excel file containing student information
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="grid gap-4 py-4">
-                        <div className="grid gap-2">
-                          <Label htmlFor="file">
-                            File <span className="text-red-500">*</span>
-                          </Label>
-                          <Input
-                            id="file"
-                            type="file"
-                            accept=".xlsx,.xls"
-                            onChange={handleFileChange}
-                            required
-                          />
-                          <p className="text-xs text-muted-foreground">
-                            Accepts Excel files (.xlsx, .xls)
-                          </p>
-                        </div>
-                      </div>
-                      <DialogFooter>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => setIsImportDialogOpen(false)}
-                          disabled={isImporting}
-                        >
-                          Cancel
-                        </Button>
-                        <Button type="submit" disabled={isImporting}>
-                          {isImporting ? (
-                            <>
-                              <Upload className="mr-2 h-4 w-4 animate-spin" />
-                              Importing...
-                            </>
-                          ) : (
-                            <>
-                              <Upload className="mr-2 h-4 w-4" />
-                              Import Students
-                            </>
-                          )}
-                        </Button>
-                      </DialogFooter>
-                    </form>
-                  </DialogContent>
-                </Dialog>
+                  <Upload className="mr-2 h-5 w-5" />
+                  Import from Excel
+                </Button>
 
-                <Dialog
-                  open={isManualDialogOpen}
-                  onOpenChange={setIsManualDialogOpen}
+                <Button
+                  className="w-full"
+                  size="lg"
+                  variant="outline"
+                  onClick={() => setShowManualForm(true)}
                 >
-                  <DialogTrigger asChild>
-                    <Button className="w-full" size="lg" variant="outline">
-                      <Plus className="mr-2 h-5 w-5" />
-                      Manual Import
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
-                    <form onSubmit={handleManualSubmit}>
-                      <DialogHeader>
-                        <DialogTitle>Manual Import</DialogTitle>
-                        <DialogDescription>
-                          Enter student information directly
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="grid gap-4 py-4">
-                        {manualStudents.map((student, index) => (
-                          <div
-                            key={index}
-                            className="grid gap-3 p-4 border rounded-lg relative"
-                          >
-                            {manualStudents.length > 1 && (
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="absolute top-2 right-2 h-6 w-6"
-                                onClick={() => removeManualStudent(index)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            )}
-                            <div className="grid gap-2">
-                              <Label htmlFor={`email-${index}`}>
-                                Email <span className="text-red-500">*</span>
-                              </Label>
-                              <Input
-                                id={`email-${index}`}
-                                type="email"
-                                placeholder="student@example.com"
-                                value={student.email}
-                                onChange={(e) =>
-                                  updateManualStudent(
-                                    index,
-                                    "email",
-                                    e.target.value,
-                                  )
-                                }
-                                required
-                              />
-                            </div>
-                            <div className="grid grid-cols-2 gap-3">
-                              <div className="grid gap-2">
-                                <Label htmlFor={`firstName-${index}`}>
-                                  First Name <span className="text-red-500">*</span>
-                                </Label>
-                                <Input
-                                  id={`firstName-${index}`}
-                                  placeholder="Nguyen Van"
-                                  value={student.firstName}
-                                  onChange={(e) =>
-                                    updateManualStudent(
-                                      index,
-                                      "firstName",
-                                      e.target.value,
-                                    )
-                                  }
-                                  required
-                                />
-                              </div>
-                              <div className="grid gap-2">
-                                <Label htmlFor={`lastName-${index}`}>
-                                  Last Name <span className="text-red-500">*</span>
-                                </Label>
-                                <Input
-                                  id={`lastName-${index}`}
-                                  placeholder="A"
-                                  value={student.lastName}
-                                  onChange={(e) =>
-                                    updateManualStudent(
-                                      index,
-                                      "lastName",
-                                      e.target.value,
-                                    )
-                                  }
-                                  required
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={addManualStudent}
-                          className="w-full"
-                        >
-                          <Plus className="mr-2 h-4 w-4" />
-                          Add Student
-                        </Button>
-                      </div>
-                      <DialogFooter>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => {
-                            setIsManualDialogOpen(false);
-                            setManualStudents([
-                              { email: "", firstName: "", lastName: "" },
-                            ]);
-                          }}
-                          disabled={isImporting}
-                        >
-                          Cancel
-                        </Button>
-                        <Button type="submit" disabled={isImporting}>
-                          {isImporting ? (
-                            <>
-                              <Upload className="mr-2 h-4 w-4 animate-spin" />
-                              Importing...
-                            </>
-                          ) : (
-                            <>
-                              <UserPlus className="mr-2 h-4 w-4" />
-                              Import Students
-                            </>
-                          )}
-                        </Button>
-                      </DialogFooter>
-                    </form>
-                  </DialogContent>
-                </Dialog>
+                  <Plus className="mr-2 h-5 w-5" />
+                  Manual Import
+                </Button>
+              </div>
+
+              {/* Form Container - NEW */}
+              <div className="space-y-4 mt-4">
+                {showExcelForm && (
+                  <ExcelImportInlineForm
+                    onClose={() => setShowExcelForm(false)}
+                    onSuccess={() => setShowExcelForm(false)}
+                  />
+                )}
+                {showManualForm && (
+                  <ManualImportInlineForm
+                    onClose={() => setShowManualForm(false)}
+                    onSuccess={() => setShowManualForm(false)}
+                  />
+                )}
               </div>
 
               <div className="space-y-3">

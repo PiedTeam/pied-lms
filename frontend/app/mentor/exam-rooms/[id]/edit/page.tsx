@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { useToast } from "@/hooks/use-toast";
 import { useGetExamRoomById, useUpdateExamRoom } from "@/service";
-import { EXAM_ROOM_MESSAGES } from "@/constants/messages.constants";
+import { EXAM_ROOM_MESSAGES } from "@/constants/messages";
 import { useEffect, useState } from "react";
 import type { UpdateExamRoomRequest } from "@/interface/exam-room/exam-room.interface";
 

@@ -15,6 +15,9 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import Editor from "@monaco-editor/react";
+import { useJudgeCodeFromFile } from "@/service";
+import { COMPILER_MESSAGES } from "@/constants/messages";
+import type { TestCaseResult } from "@/interface/compiler/compiler.interface";
 
 interface TestCase {
   examId: string;
@@ -53,6 +56,10 @@ export default function TakeExamPage() {
   const roomId = params.id as string;
   const examId = params.examId as string;
 
+  // Compiler mutation
+  const { mutate: judgeCodeFromFile, isPending: isJudging } =
+    useJudgeCodeFromFile();
+
   const [exam, setExam] = useState<Exam | null>(null);
   const [testCases, setTestCases] = useState<TestCase[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -64,7 +71,6 @@ int main() {
     
     return 0;
 }`);
-  const [isTestingCode, setIsTestingCode] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [testResults, setTestResults] = useState<JudgeTestCaseResult[]>([]);
   const [activeTab, setActiveTab] = useState("question");
@@ -248,76 +254,96 @@ int main() {
   const handleTestCode = async () => {
     if (!code.trim()) {
       toast({
-        title: "Error",
-        description: "Please write code before testing",
+        title: COMPILER_MESSAGES.ERROR.NO_CODE,
+        description: COMPILER_MESSAGES.VALIDATION.CODE_REQUIRED,
         variant: "destructive",
       });
       return;
     }
 
-    setIsTestingCode(true);
-    setActiveTab("results");
-
-    try {
-      const token = localStorage.getItem("token");
-
-      // Use judge-from-file API to test against visible test cases
-      const response = await fetch("/compiler/judge-from-file", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          code,
-          roomId,
-          questionId: examId,
-          includePrivate: false, // Only test visible test cases
-          timeLimit: null,
-          memoryLimit: null,
-          optimizationLevel: null,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.success && data.data) {
-        const results: JudgeTestCaseResult[] = data.data.results.map(
-          (r: JudgeTestCaseResult) => ({
-            testCase: r.testCase,
-            passed: r.passed,
-            input: r.input,
-            expectedOutput: r.expectedOutput,
-            actualOutput: r.actualOutput,
-            executionTime: r.executionTime,
-            error: r.error,
-            errorCode: r.errorCode,
-          }),
-        );
-
-        setTestResults(results);
-
-        toast({
-          title: "Test completed",
-          description: `${data.data.passed}/${data.data.total} test cases passed`,
-        });
-      } else {
-        toast({
-          title: "Error",
-          description: data.message || "Could not test code",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error("Error testing code:", error);
+    if (code.trim().length < 10) {
       toast({
-        title: "Error",
-        description: "An error occurred while testing code",
+        title: COMPILER_MESSAGES.ERROR.CODE_TOO_SHORT,
+        description: COMPILER_MESSAGES.VALIDATION.CODE_MIN_LENGTH,
         variant: "destructive",
       });
-    } finally {
-      setIsTestingCode(false);
+      return;
     }
+
+    setActiveTab("results");
+
+    toast({
+      title: COMPILER_MESSAGES.INFO.TESTING,
+      description: COMPILER_MESSAGES.INFO.JUDGING,
+    });
+
+    judgeCodeFromFile(
+      {
+        code: code,
+        examId: examId,
+        timeLimit: 2000, // 2 seconds
+        memoryLimit: 128, // 128 MB
+        optimizationLevel: "2",
+      },
+      {
+        onSuccess: (response) => {
+          if (response.success && response.data) {
+            const results: JudgeTestCaseResult[] = response.data.results.map(
+              (r: TestCaseResult) => ({
+                testCase: r.testCase,
+                passed: r.passed,
+                input: r.input,
+                expectedOutput: r.expectedOutput,
+                actualOutput: r.actualOutput,
+                executionTime: r.executionTime,
+                error: r.error,
+                errorCode: r.errorCode,
+              }),
+            );
+
+            setTestResults(results);
+
+            const passedCount = response.data.passed;
+            const totalCount = response.data.total;
+
+            if (passedCount === totalCount) {
+              toast({
+                title: COMPILER_MESSAGES.SUCCESS.ALL_PASSED,
+                description: `${passedCount}/${totalCount} test cases passed`,
+              });
+            } else {
+              toast({
+                title: COMPILER_MESSAGES.SUCCESS.JUDGED,
+                description: `${passedCount}/${totalCount} test cases passed`,
+                variant: "default",
+              });
+            }
+          } else {
+            // Handle compilation or runtime errors
+            const errorMessage =
+              response.message || COMPILER_MESSAGES.ERROR.JUDGE_FAILED;
+
+            toast({
+              title: COMPILER_MESSAGES.ERROR.JUDGE_FAILED,
+              description: errorMessage,
+              variant: "destructive",
+            });
+
+            // Clear previous results
+            setTestResults([]);
+          }
+        },
+        onError: (error: Error) => {
+          toast({
+            title: COMPILER_MESSAGES.ERROR.JUDGE_FAILED,
+            description:
+              error.message || COMPILER_MESSAGES.ERROR.EXECUTION_FAILED,
+            variant: "destructive",
+          });
+          setTestResults([]);
+        },
+      },
+    );
   };
 
   if (isLoading) {
@@ -377,16 +403,16 @@ int main() {
               <Button
                 variant="outline"
                 onClick={() => handleSubmit(false)}
-                disabled={isTestingCode || isSubmitting}
+                disabled={isJudging || isSubmitting}
               >
                 Save Draft
               </Button>
               <Button
                 variant="outline"
                 onClick={handleTestCode}
-                disabled={isTestingCode || isSubmitting}
+                disabled={isJudging || isSubmitting}
               >
-                {isTestingCode ? (
+                {isJudging ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Testing...
@@ -400,7 +426,7 @@ int main() {
               </Button>
               <Button
                 onClick={() => handleSubmit(true)}
-                disabled={isTestingCode || isSubmitting}
+                disabled={isJudging || isSubmitting}
               >
                 {isSubmitting ? (
                   <>
@@ -426,7 +452,8 @@ int main() {
             <CardHeader className="border-b">
               <CardTitle>Exam Information</CardTitle>
               <CardDescription>
-                Total Score: {exam.totalMarks} | Passing Score: {exam.passingMarks}
+                Total Score: {exam.totalMarks} | Passing Score:{" "}
+                {exam.passingMarks}
               </CardDescription>
             </CardHeader>
             <CardContent className="flex-1 overflow-y-auto p-6 space-y-6">
@@ -470,7 +497,8 @@ int main() {
                     Click &quot;Test Code&quot; to check with sample test cases
                   </li>
                   <li>
-                    Click &quot;Save Draft&quot; to save code (can continue later)
+                    Click &quot;Save Draft&quot; to save code (can continue
+                    later)
                   </li>
                   <li>Click &quot;Submit&quot; to submit your final answer</li>
                   <li>Note: After submitting, you cannot edit your code</li>
@@ -538,7 +566,7 @@ int main() {
                 value="results"
                 className="flex-1 m-0 overflow-y-auto p-4"
               >
-                {isTestingCode ? (
+                {isJudging ? (
                   <div className="flex items-center justify-center h-full">
                     <div className="text-center">
                       <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
@@ -634,10 +662,11 @@ int main() {
                                 Your Output:
                               </p>
                               <pre
-                                className={`p-2 rounded text-sm mt-1 ${result.passed
+                                className={`p-2 rounded text-sm mt-1 ${
+                                  result.passed
                                     ? "bg-green-50 text-green-900"
                                     : "bg-red-50 text-red-900"
-                                  }`}
+                                }`}
                               >
                                 {result.actualOutput}
                               </pre>

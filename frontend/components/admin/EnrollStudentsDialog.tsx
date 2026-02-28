@@ -22,7 +22,7 @@ import {
   useEnrollStudents,
   useGetExamRoomEnrollments,
 } from "@/services";
-import { EXAM_ROOM_MESSAGES } from "@/constants/messages.constants";
+import { EXAM_ROOM_MESSAGES } from "@/constants/messages";
 import type { UserResponse } from "@/interface/user/user.interface";
 import type { EnrollmentResultResponse } from "@/interface/exam-room/exam-room.interface";
 
@@ -155,7 +155,7 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
           Enroll Students
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[80vh]">
+      <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Enroll Students into Exam Room</DialogTitle>
           <DialogDescription>
@@ -163,7 +163,7 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-4 py-4">
+        <div className="grid gap-4 py-4 overflow-y-auto flex-1">
           {/* Search Input */}
           <div className="grid gap-2">
             <Label htmlFor="search-students">Search Students</Label>
@@ -181,7 +181,7 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
 
           {/* Selected Count */}
           {selectedStudentIds.length > 0 && (
-            <div className="flex items-center justify-between px-1">
+            <div className="flex items-center justify-between px-1 flex-shrink-0">
               <Badge variant="secondary">
                 Selected: {selectedStudentIds.length}
               </Badge>
@@ -196,27 +196,30 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
           )}
 
           {/* Students List */}
-          <div className="grid gap-2">
-            <div className="flex items-center justify-between">
+          <div className="grid gap-2 flex-1 min-h-0">
+            <div className="flex items-center justify-between flex-shrink-0">
               <Label>Student List</Label>
               {filteredStudents.filter((s) => !enrolledStudentIds.has(s.id))
                 .length > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleSelectAll}
-                    className="h-8"
-                  >
-                    {selectedStudentIds.length ===
-                      filteredStudents.filter((s) => !enrolledStudentIds.has(s.id))
-                        .length
-                      ? "Deselect All"
-                      : "Select All"}
-                  </Button>
-                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleSelectAll}
+                  className="h-8"
+                >
+                  {selectedStudentIds.length ===
+                  filteredStudents.filter((s) => !enrolledStudentIds.has(s.id))
+                    .length
+                    ? "Deselect All"
+                    : "Select All"}
+                </Button>
+              )}
             </div>
 
-            <div className="border rounded-lg max-h-[400px] overflow-y-auto">
+            <div
+              className="border rounded-lg overflow-hidden flex flex-col"
+              style={{ maxHeight: "300px" }}
+            >
               {isLoadingStudents ? (
                 <div className="text-center py-8 text-muted-foreground">
                   Loading student list...
@@ -230,7 +233,7 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
                   No matching students found
                 </div>
               ) : (
-                <div className="divide-y">
+                <div className="divide-y overflow-y-auto">
                   {filteredStudents.map((student: UserResponse) => {
                     const isEnrolled = enrolledStudentIds.has(student.id);
                     const isSelected = selectedStudentIds.includes(student.id);
@@ -238,10 +241,11 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
                     return (
                       <div
                         key={student.id}
-                        className={`p-4 transition-colors ${isEnrolled
+                        className={`p-4 transition-colors ${
+                          isEnrolled
                             ? "opacity-50 cursor-not-allowed bg-muted"
                             : "hover:bg-accent cursor-pointer"
-                          }`}
+                        }`}
                         onClick={() =>
                           !isEnrolled &&
                           handleToggleStudent(student.id, isEnrolled)

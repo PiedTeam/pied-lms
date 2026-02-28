@@ -82,3 +82,10 @@ export {
   useDeleteTestCase,
   useRunTestCase,
 } from "./testcase/testcase.service";
+
+// Compiler Services
+export {
+  useCompileCode,
+  useJudgeCode,
+  useJudgeCodeFromFile,
+} from "./compiler/compiler.mutation";

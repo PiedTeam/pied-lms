@@ -49,7 +49,7 @@ import {
   useRemoveExamFromRoom,
   useGetExamRoomEnrollments,
 } from "@/services";
-import { EXAM_ROOM_MESSAGES } from "@/constants/messages.constants";
+import { EXAM_ROOM_MESSAGES } from "@/constants/messages";
 import { EnrollStudentsDialog } from "@/components/admin/EnrollStudentsDialog";
 
 export default function ExamRoomDetailPage() {
@@ -89,14 +89,14 @@ export default function ExamRoomDetailPage() {
   const assignedExams = room?.exams || [];
   const filteredAssignedExams = examListSearchQuery
     ? assignedExams.filter(
-      (exam) =>
-        exam.title
-          .toLowerCase()
-          .includes(examListSearchQuery.toLowerCase()) ||
-        exam.description
-          ?.toLowerCase()
-          .includes(examListSearchQuery.toLowerCase()),
-    )
+        (exam) =>
+          exam.title
+            .toLowerCase()
+            .includes(examListSearchQuery.toLowerCase()) ||
+          exam.description
+            ?.toLowerCase()
+            .includes(examListSearchQuery.toLowerCase()),
+      )
     : assignedExams;
 
   const filteredStudents = enrolledStudents.filter(
@@ -272,9 +272,7 @@ export default function ExamRoomDetailPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{room.exams?.length || 0}</div>
-            <p className="text-sm text-muted-foreground">
-              Total exams in room
-            </p>
+            <p className="text-sm text-muted-foreground">Total exams in room</p>
           </CardContent>
         </Card>
 
@@ -289,9 +287,7 @@ export default function ExamRoomDetailPage() {
             <div className="text-2xl font-bold">
               {room.enrolledStudentsCount || 0}
             </div>
-            <p className="text-sm text-muted-foreground">
-              Enrolled students
-            </p>
+            <p className="text-sm text-muted-foreground">Enrolled students</p>
           </CardContent>
         </Card>
       </div>
@@ -369,10 +365,11 @@ export default function ExamRoomDetailPage() {
                                   return (
                                     <div
                                       key={exam.id}
-                                      className={`p-4 hover:bg-accent cursor-pointer transition-colors ${selectedExamId === exam.id
+                                      className={`p-4 hover:bg-accent cursor-pointer transition-colors ${
+                                        selectedExamId === exam.id
                                           ? "bg-accent"
                                           : ""
-                                        } ${isAssigned ? "opacity-50" : ""}`}
+                                      } ${isAssigned ? "opacity-50" : ""}`}
                                       onClick={() =>
                                         !isAssigned &&
                                         setSelectedExamId(exam.id)
