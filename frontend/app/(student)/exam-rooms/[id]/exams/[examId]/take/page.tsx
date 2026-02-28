@@ -13,11 +13,19 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  ResizablePanelGroup,
+  ResizablePanel,
+  ResizableHandle,
+} from "@/components/ui/resizable";
 import { useToast } from "@/hooks/use-toast";
 import Editor from "@monaco-editor/react";
-import { useJudgeCodeFromFile } from "@/service";
+import { useJudgeCodeFromFile, useCompileCode } from "@/service";
 import { COMPILER_MESSAGES } from "@/constants/messages";
 import type { TestCaseResult } from "@/interface/compiler/compiler.interface";
+import { useAuthStore } from "@/store/auth.store";
+import { saveExamScore, type ExamScore } from "@/utils/exam-score.utils";
+import { useExamScore } from "@/hooks/use-exam-scores";
 
 interface TestCase {
   examId: string;
@@ -59,6 +67,7 @@ export default function TakeExamPage() {
   // Compiler mutation
   const { mutate: judgeCodeFromFile, isPending: isJudging } =
     useJudgeCodeFromFile();
+  const { mutate: compileCode, isPending: isCompiling } = useCompileCode();
 
   const [exam, setExam] = useState<Exam | null>(null);
   const [testCases, setTestCases] = useState<TestCase[]>([]);
@@ -75,8 +84,23 @@ int main() {
   const [testResults, setTestResults] = useState<JudgeTestCaseResult[]>([]);
   const [activeTab, setActiveTab] = useState("question");
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
+  const [currentScore, setCurrentScore] =
+    useState<ReturnType<typeof useExamScore>>(null);
 
-  // Just show the UI, no API calls
+  // Get exam score if already submitted
+  const savedScore = useExamScore(roomId, examId);
+
+  // Use currentScore if available, otherwise use savedScore
+  const examScore = currentScore || savedScore;
+
+  // Update currentScore when savedScore changes
+  useEffect(() => {
+    if (savedScore) {
+      setCurrentScore(savedScore);
+    }
+  }, [savedScore]);
+
+  // Load saved code from localStorage on mount
   useEffect(() => {
     // Set mock exam data
     setExam({
@@ -86,6 +110,12 @@ int main() {
       totalMarks: 100,
       passingMarks: 50,
     });
+
+    // Load saved code from localStorage
+    const savedCode = localStorage.getItem(`exam_code_${roomId}_${examId}`);
+    if (savedCode) {
+      setCode(savedCode);
+    }
 
     // Calculate time remaining from room's endTime (stored in localStorage when navigating from room detail)
     const roomDataStr = localStorage.getItem(`roomData_${roomId}`);
@@ -119,106 +149,134 @@ int main() {
     return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const handleSubmit = useCallback(
-    async (isFinal: boolean = true) => {
-      if (!code.trim()) {
-        toast({
-          title: "Error",
-          description: "Please write code before submitting",
-          variant: "destructive",
-        });
-        return;
-      }
+  const handleSaveDraft = useCallback(() => {
+    if (!code.trim()) {
+      toast({
+        title: "No code to save",
+        description: "Please write some code before saving",
+        variant: "destructive",
+      });
+      return;
+    }
 
-      setIsSubmitting(true);
+    // Save code to localStorage
+    localStorage.setItem(`exam_code_${roomId}_${examId}`, code);
 
-      try {
-        const token = localStorage.getItem("token");
-        const roomCode = localStorage.getItem(`roomCode_${roomId}`);
+    toast({
+      title: "Draft saved",
+      description: "Your code has been saved locally",
+    });
+  }, [code, roomId, examId, toast]);
 
-        if (!token || !roomCode) {
-          toast({
-            title: "Error",
-            description: "Authentication information not found",
-            variant: "destructive",
-          });
-          setIsSubmitting(false);
-          return;
-        }
+  const handleSubmit = useCallback(async () => {
+    if (!code.trim()) {
+      toast({
+        title: "Error",
+        description: "Please write code before submitting",
+        variant: "destructive",
+      });
+      return;
+    }
 
-        // First, start participation to get participationId
-        const startResponse = await fetch("/api/participations/start", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            roomCode,
-            examId,
-          }),
-        });
+    if (code.trim().length < 10) {
+      toast({
+        title: COMPILER_MESSAGES.ERROR.CODE_TOO_SHORT,
+        description: COMPILER_MESSAGES.VALIDATION.CODE_MIN_LENGTH,
+        variant: "destructive",
+      });
+      return;
+    }
 
-        if (!startResponse.ok) {
-          const errorData = await startResponse.json();
-          toast({
-            title: "Error",
-            description: errorData.message || "Could not start the exam",
-            variant: "destructive",
-          });
-          setIsSubmitting(false);
-          return;
-        }
+    setIsSubmitting(true);
 
-        const startData = await startResponse.json();
-        const participationId = startData.data.id;
+    toast({
+      title: "Submitting...",
+      description: COMPILER_MESSAGES.INFO.JUDGING,
+    });
 
-        // Then submit the code
-        const response = await fetch("/api/participations/submit", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            participationId: participationId,
-            sourceCode: code,
-            isFinalSubmission: isFinal,
-          }),
-        });
+    // Use judge-from-file API to submit exam
+    judgeCodeFromFile(
+      {
+        code: code,
+        examId: examId,
+        timeLimit: 2000,
+        memoryLimit: 128,
+        optimizationLevel: 2,
+      },
+      {
+        onSuccess: (response) => {
+          // Always display response if we have data (status 200)
+          if (response.data) {
+            const passedCount = response.data.passed;
+            const totalCount = response.data.total;
+            const allTestsPassed = passedCount === totalCount && totalCount > 0;
 
-        const data = await response.json();
+            // Clear saved draft after successful submission
+            localStorage.removeItem(`exam_code_${roomId}_${examId}`);
 
-        if (data.success) {
-          toast({
-            title: isFinal ? "Submitted successfully" : "Saved successfully",
-            description: data.message,
-          });
+            // Always save score (0 if failed, full marks if passed)
+            if (exam) {
+              const user = useAuthStore.getState().user;
+              if (user) {
+                const score = allTestsPassed ? exam.totalMarks : 0;
 
-          if (isFinal) {
-            // Navigate back to exam room
-            router.push(`/exam-rooms/${roomId}`);
+                const newScore = {
+                  studentId: user.uuid,
+                  examRoomId: roomId,
+                  examId: examId,
+                  score: score,
+                  totalMarks: exam.totalMarks,
+                  passedTestCases: passedCount,
+                  totalTestCases: totalCount,
+                  submittedAt: new Date().toISOString(),
+                };
+
+                // Save score to localStorage (will update if exists)
+                saveExamScore(newScore);
+
+                // Update current score state to trigger re-render
+                setCurrentScore(newScore);
+
+                if (allTestsPassed) {
+                  toast({
+                    title: "Submitted successfully!",
+                    description: `Perfect! You scored ${score}/${exam.totalMarks} points (${passedCount}/${totalCount} test cases passed)`,
+                  });
+                } else {
+                  toast({
+                    title: "Submitted",
+                    description: `Score: ${score}/${exam.totalMarks} (${passedCount}/${totalCount} test cases passed). Keep practicing!`,
+                  });
+                }
+              }
+            }
+
+            // Navigate back to exam room after submission
+            setTimeout(() => {
+              router.push(`/exam-rooms/${roomId}`);
+            }, 2000);
+          } else {
+            // No data but status 200 (compilation error before judging)
+            toast({
+              title: "Submission completed with errors",
+              description: response.message || "Check your code for errors",
+            });
           }
-        } else {
+        },
+        onError: (error: Error) => {
+          // Only for network errors or non-200 status codes
           toast({
-            title: "Error",
-            description: data.message || "Could not submit",
+            title: "Network Error",
+            description: error.message || "Could not connect to server",
             variant: "destructive",
           });
-        }
-      } catch (error) {
-        console.error("Error submitting exam:", error);
-        toast({
-          title: "Error",
-          description: "An error occurred while submitting",
-          variant: "destructive",
-        });
-      } finally {
-        setIsSubmitting(false);
-      }
-    },
-    [code, toast, router, roomId, examId],
-  );
+        },
+        onSettled: () => {
+          setIsSubmitting(false);
+        },
+      },
+    );
+  }, [code, toast, router, roomId, examId, exam, judgeCodeFromFile]);
 
   const handleAutoSubmit = useCallback(async () => {
     toast({
@@ -226,7 +284,7 @@ int main() {
       description: "Your exam has been automatically submitted",
     });
 
-    await handleSubmit(true);
+    await handleSubmit();
   }, [toast, handleSubmit]);
 
   // Countdown timer
@@ -271,73 +329,86 @@ int main() {
     }
 
     setActiveTab("results");
+    setTestResults([]); // Clear previous results
 
     toast({
-      title: COMPILER_MESSAGES.INFO.TESTING,
-      description: COMPILER_MESSAGES.INFO.JUDGING,
+      title: COMPILER_MESSAGES.INFO.COMPILING,
+      description: COMPILER_MESSAGES.INFO.EXECUTING,
     });
 
-    judgeCodeFromFile(
+    // Use compile API to just compile and run the code
+    compileCode(
       {
         code: code,
-        examId: examId,
+        input: "", // Empty input for simple test
         timeLimit: 2000, // 2 seconds
         memoryLimit: 128, // 128 MB
-        optimizationLevel: "2",
+        optimizationLevel: 2, // Use number instead of string
       },
       {
         onSuccess: (response) => {
-          if (response.success && response.data) {
-            const results: JudgeTestCaseResult[] = response.data.results.map(
-              (r: TestCaseResult) => ({
-                testCase: r.testCase,
-                passed: r.passed,
-                input: r.input,
-                expectedOutput: r.expectedOutput,
-                actualOutput: r.actualOutput,
-                executionTime: r.executionTime,
-                error: r.error,
-                errorCode: r.errorCode,
-              }),
-            );
-
-            setTestResults(results);
-
-            const passedCount = response.data.passed;
-            const totalCount = response.data.total;
-
-            if (passedCount === totalCount) {
+          // Always display response if we have data (status 200)
+          // Backend returns status 200 even for compilation/runtime errors
+          if (response.data) {
+            if (response.data.success) {
+              // Compilation and execution successful
               toast({
-                title: COMPILER_MESSAGES.SUCCESS.ALL_PASSED,
-                description: `${passedCount}/${totalCount} test cases passed`,
+                title: COMPILER_MESSAGES.SUCCESS.EXECUTED,
+                description: `Compilation: ${response.data.compilationTime}ms, Execution: ${response.data.executionTime}ms`,
               });
+
+              // Create a mock test result to display the output
+              const mockResult: JudgeTestCaseResult = {
+                testCase: 1,
+                passed: true,
+                input: "",
+                expectedOutput: "Code compiled and ran successfully",
+                actualOutput: response.data.output || "No output",
+                executionTime: response.data.executionTime,
+                error: null,
+                errorCode: null,
+              };
+
+              setTestResults([mockResult]);
             } else {
+              // Compilation or runtime error (still status 200)
+              // Display error in UI, not as toast error
               toast({
-                title: COMPILER_MESSAGES.SUCCESS.JUDGED,
-                description: `${passedCount}/${totalCount} test cases passed`,
-                variant: "default",
+                title: "Compilation/Runtime Error",
+                description:
+                  response.message || "Check the error details below",
               });
+
+              // Create error result to display in UI
+              const errorResult: JudgeTestCaseResult = {
+                testCase: 1,
+                passed: false,
+                input: "",
+                expectedOutput: "",
+                actualOutput: null,
+                executionTime: response.data.executionTime,
+                error:
+                  response.data.error || response.message || "Unknown error",
+                errorCode: response.data.errorCode || null,
+              };
+
+              setTestResults([errorResult]);
             }
           } else {
-            // Handle compilation or runtime errors
-            const errorMessage =
-              response.message || COMPILER_MESSAGES.ERROR.JUDGE_FAILED;
-
+            // No data in response (shouldn't happen with status 200)
             toast({
-              title: COMPILER_MESSAGES.ERROR.JUDGE_FAILED,
-              description: errorMessage,
+              title: COMPILER_MESSAGES.ERROR.EXECUTION_FAILED,
+              description: response.message || "No response data",
               variant: "destructive",
             });
-
-            // Clear previous results
             setTestResults([]);
           }
         },
         onError: (error: Error) => {
+          // Only for network errors or non-200 status codes
           toast({
-            title: COMPILER_MESSAGES.ERROR.JUDGE_FAILED,
-            description:
-              error.message || COMPILER_MESSAGES.ERROR.EXECUTION_FAILED,
+            title: "Network Error",
+            description: error.message || "Could not connect to server",
             variant: "destructive",
           });
           setTestResults([]);
@@ -402,17 +473,17 @@ int main() {
               </div>
               <Button
                 variant="outline"
-                onClick={() => handleSubmit(false)}
-                disabled={isJudging || isSubmitting}
+                onClick={handleSaveDraft}
+                disabled={isCompiling || isSubmitting}
               >
                 Save Draft
               </Button>
               <Button
                 variant="outline"
                 onClick={handleTestCode}
-                disabled={isJudging || isSubmitting}
+                disabled={isCompiling || isSubmitting}
               >
-                {isJudging ? (
+                {isCompiling ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Testing...
@@ -425,8 +496,8 @@ int main() {
                 )}
               </Button>
               <Button
-                onClick={() => handleSubmit(true)}
-                disabled={isJudging || isSubmitting}
+                onClick={handleSubmit}
+                disabled={isCompiling || isSubmitting}
               >
                 {isSubmitting ? (
                   <>
@@ -445,242 +516,319 @@ int main() {
         </div>
       </div>
 
-      <div className="container mx-auto p-4">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-[calc(100vh-140px)]">
+      <div className="container mx-auto p-4 h-[calc(100vh-140px)]">
+        <ResizablePanelGroup
+          direction="horizontal"
+          className="rounded-lg border"
+        >
           {/* Left Panel - Exam Info */}
-          <Card className="overflow-hidden flex flex-col">
-            <CardHeader className="border-b">
-              <CardTitle>Exam Information</CardTitle>
-              <CardDescription>
-                Total Score: {exam.totalMarks} | Passing Score:{" "}
-                {exam.passingMarks}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex-1 overflow-y-auto p-6 space-y-6">
-              <div>
-                <h3 className="font-semibold mb-2">Description:</h3>
-                <p className="text-sm text-muted-foreground">
-                  {exam.description}
-                </p>
-              </div>
-
-              {testCases.length > 0 && (
-                <div>
-                  <h3 className="font-semibold mb-2">
-                    Sample test cases ({testCases.length}):
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-2">
-                    You can view sample test cases to better understand the
-                    expected input and output.
-                  </p>
-                  <div className="space-y-2">
-                    {testCases.slice(0, 2).map((tc, index) => (
-                      <div key={tc.testCaseId} className="text-sm">
-                        <Badge variant="outline">Test case {index + 1}</Badge>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Input: {tc.inputPath}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Output: {tc.outputPath}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div>
-                <h3 className="font-semibold mb-2">Instructions:</h3>
-                <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-                  <li>Write your C code in the editor on the right</li>
-                  <li>
-                    Click &quot;Test Code&quot; to check with sample test cases
-                  </li>
-                  <li>
-                    Click &quot;Save Draft&quot; to save code (can continue
-                    later)
-                  </li>
-                  <li>Click &quot;Submit&quot; to submit your final answer</li>
-                  <li>Note: After submitting, you cannot edit your code</li>
-                </ul>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Right Panel - Code Editor & Results */}
-          <Card className="overflow-hidden flex flex-col">
-            <Tabs
-              value={activeTab}
-              onValueChange={setActiveTab}
-              className="flex-1 flex flex-col"
-            >
-              <TabsList className="w-full justify-start rounded-none border-b">
-                <TabsTrigger value="question">Code Editor</TabsTrigger>
-                <TabsTrigger value="results">
-                  Test Results
-                  {testResults.length > 0 && (
-                    <Badge className="ml-2" variant="secondary">
-                      {testResults.filter((r) => r.passed).length}/
-                      {testResults.length}
-                    </Badge>
+          <ResizablePanel defaultSize={40} minSize={25} maxSize={60}>
+            <Card className="h-full overflow-hidden flex flex-col border-0 rounded-none">
+              <CardHeader className="border-b shrink-0">
+                <CardTitle>Exam Information</CardTitle>
+                <CardDescription>
+                  Total Score: {exam.totalMarks} | Passing Score:{" "}
+                  {exam.passingMarks}
+                  {examScore && (
+                    <>
+                      {" | "}
+                      <span
+                        className={
+                          examScore.score >= exam.passingMarks
+                            ? "text-green-600 font-semibold"
+                            : "text-red-600 font-semibold"
+                        }
+                      >
+                        Your Score: {examScore.score}/{examScore.totalMarks}
+                      </span>
+                    </>
                   )}
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent
-                value="question"
-                className="flex-1 m-0 p-0 data-[state=active]:flex data-[state=active]:flex-col overflow-hidden"
-              >
-                <div className="flex-1 w-full h-full min-h-[600px]">
-                  <Editor
-                    height="100%"
-                    width="100%"
-                    defaultLanguage="c"
-                    value={code}
-                    onChange={(value) => setCode(value || "")}
-                    onMount={handleEditorDidMount}
-                    theme="vs-dark"
-                    loading={
-                      <div className="flex items-center justify-center h-full bg-[#1e1e1e]">
-                        <div className="text-center">
-                          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-blue-500" />
-                          <p className="text-gray-300 text-sm">
-                            Loading &lt;Stdlib&gt;
-                          </p>
-                        </div>
-                      </div>
-                    }
-                    options={{
-                      minimap: { enabled: false },
-                      fontSize: 14,
-                      lineNumbers: "on",
-                      scrollBeyondLastLine: false,
-                      automaticLayout: true,
-                      tabSize: 4,
-                    }}
-                  />
-                </div>
-              </TabsContent>
-
-              <TabsContent
-                value="results"
-                className="flex-1 m-0 overflow-y-auto p-4"
-              >
-                {isJudging ? (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="text-center">
-                      <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-                      <p className="text-muted-foreground">
-                        Running test cases...
-                      </p>
-                    </div>
-                  </div>
-                ) : testResults.length === 0 ? (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="text-center">
-                      <Play className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                      <p className="text-muted-foreground">
-                        Click &quot;Test Code&quot; to run test cases
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-semibold">Test Results</h3>
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex-1 overflow-y-auto p-6 space-y-6">
+                {examScore && (
+                  <div className="bg-muted p-4 rounded-lg border">
+                    <h3 className="font-semibold mb-2 flex items-center gap-2">
+                      Submission Status
                       <Badge
                         variant={
-                          testResults.every((r) => r.passed)
+                          examScore.score >= exam.passingMarks
                             ? "default"
                             : "destructive"
                         }
-                      >
-                        {testResults.filter((r) => r.passed).length}/
-                        {testResults.length} Passed
-                      </Badge>
-                    </div>
-
-                    {testResults.map((result, index) => (
-                      <Card
-                        key={index}
                         className={
-                          result.passed ? "border-green-500" : "border-red-500"
+                          examScore.score >= exam.passingMarks
+                            ? "bg-green-600"
+                            : ""
                         }
                       >
-                        <CardHeader>
-                          <div className="flex items-center justify-between">
-                            <CardTitle className="text-base">
-                              Test Case {result.testCase}
-                            </CardTitle>
-                            <div className="flex items-center gap-2">
-                              {result.executionTime && (
-                                <Badge variant="outline">
-                                  {result.executionTime}ms
-                                </Badge>
-                              )}
-                              <Badge
-                                variant={
-                                  result.passed ? "default" : "destructive"
-                                }
-                                className={
-                                  result.passed ? "bg-green-600" : "bg-red-600"
-                                }
-                              >
-                                {result.passed ? "Passed" : "Failed"}
-                              </Badge>
-                            </div>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="space-y-2">
-                          {result.error && (
-                            <div>
-                              <p className="text-sm font-medium text-red-600">
-                                Error:
-                              </p>
-                              <pre className="bg-red-50 text-red-900 p-2 rounded text-sm mt-1 whitespace-pre-wrap">
-                                {result.error}
-                              </pre>
-                            </div>
-                          )}
-                          <div>
-                            <p className="text-sm font-medium">Input:</p>
-                            <pre className="bg-muted p-2 rounded text-sm mt-1">
-                              {result.input}
-                            </pre>
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium">
-                              Expected Output:
-                            </p>
-                            <pre className="bg-muted p-2 rounded text-sm mt-1">
-                              {result.expectedOutput}
-                            </pre>
-                          </div>
-                          {result.actualOutput && (
-                            <div>
-                              <p className="text-sm font-medium">
-                                Your Output:
-                              </p>
-                              <pre
-                                className={`p-2 rounded text-sm mt-1 ${
-                                  result.passed
-                                    ? "bg-green-50 text-green-900"
-                                    : "bg-red-50 text-red-900"
-                                }`}
-                              >
-                                {result.actualOutput}
-                              </pre>
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    ))}
+                        {examScore.score >= exam.passingMarks
+                          ? "Passed"
+                          : "Failed"}
+                      </Badge>
+                    </h3>
+                    <div className="space-y-2 text-sm">
+                      <p>
+                        <span className="font-medium">Score:</span>{" "}
+                        <span
+                          className={
+                            examScore.score >= exam.passingMarks
+                              ? "text-green-600 font-semibold"
+                              : "text-red-600 font-semibold"
+                          }
+                        >
+                          {examScore.score}/{examScore.totalMarks}
+                        </span>
+                      </p>
+                      <p>
+                        <span className="font-medium">Test Cases:</span>{" "}
+                        {examScore.passedTestCases}/{examScore.totalTestCases}{" "}
+                        passed
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Submitted:{" "}
+                        {new Date(examScore.submittedAt).toLocaleString()}
+                      </p>
+                    </div>
                   </div>
                 )}
-              </TabsContent>
-            </Tabs>
-          </Card>
-        </div>
+
+                <div>
+                  <h3 className="font-semibold mb-2">Description:</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {exam.description}
+                  </p>
+                </div>
+
+                {testCases.length > 0 && (
+                  <div>
+                    <h3 className="font-semibold mb-2">
+                      Sample test cases ({testCases.length}):
+                    </h3>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      You can view sample test cases to better understand the
+                      expected input and output.
+                    </p>
+                    <div className="space-y-2">
+                      {testCases.slice(0, 2).map((tc, index) => (
+                        <div key={tc.testCaseId} className="text-sm">
+                          <Badge variant="outline">Test case {index + 1}</Badge>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Input: {tc.inputPath}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Output: {tc.outputPath}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <h3 className="font-semibold mb-2">Instructions:</h3>
+                  <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                    <li>Write your C code in the editor on the right</li>
+                    <li>
+                      Click &quot;Test Code&quot; to check with sample test
+                      cases
+                    </li>
+                    <li>
+                      Click &quot;Save Draft&quot; to save code (can continue
+                      later)
+                    </li>
+                    <li>
+                      Click &quot;Submit&quot; to submit your final answer
+                    </li>
+                    <li>Note: After submitting, you cannot edit your code</li>
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
+          </ResizablePanel>
+
+          <ResizableHandle withHandle />
+
+          {/* Right Panel - Code Editor & Results */}
+          <ResizablePanel defaultSize={60} minSize={40}>
+            <Card className="h-full overflow-hidden flex flex-col border-0 rounded-none">
+              <Tabs
+                value={activeTab}
+                onValueChange={setActiveTab}
+                className="flex-1 flex flex-col h-full"
+              >
+                <TabsList className="w-full justify-start rounded-none border-b shrink-0">
+                  <TabsTrigger value="question">Code Editor</TabsTrigger>
+                  <TabsTrigger value="results">
+                    Test Results
+                    {testResults.length > 0 && (
+                      <Badge className="ml-2" variant="secondary">
+                        {testResults.filter((r) => r.passed).length}/
+                        {testResults.length}
+                      </Badge>
+                    )}
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent
+                  value="question"
+                  className="flex-1 m-0 p-0 data-[state=active]:flex data-[state=active]:flex-col overflow-hidden"
+                >
+                  <div className="flex-1 w-full h-full min-h-[600px]">
+                    <Editor
+                      height="100%"
+                      width="100%"
+                      defaultLanguage="c"
+                      value={code}
+                      onChange={(value) => setCode(value || "")}
+                      onMount={handleEditorDidMount}
+                      theme="vs-dark"
+                      loading={
+                        <div className="flex items-center justify-center h-full bg-[#1e1e1e]">
+                          <div className="text-center">
+                            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-blue-500" />
+                            <p className="text-gray-300 text-sm">
+                              Loading &lt;Stdlib&gt;
+                            </p>
+                          </div>
+                        </div>
+                      }
+                      options={{
+                        minimap: { enabled: false },
+                        fontSize: 14,
+                        lineNumbers: "on",
+                        scrollBeyondLastLine: false,
+                        automaticLayout: true,
+                        tabSize: 4,
+                      }}
+                    />
+                  </div>
+                </TabsContent>
+
+                <TabsContent
+                  value="results"
+                  className="flex-1 m-0 overflow-y-auto p-4"
+                >
+                  {isCompiling ? (
+                    <div className="flex items-center justify-center h-full">
+                      <div className="text-center">
+                        <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+                        <p className="text-muted-foreground">
+                          Running test cases...
+                        </p>
+                      </div>
+                    </div>
+                  ) : testResults.length === 0 ? (
+                    <div className="flex items-center justify-center h-full">
+                      <div className="text-center">
+                        <Play className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                        <p className="text-muted-foreground">
+                          Click &quot;Test Code&quot; to run test cases
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-semibold">Test Results</h3>
+                        <Badge
+                          variant={
+                            testResults.every((r) => r.passed)
+                              ? "default"
+                              : "destructive"
+                          }
+                        >
+                          {testResults.filter((r) => r.passed).length}/
+                          {testResults.length} Passed
+                        </Badge>
+                      </div>
+
+                      {testResults.map((result, index) => (
+                        <Card
+                          key={index}
+                          className={
+                            result.passed
+                              ? "border-green-500"
+                              : "border-red-500"
+                          }
+                        >
+                          <CardHeader>
+                            <div className="flex items-center justify-between">
+                              <CardTitle className="text-base">
+                                Test Case {result.testCase}
+                              </CardTitle>
+                              <div className="flex items-center gap-2">
+                                {result.executionTime && (
+                                  <Badge variant="outline">
+                                    {result.executionTime}ms
+                                  </Badge>
+                                )}
+                                <Badge
+                                  variant={
+                                    result.passed ? "default" : "destructive"
+                                  }
+                                  className={
+                                    result.passed
+                                      ? "bg-green-600"
+                                      : "bg-red-600"
+                                  }
+                                >
+                                  {result.passed ? "Passed" : "Failed"}
+                                </Badge>
+                              </div>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="space-y-2">
+                            {result.error && (
+                              <div>
+                                <p className="text-sm font-medium text-red-600">
+                                  Error:
+                                </p>
+                                <pre className="bg-red-50 text-red-900 p-2 rounded text-sm mt-1 whitespace-pre-wrap">
+                                  {result.error}
+                                </pre>
+                              </div>
+                            )}
+                            <div>
+                              <p className="text-sm font-medium">Input:</p>
+                              <pre className="bg-muted p-2 rounded text-sm mt-1">
+                                {result.input}
+                              </pre>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium">
+                                Expected Output:
+                              </p>
+                              <pre className="bg-muted p-2 rounded text-sm mt-1">
+                                {result.expectedOutput}
+                              </pre>
+                            </div>
+                            {result.actualOutput && (
+                              <div>
+                                <p className="text-sm font-medium">
+                                  Your Output:
+                                </p>
+                                <pre
+                                  className={`p-2 rounded text-sm mt-1 ${
+                                    result.passed
+                                      ? "bg-green-50 text-green-900"
+                                      : "bg-red-50 text-red-900"
+                                  }`}
+                                >
+                                  {result.actualOutput}
+                                </pre>
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
+            </Card>
+          </ResizablePanel>
+        </ResizablePanelGroup>
       </div>
     </div>
   );

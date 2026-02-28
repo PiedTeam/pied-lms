@@ -6,7 +6,7 @@ export interface CompileCodeRequest {
   input?: string;
   timeLimit?: number;
   memoryLimit?: number;
-  optimizationLevel?: "0" | "1" | "2" | "3" | "s";
+  optimizationLevel?: 0 | 1 | 2 | 3 | "0" | "1" | "2" | "3" | "s";
 }
 
 export interface JudgeCodeRequest {
@@ -14,7 +14,7 @@ export interface JudgeCodeRequest {
   testCases: TestCaseInput[];
   timeLimit?: number;
   memoryLimit?: number;
-  optimizationLevel?: "0" | "1" | "2" | "3" | "s";
+  optimizationLevel?: 0 | 1 | 2 | 3 | "0" | "1" | "2" | "3" | "s";
 }
 
 export interface JudgeCodeFromFileRequest {
@@ -22,7 +22,7 @@ export interface JudgeCodeFromFileRequest {
   examId: string;
   timeLimit?: number;
   memoryLimit?: number;
-  optimizationLevel?: "0" | "1" | "2" | "3" | "s";
+  optimizationLevel?: 0 | 1 | 2 | 3 | "0" | "1" | "2" | "3" | "s";
 }
 
 export interface TestCaseInput {

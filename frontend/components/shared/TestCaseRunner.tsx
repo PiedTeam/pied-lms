@@ -110,11 +110,12 @@ int main() {
         input: input,
         timeLimit: 2000, // 2 seconds
         memoryLimit: 128, // 128 MB
-        optimizationLevel: "2",
+        optimizationLevel: 2, // Use number instead of string
       },
       {
         onSuccess: (response) => {
-          if (response.success && response.data) {
+          // Always display response if we have data (status 200)
+          if (response.data) {
             setResult(response.data);
 
             if (response.data.success) {
@@ -123,27 +124,26 @@ int main() {
                 description: `Execution time: ${response.data.executionTime}ms`,
               });
             } else {
-              // Compilation or runtime error
+              // Compilation or runtime error (still status 200)
               toast({
-                title: COMPILER_MESSAGES.ERROR.EXECUTION_FAILED,
+                title: "Compilation/Runtime Error",
                 description:
-                  response.data.error || COMPILER_MESSAGES.ERROR.RUNTIME_ERROR,
-                variant: "destructive",
+                  response.message || "Check the error details below",
               });
             }
           } else {
             toast({
-              title: COMPILER_MESSAGES.ERROR.COMPILE_FAILED,
-              description:
-                response.message || COMPILER_MESSAGES.ERROR.EXECUTION_FAILED,
+              title: COMPILER_MESSAGES.ERROR.EXECUTION_FAILED,
+              description: response.message || "No response data",
               variant: "destructive",
             });
           }
         },
         onError: (error: Error) => {
+          // Only for network errors or non-200 status codes
           toast({
-            title: COMPILER_MESSAGES.ERROR.EXECUTION_FAILED,
-            description: error.message || COMPILER_MESSAGES.ERROR.RUNTIME_ERROR,
+            title: "Network Error",
+            description: error.message || "Could not connect to server",
             variant: "destructive",
           });
         },

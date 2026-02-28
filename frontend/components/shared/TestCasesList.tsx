@@ -314,17 +314,19 @@ export function TestCasesList({
           open={!!runningTestCase}
           onOpenChange={() => setRunningTestCase(null)}
         >
-          <DialogContent className="sm:max-w-[800px]">
-            <DialogHeader>
+          <DialogContent className="sm:max-w-[800px] max-h-[90vh] flex flex-col">
+            <DialogHeader className="flex-shrink-0">
               <DialogTitle>Chạy Test Case</DialogTitle>
               <DialogDescription>
                 Nhập code để test với test case này
               </DialogDescription>
             </DialogHeader>
-            <TestCaseRunner
-              testCase={runningTestCase}
-              onClose={() => setRunningTestCase(null)}
-            />
+            <div className="overflow-y-auto flex-1 pr-2">
+              <TestCaseRunner
+                testCase={runningTestCase}
+                onClose={() => setRunningTestCase(null)}
+              />
+            </div>
           </DialogContent>
         </Dialog>
       )}

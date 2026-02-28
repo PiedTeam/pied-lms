@@ -22,6 +22,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useGetExamRoomById } from "@/service";
 import { useState, useEffect } from "react";
+import { useExamRoomScores } from "@/hooks/use-exam-scores";
 
 export default function StudentExamRoomDetailPage() {
   const params = useParams();
@@ -36,6 +37,9 @@ export default function StudentExamRoomDetailPage() {
   } = useGetExamRoomById(roomId);
   const [timeRemaining, setTimeRemaining] = useState<string>("");
   const [hasAutoRedirected, setHasAutoRedirected] = useState(false);
+
+  // Get exam scores for this room
+  const roomScores = useExamRoomScores(roomId);
 
   // Calculate time remaining until end time
   useEffect(() => {
@@ -259,12 +263,17 @@ export default function StudentExamRoomDetailPage() {
                   <TableHead>Description</TableHead>
                   <TableHead>Max Score</TableHead>
                   <TableHead>Passing Score</TableHead>
+                  <TableHead>Your Score</TableHead>
                   <TableHead className="text-right">Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {room.exams.map((exam) => {
                   const isClosed = room.status?.toLowerCase() === "completed";
+                  // Find score for this exam
+                  const examScore = roomScores.find(
+                    (s) => s.examId === exam.id,
+                  );
 
                   return (
                     <TableRow key={exam.id}>
@@ -276,6 +285,35 @@ export default function StudentExamRoomDetailPage() {
                       </TableCell>
                       <TableCell>{exam.totalMarks}</TableCell>
                       <TableCell>{exam.passingMarks}</TableCell>
+                      <TableCell>
+                        {examScore ? (
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold">
+                              {examScore.score}/{examScore.totalMarks}
+                            </span>
+                            <Badge
+                              variant={
+                                examScore.score >= exam.passingMarks
+                                  ? "default"
+                                  : "destructive"
+                              }
+                              className={
+                                examScore.score >= exam.passingMarks
+                                  ? "bg-green-600"
+                                  : ""
+                              }
+                            >
+                              {examScore.score >= exam.passingMarks
+                                ? "Passed"
+                                : "Failed"}
+                            </Badge>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">
+                            Not submitted
+                          </span>
+                        )}
+                      </TableCell>
                       <TableCell className="text-right">
                         <Button
                           size="sm"
