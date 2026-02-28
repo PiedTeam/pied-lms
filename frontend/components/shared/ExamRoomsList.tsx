@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Eye, Pencil, Archive, Calendar, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -50,7 +50,7 @@ import {
   useCreateExamRoom,
   useDeleteExamRoom,
 } from "@/service";
-import { EXAM_ROOM_MESSAGES } from "@/constants/messages.constants";
+import { EXAM_ROOM_MESSAGES } from "@/constants/messages";
 import type { CreateExamRoomRequest } from "@/interface/exam-room/exam-room.interface";
 
 interface ExamRoomsListProps {
@@ -101,6 +101,24 @@ export function ExamRoomsList({ basePath }: ExamRoomsListProps) {
   const { mutate: createRoom, isPending: isCreating } = useCreateExamRoom();
   const { mutate: deleteRoom, isPending: isDeleting } = useDeleteExamRoom();
 
+  // Auto-calculate duration when start or end time changes
+  useEffect(() => {
+    if (formData.startTime && formData.endTime) {
+      const start = new Date(formData.startTime);
+      const end = new Date(formData.endTime);
+      const diffInMinutes = Math.round(
+        (end.getTime() - start.getTime()) / (1000 * 60),
+      );
+
+      if (diffInMinutes > 0) {
+        setFormData((prev) => ({
+          ...prev,
+          durationInMinutes: diffInMinutes,
+        }));
+      }
+    }
+  }, [formData.startTime, formData.endTime]);
+
   // Filter rooms by tab (client-side filtering for archived tab)
   const allRooms = roomsData?.items || [];
 
@@ -145,10 +163,34 @@ export function ExamRoomsList({ basePath }: ExamRoomsListProps) {
   const handleCreateSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Validate start time is not in the past
+    const now = new Date();
+    const startTime = new Date(formData.startTime);
+
+    if (startTime < now) {
+      toast({
+        title: "Error",
+        description: "Start time cannot be in the past",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate end time is after start time
+    const endTime = new Date(formData.endTime);
+    if (endTime <= startTime) {
+      toast({
+        title: "Error",
+        description: "End time must be after start time",
+        variant: "destructive",
+      });
+      return;
+    }
+
     createRoom(formData, {
       onSuccess: () => {
         toast({
-          title: "Thành công",
+          title: "Success",
           description: EXAM_ROOM_MESSAGES.SUCCESS.CREATED,
         });
         setIsCreateDialogOpen(false);
@@ -162,7 +204,7 @@ export function ExamRoomsList({ basePath }: ExamRoomsListProps) {
       },
       onError: (error: Error) => {
         toast({
-          title: "Lỗi",
+          title: "Error",
           description: error.message || EXAM_ROOM_MESSAGES.ERROR.CREATE_FAILED,
           variant: "destructive",
         });
@@ -176,15 +218,15 @@ export function ExamRoomsList({ basePath }: ExamRoomsListProps) {
     deleteRoom(deleteRoomId, {
       onSuccess: () => {
         toast({
-          title: "Thành công",
-          description: "Phòng thi đã được ẩn thành công",
+          title: "Success",
+          description: "Exam room hidden successfully",
         });
         setDeleteRoomId(null);
       },
       onError: (error: Error) => {
         toast({
-          title: "Lỗi",
-          description: error.message || "Không thể ẩn phòng thi",
+          title: "Error",
+          description: error.message || "Failed to hide exam room",
           variant: "destructive",
         });
       },
@@ -195,18 +237,16 @@ export function ExamRoomsList({ basePath }: ExamRoomsListProps) {
     switch (status?.toLowerCase()) {
       case "ongoing":
         return (
-          <Badge className="bg-green-600 hover:bg-green-700">
-            Đang diễn ra
-          </Badge>
+          <Badge className="bg-green-600 hover:bg-green-700">Ongoing</Badge>
         );
       case "upcoming":
         return (
-          <Badge className="bg-blue-600 hover:bg-blue-700">Sắp diễn ra</Badge>
+          <Badge className="bg-blue-600 hover:bg-blue-700">Upcoming</Badge>
         );
       case "completed":
         return (
           <Badge variant="outline" className="text-gray-600">
-            Đã kết thúc
+            Completed
           </Badge>
         );
       default:
@@ -226,7 +266,7 @@ export function ExamRoomsList({ basePath }: ExamRoomsListProps) {
   };
 
   const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString("vi-VN", {
+    return new Date(dateString).toLocaleString("en-US", {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
@@ -239,30 +279,32 @@ export function ExamRoomsList({ basePath }: ExamRoomsListProps) {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Phòng Thi</h1>
-          <p className="text-muted-foreground">Quản lý phòng thi</p>
+          <h1 className="text-3xl font-bold tracking-tight">Exam Rooms</h1>
+          <p className="text-muted-foreground">Manage exam rooms</p>
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="mr-2 h-4 w-4" />
-              Tạo Phòng Thi
+              Create Exam Room
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[600px]">
             <form onSubmit={handleCreateSubmit}>
               <DialogHeader>
-                <DialogTitle>Tạo Phòng Thi Mới</DialogTitle>
-                <DialogDescription>Nhập thông tin phòng thi</DialogDescription>
+                <DialogTitle>Create New Exam Room</DialogTitle>
+                <DialogDescription>
+                  Enter exam room information
+                </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
                   <Label htmlFor="name">
-                    Tên Phòng Thi <span className="text-red-500">*</span>
+                    Exam Room Name <span className="text-red-500">*</span>
                   </Label>
                   <Input
                     id="name"
-                    placeholder="VD: Phòng thi giữa kỳ"
+                    placeholder="e.g. Midterm Exam Room"
                     value={formData.name}
                     onChange={(e) =>
                       setFormData({ ...formData, name: e.target.value })
@@ -271,10 +313,10 @@ export function ExamRoomsList({ basePath }: ExamRoomsListProps) {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="description">Mô Tả</Label>
+                  <Label htmlFor="description">Description</Label>
                   <Textarea
                     id="description"
-                    placeholder="Mô tả về phòng thi"
+                    placeholder="Description of the exam room"
                     value={formData.description}
                     onChange={(e) =>
                       setFormData({ ...formData, description: e.target.value })
@@ -285,32 +327,32 @@ export function ExamRoomsList({ basePath }: ExamRoomsListProps) {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
                     <Label htmlFor="startTime">
-                      Thời Gian Bắt Đầu <span className="text-red-500">*</span>
+                      Start Time <span className="text-red-500">*</span>
                     </Label>
                     <DateTimePicker
                       value={formData.startTime}
                       onChange={(value) =>
                         setFormData({ ...formData, startTime: value })
                       }
-                      placeholder="Chọn thời gian bắt đầu"
+                      placeholder="Select start time"
                     />
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="endTime">
-                      Thời Gian Kết Thúc <span className="text-red-500">*</span>
+                      End Time <span className="text-red-500">*</span>
                     </Label>
                     <DateTimePicker
                       value={formData.endTime}
                       onChange={(value) =>
                         setFormData({ ...formData, endTime: value })
                       }
-                      placeholder="Chọn thời gian kết thúc"
+                      placeholder="Select end time"
                     />
                   </div>
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="duration">
-                    Thời Lượng (phút) <span className="text-red-500">*</span>
+                    Duration (minutes) <span className="text-red-500">*</span>
                   </Label>
                   <Input
                     id="duration"
@@ -318,14 +360,14 @@ export function ExamRoomsList({ basePath }: ExamRoomsListProps) {
                     min="1"
                     placeholder="60"
                     value={formData.durationInMinutes}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        durationInMinutes: parseInt(e.target.value) || 0,
-                      })
-                    }
+                    readOnly
+                    disabled
+                    className="bg-muted cursor-not-allowed"
                     required
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Automatically calculated from start and end time
+                  </p>
                 </div>
               </div>
               <DialogFooter>
@@ -335,10 +377,10 @@ export function ExamRoomsList({ basePath }: ExamRoomsListProps) {
                   onClick={() => setIsCreateDialogOpen(false)}
                   disabled={isCreating}
                 >
-                  Hủy
+                  Cancel
                 </Button>
                 <Button type="submit" disabled={isCreating}>
-                  {isCreating ? "Đang tạo..." : "Tạo Phòng Thi"}
+                  {isCreating ? "Creating..." : "Create Exam Room"}
                 </Button>
               </DialogFooter>
             </form>
@@ -352,11 +394,11 @@ export function ExamRoomsList({ basePath }: ExamRoomsListProps) {
         className="space-y-6"
       >
         <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="all">Tất cả</TabsTrigger>
-          <TabsTrigger value="upcoming">Sắp diễn ra</TabsTrigger>
-          <TabsTrigger value="ongoing">Đang diễn ra</TabsTrigger>
-          <TabsTrigger value="completed">Đã kết thúc</TabsTrigger>
-          <TabsTrigger value="archived">Đã ẩn</TabsTrigger>
+          <TabsTrigger value="all">All</TabsTrigger>
+          <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
+          <TabsTrigger value="ongoing">Ongoing</TabsTrigger>
+          <TabsTrigger value="completed">Completed</TabsTrigger>
+          <TabsTrigger value="archived">Hidden</TabsTrigger>
         </TabsList>
 
         <TabsContent value={activeTab} className="space-y-4">
@@ -364,14 +406,14 @@ export function ExamRoomsList({ basePath }: ExamRoomsListProps) {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Danh Sách Phòng Thi</CardTitle>
+                  <CardTitle>Exam Room List</CardTitle>
                   <CardDescription>
-                    Trang {pageNumber} / {totalPages} - Tổng: {totalCount}
+                    Page {pageNumber} / {totalPages} - Total: {totalCount}
                   </CardDescription>
                 </div>
                 <div className="w-72">
                   <Input
-                    placeholder="Tìm kiếm phòng thi..."
+                    placeholder="Search exam rooms..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full"
@@ -396,17 +438,17 @@ export function ExamRoomsList({ basePath }: ExamRoomsListProps) {
                 <>
                   {!currentRooms.length ? (
                     <div className="text-center py-8 text-muted-foreground">
-                      Không có phòng thi nào trong danh mục này.
+                      No exam rooms in this category.
                     </div>
                   ) : (
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Tên Phòng Thi</TableHead>
-                          <TableHead>Thời Gian</TableHead>
-                          <TableHead>Thời Lượng</TableHead>
-                          <TableHead>Trạng Thái</TableHead>
-                          <TableHead className="text-right">Thao Tác</TableHead>
+                          <TableHead>Exam Room Name</TableHead>
+                          <TableHead>Time</TableHead>
+                          <TableHead>Duration</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -424,7 +466,7 @@ export function ExamRoomsList({ basePath }: ExamRoomsListProps) {
                                 {room.name}
                                 {isArchived && (
                                   <span className="ml-2 text-xs text-muted-foreground">
-                                    (Đã ẩn)
+                                    (Hidden)
                                   </span>
                                 )}
                               </TableCell>
@@ -443,7 +485,7 @@ export function ExamRoomsList({ basePath }: ExamRoomsListProps) {
                               <TableCell>
                                 <div className="flex items-center gap-1">
                                   <Clock className="h-4 w-4" />
-                                  {room.durationInMinutes} phút
+                                  {room.durationInMinutes} min
                                 </div>
                               </TableCell>
                               <TableCell>
@@ -459,7 +501,7 @@ export function ExamRoomsList({ basePath }: ExamRoomsListProps) {
                                         `${basePath}/exam-rooms/${room.id}`,
                                       )
                                     }
-                                    title="Xem chi tiết"
+                                    title="View details"
                                   >
                                     <Eye className="h-4 w-4" />
                                   </Button>
@@ -472,7 +514,7 @@ export function ExamRoomsList({ basePath }: ExamRoomsListProps) {
                                           `${basePath}/exam-rooms/${room.id}/edit`,
                                         )
                                       }
-                                      title="Chỉnh sửa"
+                                      title="Edit"
                                     >
                                       <Pencil className="h-4 w-4" />
                                     </Button>
@@ -482,7 +524,7 @@ export function ExamRoomsList({ basePath }: ExamRoomsListProps) {
                                       variant="ghost"
                                       size="icon"
                                       onClick={() => setDeleteRoomId(room.id)}
-                                      title="Ẩn phòng thi (không thể ẩn phòng đang diễn ra)"
+                                      title="Hide exam room (cannot hide ongoing rooms)"
                                     >
                                       <Archive className="h-4 w-4" />
                                     </Button>
@@ -504,7 +546,7 @@ export function ExamRoomsList({ basePath }: ExamRoomsListProps) {
                         size="icon"
                         onClick={handlePrevPage}
                         disabled={pageNumber === 1 || isLoading}
-                        title="Trang trước"
+                        title="Previous page"
                       >
                         &lt;
                       </Button>
@@ -514,7 +556,7 @@ export function ExamRoomsList({ basePath }: ExamRoomsListProps) {
                         size="icon"
                         onClick={handleNextPage}
                         disabled={pageNumber >= totalPages || isLoading}
-                        title="Trang sau"
+                        title="Next page"
                       >
                         &gt;
                       </Button>
@@ -533,21 +575,21 @@ export function ExamRoomsList({ basePath }: ExamRoomsListProps) {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận ẩn phòng thi</AlertDialogTitle>
+            <AlertDialogTitle>Confirm Hide Exam Room</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn ẩn phòng thi này? Phòng thi sẽ không hiển
-              thị trong danh sách nhưng dữ liệu vẫn được lưu trữ. Admin có thể
-              khôi phục lại sau này nếu cần.
+              Are you sure you want to hide this exam room? It will not appear
+              in the list but data will still be stored. Admin can restore it
+              later if needed.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Hủy</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               disabled={isDeleting}
               className="bg-orange-600 text-white hover:bg-orange-700"
             >
-              {isDeleting ? "Đang ẩn..." : "Ẩn phòng thi"}
+              {isDeleting ? "Hiding..." : "Hide Exam Room"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

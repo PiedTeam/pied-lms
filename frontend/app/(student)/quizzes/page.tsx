@@ -38,21 +38,21 @@ export default function StudentQuizzesPage() {
         return (
           <Badge className="bg-green-600 hover:bg-green-700">
             <Award className="h-3 w-3 mr-1" />
-            Dễ
+            Easy
           </Badge>
         );
       case QuizletLevel.Medium:
         return (
           <Badge className="bg-yellow-600 hover:bg-yellow-700">
             <Award className="h-3 w-3 mr-1" />
-            Trung bình
+            Medium
           </Badge>
         );
       case QuizletLevel.Hard:
         return (
           <Badge className="bg-red-600 hover:bg-red-700">
             <Award className="h-3 w-3 mr-1" />
-            Khó
+            Hard
           </Badge>
         );
       default:
@@ -88,9 +88,9 @@ export default function StudentQuizzesPage() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Bộ câu hỏi</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Quizzes</h1>
         <p className="text-muted-foreground">
-          Kiểm tra kiến thức của bạn với các bộ câu hỏi
+          Test your knowledge with quiz sets
         </p>
       </div>
 
@@ -98,7 +98,7 @@ export default function StudentQuizzesPage() {
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Tìm kiếm bộ câu hỏi..."
+            placeholder="Search quizzes..."
             value={searchQuery}
             onChange={(e) => handleSearchChange(e.target.value)}
             className="pl-10"
@@ -136,7 +136,7 @@ export default function StudentQuizzesPage() {
                     </div>
                     <div className="flex flex-col gap-2 items-end">
                       <Badge variant="default" className="bg-blue-600">
-                        Đã xuất bản
+                        Published
                       </Badge>
                       {getLevelBadge(quizlet.level, quizlet.isHidden)}
                     </div>
@@ -149,28 +149,28 @@ export default function StudentQuizzesPage() {
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <User className="h-4 w-4" />
-                      <span className="font-medium">Người tạo:</span>
+                      <span className="font-medium">Created by:</span>
                       <span className="truncate">{quizlet.userName}</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Calendar className="h-4 w-4" />
-                      <span className="font-medium">Ngày tạo:</span>
+                      <span className="font-medium">Created at:</span>
                       <span>
                         {new Date(quizlet.createdAt).toLocaleDateString(
-                          "vi-VN",
+                          "en-US",
                         )}
                       </span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Clock className="h-4 w-4" />
-                      <span className="font-medium">Số câu hỏi:</span>
+                      <span className="font-medium">Questions:</span>
                       <span className="font-semibold text-primary">
                         {quizlet.quantityQuestion}
                       </span>
                     </div>
                   </div>
                   <Button className="w-full mt-4 font-semibold" size="lg">
-                    Bắt đầu làm bài
+                    Start Quiz
                   </Button>
                 </CardContent>
               </Card>
@@ -189,7 +189,7 @@ export default function StudentQuizzesPage() {
                 &lt;
               </Button>
               <span className="text-sm text-muted-foreground">
-                Trang {currentPage} / {totalPages}
+                Page {currentPage} / {totalPages}
               </span>
               <Button
                 variant="outline"
@@ -212,13 +212,13 @@ export default function StudentQuizzesPage() {
             </div>
             <h3 className="text-xl font-semibold">
               {searchQuery
-                ? "Không tìm thấy bộ câu hỏi"
-                : "Chưa có bộ câu hỏi nào"}
+                ? "No quizzes found"
+                : "No quizzes available"}
             </h3>
             <p className="text-sm text-muted-foreground mt-2">
               {searchQuery
-                ? "Không tìm thấy bộ câu hỏi phù hợp với từ khóa tìm kiếm"
-                : "Hiện tại chưa có bộ câu hỏi nào được xuất bản. Vui lòng quay lại sau!"}
+                ? "Could not find any quiz sets matching your search"
+                : "No quizzes have been published yet. Please check back later!"}
             </p>
           </CardContent>
         </Card>

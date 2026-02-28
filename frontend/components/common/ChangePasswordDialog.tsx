@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AlertCircle, Key } from "lucide-react";
+import { AlertCircle, Key, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export function ChangePasswordDialog() {
@@ -22,6 +22,9 @@ export function ChangePasswordDialog() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<{
     currentPassword?: string;
     newPassword?: string;
@@ -35,25 +38,29 @@ export function ChangePasswordDialog() {
     const newErrors: typeof errors = {};
 
     if (!currentPassword) {
-      newErrors.currentPassword = "Vui lòng nhập mật khẩu hiện tại";
+      newErrors.currentPassword = "Please enter your current password";
     }
 
     if (!newPassword) {
-      newErrors.newPassword = "Vui lòng nhập mật khẩu mới";
+      newErrors.newPassword = "Please enter a new password";
     } else {
       const passwordErrors: string[] = [];
 
       if (newPassword.length < 8) {
-        passwordErrors.push("Mật khẩu phải có ít nhất 8 ký tự");
+        passwordErrors.push("Password must be at least 8 characters");
       }
       if (!/[^a-zA-Z0-9]/.test(newPassword)) {
-        passwordErrors.push("Mật khẩu phải có ít nhất 1 ký tự đặc biệt");
+        passwordErrors.push(
+          "Password must contain at least 1 special character",
+        );
       }
       if (!/\d/.test(newPassword)) {
-        passwordErrors.push("Mật khẩu phải có ít nhất 1 chữ số");
+        passwordErrors.push("Password must contain at least 1 digit");
       }
       if (!/[A-Z]/.test(newPassword)) {
-        passwordErrors.push("Mật khẩu phải có ít nhất 1 chữ hoa");
+        passwordErrors.push(
+          "Password must contain at least 1 uppercase letter",
+        );
       }
 
       if (passwordErrors.length > 0) {
@@ -62,9 +69,9 @@ export function ChangePasswordDialog() {
     }
 
     if (!confirmPassword) {
-      newErrors.confirmPassword = "Vui lòng xác nhận mật khẩu mới";
+      newErrors.confirmPassword = "Please confirm your new password";
     } else if (newPassword !== confirmPassword) {
-      newErrors.confirmPassword = "Mật khẩu xác nhận không khớp";
+      newErrors.confirmPassword = "Passwords do not match";
     }
 
     setErrors(newErrors);
@@ -85,8 +92,8 @@ export function ChangePasswordDialog() {
       {
         onSuccess: () => {
           toast({
-            title: "Thành công",
-            description: "Đổi mật khẩu thành công",
+            title: "Success",
+            description: "Password changed successfully",
           });
           setOpen(false);
           // Reset form
@@ -97,8 +104,8 @@ export function ChangePasswordDialog() {
         },
         onError: (error) => {
           toast({
-            title: "Lỗi",
-            description: error.message || "Đổi mật khẩu thất bại",
+            title: "Error",
+            description: error.message || "Failed to change password",
             variant: "destructive",
           });
         },
@@ -111,33 +118,57 @@ export function ChangePasswordDialog() {
       <DialogTrigger asChild>
         <Button variant="outline" className="w-full">
           <Key className="mr-2 h-4 w-4" />
-          Đổi mật khẩu
+          Change Password
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Đổi mật khẩu</DialogTitle>
+          <DialogTitle>Change Password</DialogTitle>
           <DialogDescription>
-            Nhập mật khẩu hiện tại và mật khẩu mới của bạn
+            Enter your current password and your new password
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="currentPassword">Mật khẩu hiện tại</Label>
-              <Input
-                id="currentPassword"
-                type="password"
-                value={currentPassword}
-                onChange={(e) => {
-                  setCurrentPassword(e.target.value);
-                  if (errors.currentPassword) {
-                    setErrors({ ...errors, currentPassword: undefined });
+              <Label htmlFor="currentPassword">Current Password</Label>
+              <div className="relative">
+                <Input
+                  id="currentPassword"
+                  type={showCurrentPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  value={currentPassword}
+                  onChange={(e) => {
+                    setCurrentPassword(e.target.value);
+                    if (errors.currentPassword) {
+                      setErrors({ ...errors, currentPassword: undefined });
+                    }
+                  }}
+                  disabled={isPending}
+                  className={
+                    errors.currentPassword
+                      ? "border-destructive pr-10"
+                      : "pr-10"
                   }
-                }}
-                disabled={isPending}
-                className={errors.currentPassword ? "border-destructive" : ""}
-              />
+                  style={
+                    {
+                      WebkitTextSecurity: showCurrentPassword ? "none" : "disc",
+                    } as React.CSSProperties
+                  }
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors z-20 bg-background"
+                  tabIndex={-1}
+                >
+                  {showCurrentPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
               {errors.currentPassword && (
                 <p className="text-sm text-destructive flex items-center gap-1">
                   <AlertCircle className="h-3 w-3" />
@@ -147,20 +178,42 @@ export function ChangePasswordDialog() {
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="newPassword">Mật khẩu mới</Label>
-              <Input
-                id="newPassword"
-                type="password"
-                value={newPassword}
-                onChange={(e) => {
-                  setNewPassword(e.target.value);
-                  if (errors.newPassword) {
-                    setErrors({ ...errors, newPassword: undefined });
+              <Label htmlFor="newPassword">New Password</Label>
+              <div className="relative">
+                <Input
+                  id="newPassword"
+                  type={showNewPassword ? "text" : "password"}
+                  autoComplete="new-password"
+                  value={newPassword}
+                  onChange={(e) => {
+                    setNewPassword(e.target.value);
+                    if (errors.newPassword) {
+                      setErrors({ ...errors, newPassword: undefined });
+                    }
+                  }}
+                  disabled={isPending}
+                  className={
+                    errors.newPassword ? "border-destructive pr-10" : "pr-10"
                   }
-                }}
-                disabled={isPending}
-                className={errors.newPassword ? "border-destructive" : ""}
-              />
+                  style={
+                    {
+                      WebkitTextSecurity: showNewPassword ? "none" : "disc",
+                    } as React.CSSProperties
+                  }
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors z-20 bg-background"
+                  tabIndex={-1}
+                >
+                  {showNewPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
               {errors.newPassword && (
                 <p className="text-sm text-destructive flex items-center gap-1">
                   <AlertCircle className="h-3 w-3" />
@@ -170,20 +223,44 @@ export function ChangePasswordDialog() {
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="confirmPassword">Xác nhận mật khẩu mới</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => {
-                  setConfirmPassword(e.target.value);
-                  if (errors.confirmPassword) {
-                    setErrors({ ...errors, confirmPassword: undefined });
+              <Label htmlFor="confirmPassword">Confirm New Password</Label>
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  autoComplete="new-password"
+                  value={confirmPassword}
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value);
+                    if (errors.confirmPassword) {
+                      setErrors({ ...errors, confirmPassword: undefined });
+                    }
+                  }}
+                  disabled={isPending}
+                  className={
+                    errors.confirmPassword
+                      ? "border-destructive pr-10"
+                      : "pr-10"
                   }
-                }}
-                disabled={isPending}
-                className={errors.confirmPassword ? "border-destructive" : ""}
-              />
+                  style={
+                    {
+                      WebkitTextSecurity: showConfirmPassword ? "none" : "disc",
+                    } as React.CSSProperties
+                  }
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors z-20 bg-background"
+                  tabIndex={-1}
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
               {errors.confirmPassword && (
                 <p className="text-sm text-destructive flex items-center gap-1">
                   <AlertCircle className="h-3 w-3" />
@@ -199,10 +276,10 @@ export function ChangePasswordDialog() {
               onClick={() => setOpen(false)}
               disabled={isPending}
             >
-              Hủy
+              Cancel
             </Button>
             <Button type="submit" disabled={isPending}>
-              {isPending ? "Đang xử lý..." : "Đổi mật khẩu"}
+              {isPending ? "Processing..." : "Change Password"}
             </Button>
           </DialogFooter>
         </form>

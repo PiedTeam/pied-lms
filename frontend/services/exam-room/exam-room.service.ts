@@ -108,6 +108,33 @@ export function useGetExamRoomsByAdmin(
     },
   });
 }
+
+// Get All Exam Rooms (for statistics)
+export function useGetAllExamRooms(params: GetExamRoomsByMentorRequest = {}) {
+  const { pageNumber = 1, pageSize = 10, status } = params;
+
+  return useQuery({
+    queryKey: ["exam-rooms", "all", pageNumber, pageSize, status],
+    queryFn: async (): Promise<PaginatedExamRoomsResponse> => {
+      const { data } = await axios.get<ApiResponse<PaginatedExamRoomsResponse>>(
+        "/exam-rooms",
+        {
+          params: {
+            pageNumber,
+            pageSize,
+            ...(status && { status }),
+          },
+        },
+      );
+
+      if (!data.success || !data.data) {
+        throw new Error(data.message || "Failed to load exam rooms list");
+      }
+
+      return data.data;
+    },
+  });
+}
 // Get Exam Room By ID
 export function useGetExamRoomById(roomId: string, enabled: boolean = true) {
   return useQuery({
@@ -303,10 +330,10 @@ export function useGetAvailableExamRooms(
   const { pageNumber = 1, pageSize = 10 } = params;
 
   return useQuery({
-    queryKey: ["exam-rooms", "available", pageNumber, pageSize],
+    queryKey: ["exam-rooms", "student", pageNumber, pageSize],
     queryFn: async (): Promise<PaginatedExamRoomsResponse> => {
       const { data } = await axios.get<ApiResponse<PaginatedExamRoomsResponse>>(
-        "/exam-rooms/available",
+        "/exam-rooms/student",
         {
           params: {
             pageNumber,
@@ -382,6 +409,9 @@ export function useEnrollStudents() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["exam-room", variables.roomId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["exam-room-enrollments", variables.roomId],
       });
     },
   });

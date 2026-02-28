@@ -1,6 +1,8 @@
 export {
   useCreateExamRoom,
   useGetExamRoomsByMentor,
+  useGetExamRoomsByAdmin,
+  useGetAllExamRooms,
   useGetExamRoomById,
   useUpdateExamRoom,
   useDeleteExamRoom,

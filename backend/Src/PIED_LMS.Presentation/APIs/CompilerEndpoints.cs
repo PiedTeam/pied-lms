@@ -7,7 +7,7 @@ public sealed class CompilerEndpoints : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/compiler")
+        var group = app.MapGroup("/api/compiler")
             .WithName("Compiler")
             .WithOpenApi();
 

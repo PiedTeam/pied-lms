@@ -4,9 +4,9 @@
 export interface RegisterRequest {
   email: string;
   password: string;
-  firstName?: string;
-  lastName?: string;
-  confirmPassword?: string;
+  firstName: string;
+  lastName: string;
+  confirmPassword: string;
 }
 
 export interface RegisterResponse {
@@ -42,6 +42,18 @@ export interface RefreshResponse {
 export type LogoutRequest = Record<string, never>; // Empty object type
 
 export interface LogoutResponse {
+  success: boolean;
+  message: string;
+}
+
+// Reset Password
+export interface ResetPasswordRequest {
+  email: string;
+  token: string;
+  newPassword: string;
+}
+
+export interface ResetPasswordResponse {
   success: boolean;
   message: string;
 }
