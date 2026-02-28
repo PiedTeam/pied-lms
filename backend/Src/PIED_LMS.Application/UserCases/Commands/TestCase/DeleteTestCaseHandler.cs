@@ -1,5 +1,8 @@
 using Microsoft.AspNetCore.Http;
+<<<<<<< HEAD
 using PIED_LMS.Application.Abstractions;
+=======
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Contract.Services.TestCase;
 using PIED_LMS.Domain.Abstractions;
@@ -8,7 +11,10 @@ namespace PIED_LMS.Application.UserCases.Commands.TestCase;
 
 public class DeleteTestCaseHandler(
     IUnitOfWork unitOfWork,
+<<<<<<< HEAD
     ITestCaseStorageService storageService,
+=======
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
     IHttpContextAccessor httpContextAccessor,
     ILogger<DeleteTestCaseHandler> logger
 ) : IRequestHandler<DeleteTestCaseCommand, ServiceResponse<string>>
@@ -43,6 +49,7 @@ public class DeleteTestCaseHandler(
                 );
             }
 
+<<<<<<< HEAD
             // Store exam id and index for file deletion
             var examId = testCase.ExamId;
             var index = testCase.Index;
@@ -71,6 +78,14 @@ public class DeleteTestCaseHandler(
                 request.TestCaseId,
                 examId,
                 index,
+=======
+            unitOfWork.Repository<Domain.Entities.TestCase>().Remove(testCase);
+            await unitOfWork.CommitAsync(cancellationToken);
+
+            logger.LogInformation(
+                "TestCase deleted. Id: {TestCaseId}, DeletedBy: {UserId}",
+                request.TestCaseId,
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                 userId
             );
 

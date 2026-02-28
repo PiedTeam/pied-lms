@@ -2,14 +2,22 @@
 
 import { useState } from "react";
 import {
+<<<<<<< HEAD
   Upload,
+=======
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
   UserCheck,
   Download,
   Copy,
   Check,
   Search,
+<<<<<<< HEAD
   Plus,
   Trash2,
+=======
+  Upload,
+  Plus,
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
   UserPlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -42,6 +50,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+<<<<<<< HEAD
 import { useImportStudents, useApproveMentor, useGetAllUsers } from "@/service";
 import { ADMIN_MESSAGES } from "@/constants/messages.constants";
 import * as XLSX from "xlsx";
@@ -59,13 +68,32 @@ export default function AdminToolsPage() {
   const [manualStudents, setManualStudents] = useState<StudentImportDto[]>([
     { email: "", firstName: "", lastName: "" },
   ]);
+=======
+import { useApproveMentor, useGetAllUsers } from "@/service";
+import { ADMIN_MESSAGES } from "@/constants/messages";
+import * as XLSX from "xlsx";
+import { ExcelImportInlineForm } from "@/components/admin/ExcelImportInlineForm";
+import { ManualImportInlineForm } from "@/components/admin/ManualImportInlineForm";
+
+export default function AdminToolsPage() {
+  const { toast } = useToast();
+  const [showExcelForm, setShowExcelForm] = useState(false);
+  const [showManualForm, setShowManualForm] = useState(false);
+  const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
+  const [mentorUserId, setMentorUserId] = useState("");
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
 
   const { data: usersData, isError } = useGetAllUsers({
     pageNumber: 1,
     pageSize: 100,
   });
+<<<<<<< HEAD
   const { mutate: importStudents, isPending: isImporting } =
     useImportStudents();
+=======
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
   const { mutate: approveMentor, isPending: isApproving } = useApproveMentor();
 
   const filteredUsers =
@@ -90,6 +118,7 @@ export default function AdminToolsPage() {
     XLSX.utils.book_append_sheet(wb, ws, "Students");
     XLSX.writeFile(wb, "student_import_template.xlsx");
 
+<<<<<<< HEAD
     toast({ title: "Thành công", description: "Đã tải xuống file mẫu" });
   };
 
@@ -257,13 +286,20 @@ export default function AdminToolsPage() {
     const updated = [...manualStudents];
     updated[index][field] = value;
     setManualStudents(updated);
+=======
+    toast({ title: "Success", description: "Template file downloaded" });
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
   };
 
   const handleCopyId = (id: string) => {
     navigator.clipboard.writeText(id);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
+<<<<<<< HEAD
     toast({ title: "Đã sao chép", description: "User ID đã được sao chép" });
+=======
+    toast({ title: "Copied", description: "User ID copied to clipboard" });
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
   };
 
   const handleSelectUser = (id: string) => {
@@ -274,8 +310,13 @@ export default function AdminToolsPage() {
     e.preventDefault();
     if (!mentorUserId.trim()) {
       toast({
+<<<<<<< HEAD
         title: "Lỗi",
         description: "Vui lòng nhập User ID",
+=======
+        title: "Error",
+        description: "Please enter User ID",
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
         variant: "destructive",
       });
       return;
@@ -284,7 +325,11 @@ export default function AdminToolsPage() {
     approveMentor(mentorUserId, {
       onSuccess: (response) => {
         toast({
+<<<<<<< HEAD
           title: "Thành công",
+=======
+          title: "Success",
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
           description:
             response.message || ADMIN_MESSAGES.SUCCESS.MENTOR_APPROVED,
         });
@@ -294,7 +339,11 @@ export default function AdminToolsPage() {
       },
       onError: (error: Error) => {
         toast({
+<<<<<<< HEAD
           title: "Lỗi",
+=======
+          title: "Error",
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
           description:
             error.message || ADMIN_MESSAGES.ERROR.APPROVE_MENTOR_FAILED,
           variant: "destructive",
@@ -303,7 +352,12 @@ export default function AdminToolsPage() {
     });
   };
 
+<<<<<<< HEAD
   const getRoleBadgeVariant = (role: string) => {
+=======
+  const getRoleBadgeVariant = (roles: string[]) => {
+    const role = roles[0] || "";
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
     switch (role) {
       case "Admin":
         return "destructive";
@@ -321,34 +375,54 @@ export default function AdminToolsPage() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div>
+<<<<<<< HEAD
         <h1 className="text-3xl font-bold tracking-tight">Công cụ quản trị</h1>
         <p className="text-muted-foreground">
           Các công cụ dành cho quản trị viên
         </p>
+=======
+        <h1 className="text-3xl font-bold tracking-tight">Admin Tools</h1>
+        <p className="text-muted-foreground">Tools for administrators</p>
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
       </div>
 
       <Tabs defaultValue="students" className="w-full">
         <TabsList className="grid w-full max-w-md grid-cols-2">
           <TabsTrigger value="students">
             <UserPlus className="mr-2 h-4 w-4" />
+<<<<<<< HEAD
             Nhập sinh viên
           </TabsTrigger>
           <TabsTrigger value="mentor">
             <UserCheck className="mr-2 h-4 w-4" />
             Phê duyệt Mentor
+=======
+            Import Students
+          </TabsTrigger>
+          <TabsTrigger value="mentor">
+            <UserCheck className="mr-2 h-4 w-4" />
+            Approve Mentor
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="students" className="space-y-4">
           <Card>
             <CardHeader>
+<<<<<<< HEAD
               <CardTitle>Nhập danh sách sinh viên</CardTitle>
               <CardDescription>
                 Nhập sinh viên bằng file Excel hoặc nhập thủ công
+=======
+              <CardTitle>Import Student List</CardTitle>
+              <CardDescription>
+                Import students via Excel file or manually
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-3 sm:grid-cols-2">
+<<<<<<< HEAD
                 <Dialog
                   open={isImportDialogOpen}
                   onOpenChange={setIsImportDialogOpen}
@@ -546,6 +620,42 @@ export default function AdminToolsPage() {
                     </form>
                   </DialogContent>
                 </Dialog>
+=======
+                <Button
+                  className="w-full"
+                  size="lg"
+                  onClick={() => setShowExcelForm(true)}
+                >
+                  <Upload className="mr-2 h-5 w-5" />
+                  Import from Excel
+                </Button>
+
+                <Button
+                  className="w-full"
+                  size="lg"
+                  variant="outline"
+                  onClick={() => setShowManualForm(true)}
+                >
+                  <Plus className="mr-2 h-5 w-5" />
+                  Manual Import
+                </Button>
+              </div>
+
+              {/* Form Container - NEW */}
+              <div className="space-y-4 mt-4">
+                {showExcelForm && (
+                  <ExcelImportInlineForm
+                    onClose={() => setShowExcelForm(false)}
+                    onSuccess={() => setShowExcelForm(false)}
+                  />
+                )}
+                {showManualForm && (
+                  <ManualImportInlineForm
+                    onClose={() => setShowManualForm(false)}
+                    onSuccess={() => setShowManualForm(false)}
+                  />
+                )}
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
               </div>
 
               <div className="space-y-3">
@@ -555,11 +665,19 @@ export default function AdminToolsPage() {
                   onClick={handleDownloadTemplate}
                 >
                   <Download className="mr-2 h-4 w-4" />
+<<<<<<< HEAD
                   Tải file Excel mẫu
                 </Button>
 
                 <div className="bg-muted p-4 rounded-lg space-y-2">
                   <h4 className="text-sm font-medium">Cấu trúc file Excel:</h4>
+=======
+                  Download Sample Excel File
+                </Button>
+
+                <div className="bg-muted p-4 rounded-lg space-y-2">
+                  <h4 className="text-sm font-medium">Excel File Structure:</h4>
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                   <div className="bg-background p-3 rounded text-xs font-mono">
                     <div className="grid grid-cols-3 gap-2 font-semibold border-b pb-2 mb-2">
                       <div>Email</div>
@@ -581,9 +699,15 @@ export default function AdminToolsPage() {
         <TabsContent value="mentor" className="space-y-4">
           <Card>
             <CardHeader>
+<<<<<<< HEAD
               <CardTitle>Phê duyệt Mentor</CardTitle>
               <CardDescription>
                 Phê duyệt người dùng trở thành Mentor
+=======
+              <CardTitle>Approve Mentor</CardTitle>
+              <CardDescription>
+                Approve a user to become a Mentor
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -594,15 +718,25 @@ export default function AdminToolsPage() {
                 <DialogTrigger asChild>
                   <Button className="w-full" size="lg">
                     <UserCheck className="mr-2 h-5 w-5" />
+<<<<<<< HEAD
                     Phê duyệt Mentor
+=======
+                    Approve Mentor
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[700px] max-h-[80vh]">
                   <form onSubmit={handleApproveSubmit}>
                     <DialogHeader>
+<<<<<<< HEAD
                       <DialogTitle>Phê duyệt Mentor</DialogTitle>
                       <DialogDescription>
                         Chọn người dùng từ danh sách hoặc nhập User ID
+=======
+                      <DialogTitle>Approve Mentor</DialogTitle>
+                      <DialogDescription>
+                        Select a user from the list or enter User ID
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                       </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
@@ -612,18 +746,30 @@ export default function AdminToolsPage() {
                         </Label>
                         <Input
                           id="userId"
+<<<<<<< HEAD
                           placeholder="Nhập User ID (UUID)"
+=======
+                          placeholder="Enter User ID (UUID)"
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                           value={mentorUserId}
                           onChange={(e) => setMentorUserId(e.target.value)}
                           required
                         />
                       </div>
                       <div className="grid gap-2">
+<<<<<<< HEAD
                         <Label>Danh sách người dùng</Label>
                         <div className="relative">
                           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                           <Input
                             placeholder="Tìm kiếm..."
+=======
+                        <Label>User List</Label>
+                        <div className="relative">
+                          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            placeholder="Search..."
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="pl-8"
@@ -634,10 +780,17 @@ export default function AdminToolsPage() {
                             <TableHeader>
                               <TableRow>
                                 <TableHead>Email</TableHead>
+<<<<<<< HEAD
                                 <TableHead>Họ tên</TableHead>
                                 <TableHead>Vai trò</TableHead>
                                 <TableHead className="text-right">
                                   Thao tác
+=======
+                                <TableHead>Full Name</TableHead>
+                                <TableHead>Role</TableHead>
+                                <TableHead className="text-right">
+                                  Actions
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                                 </TableHead>
                               </TableRow>
                             </TableHeader>
@@ -648,7 +801,11 @@ export default function AdminToolsPage() {
                                     colSpan={4}
                                     className="text-center py-4 text-destructive"
                                   >
+<<<<<<< HEAD
                                     Không thể tải danh sách người dùng
+=======
+                                    Could not load user list
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                                   </TableCell>
                                 </TableRow>
                               ) : filteredUsers && filteredUsers.length > 0 ? (
@@ -662,10 +819,19 @@ export default function AdminToolsPage() {
                                     </TableCell>
                                     <TableCell>
                                       <Badge
+<<<<<<< HEAD
                                         variant={getRoleBadgeVariant(user.role)}
                                         className="text-xs"
                                       >
                                         {user.role}
+=======
+                                        variant={getRoleBadgeVariant(
+                                          user.roles,
+                                        )}
+                                        className="text-xs"
+                                      >
+                                        {user.roles[0] || "N/A"}
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                                       </Badge>
                                     </TableCell>
                                     <TableCell className="text-right">
@@ -678,7 +844,11 @@ export default function AdminToolsPage() {
                                             handleSelectUser(user.id)
                                           }
                                         >
+<<<<<<< HEAD
                                           Chọn
+=======
+                                          Select
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                                         </Button>
                                         <Button
                                           type="button"
@@ -703,7 +873,11 @@ export default function AdminToolsPage() {
                                     colSpan={4}
                                     className="text-center py-4"
                                   >
+<<<<<<< HEAD
                                     Không tìm thấy người dùng
+=======
+                                    No users found
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                                   </TableCell>
                                 </TableRow>
                               )}
@@ -722,18 +896,30 @@ export default function AdminToolsPage() {
                         }}
                         disabled={isApproving}
                       >
+<<<<<<< HEAD
                         Hủy
+=======
+                        Cancel
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                       </Button>
                       <Button type="submit" disabled={isApproving}>
                         {isApproving ? (
                           <>
                             <UserCheck className="mr-2 h-4 w-4 animate-spin" />
+<<<<<<< HEAD
                             Đang phê duyệt...
+=======
+                            Approving...
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                           </>
                         ) : (
                           <>
                             <UserCheck className="mr-2 h-4 w-4" />
+<<<<<<< HEAD
                             Phê duyệt
+=======
+                            Approve
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                           </>
                         )}
                       </Button>
@@ -743,11 +929,19 @@ export default function AdminToolsPage() {
               </Dialog>
 
               <div className="mt-4 bg-muted p-4 rounded-lg space-y-2">
+<<<<<<< HEAD
                 <h4 className="text-sm font-medium">Hướng dẫn:</h4>
                 <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
                   <li>Chọn người dùng từ danh sách</li>
                   <li>Hoặc sao chép User ID bằng icon Copy</li>
                   <li>Sau đó nhấn Phê duyệt để xác nhận</li>
+=======
+                <h4 className="text-sm font-medium">Instructions:</h4>
+                <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
+                  <li>Select a user from the list</li>
+                  <li>Or copy the User ID using the Copy icon</li>
+                  <li>Then click Approve to confirm</li>
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                 </ul>
               </div>
             </CardContent>

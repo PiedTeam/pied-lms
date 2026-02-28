@@ -80,12 +80,19 @@ export function LoginForm() {
   };
 
   return (
+<<<<<<< HEAD
     <Card className="w-full max-w-md">
       <CardHeader>
         <CardTitle>Login</CardTitle>
         <CardDescription>
           Enter your credentials to access your account
         </CardDescription>
+=======
+    <Card className="w-full max-w-md shadow-xl">
+      <CardHeader>
+        <CardTitle className="text-2xl">Login</CardTitle>
+        <CardDescription>Enter your credentials to continue</CardDescription>
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
@@ -142,9 +149,15 @@ export function LoginForm() {
                 tabIndex={-1}
               >
                 {showPassword ? (
+<<<<<<< HEAD
                   <EyeOff className="h-4 w-4" />
                 ) : (
                   <Eye className="h-4 w-4" />
+=======
+                  <Eye className="h-4 w-4" />
+                ) : (
+                  <EyeOff className="h-4 w-4" />
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                 )}
               </button>
             </div>

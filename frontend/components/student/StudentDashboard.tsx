@@ -182,7 +182,11 @@ export function StudentDashboard() {
       )}
 
       <p className="mt-8 text-center text-sm text-muted-foreground">
+<<<<<<< HEAD
         coded with love and coffee by hội bàn đầu
+=======
+        coded with love and coffee by Front Seat Team
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
       </p>
     </div>
   );

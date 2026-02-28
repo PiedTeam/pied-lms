@@ -49,7 +49,11 @@ import {
   useRemoveExamFromRoom,
   useGetExamRoomEnrollments,
 } from "@/services";
+<<<<<<< HEAD
 import { EXAM_ROOM_MESSAGES } from "@/constants/messages.constants";
+=======
+import { EXAM_ROOM_MESSAGES } from "@/constants/messages";
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
 import { EnrollStudentsDialog } from "@/components/teacher/EnrollStudentsDialog";
 
 export default function ExamRoomDetailPage() {
@@ -110,7 +114,11 @@ export default function ExamRoomDetailPage() {
   );
 
   const formatDateTime = (dateString: string) => {
+<<<<<<< HEAD
     return new Date(dateString).toLocaleString("vi-VN", {
+=======
+    return new Date(dateString).toLocaleString("en-US", {
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
@@ -122,11 +130,19 @@ export default function ExamRoomDetailPage() {
   const getStatusBadge = (status: string) => {
     switch (status?.toLowerCase()) {
       case "active":
+<<<<<<< HEAD
         return <Badge variant="default">Đang diễn ra</Badge>;
       case "upcoming":
         return <Badge variant="secondary">Sắp diễn ra</Badge>;
       case "closed":
         return <Badge variant="outline">Đã kết thúc</Badge>;
+=======
+        return <Badge variant="default">Ongoing</Badge>;
+      case "upcoming":
+        return <Badge variant="secondary">Upcoming</Badge>;
+      case "closed":
+        return <Badge variant="outline">Completed</Badge>;
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -135,8 +151,13 @@ export default function ExamRoomDetailPage() {
   const handleAssignExam = () => {
     if (!selectedExamId) {
       toast({
+<<<<<<< HEAD
         title: "Lỗi",
         description: "Vui lòng chọn đề thi",
+=======
+        title: "Error",
+        description: "Please select an exam",
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
         variant: "destructive",
       });
       return;
@@ -147,7 +168,11 @@ export default function ExamRoomDetailPage() {
       {
         onSuccess: () => {
           toast({
+<<<<<<< HEAD
             title: "Thành công",
+=======
+            title: "Success",
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
             description: EXAM_ROOM_MESSAGES.SUCCESS.EXAM_ASSIGNED,
           });
           setIsAssignDialogOpen(false);
@@ -156,7 +181,11 @@ export default function ExamRoomDetailPage() {
         },
         onError: (error: Error) => {
           toast({
+<<<<<<< HEAD
             title: "Lỗi",
+=======
+            title: "Error",
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
             description:
               error.message || EXAM_ROOM_MESSAGES.ERROR.ASSIGN_EXAM_FAILED,
             variant: "destructive",
@@ -172,13 +201,21 @@ export default function ExamRoomDetailPage() {
       {
         onSuccess: () => {
           toast({
+<<<<<<< HEAD
             title: "Thành công",
+=======
+            title: "Success",
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
             description: EXAM_ROOM_MESSAGES.SUCCESS.EXAM_REMOVED,
           });
         },
         onError: (error: Error) => {
           toast({
+<<<<<<< HEAD
             title: "Lỗi",
+=======
+            title: "Error",
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
             description:
               error.message || EXAM_ROOM_MESSAGES.ERROR.REMOVE_EXAM_FAILED,
             variant: "destructive",
@@ -191,7 +228,11 @@ export default function ExamRoomDetailPage() {
   if (isLoading) {
     return (
       <div className="container mx-auto p-6">
+<<<<<<< HEAD
         <div className="text-center py-8">Đang tải...</div>
+=======
+        <div className="text-center py-8">Loading...</div>
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
       </div>
     );
   }
@@ -199,7 +240,11 @@ export default function ExamRoomDetailPage() {
   if (!room) {
     return (
       <div className="container mx-auto p-6">
+<<<<<<< HEAD
         <div className="text-center py-8">Không tìm thấy phòng thi</div>
+=======
+        <div className="text-center py-8">Exam room not found</div>
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
       </div>
     );
   }
@@ -221,24 +266,40 @@ export default function ExamRoomDetailPage() {
         <Button
           onClick={() => router.push(`/teacher/exam-rooms/${roomId}/edit`)}
         >
+<<<<<<< HEAD
           Chỉnh sửa
+=======
+          Edit
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
         </Button>
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">
         <Card>
           <CardHeader>
+<<<<<<< HEAD
             <CardTitle>Thông tin phòng thi</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Trạng thái</span>
+=======
+            <CardTitle>Exam Room Info</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Status</span>
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
               {getStatusBadge(room.status)}
             </div>
             <div className="flex items-start gap-2">
               <Calendar className="h-4 w-4 mt-0.5 text-muted-foreground" />
               <div className="flex-1">
+<<<<<<< HEAD
                 <p className="text-sm font-medium">Thời gian bắt đầu</p>
+=======
+                <p className="text-sm font-medium">Start Time</p>
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                 <p className="text-sm text-muted-foreground">
                   {formatDateTime(room.startTime)}
                 </p>
@@ -247,7 +308,11 @@ export default function ExamRoomDetailPage() {
             <div className="flex items-start gap-2">
               <Calendar className="h-4 w-4 mt-0.5 text-muted-foreground" />
               <div className="flex-1">
+<<<<<<< HEAD
                 <p className="text-sm font-medium">Thời gian kết thúc</p>
+=======
+                <p className="text-sm font-medium">End Time</p>
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                 <p className="text-sm text-muted-foreground">
                   {formatDateTime(room.endTime)}
                 </p>
@@ -256,9 +321,15 @@ export default function ExamRoomDetailPage() {
             <div className="flex items-start gap-2">
               <Clock className="h-4 w-4 mt-0.5 text-muted-foreground" />
               <div className="flex-1">
+<<<<<<< HEAD
                 <p className="text-sm font-medium">Thời lượng</p>
                 <p className="text-sm text-muted-foreground">
                   {room.durationInMinutes} phút
+=======
+                <p className="text-sm font-medium">Duration</p>
+                <p className="text-sm text-muted-foreground">
+                  {room.durationInMinutes} minutes
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                 </p>
               </div>
             </div>
@@ -269,14 +340,22 @@ export default function ExamRoomDetailPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
+<<<<<<< HEAD
               Đề thi
+=======
+              Exams
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{room.exams?.length || 0}</div>
+<<<<<<< HEAD
             <p className="text-sm text-muted-foreground">
               Tổng số đề thi trong phòng
             </p>
+=======
+            <p className="text-sm text-muted-foreground">Total exams in room</p>
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
           </CardContent>
         </Card>
 
@@ -284,7 +363,11 @@ export default function ExamRoomDetailPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
+<<<<<<< HEAD
               Học sinh
+=======
+              Students
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -292,7 +375,11 @@ export default function ExamRoomDetailPage() {
               {room.enrolledStudentsCount || 0}
             </div>
             <p className="text-sm text-muted-foreground">
+<<<<<<< HEAD
               Số học sinh đã đăng ký
+=======
+              Number of enrolled students
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
             </p>
           </CardContent>
         </Card>
@@ -300,8 +387,13 @@ export default function ExamRoomDetailPage() {
 
       <Tabs defaultValue="exams" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
+<<<<<<< HEAD
           <TabsTrigger value="exams">Đề thi</TabsTrigger>
           <TabsTrigger value="students">Học sinh</TabsTrigger>
+=======
+          <TabsTrigger value="exams">Exams</TabsTrigger>
+          <TabsTrigger value="students">Students</TabsTrigger>
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
         </TabsList>
 
         <TabsContent value="exams" className="mt-6">
@@ -311,15 +403,26 @@ export default function ExamRoomDetailPage() {
                 <div>
                   <CardTitle className="flex items-center gap-2">
                     <FileText className="h-5 w-5" />
+<<<<<<< HEAD
                     Danh sách đề thi
                   </CardTitle>
                   <CardDescription>
                     {room.exams?.length || 0} đề thi
+=======
+                    Exam List
+                  </CardTitle>
+                  <CardDescription>
+                    {room.exams?.length || 0} exams
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                   </CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
                   <Input
+<<<<<<< HEAD
                     placeholder="Tìm kiếm đề thi..."
+=======
+                    placeholder="Search exams..."
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                     value={examListSearchQuery}
                     onChange={(e) => setExamListSearchQuery(e.target.value)}
                     className="w-64"
@@ -331,27 +434,45 @@ export default function ExamRoomDetailPage() {
                     <DialogTrigger asChild>
                       <Button>
                         <Plus className="mr-2 h-4 w-4" />
+<<<<<<< HEAD
                         Gán đề thi
+=======
+                        Assign exam
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                       </Button>
                     </DialogTrigger>
                     <DialogContent className="max-w-2xl max-h-[80vh]">
                       <DialogHeader>
+<<<<<<< HEAD
                         <DialogTitle>Gán đề thi vào phòng</DialogTitle>
                         <DialogDescription>
                           Tìm kiếm và chọn đề thi để gán vào phòng thi này
+=======
+                        <DialogTitle>Assign exam to room</DialogTitle>
+                        <DialogDescription>
+                          Search and select an exam to assign to this room
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                         </DialogDescription>
                       </DialogHeader>
                       <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
+<<<<<<< HEAD
                           <Label htmlFor="search">Tìm kiếm đề thi</Label>
                           <Input
                             id="search"
                             placeholder="Nhập tên đề thi..."
+=======
+                          <Label htmlFor="search">Search exams</Label>
+                          <Input
+                            id="search"
+                            placeholder="Enter exam title..."
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                             value={examSearchQuery}
                             onChange={(e) => setExamSearchQuery(e.target.value)}
                           />
                         </div>
                         <div className="grid gap-2">
+<<<<<<< HEAD
                           <Label>Danh sách đề thi</Label>
                           <div className="border rounded-lg max-h-[400px] overflow-y-auto">
                             {!examsData?.items.length ? (
@@ -361,6 +482,17 @@ export default function ExamRoomDetailPage() {
                             ) : filteredExams.length === 0 ? (
                               <div className="text-center py-8 text-muted-foreground">
                                 Không tìm thấy đề thi phù hợp
+=======
+                          <Label>Exam List</Label>
+                          <div className="border rounded-lg max-h-[400px] overflow-y-auto">
+                            {!examsData?.items.length ? (
+                              <div className="text-center py-8 text-muted-foreground">
+                                No exams available
+                              </div>
+                            ) : filteredExams.length === 0 ? (
+                              <div className="text-center py-8 text-muted-foreground">
+                                No matching exams found
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                               </div>
                             ) : (
                               <div className="divide-y">
@@ -392,7 +524,11 @@ export default function ExamRoomDetailPage() {
                                                 variant="secondary"
                                                 className="text-xs"
                                               >
+<<<<<<< HEAD
                                                 Đã gán
+=======
+                                                Assigned
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                                               </Badge>
                                             )}
                                           </div>
@@ -401,10 +537,17 @@ export default function ExamRoomDetailPage() {
                                           </p>
                                           <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
                                             <span>
+<<<<<<< HEAD
                                               Điểm tối đa: {exam.totalMarks}
                                             </span>
                                             <span>
                                               Điểm đạt: {exam.passingMarks}
+=======
+                                              Max score: {exam.totalMarks}
+                                            </span>
+                                            <span>
+                                              Passing score: {exam.passingMarks}
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                                             </span>
                                           </div>
                                         </div>
@@ -445,13 +588,21 @@ export default function ExamRoomDetailPage() {
                           }}
                           disabled={isAssigning}
                         >
+<<<<<<< HEAD
                           Hủy
+=======
+                          Cancel
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                         </Button>
                         <Button
                           onClick={handleAssignExam}
                           disabled={isAssigning || !selectedExamId}
                         >
+<<<<<<< HEAD
                           {isAssigning ? "Đang gán..." : "Gán đề thi"}
+=======
+                          {isAssigning ? "Assigning..." : "Assign exam"}
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                         </Button>
                       </DialogFooter>
                     </DialogContent>
@@ -463,18 +614,31 @@ export default function ExamRoomDetailPage() {
               {!filteredAssignedExams.length ? (
                 <div className="text-center py-8 text-muted-foreground">
                   {examListSearchQuery
+<<<<<<< HEAD
                     ? "Không tìm thấy đề thi phù hợp"
                     : "Chưa có đề thi nào. Gán đề thi vào phòng!"}
+=======
+                    ? "No matching exams found"
+                    : "No exams yet. Assign an exam to the room!"}
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                 </div>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
+<<<<<<< HEAD
                       <TableHead>Tên đề thi</TableHead>
                       <TableHead>Mô tả</TableHead>
                       <TableHead>Điểm tối đa</TableHead>
                       <TableHead>Điểm đạt</TableHead>
                       <TableHead className="text-right">Thao tác</TableHead>
+=======
+                      <TableHead>Exam Title</TableHead>
+                      <TableHead>Description</TableHead>
+                      <TableHead>Max Score</TableHead>
+                      <TableHead>Passing Score</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -496,7 +660,11 @@ export default function ExamRoomDetailPage() {
                               onClick={() =>
                                 router.push(`/teacher/exams/${exam.id}`)
                               }
+<<<<<<< HEAD
                               title="Xem chi tiết"
+=======
+                              title="View details"
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
@@ -505,7 +673,11 @@ export default function ExamRoomDetailPage() {
                               size="icon"
                               onClick={() => handleRemoveExam(exam.id)}
                               disabled={isRemoving}
+<<<<<<< HEAD
                               title="Xóa khỏi phòng"
+=======
+                              title="Remove from room"
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -527,10 +699,17 @@ export default function ExamRoomDetailPage() {
                 <div>
                   <CardTitle className="flex items-center gap-2">
                     <Users className="h-5 w-5" />
+<<<<<<< HEAD
                     Danh sách học sinh
                   </CardTitle>
                   <CardDescription>
                     {room.enrolledStudentsCount || 0} học sinh đã đăng ký
+=======
+                    Student List
+                  </CardTitle>
+                  <CardDescription>
+                    {room.enrolledStudentsCount || 0} enrolled students
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                   </CardDescription>
                 </div>
                 <EnrollStudentsDialog roomId={roomId} />
@@ -539,7 +718,11 @@ export default function ExamRoomDetailPage() {
             <CardContent>
               <div className="mb-4">
                 <Input
+<<<<<<< HEAD
                   placeholder="Tìm kiếm học sinh theo tên hoặc email..."
+=======
+                  placeholder="Search students by name or email..."
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                   value={studentSearchQuery}
                   onChange={(e) => setStudentSearchQuery(e.target.value)}
                 />
@@ -555,20 +738,35 @@ export default function ExamRoomDetailPage() {
                 </div>
               ) : !enrolledStudents.length ? (
                 <div className="text-center py-8 text-muted-foreground">
+<<<<<<< HEAD
                   Chưa có học sinh nào đăng ký phòng thi này
                 </div>
               ) : filteredStudents.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   Không tìm thấy học sinh phù hợp
+=======
+                  No students have enrolled in this exam room yet
+                </div>
+              ) : filteredStudents.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No matching students found
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                 </div>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
+<<<<<<< HEAD
                       <TableHead>Họ và tên</TableHead>
                       <TableHead>Email</TableHead>
                       <TableHead>Ngày đăng ký</TableHead>
                       <TableHead>Trạng thái email</TableHead>
+=======
+                      <TableHead>Full Name</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Enrollment Date</TableHead>
+                      <TableHead>Email Status</TableHead>
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -584,9 +782,15 @@ export default function ExamRoomDetailPage() {
                         </TableCell>
                         <TableCell>
                           {enrollment.emailSent ? (
+<<<<<<< HEAD
                             <Badge variant="default">Đã gửi</Badge>
                           ) : (
                             <Badge variant="outline">Chưa gửi</Badge>
+=======
+                            <Badge variant="default">Sent</Badge>
+                          ) : (
+                            <Badge variant="outline">Not Sent</Badge>
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                           )}
                         </TableCell>
                       </TableRow>

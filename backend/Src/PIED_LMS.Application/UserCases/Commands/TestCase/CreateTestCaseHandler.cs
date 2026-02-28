@@ -1,5 +1,8 @@
 using Microsoft.AspNetCore.Http;
+<<<<<<< HEAD
 using PIED_LMS.Application.Abstractions;
+=======
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Contract.Services.TestCase;
 using PIED_LMS.Domain.Abstractions;
@@ -8,7 +11,10 @@ namespace PIED_LMS.Application.UserCases.Commands.TestCase;
 
 public class CreateTestCaseHandler(
     IUnitOfWork unitOfWork,
+<<<<<<< HEAD
     ITestCaseStorageService storageService,
+=======
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
     IHttpContextAccessor httpContextAccessor,
     ILogger<CreateTestCaseHandler> logger
 ) : IRequestHandler<CreateTestCaseCommand, ServiceResponse<TestCaseResponse>>
@@ -43,6 +49,7 @@ public class CreateTestCaseHandler(
                 );
             }
 
+<<<<<<< HEAD
             // Save test case files to file system first
             // This ensures consistency - if file write fails, we don't update DB
             var (inputPath, outputPath) = await storageService.SaveTestCaseAsync(
@@ -54,13 +61,21 @@ public class CreateTestCaseHandler(
                 cancellationToken);
 
             // Create TestCase entity with file paths
+=======
+            // Create TestCase entity
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
             var testCase = new Domain.Entities.TestCase
             {
                 Id = Guid.NewGuid(),
                 ExamId = request.ExamId,
                 Index = request.Index,
+<<<<<<< HEAD
                 InputPath = inputPath,
                 OutputPath = outputPath,
+=======
+                InputPath = request.InputPath,
+                OutputPath = request.OutputPath,
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                 IsHidden = request.IsHidden
             };
 
@@ -68,10 +83,16 @@ public class CreateTestCaseHandler(
             await unitOfWork.CommitAsync(cancellationToken);
 
             logger.LogInformation(
+<<<<<<< HEAD
                 "TestCase created. Id: {TestCaseId}, ExamId: {ExamId}, Index: {Index}, CreatedBy: {UserId}",
                 testCase.Id,
                 testCase.ExamId,
                 testCase.Index,
+=======
+                "TestCase created. Id: {TestCaseId}, ExamId: {ExamId}, CreatedBy: {UserId}",
+                testCase.Id,
+                testCase.ExamId,
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                 userId
             );
 
@@ -90,6 +111,7 @@ public class CreateTestCaseHandler(
                 response
             );
         }
+<<<<<<< HEAD
         catch (InvalidOperationException ex)
         {
             logger.LogError(
@@ -104,6 +126,8 @@ public class CreateTestCaseHandler(
                 ErrorCode: "FILE_STORAGE_ERROR"
             );
         }
+=======
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
         catch (Exception ex)
         {
             logger.LogError(

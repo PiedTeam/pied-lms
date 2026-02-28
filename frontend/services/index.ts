@@ -9,6 +9,10 @@ export {
 // User Services
 export {
   useChangePassword,
+<<<<<<< HEAD
+=======
+  useResetPassword,
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
   useGetUserById,
   useGetAllUsers,
   useGetAllStudents,
@@ -30,6 +34,11 @@ export {
 export {
   useCreateExamRoom,
   useGetExamRoomsByMentor,
+<<<<<<< HEAD
+=======
+  useGetExamRoomsByAdmin,
+  useGetAllExamRooms,
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
   useGetExamRoomById,
   useUpdateExamRoom,
   useDeleteExamRoom,
@@ -44,6 +53,11 @@ export {
 export {
   useCreateExam,
   useGetExamsByMentor,
+<<<<<<< HEAD
+=======
+  useGetExamsByAdmin,
+  useGetAllExams,
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
   useGetExamById,
   useUpdateExam,
   useDeleteExam,
@@ -77,3 +91,13 @@ export {
   useDeleteTestCase,
   useRunTestCase,
 } from "./testcase/testcase.service";
+<<<<<<< HEAD
+=======
+
+// Compiler Services
+export {
+  useCompileCode,
+  useJudgeCode,
+  useJudgeCodeFromFile,
+} from "./compiler/compiler.mutation";
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd

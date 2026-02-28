@@ -14,7 +14,11 @@ export default function ExamDetailPage() {
   const { data: exam, isLoading } = useGetExamById(examId);
 
   const formatDate = (dateString: string) => {
+<<<<<<< HEAD
     return new Date(dateString).toLocaleDateString("vi-VN", {
+=======
+    return new Date(dateString).toLocaleDateString("en-US", {
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
@@ -26,7 +30,11 @@ export default function ExamDetailPage() {
   if (isLoading) {
     return (
       <div className="container mx-auto p-6">
+<<<<<<< HEAD
         <div className="text-center py-8">Đang tải...</div>
+=======
+        <div className="text-center py-8">Loading...</div>
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
       </div>
     );
   }
@@ -34,7 +42,11 @@ export default function ExamDetailPage() {
   if (!exam) {
     return (
       <div className="container mx-auto p-6">
+<<<<<<< HEAD
         <div className="text-center py-8">Không tìm thấy đề thi</div>
+=======
+        <div className="text-center py-8">Exam not found</div>
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
       </div>
     );
   }
@@ -50,7 +62,11 @@ export default function ExamDetailPage() {
           <p className="text-muted-foreground">{exam.description}</p>
         </div>
         <Button onClick={() => router.push(`/mentor/exams/${examId}/edit`)}>
+<<<<<<< HEAD
           Chỉnh sửa
+=======
+          Edit
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
         </Button>
       </div>
 
@@ -59,12 +75,20 @@ export default function ExamDetailPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <FileText className="h-4 w-4" />
+<<<<<<< HEAD
               Điểm tối đa
+=======
+              Max Marks
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{exam.totalMarks}</div>
+<<<<<<< HEAD
             <p className="text-sm text-muted-foreground">điểm</p>
+=======
+            <p className="text-sm text-muted-foreground">marks</p>
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
           </CardContent>
         </Card>
 
@@ -72,12 +96,20 @@ export default function ExamDetailPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <FileText className="h-4 w-4" />
+<<<<<<< HEAD
               Điểm đạt
+=======
+              Passing Marks
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{exam.passingMarks}</div>
+<<<<<<< HEAD
             <p className="text-sm text-muted-foreground">điểm</p>
+=======
+            <p className="text-sm text-muted-foreground">marks</p>
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
           </CardContent>
         </Card>
 
@@ -85,7 +117,11 @@ export default function ExamDetailPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Calendar className="h-4 w-4" />
+<<<<<<< HEAD
               Ngày tạo
+=======
+              Created At
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -96,22 +132,36 @@ export default function ExamDetailPage() {
 
       <Card>
         <CardHeader>
+<<<<<<< HEAD
           <CardTitle>Thông tin chi tiết</CardTitle>
+=======
+          <CardTitle>Detailed Information</CardTitle>
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
             <p className="text-sm font-medium text-muted-foreground">
+<<<<<<< HEAD
               Tên đề thi
+=======
+              Exam Title
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
             </p>
             <p className="text-base">{exam.title}</p>
           </div>
           <div>
+<<<<<<< HEAD
             <p className="text-sm font-medium text-muted-foreground">Mô tả</p>
             <p className="text-base">{exam.description || "Không có mô tả"}</p>
+=======
+            <p className="text-sm font-medium text-muted-foreground">Description</p>
+            <p className="text-base">{exam.description || "No description provided"}</p>
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <p className="text-sm font-medium text-muted-foreground">
+<<<<<<< HEAD
                 Điểm tối đa
               </p>
               <p className="text-base">{exam.totalMarks} điểm</p>
@@ -121,6 +171,17 @@ export default function ExamDetailPage() {
                 Điểm đạt
               </p>
               <p className="text-base">{exam.passingMarks} điểm</p>
+=======
+                Max Marks
+              </p>
+              <p className="text-base">{exam.totalMarks} marks</p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">
+                Passing Marks
+              </p>
+              <p className="text-base">{exam.passingMarks} marks</p>
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
             </div>
           </div>
         </CardContent>

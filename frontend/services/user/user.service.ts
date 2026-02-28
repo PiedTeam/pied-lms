@@ -32,6 +32,35 @@ export function useChangePassword() {
   });
 }
 
+<<<<<<< HEAD
+=======
+// Reset Password
+export function useResetPassword() {
+  return useMutation({
+    mutationFn: async (payload: {
+      email: string;
+      token: string;
+      newPassword: string;
+      confirmPassword: string;
+    }): Promise<{ success: boolean; message: string }> => {
+      const { data } = await axios.post<ApiResponse<string>>(
+        "/auth/reset-password",
+        payload,
+      );
+
+      if (!data.success) {
+        throw new Error(data.message || "Failed to reset password");
+      }
+
+      return {
+        success: true,
+        message: data.message || "Đặt lại mật khẩu thành công",
+      };
+    },
+  });
+}
+
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
 // Get User By ID
 export function useGetUserById(userId: string, enabled: boolean = true) {
   return useQuery({

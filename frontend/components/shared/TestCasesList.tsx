@@ -118,13 +118,19 @@ export function TestCasesList({
               Tạo Test Case
             </Button>
           </DialogTrigger>
+<<<<<<< HEAD
           <DialogContent className="sm:max-w-[600px]">
             <DialogHeader>
+=======
+          <DialogContent className="sm:max-w-[600px] max-h-[85vh] flex flex-col">
+            <DialogHeader className="flex-shrink-0">
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
               <DialogTitle>Tạo Test Case mới</DialogTitle>
               <DialogDescription>
                 Tạo test case để kiểm tra tính đúng đắn của code
               </DialogDescription>
             </DialogHeader>
+<<<<<<< HEAD
             <TestCaseForm
               examId={examId} // Changed from questionId
               existingTestCases={testCases || []} // Pass existing test cases
@@ -137,6 +143,22 @@ export function TestCasesList({
               }}
               onCancel={() => setIsCreateDialogOpen(false)}
             />
+=======
+            <div className="overflow-y-auto flex-1 pr-2">
+              <TestCaseForm
+                examId={examId} // Changed from questionId
+                existingTestCases={testCases || []} // Pass existing test cases
+                onSuccess={() => {
+                  setIsCreateDialogOpen(false);
+                  toast({
+                    title: "Thành công",
+                    description: "Test case đã được tạo",
+                  });
+                }}
+                onCancel={() => setIsCreateDialogOpen(false)}
+              />
+            </div>
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
           </DialogContent>
         </Dialog>
       </div>
@@ -280,13 +302,19 @@ export function TestCasesList({
           open={!!editingTestCase}
           onOpenChange={() => setEditingTestCase(null)}
         >
+<<<<<<< HEAD
           <DialogContent className="sm:max-w-[600px]">
             <DialogHeader>
+=======
+          <DialogContent className="sm:max-w-[600px] max-h-[85vh] flex flex-col">
+            <DialogHeader className="flex-shrink-0">
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
               <DialogTitle>Chỉnh sửa Test Case</DialogTitle>
               <DialogDescription>
                 Cập nhật thông tin test case
               </DialogDescription>
             </DialogHeader>
+<<<<<<< HEAD
             <TestCaseForm
               examId={examId} // Changed from questionId
               testCase={editingTestCase}
@@ -300,6 +328,23 @@ export function TestCasesList({
               }}
               onCancel={() => setEditingTestCase(null)}
             />
+=======
+            <div className="overflow-y-auto flex-1 pr-2">
+              <TestCaseForm
+                examId={examId} // Changed from questionId
+                testCase={editingTestCase}
+                existingTestCases={testCases || []} // Pass existing test cases
+                onSuccess={() => {
+                  setEditingTestCase(null);
+                  toast({
+                    title: "Thành công",
+                    description: "Test case đã được cập nhật",
+                  });
+                }}
+                onCancel={() => setEditingTestCase(null)}
+              />
+            </div>
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
           </DialogContent>
         </Dialog>
       )}
@@ -310,17 +355,31 @@ export function TestCasesList({
           open={!!runningTestCase}
           onOpenChange={() => setRunningTestCase(null)}
         >
+<<<<<<< HEAD
           <DialogContent className="sm:max-w-[800px]">
             <DialogHeader>
+=======
+          <DialogContent className="sm:max-w-[800px] max-h-[90vh] flex flex-col">
+            <DialogHeader className="flex-shrink-0">
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
               <DialogTitle>Chạy Test Case</DialogTitle>
               <DialogDescription>
                 Nhập code để test với test case này
               </DialogDescription>
             </DialogHeader>
+<<<<<<< HEAD
             <TestCaseRunner
               testCase={runningTestCase}
               onClose={() => setRunningTestCase(null)}
             />
+=======
+            <div className="overflow-y-auto flex-1 pr-2">
+              <TestCaseRunner
+                testCase={runningTestCase}
+                onClose={() => setRunningTestCase(null)}
+              />
+            </div>
+>>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
           </DialogContent>
         </Dialog>
       )}
