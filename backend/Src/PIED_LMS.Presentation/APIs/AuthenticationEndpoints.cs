@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity.Data;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Constants;
 
@@ -43,6 +44,12 @@ public class AuthenticationEndpoints : ICarterModule
             .RequireAuthorization()
             .Produces<ServiceResponse<string>>()
             .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest);
+
+        group.MapPost("/reset-password", ResetPassword)
+           .WithName("ResetPassword")
+           .WithOpenApi()
+           .Produces<ServiceResponse<string>>()
+           .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest);
 
         group.MapPost("/assign-role", AssignRole)
             .WithName("AssignRole")
@@ -211,6 +218,20 @@ public class AuthenticationEndpoints : ICarterModule
         var result = await mediator.Send(command, cancellationToken);
         return result.Success ? Results.Ok(result) : Results.BadRequest(result);
     }
+    private static async Task<IResult> ResetPassword(
+       ResetPasswordRequest request,
+       IMediator mediator,
+       CancellationToken cancellationToken)
+    {
+        var command = new PIED_LMS.Application.UserCases.Commands.Auth.ResetPasswordCommand(
+            request.Email,
+            request.Token,
+            request.NewPassword
+        );
+
+        var result = await mediator.Send(command, cancellationToken);
+        return result.Success ? Results.Ok(result) : Results.BadRequest(result);
+    }
 
     private static async Task<IResult> AssignRole(
         AssignRoleRequest request,
@@ -262,6 +283,11 @@ public sealed record ChangePasswordRequest(
 public sealed record AssignRoleRequest(
     Guid UserId,
     string RoleName
+);
+public sealed record ResetPasswordRequest(
+    string Email,
+    string Token,
+    string NewPassword
 );
 
 public sealed record GetAllUsersRequest(
