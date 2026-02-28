@@ -19,7 +19,7 @@ export default function ViewQuizletPage() {
   if (isLoading) {
     return (
       <div className="container mx-auto p-6">
-        <div className="text-center py-12">Đang tải...</div>
+        <div className="text-center py-12">Loading...</div>
       </div>
     );
   }
@@ -28,9 +28,9 @@ export default function ViewQuizletPage() {
     return (
       <div className="container mx-auto p-6">
         <div className="text-center py-12">
-          <p className="text-destructive">Không tìm thấy quizlet</p>
+          <p className="text-destructive">Quizlet not found</p>
           <Button className="mt-4" onClick={() => router.back()}>
-            Quay lại
+            Back
           </Button>
         </div>
       </div>
@@ -41,9 +41,9 @@ export default function ViewQuizletPage() {
     return (
       <div className="container mx-auto p-6">
         <div className="text-center py-12">
-          <p className="text-destructive">Không tìm thấy quizlet</p>
+          <p className="text-destructive">Quizlet not found</p>
           <Button className="mt-4" onClick={() => router.back()}>
-            Quay lại
+            Back
           </Button>
         </div>
       </div>
@@ -61,38 +61,38 @@ export default function ViewQuizletPage() {
           <p className="text-muted-foreground">{quizlet.description}</p>
         </div>
         <Button onClick={() => router.push(`/teacher/quizlets/${id}/edit`)}>
-          Chỉnh sửa
+          Edit
         </Button>
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Trạng thái</CardTitle>
+            <CardTitle className="text-sm font-medium">Status</CardTitle>
             <FileSpreadsheet className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             {quizlet.isPublished ? (
-              <Badge variant="default">Đã xuất bản</Badge>
+              <Badge variant="default">Published</Badge>
             ) : (
-              <Badge variant="secondary">Nháp</Badge>
+              <Badge variant="secondary">Draft</Badge>
             )}
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Độ khó</CardTitle>
+            <CardTitle className="text-sm font-medium">Difficulty</CardTitle>
           </CardHeader>
           <CardContent>
-            {quizlet.level === 1 && <Badge className="bg-green-600">Dễ</Badge>}
+            {quizlet.level === 1 && <Badge className="bg-green-600">Easy</Badge>}
             {quizlet.level === 2 && (
-              <Badge className="bg-yellow-600">Trung bình</Badge>
+              <Badge className="bg-yellow-600">Medium</Badge>
             )}
-            {quizlet.level === 3 && <Badge className="bg-red-600">Khó</Badge>}
+            {quizlet.level === 3 && <Badge className="bg-red-600">Hard</Badge>}
             {quizlet.isHidden && (
               <Badge variant="outline" className="ml-2">
-                Level ẩn
+                Hidden level
               </Badge>
             )}
           </CardContent>
@@ -100,15 +100,15 @@ export default function ViewQuizletPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Ngày tạo</CardTitle>
+            <CardTitle className="text-sm font-medium">Created At</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {new Date(quizlet.createdAt).toLocaleDateString("vi-VN")}
+              {new Date(quizlet.createdAt).toLocaleDateString("en-US")}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Bởi: {quizlet.userName || "—"}
+              By: {quizlet.userName || "—"}
             </p>
           </CardContent>
         </Card>

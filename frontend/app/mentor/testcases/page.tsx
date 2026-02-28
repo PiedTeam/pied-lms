@@ -77,7 +77,7 @@ export default function MentorTestCasesPage() {
                 onClick={() => router.push(`/mentor/exams/${selectedExam.id}`)}
               >
                 <Eye className="h-4 w-4 mr-2" />
-                Xem Đề Thi
+                View Exam
               </Button>
             </CardHeader>
             <CardContent>

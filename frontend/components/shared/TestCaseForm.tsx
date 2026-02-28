@@ -17,7 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useCreateTestCase, useUpdateTestCase } from "@/service";
-import { TESTCASE_MESSAGES } from "@/constants/messages.constants";
+import { TESTCASE_MESSAGES } from "@/constants/messages";
 import type { TestCaseResponse } from "@/interface/testcase/testcase.interface";
 
 interface TestCaseFormData {

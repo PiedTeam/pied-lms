@@ -48,7 +48,13 @@ export default function UsersPage() {
       user.lastName?.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  const getRoleBadgeVariant = (role: string) => {
+  // Calculate total pages
+  const totalPages = usersData?.totalCount
+    ? Math.ceil(usersData.totalCount / pageSize)
+    : 1;
+
+  const getRoleBadgeVariant = (roles: string[]) => {
+    const role = roles[0] || "";
     switch (role) {
       case "Admin":
         return "destructive";
@@ -112,7 +118,7 @@ export default function UsersPage() {
                     <TableHead>Họ tên</TableHead>
                     <TableHead>Vai trò</TableHead>
                     <TableHead>Ngày tạo</TableHead>
-                    <TableHead>Đăng nhập cuối</TableHead>
+                    <TableHead>Trạng thái</TableHead>
                     <TableHead className="text-right">Thao tác</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -126,17 +132,19 @@ export default function UsersPage() {
                         {user.firstName} {user.lastName}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={getRoleBadgeVariant(user.role)}>
-                          {user.role}
+                        <Badge variant={getRoleBadgeVariant(user.roles)}>
+                          {user.roles[0] || "N/A"}
                         </Badge>
                       </TableCell>
                       <TableCell>
                         {new Date(user.createdAt).toLocaleDateString("vi-VN")}
                       </TableCell>
                       <TableCell>
-                        {user.lastLogin
-                          ? new Date(user.lastLogin).toLocaleDateString("vi-VN")
-                          : "Chưa đăng nhập"}
+                        <Badge
+                          variant={user.isActive ? "default" : "secondary"}
+                        >
+                          {user.isActive ? "Hoạt động" : "Không hoạt động"}
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
@@ -190,18 +198,18 @@ export default function UsersPage() {
                     }
                     disabled={pageNumber === 1}
                   >
-                    Trước
+                    &lt;
                   </Button>
                   <span className="text-sm">
-                    Trang {pageNumber} / {usersData?.totalPages || 1}
+                    Trang {pageNumber} / {totalPages}
                   </span>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setPageNumber((prev) => prev + 1)}
-                    disabled={pageNumber >= (usersData?.totalPages || 1)}
+                    disabled={pageNumber >= totalPages}
                   >
-                    Sau
+                    &gt;
                   </Button>
                 </div>
               </div>

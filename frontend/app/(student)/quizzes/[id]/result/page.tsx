@@ -70,21 +70,21 @@ export default function QuizResultPage() {
         return (
           <Badge className="bg-green-600 hover:bg-green-700">
             <Award className="h-3 w-3 mr-1" />
-            Dễ
+            Easy
           </Badge>
         );
       case QuizletLevel.Medium:
         return (
           <Badge className="bg-yellow-600 hover:bg-yellow-700">
             <Award className="h-3 w-3 mr-1" />
-            Trung bình
+            Medium
           </Badge>
         );
       case QuizletLevel.Hard:
         return (
           <Badge className="bg-red-600 hover:bg-red-700">
             <Award className="h-3 w-3 mr-1" />
-            Khó
+            Hard
           </Badge>
         );
       default:
@@ -96,9 +96,9 @@ export default function QuizResultPage() {
     return (
       <div className="container mx-auto p-6">
         <div className="text-center py-12">
-          <p className="text-destructive">Không tìm thấy kết quả</p>
+          <p className="text-destructive">Result not found</p>
           <Button className="mt-4" onClick={() => router.push("/quizzes")}>
-            Về danh sách bài thi
+            Back to Quiz List
           </Button>
         </div>
       </div>
@@ -111,7 +111,7 @@ export default function QuizResultPage() {
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins} phút ${secs} giây`;
+    return `${mins}m ${secs}s`;
   };
 
   return (
@@ -128,18 +128,17 @@ export default function QuizResultPage() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-primary">Kết quả bài thi</h1>
+            <h1 className="text-3xl font-bold text-primary">Quiz Results</h1>
             <p className="text-muted-foreground">{result.quizletTitle}</p>
           </div>
         </div>
 
         {/* Result Summary Card */}
         <Card
-          className={`border-4 shadow-2xl ${
-            isPassed
+          className={`border-4 shadow-2xl ${isPassed
               ? "border-green-500 bg-gradient-to-br from-green-50 to-white"
               : "border-orange-500 bg-gradient-to-br from-orange-50 to-white"
-          }`}
+            }`}
         >
           <CardHeader className="text-center pb-4">
             <div className="flex justify-center mb-4">
@@ -154,12 +153,12 @@ export default function QuizResultPage() {
               )}
             </div>
             <CardTitle className="text-4xl font-bold mb-2">
-              {isPassed ? "Chúc mừng! 🎉" : "Cố gắng lên! 💪"}
+              {isPassed ? "Congratulations! 🎉" : "Keep trying! 💪"}
             </CardTitle>
             <CardDescription className="text-lg">
               {isPassed
-                ? "Bạn đã vượt qua bài thi với kết quả xuất sắc!"
-                : "Bạn cần đạt ít nhất 60% để đạt. Hãy thử lại nhé!"}
+                ? "You passed the quiz with an excellent result!"
+                : "You need at least 60% to pass. Try again!"}
             </CardDescription>
             <div className="mt-6">
               <div className="text-6xl font-bold text-primary mb-2">
@@ -174,7 +173,7 @@ export default function QuizResultPage() {
         <div className="grid gap-6 md:grid-cols-4">
           <Card className="border-2 shadow-lg hover:shadow-xl transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Điểm số</CardTitle>
+              <CardTitle className="text-sm font-medium">Score</CardTitle>
               <Trophy className="h-5 w-5 text-yellow-600" />
             </CardHeader>
             <CardContent>
@@ -182,14 +181,14 @@ export default function QuizResultPage() {
                 {result.earnedScore.toFixed(1)}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                / {result.totalScore} điểm
+                / {result.totalScore} points
               </p>
             </CardContent>
           </Card>
 
           <Card className="border-2 shadow-lg hover:shadow-xl transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Đúng</CardTitle>
+              <CardTitle className="text-sm font-medium">Correct</CardTitle>
               <CheckCircle2 className="h-5 w-5 text-green-600" />
             </CardHeader>
             <CardContent>
@@ -197,14 +196,14 @@ export default function QuizResultPage() {
                 {result.correctCount}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                / {result.totalQuestions} câu
+                / {result.totalQuestions} questions
               </p>
             </CardContent>
           </Card>
 
           <Card className="border-2 shadow-lg hover:shadow-xl transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Sai</CardTitle>
+              <CardTitle className="text-sm font-medium">Wrong</CardTitle>
               <XCircle className="h-5 w-5 text-red-600" />
             </CardHeader>
             <CardContent>
@@ -217,14 +216,14 @@ export default function QuizResultPage() {
                     result.totalQuestions) *
                   100
                 ).toFixed(1)}
-                % sai
+                % wrong
               </p>
             </CardContent>
           </Card>
 
           <Card className="border-2 shadow-lg hover:shadow-xl transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Thời gian</CardTitle>
+              <CardTitle className="text-sm font-medium">Time Taken</CardTitle>
               <Clock className="h-5 w-5 text-blue-600" />
             </CardHeader>
             <CardContent>
@@ -242,9 +241,9 @@ export default function QuizResultPage() {
         {/* Answer Review */}
         <Card className="border-2 shadow-lg">
           <CardHeader className="bg-gradient-to-r from-primary/5 to-purple-50 border-b-2">
-            <CardTitle className="text-2xl">Xem lại đáp án</CardTitle>
+            <CardTitle className="text-2xl">Review Answers</CardTitle>
             <CardDescription className="text-base">
-              Xem lại câu trả lời của bạn và đáp án đúng
+              Review your answers and the correct solutions
             </CardDescription>
           </CardHeader>
           <CardContent className="p-6 space-y-8">
@@ -265,7 +264,7 @@ export default function QuizResultPage() {
                       variant="outline"
                       className="text-base px-4 py-2 mt-1"
                     >
-                      Câu {qIndex + 1}
+                      Question {qIndex + 1}
                     </Badge>
                     <div className="flex-1">
                       <div className="flex items-start justify-between gap-4 mb-4">
@@ -279,12 +278,12 @@ export default function QuizResultPage() {
                               className="text-sm bg-blue-100 text-blue-700"
                             >
                               {question.questionType === "SingleChoice"
-                                ? "Một đáp án"
-                                : "Nhiều đáp án"}
+                                ? "Single Choice"
+                                : "Multiple Choice"}
                             </Badge>
                             {getLevelBadge(question.level, question.isHidden)}
                             <Badge variant="outline" className="text-sm">
-                              {question.score} điểm
+                              {question.score} points
                             </Badge>
                           </div>
                         </div>
@@ -292,7 +291,7 @@ export default function QuizResultPage() {
                           {isCorrect ? (
                             <Badge className="bg-green-600 text-white px-4 py-2 text-base">
                               <CheckCircle2 className="h-4 w-4 mr-2" />
-                              Đúng
+                              Correct
                             </Badge>
                           ) : (
                             <Badge
@@ -300,7 +299,7 @@ export default function QuizResultPage() {
                               className="px-4 py-2 text-base"
                             >
                               <XCircle className="h-4 w-4 mr-2" />
-                              Sai
+                              Incorrect
                             </Badge>
                           )}
                         </div>
@@ -315,13 +314,12 @@ export default function QuizResultPage() {
                           return (
                             <div
                               key={aIndex}
-                              className={`p-4 rounded-xl border-2 transition-all ${
-                                isCorrectAnswer
+                              className={`p-4 rounded-xl border-2 transition-all ${isCorrectAnswer
                                   ? "border-green-500 bg-green-50 shadow-md"
                                   : isUserAnswer
                                     ? "border-red-500 bg-red-50 shadow-md"
                                     : "border-gray-200 bg-white"
-                              }`}
+                                }`}
                             >
                               <div className="flex items-center gap-3">
                                 <span className="font-mono text-base font-bold bg-primary/10 px-3 py-1 rounded">
@@ -332,12 +330,12 @@ export default function QuizResultPage() {
                                 </span>
                                 {isCorrectAnswer && (
                                   <Badge className="bg-green-600 text-white">
-                                    Đáp án đúng
+                                    Correct Answer
                                   </Badge>
                                 )}
                                 {isUserAnswer && !isCorrectAnswer && (
                                   <Badge variant="destructive">
-                                    Bạn đã chọn
+                                    You selected
                                   </Badge>
                                 )}
                               </div>
@@ -366,7 +364,7 @@ export default function QuizResultPage() {
             className="px-8"
           >
             <Home className="mr-2 h-5 w-5" />
-            Về danh sách
+            Back to List
           </Button>
           <Button
             size="lg"
@@ -374,7 +372,7 @@ export default function QuizResultPage() {
             className="px-8 bg-primary hover:bg-primary/90"
           >
             <RotateCcw className="mr-2 h-5 w-5" />
-            Làm lại
+            Try Again
           </Button>
         </div>
       </div>

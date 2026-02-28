@@ -13,7 +13,7 @@ export function MentorProfile() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Profile</h1>
         <p className="text-sm text-muted-foreground">
-          Thông tin cơ bản của mentor.
+          This page shows basic information about the mentor. Currently, you can only view; edit profile functionality will be implemented soon.
         </p>
       </div>
 
