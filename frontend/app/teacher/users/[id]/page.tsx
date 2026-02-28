@@ -20,12 +20,7 @@ export default function UserDetailPage() {
 
   const { data: user, isLoading, error } = useGetUserById(userId);
 
-<<<<<<< HEAD
   const getRoleBadgeVariant = (role: string) => {
-=======
-  const getRoleBadgeVariant = (roles: string[]) => {
-    const role = roles[0] || "";
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
     switch (role) {
       case "Admin":
         return "destructive";
@@ -97,16 +92,8 @@ export default function UserDetailPage() {
               <CardTitle>Thông tin cá nhân</CardTitle>
               <CardDescription>ID: {user.id}</CardDescription>
             </div>
-<<<<<<< HEAD
             <Badge variant={getRoleBadgeVariant(user.role)} className="text-sm">
               {user.role}
-=======
-            <Badge
-              variant={getRoleBadgeVariant(user.roles)}
-              className="text-sm"
-            >
-              {user.roles.join(", ")}
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
             </Badge>
           </div>
         </CardHeader>
@@ -147,7 +134,6 @@ export default function UserDetailPage() {
             </div>
 
             <div className="flex items-start gap-3">
-<<<<<<< HEAD
               <Clock className="h-5 w-5 text-muted-foreground mt-0.5" />
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
@@ -159,11 +145,6 @@ export default function UserDetailPage() {
                     : "Chưa đăng nhập"}
                 </p>
               </div>
-=======
-              <Badge variant={user.isActive ? "default" : "secondary"}>
-                {user.isActive ? "Hoạt động" : "Không hoạt động"}
-              </Badge>
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
             </div>
           </div>
         </CardContent>

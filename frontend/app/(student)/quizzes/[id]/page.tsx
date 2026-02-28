@@ -52,33 +52,21 @@ export default function TakeQuizPage() {
         return (
           <Badge className="bg-green-600 hover:bg-green-700">
             <Award className="h-3 w-3 mr-1" />
-<<<<<<< HEAD
             Dễ
-=======
-            Easy
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
           </Badge>
         );
       case QuizletLevel.Medium:
         return (
           <Badge className="bg-yellow-600 hover:bg-yellow-700">
             <Award className="h-3 w-3 mr-1" />
-<<<<<<< HEAD
             Trung bình
-=======
-            Medium
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
           </Badge>
         );
       case QuizletLevel.Hard:
         return (
           <Badge className="bg-red-600 hover:bg-red-700">
             <Award className="h-3 w-3 mr-1" />
-<<<<<<< HEAD
             Khó
-=======
-            Hard
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
           </Badge>
         );
       default:
@@ -90,11 +78,7 @@ export default function TakeQuizPage() {
     return (
       <div className="container mx-auto p-6">
         <div className="text-center py-12">
-<<<<<<< HEAD
           <p className="text-muted-foreground">Đang tải bài thi...</p>
-=======
-          <p className="text-muted-foreground">Loading quiz...</p>
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
         </div>
       </div>
     );
@@ -104,15 +88,9 @@ export default function TakeQuizPage() {
     return (
       <div className="container mx-auto p-6">
         <div className="text-center py-12">
-<<<<<<< HEAD
           <p className="text-destructive">Không tìm thấy bài thi</p>
           <Button className="mt-4" onClick={() => router.back()}>
             Quay lại
-=======
-          <p className="text-destructive">Quiz not found</p>
-          <Button className="mt-4" onClick={() => router.back()}>
-            Go back
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
           </Button>
         </div>
       </div>
@@ -155,13 +133,8 @@ export default function TakeQuizPage() {
   const handleNext = () => {
     if (selectedAnswers.length === 0) {
       toast({
-<<<<<<< HEAD
         title: "Vui lòng chọn đáp án",
         description: "Bạn phải chọn ít nhất một đáp án trước khi tiếp tục",
-=======
-        title: "Please select an answer",
-        description: "You must choose at least one answer before continuing",
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
         variant: "destructive",
       });
       return;
@@ -181,13 +154,8 @@ export default function TakeQuizPage() {
   const handleSubmit = () => {
     if (answers.length < totalQuestions) {
       toast({
-<<<<<<< HEAD
         title: "Chưa hoàn thành",
         description: "Vui lòng trả lời tất cả câu hỏi trước khi nộp bài",
-=======
-        title: "Incomplete",
-        description: "Please answer all questions before submitting",
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
         variant: "destructive",
       });
       return;
@@ -259,11 +227,7 @@ export default function TakeQuizPage() {
                     {quizlet.title}
                   </h1>
                   <p className="text-sm text-muted-foreground">
-<<<<<<< HEAD
                     Câu hỏi {currentQuestion + 1} / {totalQuestions}
-=======
-                    Question {currentQuestion + 1} / {totalQuestions}
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                   </p>
                 </div>
               </div>
@@ -287,11 +251,7 @@ export default function TakeQuizPage() {
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-3">
                   <Badge variant="outline" className="text-base px-3 py-1">
-<<<<<<< HEAD
                     Câu {currentQuestion + 1}
-=======
-                    Question {currentQuestion + 1}
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                   </Badge>
                   {getLevelBadge(question.level, question.isHidden)}
                 </div>
@@ -304,7 +264,6 @@ export default function TakeQuizPage() {
                     className="text-sm bg-blue-100 text-blue-700"
                   >
                     {question.questionType === "SingleChoice"
-<<<<<<< HEAD
                       ? "Một đáp án"
                       : "Nhiều đáp án"}
                   </Badge>
@@ -312,15 +271,6 @@ export default function TakeQuizPage() {
                     {question.questionType === "SingleChoice"
                       ? "Chọn một đáp án đúng"
                       : "Chọn tất cả đáp án đúng"}
-=======
-                      ? "Single Choice"
-                      : "Multiple Choice"}
-                  </Badge>
-                  <span className="text-base">
-                    {question.questionType === "SingleChoice"
-                      ? "Select one correct answer"
-                      : "Select all correct answers"}
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                   </span>
                 </CardDescription>
               </div>
@@ -328,11 +278,7 @@ export default function TakeQuizPage() {
                 variant="secondary"
                 className="text-lg px-4 py-2 bg-blue-100 text-blue-700"
               >
-<<<<<<< HEAD
                 {question.score} điểm
-=======
-                {question.score} points
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
               </Badge>
             </div>
           </CardHeader>
@@ -343,7 +289,6 @@ export default function TakeQuizPage() {
                 <button
                   key={index}
                   onClick={() => handleAnswerToggle(answer)}
-<<<<<<< HEAD
                   className={`w-full text-left p-5 rounded-xl border-2 transition-all duration-200 ${
                     isSelected
                       ? "border-primary bg-primary/10 shadow-md scale-[1.02]"
@@ -357,19 +302,6 @@ export default function TakeQuizPage() {
                           ? "border-primary bg-primary"
                           : "border-gray-300"
                       }`}
-=======
-                  className={`w-full text-left p-5 rounded-xl border-2 transition-all duration-200 ${isSelected
-                      ? "border-primary bg-primary/10 shadow-md scale-[1.02]"
-                      : "border-gray-200 hover:border-primary/50 hover:bg-gray-50"
-                    }`}
-                >
-                  <div className="flex items-center gap-4">
-                    <div
-                      className={`shrink-0 w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all ${isSelected
-                          ? "border-primary bg-primary"
-                          : "border-gray-300"
-                        }`}
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                     >
                       {isSelected && (
                         <CheckCircle2 className="h-5 w-5 text-white" />
@@ -397,11 +329,7 @@ export default function TakeQuizPage() {
                 size="lg"
                 className="px-8"
               >
-<<<<<<< HEAD
                 Câu trước
-=======
-                Previous
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
               </Button>
 
               <div className="flex flex-wrap gap-2 justify-center">
@@ -413,21 +341,13 @@ export default function TakeQuizPage() {
                     <button
                       key={index}
                       onClick={() => setCurrentQuestion(index)}
-<<<<<<< HEAD
                       className={`w-10 h-10 rounded-lg text-sm font-bold transition-all ${
                         index === currentQuestion
-=======
-                      className={`w-10 h-10 rounded-lg text-sm font-bold transition-all ${index === currentQuestion
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                           ? "bg-primary text-white shadow-lg scale-110"
                           : hasAnswer
                             ? "bg-green-500 text-white border-2 border-green-600"
                             : "bg-gray-200 text-gray-600 hover:bg-gray-300"
-<<<<<<< HEAD
                       }`}
-=======
-                        }`}
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                     >
                       {index + 1}
                     </button>
@@ -442,39 +362,23 @@ export default function TakeQuizPage() {
                   size="lg"
                   className="px-8 bg-green-600 hover:bg-green-700"
                 >
-<<<<<<< HEAD
                   {isSubmitting ? "Đang nộp bài..." : "Nộp bài"}
                 </Button>
               ) : (
                 <Button onClick={handleNext} size="lg" className="px-8">
                   Câu tiếp
-=======
-                  {isSubmitting ? "Submitting..." : "Submit"}
-                </Button>
-              ) : (
-                <Button onClick={handleNext} size="lg" className="px-8">
-                  Next
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                 </Button>
               )}
             </div>
             <div className="text-center text-sm text-muted-foreground">
               <span className="inline-flex items-center gap-2">
                 <span className="w-4 h-4 bg-green-500 rounded"></span>
-<<<<<<< HEAD
                 Đã trả lời
-=======
-                Answered
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
               </span>
               <span className="mx-3">•</span>
               <span className="inline-flex items-center gap-2">
                 <span className="w-4 h-4 bg-gray-200 rounded"></span>
-<<<<<<< HEAD
                 Chưa trả lời
-=======
-                Unanswered
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
               </span>
             </div>
           </CardContent>

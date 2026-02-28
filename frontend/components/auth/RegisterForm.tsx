@@ -16,10 +16,7 @@ import {
 } from "@/components/ui/card";
 import { AlertCircle, Eye, EyeOff } from "lucide-react";
 import { useRegister } from "@/service";
-<<<<<<< HEAD
 import { useAuthStore } from "@/store/auth.store";
-=======
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
 
 export function RegisterForm() {
   const router = useRouter();
@@ -104,24 +101,15 @@ export function RegisterForm() {
       {
         email,
         password,
-<<<<<<< HEAD
         firstName: firstName || undefined,
         lastName: lastName || undefined,
-=======
-        firstName: firstName || "", // Send empty string instead of undefined
-        lastName: lastName || "", // Send empty string instead of undefined
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
         confirmPassword,
       },
       {
         onSuccess: () => {
           // Show success message
           setSuccessMessage(
-<<<<<<< HEAD
             "Đăng ký thành công! Đang chuyển đến trang đăng nhập...",
-=======
-            "Registration successful! Redirecting to login page...",
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
           );
           setErrors({});
 
@@ -133,11 +121,7 @@ export function RegisterForm() {
         onError: (error: Error) => {
           setSuccessMessage("");
           setErrors({
-<<<<<<< HEAD
             general: error.message || "Đăng ký thất bại. Vui lòng thử lại.",
-=======
-            general: error.message || "Registration failed. Please try again.",
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
           });
         },
       },
@@ -145,15 +129,9 @@ export function RegisterForm() {
   };
 
   return (
-<<<<<<< HEAD
     <Card className="w-full max-w-md">
       <CardHeader>
         <CardTitle>Register</CardTitle>
-=======
-    <Card className="w-full max-w-md shadow-xl">
-      <CardHeader>
-        <CardTitle className="text-2xl">Register</CardTitle>
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
         <CardDescription>Create a new account to get started</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
@@ -240,15 +218,9 @@ export function RegisterForm() {
                 tabIndex={-1}
               >
                 {showPassword ? (
-<<<<<<< HEAD
                   <EyeOff className="h-4 w-4" />
                 ) : (
                   <Eye className="h-4 w-4" />
-=======
-                  <Eye className="h-4 w-4" />
-                ) : (
-                  <EyeOff className="h-4 w-4" />
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                 )}
               </button>
             </div>
@@ -264,11 +236,7 @@ export function RegisterForm() {
               <Input
                 id="confirmPassword"
                 type={showConfirmPassword ? "text" : "password"}
-<<<<<<< HEAD
                 placeholder="Confirm your password"
-=======
-                placeholder="Re-enter your password"
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                 value={confirmPassword}
                 onChange={(e) => {
                   setConfirmPassword(e.target.value);
@@ -287,15 +255,9 @@ export function RegisterForm() {
                 tabIndex={-1}
               >
                 {showConfirmPassword ? (
-<<<<<<< HEAD
                   <EyeOff className="h-4 w-4" />
                 ) : (
                   <Eye className="h-4 w-4" />
-=======
-                  <Eye className="h-4 w-4" />
-                ) : (
-                  <EyeOff className="h-4 w-4" />
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                 )}
               </button>
             </div>

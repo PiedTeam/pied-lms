@@ -103,13 +103,8 @@ public class TestCaseEndpoints : ICarterModule
             testcaseId,
             request.ExamId,
             request.Index,
-<<<<<<< HEAD
             request.Input,
             request.Output,
-=======
-            request.InputPath,
-            request.OutputPath,
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
             request.IsHidden
         );
         var result = await mediator.Send(command);
@@ -155,12 +150,7 @@ public class TestCaseEndpoints : ICarterModule
 public sealed record UpdateTestCaseRequest(
     Guid ExamId,
     int Index,
-<<<<<<< HEAD
     string Input,
     string Output,
-=======
-    string InputPath,
-    string OutputPath,
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
     bool IsHidden
 );

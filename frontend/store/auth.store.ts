@@ -44,16 +44,12 @@ export const useAuthStore = create<AuthState>()(
           user,
           isAuthenticated: !!accessToken,
         }),
-      logout: () => {
-        // Clear auth data but preserve exam scores
+      logout: () =>
         set({
           token: null,
           user: null,
           isAuthenticated: false,
-        });
-        // Note: exam_scores in localStorage will NOT be cleared
-        // Only auth-storage will be cleared by zustand persist
-      },
+        }),
       setHasHydrated: (state) => {
         set({
           _hasHydrated: state,

@@ -96,12 +96,6 @@ export function useGetExamsByAdmin(params: GetExamsRequest = {}) {
   });
 }
 
-<<<<<<< HEAD
-=======
-// Alias for useGetExamsByAdmin (for consistency)
-export const useGetAllExams = useGetExamsByAdmin;
-
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
 // Get Exam By ID
 export function useGetExamById(examId: string, enabled: boolean = true) {
   return useQuery({

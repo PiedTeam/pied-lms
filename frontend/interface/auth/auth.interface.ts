@@ -4,15 +4,9 @@
 export interface RegisterRequest {
   email: string;
   password: string;
-<<<<<<< HEAD
   firstName?: string;
   lastName?: string;
   confirmPassword?: string;
-=======
-  firstName: string;
-  lastName: string;
-  confirmPassword: string;
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
 }
 
 export interface RegisterResponse {
@@ -52,21 +46,6 @@ export interface LogoutResponse {
   message: string;
 }
 
-<<<<<<< HEAD
-=======
-// Reset Password
-export interface ResetPasswordRequest {
-  email: string;
-  token: string;
-  newPassword: string;
-}
-
-export interface ResetPasswordResponse {
-  success: boolean;
-  message: string;
-}
-
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
 // JWT Token Payload
 export interface JwtPayload {
   "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier": string;

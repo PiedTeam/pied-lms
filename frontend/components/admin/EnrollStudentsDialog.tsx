@@ -22,11 +22,7 @@ import {
   useEnrollStudents,
   useGetExamRoomEnrollments,
 } from "@/services";
-<<<<<<< HEAD
 import { EXAM_ROOM_MESSAGES } from "@/constants/messages.constants";
-=======
-import { EXAM_ROOM_MESSAGES } from "@/constants/messages";
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
 import type { UserResponse } from "@/interface/user/user.interface";
 import type { EnrollmentResultResponse } from "@/interface/exam-room/exam-room.interface";
 
@@ -98,11 +94,7 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
   const handleEnrollStudents = () => {
     if (selectedStudentIds.length === 0) {
       toast({
-<<<<<<< HEAD
         title: "Lỗi",
-=======
-        title: "Error",
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
         description: EXAM_ROOM_MESSAGES.ERROR.NO_STUDENTS_SELECTED,
         variant: "destructive",
       });
@@ -121,23 +113,14 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
           if (hasErrors) {
             // Show partial success with details
             toast({
-<<<<<<< HEAD
               title: "Thêm học sinh hoàn tất",
               description: `Thành công: ${result.successfulEnrollments}/${result.totalStudents}. Thất bại: ${result.failedEnrollments}`,
-=======
-              title: "Enrollment complete",
-              description: `Successful: ${result.successfulEnrollments}/${result.totalStudents}. Failed: ${result.failedEnrollments}`,
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
               variant: "default",
             });
           } else {
             // Show full success
             toast({
-<<<<<<< HEAD
               title: "Thành công",
-=======
-              title: "Success",
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
               description: EXAM_ROOM_MESSAGES.SUCCESS.STUDENTS_ENROLLED,
             });
           }
@@ -148,11 +131,7 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
         },
         onError: (error: Error) => {
           toast({
-<<<<<<< HEAD
             title: "Lỗi",
-=======
-            title: "Error",
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
             description:
               error.message || EXAM_ROOM_MESSAGES.ERROR.ENROLL_STUDENTS_FAILED,
             variant: "destructive",
@@ -173,7 +152,6 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
       <DialogTrigger asChild>
         <Button>
           <UserPlus className="mr-2 h-4 w-4" />
-<<<<<<< HEAD
           Thêm học sinh
         </Button>
       </DialogTrigger>
@@ -189,32 +167,11 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
           {/* Search Input */}
           <div className="grid gap-2">
             <Label htmlFor="search-students">Tìm kiếm học sinh</Label>
-=======
-          Enroll Students
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle>Enroll Students into Exam Room</DialogTitle>
-          <DialogDescription>
-            Select students to add to this exam room
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="grid gap-4 py-4 overflow-y-auto flex-1">
-          {/* Search Input */}
-          <div className="grid gap-2">
-            <Label htmlFor="search-students">Search Students</Label>
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 id="search-students"
-<<<<<<< HEAD
                 placeholder="Nhập tên hoặc email học sinh..."
-=======
-                placeholder="Enter student name or email..."
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
@@ -224,40 +181,24 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
 
           {/* Selected Count */}
           {selectedStudentIds.length > 0 && (
-<<<<<<< HEAD
             <div className="flex items-center justify-between px-1">
               <Badge variant="secondary">
                 Đã chọn: {selectedStudentIds.length}
-=======
-            <div className="flex items-center justify-between px-1 flex-shrink-0">
-              <Badge variant="secondary">
-                Selected: {selectedStudentIds.length}
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
               </Badge>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setSelectedStudentIds([])}
               >
-<<<<<<< HEAD
                 Bỏ chọn tất cả
-=======
-                Deselect All
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
               </Button>
             </div>
           )}
 
           {/* Students List */}
-<<<<<<< HEAD
           <div className="grid gap-2">
             <div className="flex items-center justify-between">
               <Label>Danh sách học sinh</Label>
-=======
-          <div className="grid gap-2 flex-1 min-h-0">
-            <div className="flex items-center justify-between flex-shrink-0">
-              <Label>Student List</Label>
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
               {filteredStudents.filter((s) => !enrolledStudentIds.has(s.id))
                 .length > 0 && (
                 <Button
@@ -269,18 +210,12 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
                   {selectedStudentIds.length ===
                   filteredStudents.filter((s) => !enrolledStudentIds.has(s.id))
                     .length
-<<<<<<< HEAD
                     ? "Bỏ chọn tất cả"
                     : "Chọn tất cả"}
-=======
-                    ? "Deselect All"
-                    : "Select All"}
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                 </Button>
               )}
             </div>
 
-<<<<<<< HEAD
             <div className="border rounded-lg max-h-[400px] overflow-y-auto">
               {isLoadingStudents ? (
                 <div className="text-center py-8 text-muted-foreground">
@@ -296,26 +231,6 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
                 </div>
               ) : (
                 <div className="divide-y">
-=======
-            <div
-              className="border rounded-lg overflow-hidden flex flex-col"
-              style={{ maxHeight: "300px" }}
-            >
-              {isLoadingStudents ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  Loading student list...
-                </div>
-              ) : students.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  No students in the system
-                </div>
-              ) : filteredStudents.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  No matching students found
-                </div>
-              ) : (
-                <div className="divide-y overflow-y-auto">
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                   {filteredStudents.map((student: UserResponse) => {
                     const isEnrolled = enrolledStudentIds.has(student.id);
                     const isSelected = selectedStudentIds.includes(student.id);
@@ -348,19 +263,11 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
                                 {student.firstName} {student.lastName}
                               </h4>
                               <Badge variant="outline" className="text-xs">
-<<<<<<< HEAD
                                 {student.role}
                               </Badge>
                               {isEnrolled && (
                                 <Badge variant="secondary" className="text-xs">
                                   Đã thêm
-=======
-                                {student.roles[0] || "N/A"}
-                              </Badge>
-                              {isEnrolled && (
-                                <Badge variant="secondary" className="text-xs">
-                                  Already Enrolled
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                                 </Badge>
                               )}
                             </div>
@@ -384,24 +291,15 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
             onClick={handleClose}
             disabled={isEnrolling}
           >
-<<<<<<< HEAD
             Hủy
-=======
-            Cancel
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
           </Button>
           <Button
             onClick={handleEnrollStudents}
             disabled={isEnrolling || selectedStudentIds.length === 0}
           >
             {isEnrolling
-<<<<<<< HEAD
               ? "Đang thêm..."
               : `Thêm ${selectedStudentIds.length > 0 ? `(${selectedStudentIds.length})` : ""}`}
-=======
-              ? "Enrolling..."
-              : `Enroll ${selectedStudentIds.length > 0 ? `(${selectedStudentIds.length})` : ""}`}
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
           </Button>
         </DialogFooter>
       </DialogContent>

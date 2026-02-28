@@ -44,12 +44,6 @@ public class AuthenticationEndpoints : ICarterModule
             .Produces<ServiceResponse<string>>()
             .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest);
 
-        group.MapPost("/reset-password", ResetPassword)
-            .WithName("ResetPassword")
-            .WithOpenApi()
-            .Produces<ServiceResponse<string>>()
-            .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest);
-
         group.MapPost("/assign-role", AssignRole)
             .WithName("AssignRole")
             .WithOpenApi()
@@ -218,21 +212,6 @@ public class AuthenticationEndpoints : ICarterModule
         return result.Success ? Results.Ok(result) : Results.BadRequest(result);
     }
 
-    private static async Task<IResult> ResetPassword(
-        ResetPasswordRequest request,
-        IMediator mediator,
-        CancellationToken cancellationToken)
-    {
-        var command = new PIED_LMS.Application.UserCases.Commands.Auth.ResetPasswordCommand(
-            request.Email,
-            request.Token,
-            request.NewPassword
-        );
-
-        var result = await mediator.Send(command, cancellationToken);
-        return result.Success ? Results.Ok(result) : Results.BadRequest(result);
-    }
-
     private static async Task<IResult> AssignRole(
         AssignRoleRequest request,
         IMediator mediator,
@@ -278,12 +257,6 @@ public sealed record ChangePasswordRequest(
     string CurrentPassword,
     string NewPassword,
     string ConfirmPassword
-);
-
-public sealed record ResetPasswordRequest(
-    string Email,
-    string Token,
-    string NewPassword
 );
 
 public sealed record AssignRoleRequest(

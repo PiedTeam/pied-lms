@@ -15,11 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useGetExamById, useUpdateExam } from "@/service";
-<<<<<<< HEAD
 import { EXAM_MESSAGES } from "@/constants/messages.constants";
-=======
-import { EXAM_MESSAGES } from "@/constants/messages";
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import type { UpdateExamRequest } from "@/interface/exam/exam.interface";

@@ -84,17 +84,10 @@ export function ExamsList({ basePath }: ExamsListProps) {
   // Apply search filter
   const filteredExams = searchQuery
     ? allExams.filter(
-<<<<<<< HEAD
         (exam) =>
           exam.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
           exam.description?.toLowerCase().includes(searchQuery.toLowerCase()),
       )
-=======
-      (exam) =>
-        exam.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        exam.description?.toLowerCase().includes(searchQuery.toLowerCase()),
-    )
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
     : allExams;
 
   const currentExams =
@@ -132,13 +125,8 @@ export function ExamsList({ basePath }: ExamsListProps) {
     createExam(formData, {
       onSuccess: () => {
         toast({
-<<<<<<< HEAD
           title: "Thành công",
           description: "Đề thi đã được tạo thành công",
-=======
-          title: "Success",
-          description: "Exam created successfully",
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
         });
         setIsCreateDialogOpen(false);
         setFormData({
@@ -150,13 +138,8 @@ export function ExamsList({ basePath }: ExamsListProps) {
       },
       onError: (error: Error) => {
         toast({
-<<<<<<< HEAD
           title: "Lỗi",
           description: error.message || "Không thể tạo đề thi",
-=======
-          title: "Error",
-          description: error.message || "Failed to create exam",
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
           variant: "destructive",
         });
       },
@@ -169,25 +152,15 @@ export function ExamsList({ basePath }: ExamsListProps) {
     deleteExam(deleteExamId, {
       onSuccess: () => {
         toast({
-<<<<<<< HEAD
           title: "Thành công",
           description: "Đề thi đã được ẩn thành công",
-=======
-          title: "Success",
-          description: "Exam hidden successfully",
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
         });
         setDeleteExamId(null);
       },
       onError: (error: Error) => {
         toast({
-<<<<<<< HEAD
           title: "Lỗi",
           description: error.message || "Không thể ẩn đề thi",
-=======
-          title: "Error",
-          description: error.message || "Failed to hide exam",
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
           variant: "destructive",
         });
       },
@@ -198,52 +171,30 @@ export function ExamsList({ basePath }: ExamsListProps) {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-<<<<<<< HEAD
           <h1 className="text-3xl font-bold tracking-tight">Đề Thi</h1>
           <p className="text-muted-foreground">Quản lý các đề thi</p>
-=======
-          <h1 className="text-3xl font-bold tracking-tight">Exams</h1>
-          <p className="text-muted-foreground">Manage exams</p>
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="mr-2 h-4 w-4" />
-<<<<<<< HEAD
               Tạo Đề Thi
-=======
-              Create Exam
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[600px]">
             <form onSubmit={handleCreateSubmit}>
               <DialogHeader>
-<<<<<<< HEAD
                 <DialogTitle>Tạo Đề Thi Mới</DialogTitle>
                 <DialogDescription>Nhập thông tin đề thi</DialogDescription>
-=======
-                <DialogTitle>Create New Exam</DialogTitle>
-                <DialogDescription>Enter exam information</DialogDescription>
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
                   <Label htmlFor="title">
-<<<<<<< HEAD
                     Tên Đề Thi <span className="text-red-500">*</span>
                   </Label>
                   <Input
                     id="title"
                     placeholder="VD: Đề thi giữa kỳ"
-=======
-                    Exam Title <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="title"
-                    placeholder="e.g. Midterm Exam"
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                     value={formData.title}
                     onChange={(e) =>
                       setFormData({ ...formData, title: e.target.value })
@@ -252,17 +203,10 @@ export function ExamsList({ basePath }: ExamsListProps) {
                   />
                 </div>
                 <div className="grid gap-2">
-<<<<<<< HEAD
                   <Label htmlFor="description">Mô Tả</Label>
                   <Textarea
                     id="description"
                     placeholder="Mô tả về đề thi"
-=======
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    placeholder="Exam description"
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                     value={formData.description}
                     onChange={(e) =>
                       setFormData({ ...formData, description: e.target.value })
@@ -273,11 +217,7 @@ export function ExamsList({ basePath }: ExamsListProps) {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
                     <Label htmlFor="totalMarks">
-<<<<<<< HEAD
                       Tổng Điểm <span className="text-red-500">*</span>
-=======
-                      Total Score <span className="text-red-500">*</span>
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                     </Label>
                     <Input
                       id="totalMarks"
@@ -296,11 +236,7 @@ export function ExamsList({ basePath }: ExamsListProps) {
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="passingMarks">
-<<<<<<< HEAD
                       Điểm Đạt <span className="text-red-500">*</span>
-=======
-                      Passing Score <span className="text-red-500">*</span>
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                     </Label>
                     <Input
                       id="passingMarks"
@@ -326,17 +262,10 @@ export function ExamsList({ basePath }: ExamsListProps) {
                   onClick={() => setIsCreateDialogOpen(false)}
                   disabled={isCreating}
                 >
-<<<<<<< HEAD
                   Hủy
                 </Button>
                 <Button type="submit" disabled={isCreating}>
                   {isCreating ? "Đang tạo..." : "Tạo Đề Thi"}
-=======
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={isCreating}>
-                  {isCreating ? "Creating..." : "Create Exam"}
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                 </Button>
               </DialogFooter>
             </form>
@@ -350,13 +279,8 @@ export function ExamsList({ basePath }: ExamsListProps) {
         className="space-y-6"
       >
         <TabsList className="grid w-full grid-cols-2">
-<<<<<<< HEAD
           <TabsTrigger value="active">Đang hoạt động</TabsTrigger>
           <TabsTrigger value="archived">Đã ẩn</TabsTrigger>
-=======
-          <TabsTrigger value="active">Active</TabsTrigger>
-          <TabsTrigger value="archived">Hidden</TabsTrigger>
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
         </TabsList>
 
         <TabsContent value={activeTab} className="space-y-4">
@@ -364,24 +288,14 @@ export function ExamsList({ basePath }: ExamsListProps) {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-<<<<<<< HEAD
                   <CardTitle>Danh Sách Đề Thi</CardTitle>
                   <CardDescription>
                     Trang {pageNumber} / {totalPages} - Tổng: {totalCount}
-=======
-                  <CardTitle>Exam List</CardTitle>
-                  <CardDescription>
-                    Page {pageNumber} / {totalPages} - Total: {totalCount}
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                   </CardDescription>
                 </div>
                 <div className="w-72">
                   <Input
-<<<<<<< HEAD
                     placeholder="Tìm kiếm đề thi..."
-=======
-                    placeholder="Search exams..."
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full"
@@ -407,29 +321,17 @@ export function ExamsList({ basePath }: ExamsListProps) {
                   {!currentExams.length ? (
                     <div className="text-center py-8 text-muted-foreground">
                       {activeTab === "active"
-<<<<<<< HEAD
                         ? "Chưa có đề thi nào. Tạo đề thi đầu tiên!"
                         : "Không có đề thi nào đã ẩn."}
-=======
-                        ? "No exams yet. Create your first exam!"
-                        : "No hidden exams."}
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                     </div>
                   ) : (
                     <Table>
                       <TableHeader>
                         <TableRow>
-<<<<<<< HEAD
                           <TableHead>Tên Đề Thi</TableHead>
                           <TableHead>Mô Tả</TableHead>
                           <TableHead>Điểm</TableHead>
                           <TableHead className="text-right">Thao Tác</TableHead>
-=======
-                          <TableHead>Exam Title</TableHead>
-                          <TableHead>Description</TableHead>
-                          <TableHead>Score</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -445,11 +347,7 @@ export function ExamsList({ basePath }: ExamsListProps) {
                                 {exam.title}
                                 {isArchived && (
                                   <span className="ml-2 text-xs text-muted-foreground">
-<<<<<<< HEAD
                                     (Đã ẩn)
-=======
-                                    (Hidden)
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                                   </span>
                                 )}
                               </TableCell>
@@ -459,17 +357,10 @@ export function ExamsList({ basePath }: ExamsListProps) {
                               <TableCell>
                                 <div className="flex items-center gap-2">
                                   <Badge variant="outline">
-<<<<<<< HEAD
                                     Tổng: {exam.totalMarks}
                                   </Badge>
                                   <Badge variant="secondary">
                                     Đạt: {exam.passingMarks}
-=======
-                                    Total: {exam.totalMarks}
-                                  </Badge>
-                                  <Badge variant="secondary">
-                                    Pass: {exam.passingMarks}
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                                   </Badge>
                                 </div>
                               </TableCell>
@@ -483,11 +374,7 @@ export function ExamsList({ basePath }: ExamsListProps) {
                                         `${basePath}/exams/${exam.id}`,
                                       )
                                     }
-<<<<<<< HEAD
                                     title="Xem chi tiết"
-=======
-                                    title="View details"
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                                   >
                                     <Eye className="h-4 w-4" />
                                   </Button>
@@ -501,11 +388,7 @@ export function ExamsList({ basePath }: ExamsListProps) {
                                             `${basePath}/exams/${exam.id}/edit`,
                                           )
                                         }
-<<<<<<< HEAD
                                         title="Chỉnh sửa"
-=======
-                                        title="Edit"
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                                       >
                                         <Pencil className="h-4 w-4" />
                                       </Button>
@@ -513,11 +396,7 @@ export function ExamsList({ basePath }: ExamsListProps) {
                                         variant="ghost"
                                         size="icon"
                                         onClick={() => setDeleteExamId(exam.id)}
-<<<<<<< HEAD
                                         title="Ẩn đề thi"
-=======
-                                        title="Hide exam"
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                                       >
                                         <Archive className="h-4 w-4" />
                                       </Button>
@@ -540,11 +419,7 @@ export function ExamsList({ basePath }: ExamsListProps) {
                         size="icon"
                         onClick={handlePrevPage}
                         disabled={pageNumber === 1 || isLoading}
-<<<<<<< HEAD
                         title="Trang trước"
-=======
-                        title="Previous page"
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                       >
                         &lt;
                       </Button>
@@ -554,11 +429,7 @@ export function ExamsList({ basePath }: ExamsListProps) {
                         size="icon"
                         onClick={handleNextPage}
                         disabled={pageNumber >= totalPages || isLoading}
-<<<<<<< HEAD
                         title="Trang sau"
-=======
-                        title="Next page"
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                       >
                         &gt;
                       </Button>
@@ -577,7 +448,6 @@ export function ExamsList({ basePath }: ExamsListProps) {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-<<<<<<< HEAD
             <AlertDialogTitle>Xác nhận ẩn đề thi</AlertDialogTitle>
             <AlertDialogDescription>
               Bạn có chắc chắn muốn ẩn đề thi này? Đề thi sẽ không hiển thị
@@ -587,27 +457,12 @@ export function ExamsList({ basePath }: ExamsListProps) {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>Hủy</AlertDialogCancel>
-=======
-            <AlertDialogTitle>Confirm Hide Exam</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to hide this exam? The exam will not appear
-              in the list but data will still be stored. Admin can restore it
-              later if needed.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
             <AlertDialogAction
               onClick={handleDelete}
               disabled={isDeleting}
               className="bg-orange-600 text-white hover:bg-orange-700"
             >
-<<<<<<< HEAD
               {isDeleting ? "Đang ẩn..." : "Ẩn đề thi"}
-=======
-              {isDeleting ? "Hiding..." : "Hide Exam"}
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

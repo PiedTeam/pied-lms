@@ -21,10 +21,6 @@ export interface ExamRoomResponse {
   deletedAt: string | null;
   createdAt?: string;
   exams?: ExamRoomExamResponse[]; // For student exam rooms page
-<<<<<<< HEAD
-=======
-  examCount?: number; // Number of exams in the room (from backend)
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
   roomCode?: string; // For joining rooms
 }
 

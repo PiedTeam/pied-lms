@@ -10,11 +10,7 @@ import type {
   StudentQuizletResponse,
   StudentQuizletSummaryResponse,
 } from "@/interface/quizlet/quizlet.interface";
-<<<<<<< HEAD
 import { QUIZLET_MESSAGES } from "@/constants/messages.constants";
-=======
-import { QUIZLET_MESSAGES } from "@/constants/messages";
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
 
 // Get Student Quizlets Summary (GET /api/students/quizlets)
 export function useGetStudentQuizlets() {

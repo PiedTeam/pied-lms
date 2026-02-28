@@ -34,20 +34,12 @@ const menuItems = [
     icon: LayoutDashboard,
   },
   {
-<<<<<<< HEAD
     title: "Phòng thi",
-=======
-    title: "Exam Rooms",
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
     href: "/mentor/exam-rooms",
     icon: DoorOpen,
   },
   {
-<<<<<<< HEAD
     title: "Đề thi",
-=======
-    title: "Exams",
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
     href: "/mentor/exams",
     icon: FileText,
   },

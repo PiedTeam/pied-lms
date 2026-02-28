@@ -36,7 +36,7 @@ export default function MentorHistoryPage() {
 					<CardTitle className="text-base">Notes</CardTitle>
 				</CardHeader>
 				<CardContent className="text-sm text-muted-foreground">
-					Mentor can view the public history board; filters and pagination will be added when connecting to the API.
+					Mentor có quyền xem bảng history công khai; phần lọc/pagination sẽ làm khi nối API.
 				</CardContent>
 			</Card>
 		</div>

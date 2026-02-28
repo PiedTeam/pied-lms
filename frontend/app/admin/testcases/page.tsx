@@ -79,11 +79,7 @@ export default function AdminTestCasesPage() {
                 onClick={() => router.push(`/admin/exams/${selectedExam.id}`)}
               >
                 <Eye className="h-4 w-4 mr-2" />
-<<<<<<< HEAD
                 Xem Đề Thi
-=======
-                View Exam
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
               </Button>
             </CardHeader>
             <CardContent>

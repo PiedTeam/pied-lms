@@ -16,11 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { useToast } from "@/hooks/use-toast";
 import { useGetExamRoomById, useUpdateExamRoom } from "@/service";
-<<<<<<< HEAD
 import { EXAM_ROOM_MESSAGES } from "@/constants/messages.constants";
-=======
-import { EXAM_ROOM_MESSAGES } from "@/constants/messages";
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
 import { useEffect, useState } from "react";
 import type { UpdateExamRoomRequest } from "@/interface/exam-room/exam-room.interface";
 
@@ -60,78 +56,22 @@ export default function EditExamRoomPage() {
     }
   }, [room]);
 
-<<<<<<< HEAD
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-=======
-  // Auto-calculate duration when start or end time changes
-  useEffect(() => {
-    if (formData.startTime && formData.endTime) {
-      const start = new Date(formData.startTime);
-      const end = new Date(formData.endTime);
-      const diffInMinutes = Math.round(
-        (end.getTime() - start.getTime()) / (1000 * 60),
-      );
-
-      if (diffInMinutes > 0) {
-        setFormData((prev) => ({
-          ...prev,
-          durationInMinutes: diffInMinutes,
-        }));
-      }
-    }
-  }, [formData.startTime, formData.endTime]);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Validate start time is not in the past
-    const now = new Date();
-    const startTime = new Date(formData.startTime);
-
-    if (startTime < now) {
-      toast({
-        title: "Error",
-        description: "Start time cannot be in the past",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Validate end time is after start time
-    const endTime = new Date(formData.endTime);
-    if (endTime <= startTime) {
-      toast({
-        title: "Error",
-        description: "End time must be after start time",
-        variant: "destructive",
-      });
-      return;
-    }
-
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
     updateRoom(
       { roomId, payload: formData },
       {
         onSuccess: () => {
           toast({
-<<<<<<< HEAD
             title: "Thành công",
-=======
-            title: "Success",
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
             description: EXAM_ROOM_MESSAGES.SUCCESS.UPDATED,
           });
           router.push(`/admin/exam-rooms`);
         },
         onError: (error: Error) => {
           toast({
-<<<<<<< HEAD
             title: "Lỗi",
-=======
-            title: "Error",
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
             description:
               error.message || EXAM_ROOM_MESSAGES.ERROR.UPDATE_FAILED,
             variant: "destructive",
@@ -144,11 +84,7 @@ export default function EditExamRoomPage() {
   if (isLoading) {
     return (
       <div className="container mx-auto p-6">
-<<<<<<< HEAD
         <div className="text-center py-8">Đang tải...</div>
-=======
-        <div className="text-center py-8">Loading...</div>
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
       </div>
     );
   }
@@ -156,11 +92,7 @@ export default function EditExamRoomPage() {
   if (!room) {
     return (
       <div className="container mx-auto p-6">
-<<<<<<< HEAD
         <div className="text-center py-8">Không tìm thấy phòng thi</div>
-=======
-        <div className="text-center py-8">Exam room not found</div>
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
       </div>
     );
   }
@@ -176,48 +108,29 @@ export default function EditExamRoomPage() {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
-<<<<<<< HEAD
           <h1 className="text-3xl font-bold tracking-tight">
             Chỉnh sửa phòng thi
           </h1>
           <p className="text-muted-foreground">Cập nhật thông tin phòng thi</p>
-=======
-          <h1 className="text-3xl font-bold tracking-tight">Edit Exam Room</h1>
-          <p className="text-muted-foreground">Update exam room information</p>
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
         </div>
       </div>
 
       <Card>
         <CardHeader>
-<<<<<<< HEAD
           <CardTitle>Thông tin phòng thi</CardTitle>
           <CardDescription>
             Nhập thông tin chi tiết về phòng thi
-=======
-          <CardTitle>Exam Room Information</CardTitle>
-          <CardDescription>
-            Enter detailed information about the exam room
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid gap-2">
               <Label htmlFor="name">
-<<<<<<< HEAD
                 Tên phòng thi <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="name"
                 placeholder="Ví dụ: Phòng thi giữa kỳ"
-=======
-                Exam Room Name <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="name"
-                placeholder="e.g. Midterm Exam Room"
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                 value={formData.name}
                 onChange={(e) =>
                   setFormData({ ...formData, name: e.target.value })
@@ -227,17 +140,10 @@ export default function EditExamRoomPage() {
             </div>
 
             <div className="grid gap-2">
-<<<<<<< HEAD
               <Label htmlFor="description">Mô tả</Label>
               <Textarea
                 id="description"
                 placeholder="Mô tả về phòng thi"
-=======
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                placeholder="Description of the exam room"
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                 value={formData.description}
                 onChange={(e) =>
                   setFormData({ ...formData, description: e.target.value })
@@ -249,53 +155,33 @@ export default function EditExamRoomPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="startTime">
-<<<<<<< HEAD
                   Thời gian bắt đầu <span className="text-red-500">*</span>
-=======
-                  Start Time <span className="text-red-500">*</span>
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                 </Label>
                 <DateTimePicker
                   value={formData.startTime}
                   onChange={(value) =>
                     setFormData({ ...formData, startTime: value })
                   }
-<<<<<<< HEAD
                   placeholder="Chọn thời gian bắt đầu"
-=======
-                  placeholder="Select start time"
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                 />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="endTime">
-<<<<<<< HEAD
                   Thời gian kết thúc <span className="text-red-500">*</span>
-=======
-                  End Time <span className="text-red-500">*</span>
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                 </Label>
                 <DateTimePicker
                   value={formData.endTime}
                   onChange={(value) =>
                     setFormData({ ...formData, endTime: value })
                   }
-<<<<<<< HEAD
                   placeholder="Chọn thời gian kết thúc"
-=======
-                  placeholder="Select end time"
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
                 />
               </div>
             </div>
 
             <div className="grid gap-2">
               <Label htmlFor="duration">
-<<<<<<< HEAD
                 Thời lượng (phút) <span className="text-red-500">*</span>
-=======
-                Duration (minutes) <span className="text-red-500">*</span>
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
               </Label>
               <Input
                 id="duration"
@@ -303,7 +189,6 @@ export default function EditExamRoomPage() {
                 min="1"
                 placeholder="60"
                 value={formData.durationInMinutes}
-<<<<<<< HEAD
                 onChange={(e) =>
                   setFormData({
                     ...formData,
@@ -312,16 +197,6 @@ export default function EditExamRoomPage() {
                 }
                 required
               />
-=======
-                readOnly
-                disabled
-                className="bg-muted cursor-not-allowed"
-                required
-              />
-              <p className="text-xs text-muted-foreground">
-                Automatically calculated from start and end time
-              </p>
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
             </div>
 
             <div className="flex items-center gap-2 pt-4">
@@ -331,19 +206,11 @@ export default function EditExamRoomPage() {
                 onClick={() => router.push(`/admin/exam-rooms`)}
                 disabled={isUpdating}
               >
-<<<<<<< HEAD
                 Hủy
               </Button>
               <Button type="submit" disabled={isUpdating}>
                 <Save className="mr-2 h-4 w-4" />
                 {isUpdating ? "Đang lưu..." : "Lưu thay đổi"}
-=======
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isUpdating}>
-                <Save className="mr-2 h-4 w-4" />
-                {isUpdating ? "Saving..." : "Save Changes"}
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
               </Button>
             </div>
           </form>

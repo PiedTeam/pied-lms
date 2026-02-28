@@ -16,11 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { useToast } from "@/hooks/use-toast";
 import { useGetExamRoomById, useUpdateExamRoom } from "@/service";
-<<<<<<< HEAD
 import { EXAM_ROOM_MESSAGES } from "@/constants/messages.constants";
-=======
-import { EXAM_ROOM_MESSAGES } from "@/constants/messages";
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
 import { useEffect, useState } from "react";
 import type { UpdateExamRoomRequest } from "@/interface/exam-room/exam-room.interface";
 
@@ -60,57 +56,9 @@ export default function EditExamRoomPage() {
     }
   }, [room]);
 
-<<<<<<< HEAD
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-=======
-  // Auto-calculate duration when start or end time changes
-  useEffect(() => {
-    if (formData.startTime && formData.endTime) {
-      const start = new Date(formData.startTime);
-      const end = new Date(formData.endTime);
-      const diffInMinutes = Math.round(
-        (end.getTime() - start.getTime()) / (1000 * 60),
-      );
-
-      if (diffInMinutes > 0) {
-        setFormData((prev) => ({
-          ...prev,
-          durationInMinutes: diffInMinutes,
-        }));
-      }
-    }
-  }, [formData.startTime, formData.endTime]);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Validate start time is not in the past
-    const now = new Date();
-    const startTime = new Date(formData.startTime);
-
-    if (startTime < now) {
-      toast({
-        title: "Lỗi",
-        description: "Thời gian bắt đầu không được trước thời gian hiện tại",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Validate end time is after start time
-    const endTime = new Date(formData.endTime);
-    if (endTime <= startTime) {
-      toast({
-        title: "Lỗi",
-        description: "Thời gian kết thúc phải sau thời gian bắt đầu",
-        variant: "destructive",
-      });
-      return;
-    }
-
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
     updateRoom(
       { roomId, payload: formData },
       {
@@ -241,7 +189,6 @@ export default function EditExamRoomPage() {
                 min="1"
                 placeholder="60"
                 value={formData.durationInMinutes}
-<<<<<<< HEAD
                 onChange={(e) =>
                   setFormData({
                     ...formData,
@@ -250,16 +197,6 @@ export default function EditExamRoomPage() {
                 }
                 required
               />
-=======
-                readOnly
-                disabled
-                className="bg-muted cursor-not-allowed"
-                required
-              />
-              <p className="text-xs text-muted-foreground">
-                Tự động tính từ thời gian bắt đầu và kết thúc
-              </p>
->>>>>>> f6c1b06589309671c5671f5e82489d8f3e81a0bd
             </div>
 
             <div className="flex items-center gap-2 pt-4">
