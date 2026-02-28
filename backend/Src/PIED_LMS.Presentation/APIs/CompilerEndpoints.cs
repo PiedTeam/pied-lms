@@ -7,7 +7,7 @@ public sealed class CompilerEndpoints : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/compiler")
+        var group = app.MapGroup("/api/compiler")
             .WithName("Compiler")
             .WithOpenApi();
 
@@ -16,12 +16,12 @@ public sealed class CompilerEndpoints : ICarterModule
             .WithOpenApi()
             .Produces<ServiceResponse<CompileResult>>();
 
-        group.MapPost("/judge", Judge)
+        group.MapPost("/api/judge", Judge)
             .WithName("Judge")
             .WithOpenApi()
             .Produces<ServiceResponse<JudgeResult>>();
 
-        group.MapPost("/judge-from-file", JudgeFromFile)
+        group.MapPost("/api/judge-from-file", JudgeFromFile)
             .WithName("JudgeFromFile")
             .WithOpenApi()
             .Produces<ServiceResponse<JudgeResult>>();
