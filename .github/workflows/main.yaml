@@ -58,3 +58,18 @@ jobs:
             repository: ${{ github.repository }}
             profile: backend
         secrets: inherit
+    deploy-lms:
+        name: Deploy / LMS
+        needs: build-backend
+        permissions:
+            contents: read
+            packages: write
+        if: ${{ github.ref == 'refs/heads/main' }}
+        uses: ./.github/workflows/deploy-application.yaml
+        with:
+            actor: ${{ github.actor }}
+            repository: ${{ github.repository }}
+            profile: prod
+            environment: prod
+            tag: latest
+        secrets: inherit
