@@ -20,7 +20,8 @@ export default function UserDetailPage() {
 
   const { data: user, isLoading, error } = useGetUserById(userId);
 
-  const getRoleBadgeVariant = (role: string) => {
+  const getRoleBadgeVariant = (roles: string[]) => {
+    const role = roles[0] || "";
     switch (role) {
       case "Admin":
         return "destructive";
@@ -38,7 +39,7 @@ export default function UserDetailPage() {
   if (isLoading) {
     return (
       <div className="container mx-auto p-6">
-        <div className="text-center py-12">Đang tải...</div>
+        <div className="text-center py-12">Loading...</div>
       </div>
     );
   }
@@ -50,13 +51,13 @@ export default function UserDetailPage() {
           <CardContent className="pt-6">
             <div className="text-center py-12">
               <p className="text-destructive">
-                {(error as Error)?.message || "Không tìm thấy người dùng"}
+                {(error as Error)?.message || "User not found"}
               </p>
               <Button
                 className="mt-4"
                 onClick={() => router.push("/admin/users")}
               >
-                Quay lại
+                Go back
               </Button>
             </div>
           </CardContent>
@@ -77,10 +78,10 @@ export default function UserDetailPage() {
         </Button>
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            Chi tiết người dùng
+            User Details
           </h1>
           <p className="text-muted-foreground">
-            Thông tin chi tiết về người dùng
+            Detailed information about the user
           </p>
         </div>
       </div>
@@ -89,11 +90,14 @@ export default function UserDetailPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Thông tin cá nhân</CardTitle>
+              <CardTitle>Personal Information</CardTitle>
               <CardDescription>ID: {user.id}</CardDescription>
             </div>
-            <Badge variant={getRoleBadgeVariant(user.role)} className="text-sm">
-              {user.role}
+            <Badge
+              variant={getRoleBadgeVariant(user.roles)}
+              className="text-sm"
+            >
+              {user.roles.join(", ")}
             </Badge>
           </div>
         </CardHeader>
@@ -113,7 +117,7 @@ export default function UserDetailPage() {
               <User className="h-5 w-5 text-muted-foreground mt-0.5" />
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
-                  Họ tên
+                  Full Name
                 </p>
                 <p className="text-base">
                   {user.firstName} {user.lastName}
@@ -125,26 +129,18 @@ export default function UserDetailPage() {
               <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
-                  Ngày tạo
+                  Created At
                 </p>
                 <p className="text-base">
-                  {new Date(user.createdAt).toLocaleString("vi-VN")}
+                  {new Date(user.createdAt).toLocaleString("en-US")}
                 </p>
               </div>
             </div>
 
             <div className="flex items-start gap-3">
-              <Clock className="h-5 w-5 text-muted-foreground mt-0.5" />
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Đăng nhập cuối
-                </p>
-                <p className="text-base">
-                  {user.lastLogin
-                    ? new Date(user.lastLogin).toLocaleString("vi-VN")
-                    : "Chưa đăng nhập"}
-                </p>
-              </div>
+              <Badge variant={user.isActive ? "default" : "secondary"}>
+                {user.isActive ? "Active" : "Inactive"}
+              </Badge>
             </div>
           </div>
         </CardContent>

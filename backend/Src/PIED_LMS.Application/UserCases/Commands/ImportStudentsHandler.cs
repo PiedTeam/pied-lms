@@ -43,7 +43,8 @@ public class ImportStudentsHandler(UserManager<ApplicationUser> userManager, IEm
                     await userManager.AddToRoleAsync(user, RoleConstants.Student);
                     
                     var tokenReset = await userManager.GeneratePasswordResetTokenAsync(user);
-                    var encodedToken = System.Net.WebUtility.UrlEncode(tokenReset);
+                    var tokenBytes = System.Text.Encoding.UTF8.GetBytes(tokenReset);
+                    var encodedToken = Microsoft.AspNetCore.WebUtilities.WebEncoders.Base64UrlEncode(tokenBytes);
                     var baseUrl = configuration["Frontend:BaseUrl"] ?? "http://localhost:3000";
                     var resetLink = $"{baseUrl}/auth/reset-password?email={st.Email}&token={encodedToken}";
                     

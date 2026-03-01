@@ -7,6 +7,8 @@ import type {
   LoginResponse,
   RefreshResponse,
   LogoutResponse,
+  ResetPasswordRequest,
+  ResetPasswordResponse,
 } from "@/interface/auth/auth.interface";
 import type { ApiResponse } from "@/interface";
 import { AUTH_MESSAGES } from "@/constants";
@@ -287,6 +289,90 @@ export function useRefreshToken() {
       const { useAuthStore } = await import("@/store/auth.store");
       // Only update accessToken, refreshToken stays in HTTP-only cookie
       useAuthStore.getState().setToken(data.accessToken);
+    },
+  });
+}
+
+export function useResetPassword() {
+  return useMutation({
+    mutationFn: async (
+      payload: ResetPasswordRequest,
+    ): Promise<ResetPasswordResponse> => {
+      try {
+        const { data } = await axios.post<ApiResponse<ResetPasswordResponse>>(
+          "/auth/reset-password",
+          payload,
+        );
+
+        // Check if success is true (data can be null for reset password)
+        if (!data.success) {
+          // Check if there are validation errors in the errors object
+          if (data.errors && typeof data.errors === "object") {
+            const errorMessages: string[] = [];
+            Object.entries(data.errors).forEach(([, value]) => {
+              if (Array.isArray(value)) {
+                errorMessages.push(...value);
+              } else if (typeof value === "string") {
+                errorMessages.push(value);
+              }
+            });
+            if (errorMessages.length > 0) {
+              throw new Error(errorMessages.join(" "));
+            }
+          }
+          throw new Error(
+            data.message || AUTH_MESSAGES.ERROR.PASSWORD_RESET_FAILED,
+          );
+        }
+
+        // Return success response (data can be null)
+        return {
+          success: data.success,
+          message: data.message,
+        };
+      } catch (error: unknown) {
+        // Handle axios error response
+        if (error && typeof error === "object" && "response" in error) {
+          const axiosError = error as {
+            response?: {
+              data?: {
+                errors?: Record<string, string | string[]>;
+                message?: string;
+              };
+            };
+          };
+          const errorData = axiosError.response?.data;
+
+          if (errorData) {
+            // Check for validation errors in errors object
+            if (errorData.errors && typeof errorData.errors === "object") {
+              const errorMessages: string[] = [];
+              Object.entries(errorData.errors).forEach(([, value]) => {
+                if (Array.isArray(value)) {
+                  errorMessages.push(...value);
+                } else if (typeof value === "string") {
+                  errorMessages.push(value);
+                }
+              });
+              if (errorMessages.length > 0) {
+                throw new Error(errorMessages.join(" "));
+              }
+            }
+
+            // Use message from response
+            if (errorData.message) {
+              throw new Error(errorData.message);
+            }
+          }
+        }
+
+        // Re-throw if already an Error object
+        if (error instanceof Error) {
+          throw error;
+        }
+
+        throw new Error(AUTH_MESSAGES.ERROR.PASSWORD_RESET_FAILED);
+      }
     },
   });
 }

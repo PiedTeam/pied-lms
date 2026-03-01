@@ -40,8 +40,8 @@ export default function MentorStudentsPage() {
     ) || [];
 
   const formatDateTime = (dateString: string | null) => {
-    if (!dateString) return "Chưa đăng nhập";
-    return new Date(dateString).toLocaleString("vi-VN", {
+    if (!dateString) return "Never logged in";
+    return new Date(dateString).toLocaleString("en-US", {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
@@ -54,22 +54,22 @@ export default function MentorStudentsPage() {
     <div className="container mx-auto p-6 space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">
-          Danh sách học sinh
+          Student List
         </h1>
         <p className="text-muted-foreground">
-          Quản lý và xem thông tin học sinh trong hệ thống
+          Manage and view student information in the system
         </p>
       </div>
 
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>Học sinh</CardTitle>
+            <CardTitle>Students</CardTitle>
             <div className="flex items-center gap-2">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Tìm kiếm theo tên hoặc email..."
+                  placeholder="Search by name or email..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9 w-[300px]"
@@ -90,22 +90,22 @@ export default function MentorStudentsPage() {
             </div>
           ) : !studentsData?.items.length ? (
             <div className="text-center py-8 text-muted-foreground">
-              Không có học sinh nào trong hệ thống
+              No students in the system
             </div>
           ) : filteredStudents.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              Không tìm thấy học sinh phù hợp
+              No matching students found
             </div>
           ) : (
             <>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Họ và tên</TableHead>
+                    <TableHead>Full Name</TableHead>
                     <TableHead>Email</TableHead>
-                    <TableHead>Vai trò</TableHead>
-                    <TableHead>Ngày tạo</TableHead>
-                    <TableHead>Đăng nhập lần cuối</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Created At</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -116,10 +116,18 @@ export default function MentorStudentsPage() {
                       </TableCell>
                       <TableCell>{student.email}</TableCell>
                       <TableCell>
-                        <Badge variant="outline">{student.role}</Badge>
+                        <Badge variant="outline">
+                          {student.roles[0] || "N/A"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={student.isActive ? "default" : "secondary"}
+                        >
+                          {student.isActive ? "Active" : "Inactive"}
+                        </Badge>
                       </TableCell>
                       <TableCell>{formatDateTime(student.createdAt)}</TableCell>
-                      <TableCell>{formatDateTime(student.lastLogin)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -128,7 +136,7 @@ export default function MentorStudentsPage() {
               {totalPages > 1 && (
                 <div className="flex items-center justify-between mt-4">
                   <div className="text-sm text-muted-foreground">
-                    Trang {pageNumber} / {totalPages} - Tổng:{" "}
+                    Page {pageNumber} / {totalPages} - Total:{" "}
                     {studentsData.totalCount}
                   </div>
                   <div className="flex items-center gap-2">

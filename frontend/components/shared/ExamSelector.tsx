@@ -50,8 +50,8 @@ export function ExamSelector({
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="active">Đang hoạt động</TabsTrigger>
-          <TabsTrigger value="archived">Đã ẩn</TabsTrigger>
+          <TabsTrigger value="active">Active</TabsTrigger>
+          <TabsTrigger value="archived">Hidden</TabsTrigger>
         </TabsList>
 
         <TabsContent value={activeTab} className="mt-4">
@@ -74,11 +74,10 @@ export function ExamSelector({
               filteredExams.map((exam) => (
                 <Card
                   key={exam.id}
-                  className={`cursor-pointer transition-all hover:shadow-md ${
-                    selectedExamId === exam.id
-                      ? "border-primary bg-primary/5 ring-2 ring-primary"
-                      : "hover:border-primary/50"
-                  }`}
+                  className={`cursor-pointer transition-all hover:shadow-md ${selectedExamId === exam.id
+                    ? "border-primary bg-primary/5 ring-2 ring-primary"
+                    : "hover:border-primary/50"
+                    }`}
                   onClick={() => onSelectExam(exam.id)}
                 >
                   <CardContent className="p-4">

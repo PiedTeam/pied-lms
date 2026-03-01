@@ -33,34 +33,34 @@ export default function MentorDashboardPage() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
         <p className="text-muted-foreground">
-          Chào mừng trở lại, {user?.fullName || "Mentor"}
+          Welcome back, {user?.fullName || "Mentor"}
         </p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Phòng thi</CardTitle>
+            <CardTitle className="text-sm font-medium">Exam Rooms</CardTitle>
             <DoorOpen className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {examRoomsData?.totalCount || 0}
             </div>
-            <p className="text-xs text-muted-foreground">Tổng số phòng thi</p>
+            <p className="text-xs text-muted-foreground">Total exam rooms</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Đề thi</CardTitle>
+            <CardTitle className="text-sm font-medium">Exams</CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {examsData?.totalCount || 0}
             </div>
-            <p className="text-xs text-muted-foreground">Tổng số đề thi</p>
+            <p className="text-xs text-muted-foreground">Total exams</p>
           </CardContent>
         </Card>
 
@@ -71,20 +71,20 @@ export default function MentorDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{quizsCount || 0}</div>
-            <p className="text-xs text-muted-foreground">Tổng số quizlet</p>
+            <p className="text-xs text-muted-foreground">Total quizlets</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Sinh viên</CardTitle>
+            <CardTitle className="text-sm font-medium">Students</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {studentsCount !== undefined ? studentsCount : 0}
             </div>
-            <p className="text-xs text-muted-foreground">Tổng số sinh viên</p>
+            <p className="text-xs text-muted-foreground">Total students</p>
           </CardContent>
         </Card>
       </div>
@@ -92,15 +92,15 @@ export default function MentorDashboardPage() {
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Phòng thi gần đây</CardTitle>
+            <CardTitle>Recent Exam Rooms</CardTitle>
             <CardDescription>
-              {examRoomsData?.items.length || 0} phòng thi
+              {examRoomsData?.items.length || 0} exam rooms
             </CardDescription>
           </CardHeader>
           <CardContent>
             {!examRoomsData?.items.length ? (
               <p className="text-sm text-muted-foreground">
-                Chưa có phòng thi nào
+                No exam rooms yet
               </p>
             ) : (
               <div className="space-y-4">
@@ -112,7 +112,7 @@ export default function MentorDashboardPage() {
                     <div>
                       <p className="text-sm font-medium">{room.name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {new Date(room.startTime).toLocaleDateString("vi-VN")}
+                        {new Date(room.startTime).toLocaleDateString("en-US")}
                       </p>
                     </div>
                     <div className="text-xs text-muted-foreground">
@@ -127,15 +127,15 @@ export default function MentorDashboardPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Đề thi gần đây</CardTitle>
+            <CardTitle>Recent Exams</CardTitle>
             <CardDescription>
-              {examsData?.items.length || 0} đề thi
+              {examsData?.items.length || 0} exams
             </CardDescription>
           </CardHeader>
           <CardContent>
             {!examsData?.items.length ? (
               <p className="text-sm text-muted-foreground">
-                Chưa có đề thi nào
+                No exams yet
               </p>
             ) : (
               <div className="space-y-4">
@@ -147,11 +147,11 @@ export default function MentorDashboardPage() {
                     <div>
                       <p className="text-sm font-medium">{exam.title}</p>
                       <p className="text-xs text-muted-foreground">
-                        {exam.totalMarks} điểm
+                        {exam.totalMarks} marks
                       </p>
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      {new Date(exam.createdAt).toLocaleDateString("vi-VN")}
+                      {new Date(exam.createdAt).toLocaleDateString("en-US")}
                     </div>
                   </div>
                 ))}

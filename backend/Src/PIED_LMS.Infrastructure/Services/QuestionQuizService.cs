@@ -54,7 +54,7 @@ public class QuestionQuizService(IExcelService excelService, IUnitOfWork unitOfW
                         // Assuming the requirement is "Excel values override Quizlet values"
                         IsHidden = row.IsHidden ?? isHidden,
                         Level = row.Level.HasValue ? (int)row.Level.Value : (int)level,
-                        Answers = new List<QuestionAnswer>()
+                        Answers = []
                     };
 
                     // Process Option 1

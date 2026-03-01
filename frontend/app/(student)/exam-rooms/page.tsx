@@ -2,7 +2,14 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Calendar, Clock, Users, ArrowRight, Search, Key } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  ArrowRight,
+  Search,
+  Key,
+  FileText,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -26,6 +33,7 @@ import {
 import { useGetAvailableExamRooms } from "@/service";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import type { ExamRoomResponse } from "@/interface/exam-room/exam-room.interface";
 
 export default function StudentExamRoomsPage() {
   const router = useRouter();
@@ -34,7 +42,9 @@ export default function StudentExamRoomsPage() {
   const [activeTab, setActiveTab] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [isJoinDialogOpen, setIsJoinDialogOpen] = useState(false);
-  const [selectedRoom, setSelectedRoom] = useState<any>(null);
+  const [selectedRoom, setSelectedRoom] = useState<ExamRoomResponse | null>(
+    null,
+  );
   const [roomCode, setRoomCode] = useState("");
   const pageSize = 5; // 5 rooms per page
 
@@ -44,7 +54,7 @@ export default function StudentExamRoomsPage() {
   });
 
   const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString("vi-VN", {
+    return new Date(dateString).toLocaleString("en-US", {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
@@ -58,17 +68,15 @@ export default function StudentExamRoomsPage() {
 
     switch (status) {
       case "Ongoing":
-        return (
-          <Badge className="bg-blue-600 hover:bg-blue-700">Đang diễn ra</Badge>
-        );
+        return <Badge className="bg-blue-600 hover:bg-blue-700">Ongoing</Badge>;
       case "Upcoming":
         return (
-          <Badge className="bg-green-600 hover:bg-green-700">Sắp diễn ra</Badge>
+          <Badge className="bg-green-600 hover:bg-green-700">Upcoming</Badge>
         );
       case "Completed":
         return (
           <Badge variant="secondary" className="bg-gray-500 text-white">
-            Đã kết thúc
+            Finished
           </Badge>
         );
       default:
@@ -93,11 +101,17 @@ export default function StudentExamRoomsPage() {
 
     if (activeTab === "all") return activeRooms;
     if (activeTab === "upcoming")
-      return activeRooms.filter((room) => room.status === "Upcoming");
+      return activeRooms.filter(
+        (room) => room.status?.toLowerCase() === "upcoming",
+      );
     if (activeTab === "ongoing")
-      return activeRooms.filter((room) => room.status === "Ongoing");
+      return activeRooms.filter(
+        (room) => room.status?.toLowerCase() === "ongoing",
+      );
     if (activeTab === "completed")
-      return activeRooms.filter((room) => room.status === "Completed");
+      return activeRooms.filter(
+        (room) => room.status?.toLowerCase() === "completed",
+      );
     return activeRooms;
   }, [searchedRooms, activeTab]);
 
@@ -119,11 +133,11 @@ export default function StudentExamRoomsPage() {
     setCurrentPage(1);
   };
 
-  const handleJoinRoom = (room: any) => {
-    if (room.status !== "Ongoing") {
+  const handleJoinRoom = (room: ExamRoomResponse) => {
+    if (room.status?.toLowerCase() !== "ongoing") {
       toast({
-        title: "Không thể vào phòng",
-        description: "Chỉ có thể vào phòng thi đang diễn ra",
+        title: "Cannot enter room",
+        description: "You can only join exam rooms that are ongoing",
         variant: "destructive",
       });
       return;
@@ -135,8 +149,8 @@ export default function StudentExamRoomsPage() {
   const handleSubmitJoin = () => {
     if (!roomCode.trim()) {
       toast({
-        title: "Lỗi",
-        description: "Vui lòng nhập mã phòng",
+        title: "Error",
+        description: "Please enter the room code",
         variant: "destructive",
       });
       return;
@@ -144,8 +158,8 @@ export default function StudentExamRoomsPage() {
 
     if (roomCode.toUpperCase() !== selectedRoom?.roomCode) {
       toast({
-        title: "Mã phòng không đúng",
-        description: "Vui lòng kiểm tra lại mã phòng",
+        title: "Incorrect room code",
+        description: "Please check the room code again",
         variant: "destructive",
       });
       return;
@@ -155,8 +169,8 @@ export default function StudentExamRoomsPage() {
     localStorage.setItem(`roomCode_${selectedRoom.id}`, roomCode.toUpperCase());
 
     toast({
-      title: "Thành công",
-      description: "Đã vào phòng thi",
+      title: "Success",
+      description: "Successfully joined the exam room",
     });
 
     // Navigate to exam room
@@ -168,17 +182,15 @@ export default function StudentExamRoomsPage() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Phòng thi</h1>
-        <p className="text-muted-foreground">
-          Danh sách các phòng thi khả dụng
-        </p>
+        <h1 className="text-3xl font-bold tracking-tight">Exam Rooms</h1>
+        <p className="text-muted-foreground">List of available exam rooms</p>
       </div>
 
       <div className="flex items-center gap-4">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Tìm kiếm phòng thi..."
+            placeholder="Search exam rooms..."
             value={searchQuery}
             onChange={(e) => handleSearchChange(e.target.value)}
             className="pl-10"
@@ -188,10 +200,10 @@ export default function StudentExamRoomsPage() {
 
       <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="all">Tất cả</TabsTrigger>
-          <TabsTrigger value="upcoming">Sắp diễn ra</TabsTrigger>
-          <TabsTrigger value="ongoing">Đang diễn ra</TabsTrigger>
-          <TabsTrigger value="completed">Đã kết thúc</TabsTrigger>
+          <TabsTrigger value="all">All</TabsTrigger>
+          <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
+          <TabsTrigger value="ongoing">Ongoing</TabsTrigger>
+          <TabsTrigger value="completed">Finished</TabsTrigger>
         </TabsList>
 
         <TabsContent value={activeTab} className="mt-6">
@@ -213,17 +225,17 @@ export default function StudentExamRoomsPage() {
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
-                <p className="text-lg font-medium">Không có phòng thi nào</p>
+                <p className="text-lg font-medium">No exam rooms found</p>
                 <p className="text-sm text-muted-foreground">
                   {searchQuery
-                    ? "Không tìm thấy phòng thi phù hợp"
+                    ? "No matching exam rooms found"
                     : activeTab === "upcoming"
-                      ? "Chưa có phòng thi sắp diễn ra"
+                      ? "No upcoming exam rooms"
                       : activeTab === "ongoing"
-                        ? "Chưa có phòng thi đang diễn ra"
+                        ? "No ongoing exam rooms"
                         : activeTab === "completed"
-                          ? "Chưa có phòng thi đã kết thúc"
-                          : "Chưa có phòng thi khả dụng"}
+                          ? "No finished exam rooms"
+                          : "No available exam rooms"}
                 </p>
               </CardContent>
             </Card>
@@ -248,7 +260,7 @@ export default function StudentExamRoomsPage() {
                       <div className="flex items-center gap-2 text-sm">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
                         <div className="flex-1">
-                          <p className="font-medium">Bắt đầu</p>
+                          <p className="font-medium">Started</p>
                           <p className="text-muted-foreground">
                             {formatDateTime(room.startTime)}
                           </p>
@@ -257,7 +269,7 @@ export default function StudentExamRoomsPage() {
                       <div className="flex items-center gap-2 text-sm">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
                         <div className="flex-1">
-                          <p className="font-medium">Kết thúc</p>
+                          <p className="font-medium">Ended</p>
                           <p className="text-muted-foreground">
                             {formatDateTime(room.endTime)}
                           </p>
@@ -266,43 +278,43 @@ export default function StudentExamRoomsPage() {
                       <div className="flex items-center gap-2 text-sm">
                         <Clock className="h-4 w-4 text-muted-foreground" />
                         <span className="text-muted-foreground">
-                          Thời lượng: {room.durationInMinutes} phút
+                          Duration: {room.durationInMinutes} minutes
                         </span>
                       </div>
                       <div className="flex items-center gap-2 text-sm">
-                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <FileText className="h-4 w-4 text-muted-foreground" />
                         <span className="text-muted-foreground">
-                          {room.exams?.length || 0} đề thi
+                          {room.examCount || 0} exams
                         </span>
                       </div>
-                      {room.status === "Ongoing" && (
+                      {room.status?.toLowerCase() === "ongoing" && (
                         <Button
                           className="w-full mt-4"
                           size="sm"
                           onClick={() => handleJoinRoom(room)}
                         >
                           <Key className="mr-2 h-4 w-4" />
-                          Vào phòng thi
+                          Join Exam Room
                         </Button>
                       )}
-                      {room.status === "Upcoming" && (
+                      {room.status?.toLowerCase() === "upcoming" && (
                         <Button
                           className="w-full mt-4"
                           size="sm"
                           variant="secondary"
                           disabled
                         >
-                          Chưa đến giờ
+                          Not started yet
                         </Button>
                       )}
-                      {room.status === "Completed" && (
+                      {room.status?.toLowerCase() === "completed" && (
                         <Button
                           className="w-full mt-4"
                           size="sm"
                           variant="outline"
                           onClick={() => router.push(`/exam-rooms/${room.id}`)}
                         >
-                          Xem kết quả
+                          View Results
                           <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
                       )}
@@ -323,7 +335,7 @@ export default function StudentExamRoomsPage() {
                     &lt;
                   </Button>
                   <span className="text-sm text-muted-foreground">
-                    Trang {currentPage} / {totalPages}
+                    Page {currentPage} / {totalPages}
                   </span>
                   <Button
                     variant="outline"
@@ -346,17 +358,18 @@ export default function StudentExamRoomsPage() {
       <Dialog open={isJoinDialogOpen} onOpenChange={setIsJoinDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Nhập mã phòng thi</DialogTitle>
+            <DialogTitle>Enter Room Code</DialogTitle>
             <DialogDescription>
-              Vui lòng nhập mã phòng để vào phòng thi: {selectedRoom?.name}
+              Please enter the room code to join the exam room:{" "}
+              {selectedRoom?.name}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="roomCode">Mã phòng</Label>
+              <Label htmlFor="roomCode">Room Code</Label>
               <Input
                 id="roomCode"
-                placeholder="Nhập mã phòng (VD: STBUP96G)"
+                placeholder="Enter room code (e.g., STBUP96G)"
                 value={roomCode}
                 onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
                 className="uppercase"
@@ -372,9 +385,9 @@ export default function StudentExamRoomsPage() {
                 setRoomCode("");
               }}
             >
-              Hủy
+              Cancel
             </Button>
-            <Button onClick={handleSubmitJoin}>Vào phòng</Button>
+            <Button onClick={handleSubmitJoin}>Join Room</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -22,4 +22,4 @@ export const QUERY_KEYS = {
 } as const;
 
 // Export message constants
-export * from "./messages.constants";
+export * from "./messages";

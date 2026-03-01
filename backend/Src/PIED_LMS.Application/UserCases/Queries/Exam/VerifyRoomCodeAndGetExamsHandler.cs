@@ -99,7 +99,7 @@ public class VerifyRoomCodeAndGetExamsHandler(
                 return new ServiceResponse<List<ExamInRoomResponse>>(
                     true,
                     "No exams found in this room",
-                    new List<ExamInRoomResponse>()
+                    []
                 );
             }
 

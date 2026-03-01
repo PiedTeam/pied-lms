@@ -41,8 +41,8 @@ public class GetQuestionQuizsHandler(IUnitOfWork unitOfWork) : IRequestHandler<G
                 q.Content,
                 q.Score,
                 (QuestionType)(int)q.QuestionType, 
-                q.Answers?.Select(a => a.Content).ToList() ?? new List<string>(),
-                q.Answers?.Where(a => a.IsCorrect).Select(a => a.Content).ToList() ?? new List<string>(),
+                q.Answers?.Select(a => a.Content).ToList() ?? [],
+                q.Answers?.Where(a => a.IsCorrect).Select(a => a.Content).ToList() ?? [],
                 q.IsHidden,
                 (QuizletLevel)q.Level
             )).ToList()
