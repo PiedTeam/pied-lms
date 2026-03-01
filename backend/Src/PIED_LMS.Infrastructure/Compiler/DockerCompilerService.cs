@@ -575,7 +575,7 @@ public sealed class DockerCompilerService(
         builder.AppendLine("  i=$((i+1))");
         builder.AppendLine("done");
 
-        return builder.ToString();
+        return builder.ToString().Replace("\r", "");
     }
 
     private static string? ExtractCompileError(string stdout)
@@ -658,6 +658,8 @@ public sealed class DockerCompilerService(
             $"cd {sessionId}; " +
             $"trap 'cd {_options.ContainerWorkDir}; rm -rf {sessionId}' EXIT; " +
             $"{script}";
+
+        scopedScript = scopedScript.Replace("\r", "");
 
         var startInfo = new ProcessStartInfo
         {
