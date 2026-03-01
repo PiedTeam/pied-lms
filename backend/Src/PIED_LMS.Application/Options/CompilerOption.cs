@@ -44,7 +44,7 @@ public class CompilerOption
 
     [Range(1, int.MaxValue)] public int StderrLimitBytes { get; set; } = 262_144;
 
-    [Required] public string CompileSuccessMarker { get; set; } = "__COMPILE_SUCCESS__";
+    [Required] public string CompileSuccessMarker { get; set; } = "_COMPILE_SUCCESS_";
 
     [Required] public string TestCaseBasePath { get; set; } = "/testcases";
 
