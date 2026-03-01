@@ -10,18 +10,18 @@ export interface TestCaseResponse {
 }
 
 export interface CreateTestCaseRequest {
-  examId: string; // Changed from questionId (number) to examId (string/Guid)
+  examId: string;
   index: number;
-  inputPath: string;
-  outputPath: string;
+  input: string;
+  output: string;
   isHidden: boolean;
 }
 
 export interface UpdateTestCaseRequest {
-  examId: string; // Changed from questionId to examId
+  examId: string;
   index: number;
-  inputPath: string;
-  outputPath: string;
+  input: string;
+  output: string;
   isHidden: boolean;
 }
 

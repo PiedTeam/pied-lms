@@ -21,8 +21,8 @@ import { TESTCASE_MESSAGES } from "@/constants/messages";
 import type { TestCaseResponse } from "@/interface/testcase/testcase.interface";
 
 interface TestCaseFormData {
-  inputPath: string;
-  outputPath: string;
+  input: string;
+  output: string;
   isHidden: boolean;
   index: number;
 }
@@ -50,8 +50,8 @@ export function TestCaseForm({
 
   const form = useForm<TestCaseFormData>({
     defaultValues: {
-      inputPath: testCase?.inputPath || "",
-      outputPath: testCase?.outputPath || "",
+      input: testCase?.inputPath || "",
+      output: testCase?.outputPath || "",
       isHidden: testCase?.isHidden || false,
       index: testCase?.index || 1,
     },
@@ -59,19 +59,19 @@ export function TestCaseForm({
 
   const onSubmit = (data: TestCaseFormData) => {
     // Basic validation
-    if (!data.inputPath.trim()) {
+    if (!data.input.trim()) {
       toast({
         title: "Lỗi",
-        description: "Input path is required",
+        description: "Input là bắt buộc",
         variant: "destructive",
       });
       return;
     }
 
-    if (!data.outputPath.trim()) {
+    if (!data.output.trim()) {
       toast({
         title: "Lỗi",
-        description: "Output path is required",
+        description: "Output là bắt buộc",
         variant: "destructive",
       });
       return;
@@ -105,10 +105,10 @@ export function TestCaseForm({
     setIsSubmitting(true);
 
     const payload = {
-      examId: examId, // Changed from questionId
+      examId: examId,
       index: data.index,
-      inputPath: data.inputPath,
-      outputPath: data.outputPath,
+      input: data.input,
+      output: data.output,
       isHidden: data.isHidden,
     };
 
@@ -116,12 +116,12 @@ export function TestCaseForm({
       // Update existing test case
       updateTestCase(
         {
-          id: testCase.testCaseId, // Changed from testCase.id
+          id: testCase.testCaseId,
           payload: {
-            examId: examId, // Changed from questionId
+            examId: examId,
             index: data.index,
-            inputPath: data.inputPath,
-            outputPath: data.outputPath,
+            input: data.input,
+            output: data.output,
             isHidden: data.isHidden,
           },
         },
@@ -195,19 +195,19 @@ export function TestCaseForm({
 
           <FormField
             control={form.control}
-            name="inputPath"
+            name="input"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Input Path</FormLabel>
+                <FormLabel>Input</FormLabel>
                 <FormControl>
                   <Textarea
-                    placeholder="Enter input file path or content..."
+                    placeholder="Nhập dữ liệu đầu vào cho test case..."
                     className="min-h-[100px] font-mono text-sm"
                     {...field}
                   />
                 </FormControl>
                 <FormDescription>
-                  Path to input file or input content for the test case
+                  Dữ liệu stdin sẽ được truyền vào chương trình
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -216,19 +216,19 @@ export function TestCaseForm({
 
           <FormField
             control={form.control}
-            name="outputPath"
+            name="output"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Output Path</FormLabel>
+                <FormLabel>Expected Output</FormLabel>
                 <FormControl>
                   <Textarea
-                    placeholder="Enter output file path or expected output..."
+                    placeholder="Nhập kết quả đầu ra mong đợi..."
                     className="min-h-[100px] font-mono text-sm"
                     {...field}
                   />
                 </FormControl>
                 <FormDescription>
-                  Path to output file or expected output content
+                  Kết quả stdout mong đợi từ chương trình
                 </FormDescription>
                 <FormMessage />
               </FormItem>

@@ -65,7 +65,7 @@ export interface SubmitExamResponse {
 }
 
 export interface StartExamRequest {
-  examRoomId: string;
+  roomCode: string;
   examId: string;
 }
 

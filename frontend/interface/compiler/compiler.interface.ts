@@ -20,6 +20,7 @@ export interface JudgeCodeRequest {
 export interface JudgeCodeFromFileRequest {
   code: string;
   examId: string;
+  participationId: string;
   timeLimit?: number;
   memoryLimit?: number;
   optimizationLevel?: 0 | 1 | 2 | 3 | "0" | "1" | "2" | "3" | "s";

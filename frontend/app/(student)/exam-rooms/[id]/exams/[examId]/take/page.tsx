@@ -22,6 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import Editor from "@monaco-editor/react";
 import { useJudgeCodeFromFile, useCompileCode } from "@/service";
 import { useGetExamById } from "@/services";
+import { useStartExam } from "@/services/exam-participation/exam-participation.service";
 import { COMPILER_MESSAGES } from "@/constants/messages";
 import type { TestCaseResult } from "@/interface/compiler/compiler.interface";
 import { useAuthStore } from "@/store/auth.store";
@@ -76,10 +77,13 @@ export default function TakeExamPage() {
   const { mutate: judgeCodeFromFile, isPending: isJudging } =
     useJudgeCodeFromFile();
   const { mutate: compileCode, isPending: isCompiling } = useCompileCode();
+  const { mutate: startExam } = useStartExam();
 
   const [exam, setExam] = useState<Exam | null>(null);
   const [testCases, setTestCases] = useState<TestCase[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [participationId, setParticipationId] = useState<string | null>(null);
+  const [startExamError, setStartExamError] = useState<string | null>(null);
   const [code, setCode] = useState(`#include <stdio.h>
 #include <stdlib.h>
 
@@ -108,7 +112,7 @@ int main() {
     }
   }, [savedScore]);
 
-  // Load saved code from localStorage on mount
+  // Load saved code from localStorage and call start exam API on mount
   useEffect(() => {
     // Set exam data from API response
     if (examData) {
@@ -121,8 +125,9 @@ int main() {
       setCode(savedCode);
     }
 
-    // Calculate time remaining from room's endTime (stored in localStorage when navigating from room detail)
+    // Get room data (saved by exam room detail page before navigation)
     const roomDataStr = localStorage.getItem(`roomData_${roomId}`);
+    let roomCode: string | null = null;
     if (roomDataStr) {
       try {
         const roomData = JSON.parse(roomDataStr);
@@ -133,17 +138,34 @@ int main() {
           Math.floor((endTime - now) / 1000),
         );
         setTimeRemaining(remainingSeconds);
+        roomCode = roomData.roomCode ?? null;
       } catch (error) {
         console.error("Error parsing room data:", error);
-        // Fallback to 60 minutes if parsing fails
         setTimeRemaining(60 * 60);
       }
     } else {
-      // Fallback to 60 minutes if no room data
       setTimeRemaining(60 * 60);
     }
 
+    // Call POST /api/participations/start to create/resume exam participation
+    if (roomCode) {
+      startExam(
+        { roomCode, examId },
+        {
+          onSuccess: (participation) => {
+            setParticipationId(participation.id);
+          },
+          onError: (error: Error) => {
+            setStartExamError(error.message);
+          },
+        },
+      );
+    } else {
+      setStartExamError("Room code not found. Please go back and try again.");
+    }
+
     setIsLoading(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [examData, examId, roomId]);
 
   const formatTime = (seconds: number) => {
@@ -198,11 +220,22 @@ int main() {
       description: COMPILER_MESSAGES.INFO.JUDGING,
     });
 
+    if (!participationId) {
+      toast({
+        title: "Error",
+        description: "Exam session not started. Please go back and try again.",
+        variant: "destructive",
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
     // Use judge-from-file API to submit exam
     judgeCodeFromFile(
       {
         code: code,
         examId: examId,
+        participationId: participationId,
         timeLimit: 2000,
         memoryLimit: 128,
         optimizationLevel: 2,
@@ -280,7 +313,7 @@ int main() {
         },
       },
     );
-  }, [code, toast, router, roomId, examId, exam, judgeCodeFromFile]);
+  }, [code, toast, router, roomId, examId, exam, judgeCodeFromFile, participationId]);
 
   const handleAutoSubmit = useCallback(async () => {
     toast({
@@ -427,6 +460,20 @@ int main() {
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4" />
           <p className="text-muted-foreground">Loading exam...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (startExamError) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <p className="text-destructive font-semibold">Cannot start exam</p>
+          <p className="text-muted-foreground">{startExamError}</p>
+          <Button onClick={() => router.push(`/exam-rooms/${roomId}`)}>
+            Go back
+          </Button>
         </div>
       </div>
     );
@@ -841,11 +888,10 @@ int main() {
                                   Your Output:
                                 </p>
                                 <pre
-                                  className={`p-2 rounded text-sm mt-1 ${
-                                    result.passed
+                                  className={`p-2 rounded text-sm mt-1 ${result.passed
                                       ? "bg-green-50 text-green-900"
                                       : "bg-red-50 text-red-900"
-                                  }`}
+                                    }`}
                                 >
                                   {result.actualOutput}
                                 </pre>
