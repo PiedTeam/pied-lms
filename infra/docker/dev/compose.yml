@@ -12,7 +12,11 @@ services:
     networks:
       - pied-network
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${DATABASE__USER:-postgres} -d ${DATABASE__NAME:-piedlms}" ]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${DATABASE__USER:-postgres} -d ${DATABASE__NAME:-piedlms}",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -62,6 +66,7 @@ services:
     volumes:
       - backend_storage:/app/storage
       - /var/run/docker.sock:/var/run/docker.sock
+      - /dev/shm/pied-judge:/dev/shm/pied-judge
     depends_on:
       postgres:
         condition: service_healthy

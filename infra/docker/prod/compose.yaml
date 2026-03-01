@@ -17,10 +17,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.25'
+          cpus: "0.25"
           memory: 128M
         reservations:
-          cpus: '0.1'
+          cpus: "0.1"
           memory: 64M
     labels:
       - "com.piedteam.project=pied-lms"
@@ -48,10 +48,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1.0'
+          cpus: "1.0"
           memory: 512M
         reservations:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 256M
     labels:
       - "com.piedteam.project=pied-lms"
@@ -62,7 +62,11 @@ services:
       - "com.piedteam.backup.enabled=true"
       - "com.piedteam.backup.schedule=daily"
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${DATABASE__USER:-postgres} -d ${DATABASE__NAME:-piedlms}" ]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${DATABASE__USER:-postgres} -d ${DATABASE__NAME:-piedlms}",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -133,14 +137,15 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '2.0'
+          cpus: "2.0"
           memory: 1G
         reservations:
-          cpus: '1.0'
+          cpus: "1.0"
           memory: 512M
     volumes:
       - pied-lms-backend-storage:/app/storage
       - /var/run/docker.sock:/var/run/docker.sock
+      - /dev/shm/pied-judge:/dev/shm/pied-judge
     depends_on:
       lms-postgres:
         condition: service_healthy
@@ -157,7 +162,7 @@ services:
       - "com.piedteam.healthcheck.endpoint=/health"
       - "com.piedteam.framework=dotnet"
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8080/health" ]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
       timeout: 10s
       retries: 3
