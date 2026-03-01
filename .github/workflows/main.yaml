@@ -84,5 +84,5 @@ jobs:
             repository: ${{ github.repository }}
             profile: prod
             environment: prod
-            tag: latest
+            tag: ${{ github.sha }}
         secrets: inherit

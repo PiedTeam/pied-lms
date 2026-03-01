@@ -30,7 +30,6 @@ jobs:
     env:
       REGISTRY: ghcr.io/${{ inputs.repository }}
       ENVIRONMENT: ${{ secrets.ENVIRONMENT }}
-      TAG: ${{ inputs.tag }}
       CLOUDFLARE_TUNNEL_TOKEN: ${{ secrets.CLOUDFLARE_TUNNEL_TOKEN }}
       DATABASE__NAME: ${{ secrets.DATABASE__NAME }}
       DATABASE__USER: ${{ secrets.DATABASE__USER }}
@@ -39,6 +38,12 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+
+      - name: Set Short SHA
+        run: |
+          SHORT_SHA=$(echo ${{ inputs.tag }} | cut -c1-7)
+          echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_ENV
+          echo "TAG=$SHORT_SHA" >> $GITHUB_ENV
 
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v2
