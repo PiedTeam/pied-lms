@@ -35,6 +35,21 @@ jobs:
       DATABASE__USER: ${{ secrets.DATABASE__USER }}
       DATABASE__PASSWORD: ${{ secrets.DATABASE__PASSWORD }}
       ASPNETCORE_ENVIRONMENT: ${{ secrets.ASPNETCORE_ENVIRONMENT }}
+      ALLOWED_HOSTS: ${{ secrets.ALLOWED_HOSTS }}
+      JWT__ISSUER: ${{ secrets.JWT__ISSUER }}
+      JWT__AUDIENCE: ${{ secrets.JWT__AUDIENCE }}
+      JWT__SECRET: ${{ secrets.JWT__SECRET }}
+      JWT__EXPIRY_MINUTES: ${{ secrets.JWT__EXPIRY_MINUTES }}
+      JWT__REFRESH_TOKEN_EXPIRATION_DAYS: ${{ secrets.JWT__REFRESH_TOKEN_EXPIRATION_DAYS }}
+      EMAIL__HOST: ${{ secrets.EMAIL__HOST }}
+      EMAIL__PORT: ${{ secrets.EMAIL__PORT }}
+      EMAIL__SENDER_EMAIL: ${{ secrets.EMAIL__SENDER_EMAIL }}
+      EMAIL__SENDER_PASSWORD: ${{ secrets.EMAIL__SENDER_PASSWORD }}
+      SEED__ADMIN_PASSWORD: ${{ secrets.SEED__ADMIN_PASSWORD }}
+      SEED__TEACHER_PASSWORD: ${{ secrets.SEED__TEACHER_PASSWORD }}
+      SEED__MENTOR_PASSWORD: ${{ secrets.SEED__MENTOR_PASSWORD }}
+      LOGGING__LOGLEVEL__DEFAULT: ${{ secrets.LOGGING__LOGLEVEL__DEFAULT }}
+      LOGGING__LOGLEVEL__MICROSOFTASPNETCORE: ${{ secrets.LOGGING__LOGLEVEL__MICROSOFTASPNETCORE }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
