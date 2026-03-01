@@ -91,6 +91,21 @@ services:
       DATABASE__NAME: ${DATABASE__NAME}
       DATABASE__USER: ${DATABASE__USER}
       DATABASE__PASSWORD: ${DATABASE__PASSWORD}
+      Logging__LogLevel__Default: ${LOGGING__LOGLEVEL__DEFAULT:-Information}
+      Logging__LogLevel__Microsoft.AspNetCore: ${LOGGING__LOGLEVEL__MICROSOFTASPNETCORE:-Warning}
+      JwtSettings__Issuer: ${JWT__ISSUER:-https://localhost:7001}
+      JwtSettings__Audience: ${JWT__AUDIENCE:-https://localhost:7001}
+      JwtSettings__Secret: ${JWT__SECRET}
+      JwtSettings__ExpiryMinutes: ${JWT__EXPIRY_MINUTES:-60}
+      JwtSettings__RefreshTokenExpirationDays: ${JWT__REFRESH_TOKEN_EXPIRATION_DAYS:-7}
+      EmailSettings__Host: ${EMAIL__HOST:-smtp.gmail.com}
+      EmailSettings__Port: ${EMAIL__PORT:-587}
+      EmailSettings__SenderEmail: ${EMAIL__SENDER_EMAIL}
+      EmailSettings__SenderPassword: ${EMAIL__SENDER_PASSWORD}
+      Seed__AdminPassword: ${SEED__ADMIN_PASSWORD}
+      Seed__TeacherPassword: ${SEED__TEACHER_PASSWORD}
+      Seed__MentorPassword: ${SEED__MENTOR_PASSWORD}
+      AllowedHosts: ${ALLOWED_HOSTS:-localhost;127.0.0.1}
     deploy:
       resources:
         limits:
