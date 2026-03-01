@@ -190,8 +190,6 @@ public sealed class DockerCompilerService(
             var failed = results.Count - passed;
             var judgeResult = new JudgeResult(passed, failed, testCases.Count, results);
 
-            logger.LogInformation("Judge raw stdout. SessionId: {SessionId} Stdout:\n{Stdout}", sessionId, batchOutcome.Stdout);
-
             return CompilerServiceResult<JudgeResult>.FromData(judgeResult);
         }
         finally
@@ -550,7 +548,6 @@ public sealed class DockerCompilerService(
             $"gcc main.c -o main {optimizationFlag} -std={gccStandard} 2>&1 || " +
             "{ printf '###COMPILE_FAILED###\\n'; exit 0; }");
         builder.AppendLine("printf '###COMPILE_SUCCESS###\\n'");
-        builder.AppendLine("printf '###DEBUG_INPUTS###\\n'; ls -la ./inputs/ 2>&1; printf '###DEBUG_INPUTS_END###\\n'");
         builder.AppendLine("mkdir -p outputs");
         builder.AppendLine("i=0");
         builder.AppendLine("for f in ./inputs/*.txt; do");
@@ -655,7 +652,9 @@ public sealed class DockerCompilerService(
         CancellationToken cancellationToken)
     {
         var scopedScript =
-            $"cd {_options.ContainerWorkDir}/{sessionId} && {script}";
+            $"mkdir -p {_options.ContainerWorkDir}/{sessionId} && " +
+            $"cd {_options.ContainerWorkDir}/{sessionId} && " +
+            $"{script}";
 
         scopedScript = scopedScript.Replace("\r", "");
 
