@@ -36,5 +36,5 @@ jobs:
           echo "REGISTRY=ghcr.io/$REPO_LOWER" >> $GITHUB_ENV
       - name: Build and push image
         run: |
-          docker compose -f infra/docker/prod/compose.yaml --profile ${{inputs.profile}} build --parallel
-          docker compose -f infra/docker/prod/compose.yaml --profile ${{inputs.profile}} push
+          docker compose -f infra/docker/prod/compose.build.yaml --profile ${{inputs.profile}} build --parallel
+          docker compose -f infra/docker/prod/compose.build.yaml --profile ${{inputs.profile}} push
