@@ -1,9 +1,9 @@
 using PIED_LMS.API.Filters;
 using PIED_LMS.API.Middlewares;
+using PIED_LMS.Application.Abstractions;
 using PIED_LMS.Application.Options;
 using PIED_LMS.Contract.Services.Compiler.Validators;
 using PIED_LMS.Infrastructure.Compiler;
-using PIED_LMS.Application.Abstractions;
 
 
 
@@ -46,7 +46,8 @@ public static class InfrastructureExtensions
             {
                 policy.WithOrigins(
                     "http://localhost:3000",
-                    "https://localhost:3000"
+                    "https://localhost:3000",
+                    "https://pied-lms.vercel.app"
                 )
                 .AllowAnyMethod()
                 .AllowAnyHeader()
@@ -99,19 +100,6 @@ public static class InfrastructureExtensions
             limiterOptions.QueueLimit = 2;
         }));
 
-       
-        // 4. CORS
-        services.AddCors(options =>
-        {
-            options.AddPolicy("AllowAll", policy =>
-            {
-                policy
-                    .AllowAnyOrigin()
-                    .AllowAnyHeader()
-                    .AllowAnyMethod();
-            });
-        });
-
         services.AddAuthorization();
 
         return services;
@@ -121,14 +109,13 @@ public static class InfrastructureExtensions
     {
         app.UseExceptionHandler();
         app.UseSerilogRequestLogging();
-        
+
         // Enable CORS - must be before UseAuthentication and UseAuthorization
         app.UseCors("AllowFrontend");
-        
+
         app.UseRateLimiter();
         app.UseResponseCaching();
         app.UseHttpsRedirection();
-        app.UseCors("AllowAll");
         app.UseAuthentication();
         app.UseAuthorization();
 
