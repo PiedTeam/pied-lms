@@ -35,9 +35,9 @@ services:
       DATABASE__NAME: ${DATABASE__NAME}
       DATABASE__USER: ${DATABASE__USER}
       DATABASE__PASSWORD: ${DATABASE__PASSWORD}
-      CompilerOptions__Enabled: ${COMPILER__ENABLED:-false}
-      CompilerOptions__ContainerPoolSize: ${COMPILER__CONTAINER_POOL_SIZE:-10}
-      CompilerOptions__MaxConcurrentCompilations: ${COMPILER__MAX_CONCURRENT_COMPILATIONS:-10}
+      CompilerOptions__Enabled: ${COMPILER__ENABLED:-true}
+      CompilerOptions__ContainerPoolSize: ${COMPILER__CONTAINER_POOL_SIZE:-3}
+      CompilerOptions__MaxConcurrentCompilations: ${COMPILER__MAX_CONCURRENT_COMPILATIONS:-3}
       CompilerOptions__MaxConcurrentTestCases: ${COMPILER__MAX_CONCURRENT_TEST_CASES:-8}
       CompilerOptions__SemaphoreWaitTimeoutMs: ${COMPILER__SEMAPHORE_WAIT_TIMEOUT_MS:-2000}
       CompilerOptions__ContainerNamePrefix: ${COMPILER__CONTAINER_NAME_PREFIX:-compiler-}
