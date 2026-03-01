@@ -656,7 +656,6 @@ public sealed class DockerCompilerService(
             $"cd {_options.ContainerWorkDir} && " +
             $"mkdir -p {sessionId} && " +
             $"cd {sessionId}; " +
-            $"trap 'cd {_options.ContainerWorkDir}; rm -rf {sessionId}' EXIT; " +
             $"{script}";
 
         scopedScript = scopedScript.Replace("\r", "");
