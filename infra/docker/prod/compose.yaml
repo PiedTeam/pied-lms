@@ -117,7 +117,7 @@ services:
       CompilerOptions__SemaphoreWaitTimeoutMs: ${COMPILER__SEMAPHORE_WAIT_TIMEOUT_MS:-2000}
       CompilerOptions__ContainerNamePrefix: ${COMPILER__CONTAINER_NAME_PREFIX:-compiler-}
       CompilerOptions__ContainerImage: ${COMPILER__CONTAINER_IMAGE:-gcc:13}
-      CompilerOptions__ContainerWorkDir: ${COMPILER__CONTAINER_WORK_DIR:-/dev/shm/pied-judge}
+      CompilerOptions__ContainerWorkDir: ${COMPILER__CONTAINER_WORK_DIR:-/work}
       CompilerOptions__ContainerNetwork: ${COMPILER__CONTAINER_NETWORK:-none}
       CompilerOptions__ContainerCpuLimit: ${COMPILER__CONTAINER_CPU_LIMIT:-0.5}
       CompilerOptions__ContainerMemoryLimitMb: ${COMPILER__CONTAINER_MEMORY_LIMIT_MB:-256}
@@ -145,7 +145,7 @@ services:
     volumes:
       - pied-lms-backend-storage:/app/storage
       - /var/run/docker.sock:/var/run/docker.sock
-      - /dev/shm/pied-judge:/dev/shm/pied-judge
+      - /tmp/pied-judge:/work
     depends_on:
       lms-postgres:
         condition: service_healthy

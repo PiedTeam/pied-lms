@@ -151,8 +151,12 @@ public sealed class ContainerPoolManager
 
     private static string GetHostWorkRoot()
     {
-        var basePath = Directory.Exists("/dev/shm") ? "/dev/shm" : Path.GetTempPath();
-        return Path.Combine(basePath, "pied-judge");
+        // Always use /tmp/pied-judge — a stable host path.
+        // Do NOT use /dev/shm here: when the backend runs inside a container,
+        // Directory.Exists("/dev/shm") is true for the CONTAINER's tmpfs, not
+        // the host's. The Docker daemon mounts the HOST /dev/shm into compiler
+        // containers, causing a namespace mismatch and "No such file" errors.
+        return Path.Combine(Path.GetTempPath(), "pied-judge");
     }
 
     private static void EnsureWritableDirectory(string path)
