@@ -47,6 +47,7 @@ services:
       CompilerOptions__ContainerNamePrefix: ${COMPILER__CONTAINER_NAME_PREFIX:-compiler-}
       CompilerOptions__ContainerImage: ${COMPILER__CONTAINER_IMAGE:-gcc:13}
       CompilerOptions__ContainerWorkDir: ${COMPILER__CONTAINER_WORK_DIR:-/work}
+      CompilerOptions__ContainerWorkVolume: ${COMPILER__CONTAINER_WORK_VOLUME:-pied-judge-work}
       CompilerOptions__ContainerNetwork: ${COMPILER__CONTAINER_NETWORK:-none}
       CompilerOptions__ContainerCpuLimit: ${COMPILER__CONTAINER_CPU_LIMIT:-0.5}
       CompilerOptions__ContainerMemoryLimitMb: ${COMPILER__CONTAINER_MEMORY_LIMIT_MB:-256}
@@ -66,7 +67,7 @@ services:
     volumes:
       - backend_storage:/app/storage
       - /var/run/docker.sock:/var/run/docker.sock
-      - /tmp/pied-judge:/work
+      - pied-judge-work:/work
     depends_on:
       postgres:
         condition: service_healthy
@@ -76,6 +77,8 @@ services:
 volumes:
   postgres_data:
   backend_storage:
+  pied-judge-work:
+    name: pied-judge-work
 networks:
   pied-network:
     driver: bridge

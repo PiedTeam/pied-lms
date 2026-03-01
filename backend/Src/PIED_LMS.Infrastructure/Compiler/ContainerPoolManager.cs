@@ -102,7 +102,10 @@ public sealed class ContainerPoolManager
         startInfo.ArgumentList.Add("--tmpfs");
         startInfo.ArgumentList.Add(_options.ContainerTmpfsMount);
         startInfo.ArgumentList.Add("-v");
-        startInfo.ArgumentList.Add($"{HostWorkRoot}:{_options.ContainerWorkDir}:rw");
+        startInfo.ArgumentList.Add(
+            string.IsNullOrEmpty(_options.ContainerWorkVolume)
+                ? $"{HostWorkRoot}:{_options.ContainerWorkDir}:rw"   // bind mount (local / no compose)
+                : $"{_options.ContainerWorkVolume}:{_options.ContainerWorkDir}:rw"); // named volume (prod)
         startInfo.ArgumentList.Add("-w");
         startInfo.ArgumentList.Add(_options.ContainerWorkDir);
         startInfo.ArgumentList.Add(_options.ContainerImage);
@@ -149,13 +152,18 @@ public sealed class ContainerPoolManager
         };
     }
 
-    private static string GetHostWorkRoot()
+    private string GetHostWorkRoot()
     {
-        // Always use /tmp/pied-judge — a stable host path.
-        // Do NOT use /dev/shm here: when the backend runs inside a container,
-        // Directory.Exists("/dev/shm") is true for the CONTAINER's tmpfs, not
-        // the host's. The Docker daemon mounts the HOST /dev/shm into compiler
-        // containers, causing a namespace mismatch and "No such file" errors.
+        // When a named volume is configured, the backend container also mounts it at
+        // ContainerWorkDir (e.g. /work). HostWorkRoot must equal that mount point so
+        // that file writes inside the backend container land on the shared named volume,
+        // which compiler containers also mount at the same path.
+        if (!string.IsNullOrEmpty(_options.ContainerWorkVolume))
+            return _options.ContainerWorkDir;
+
+        // No named volume: fall back to a stable host bind-mount path.
+        // Use /tmp (GetTempPath) instead of /dev/shm to avoid tmpfs namespace
+        // mismatch when the backend runs inside a container.
         return Path.Combine(Path.GetTempPath(), "pied-judge");
     }
 
