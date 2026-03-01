@@ -1,0 +1,40 @@
+name: Build
+on:
+  workflow_call:
+    inputs:
+      actor:
+        required: true
+        type: string
+      repository:
+        required: true
+        type: string
+      profile:
+        required: true
+        type: string
+jobs:
+  build-service-image:
+    name: Build API Images
+    runs-on: ubuntu-latest
+    env:
+      REGISTRY: ghcr.io/${{ inputs.repository }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ inputs.actor}}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set TAG environment variable
+        run: echo "TAG=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+      - name: Lowercase Repository Name
+        run: |
+          REPO_LOWER=$(echo "${{ inputs.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "REGISTRY=ghcr.io/$REPO_LOWER" >> $GITHUB_ENV
+      - name: Build and push image
+        run: |
+          docker compose -f infra/docker/prod/compose.yaml --profile ${{inputs.profile}} build --parallel
+          docker compose -f infra/docker/prod/compose.yaml --profile ${{inputs.profile}} push

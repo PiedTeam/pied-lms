@@ -1,0 +1,75 @@
+name: PIED-LMS Main CI/CD
+
+on:
+    push:
+        branches: ["main"]
+
+concurrency:
+    group: ci-cd-main-${{ github.ref }}
+    cancel-in-progress: true
+
+env:
+    REGISTRY: ghcr.io
+    IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+    detect-changes:
+        name: Detect Changes
+        runs-on: ubuntu-latest
+        outputs:
+            backend-changed: ${{ steps.changes.outputs.backend }}
+            frontend-changed: ${{ steps.changes.outputs.frontend }}
+            workflow-changed: ${{ steps.changes.outputs.workflow }}
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 2
+
+            - uses: dorny/paths-filter@v2
+              id: changes
+              with:
+                  filters: |
+                      backend:
+                        - 'backend/**'
+                      frontend:
+                        - 'frontend/**'
+                      workflow:
+                        - '.github/workflows/**'
+
+            - name: Display Changes
+              run: |
+                  echo "Backend: ${{ steps.changes.outputs.backend }}"
+                  echo "Frontend: ${{ steps.changes.outputs.frontend }}"
+                  echo "Workflow: ${{ steps.changes.outputs.workflow }}"
+    build-backend:
+        name: Build Backend
+        permissions:
+            contents: read
+            packages: write
+        needs: detect-changes
+        if: |
+            needs.detect-changes.outputs.backend-changed == 'true' || 
+            needs.detect-changes.outputs.frontend-changed == 'true' || 
+            needs.detect-changes.outputs.workflow-changed == 'true'
+        uses: ./.github/workflows/build-image.yaml
+        with:
+            actor: ${{ github.actor }}
+            repository: ${{ github.repository }}
+            profile: backend
+        secrets: inherit
+    deploy-client:
+        name: Deploy / Prod / API
+        needs: build-backend
+        permissions:
+            contents: read
+            packages: write
+        if: ${{ github.ref == 'refs/heads/main' }}
+        uses: ./.github/workflows/deploy-application.yaml
+        with:
+            actor: ${{ github.actor }}
+            repository: ${{ github.repository }}
+            profile: prod
+            environment: prod
+            tag: latest
+        secrets: inherit
