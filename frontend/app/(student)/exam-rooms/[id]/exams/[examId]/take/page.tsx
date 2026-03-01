@@ -21,6 +21,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import Editor from "@monaco-editor/react";
 import { useJudgeCodeFromFile, useCompileCode } from "@/service";
+import { useGetExamById } from "@/services";
 import { COMPILER_MESSAGES } from "@/constants/messages";
 import type { TestCaseResult } from "@/interface/compiler/compiler.interface";
 import { useAuthStore } from "@/store/auth.store";
@@ -64,6 +65,13 @@ export default function TakeExamPage() {
   const roomId = params.id as string;
   const examId = params.examId as string;
 
+  // Fetch exam data from API
+  const {
+    data: examData,
+    isLoading: isLoadingExam,
+    error: examError,
+  } = useGetExamById(examId);
+
   // Compiler mutation
   const { mutate: judgeCodeFromFile, isPending: isJudging } =
     useJudgeCodeFromFile();
@@ -102,14 +110,10 @@ int main() {
 
   // Load saved code from localStorage on mount
   useEffect(() => {
-    // Set mock exam data
-    setExam({
-      id: examId,
-      title: "C Programming Exam",
-      description: "Write a C program to solve the given problem",
-      totalMarks: 100,
-      passingMarks: 50,
-    });
+    // Set exam data from API response
+    if (examData) {
+      setExam(examData);
+    }
 
     // Load saved code from localStorage
     const savedCode = localStorage.getItem(`exam_code_${roomId}_${examId}`);
@@ -140,7 +144,7 @@ int main() {
     }
 
     setIsLoading(false);
-  }, [examId, roomId]);
+  }, [examData, examId, roomId]);
 
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
@@ -417,12 +421,28 @@ int main() {
     );
   };
 
-  if (isLoading) {
+  if (isLoading || isLoadingExam) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4" />
           <p className="text-muted-foreground">Loading exam...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (examError) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-muted-foreground">Exam not found</p>
+          <Button
+            className="mt-4"
+            onClick={() => router.push(`/exam-rooms/${roomId}`)}
+          >
+            Go back
+          </Button>
         </div>
       </div>
     );
@@ -525,25 +545,37 @@ int main() {
           <ResizablePanel defaultSize={40} minSize={25} maxSize={60}>
             <Card className="h-full overflow-hidden flex flex-col border-0 rounded-none">
               <CardHeader className="border-b shrink-0">
-                <CardTitle>Exam Information</CardTitle>
-                <CardDescription>
-                  Total Score: {exam.totalMarks} | Passing Score:{" "}
-                  {exam.passingMarks}
+                <CardTitle>{exam.title}</CardTitle>
+                <CardDescription>{exam.description}</CardDescription>
+                <div className="flex gap-4 mt-3 text-sm">
+                  <div className="flex items-center gap-1">
+                    <span className="font-medium">Total Score:</span>
+                    <Badge variant="outline">{exam.totalMarks}</Badge>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="font-medium">Passing Score:</span>
+                    <Badge variant="outline">{exam.passingMarks}</Badge>
+                  </div>
                   {examScore && (
-                    <>
-                      {" | "}
-                      <span
+                    <div className="flex items-center gap-1">
+                      <span className="font-medium">Your Score:</span>
+                      <Badge
+                        variant={
+                          examScore.score >= exam.passingMarks
+                            ? "default"
+                            : "destructive"
+                        }
                         className={
                           examScore.score >= exam.passingMarks
-                            ? "text-green-600 font-semibold"
-                            : "text-red-600 font-semibold"
+                            ? "bg-green-600"
+                            : ""
                         }
                       >
-                        Your Score: {examScore.score}/{examScore.totalMarks}
-                      </span>
-                    </>
+                        {examScore.score}/{examScore.totalMarks}
+                      </Badge>
+                    </div>
                   )}
-                </CardDescription>
+                </div>
               </CardHeader>
               <CardContent className="flex-1 overflow-y-auto p-6 space-y-6">
                 {examScore && (
