@@ -145,8 +145,3 @@ networks:
       - "com.piedteam.project=pied-lms"
       - "com.piedteam.service=internal-network"
       - "com.piedteam.description=Internal network for PIED LMS services"
-      - "com.piedteam.subnet=172.20.0.0/16"
-    ipam:
-      driver: default
-      config:
-        - subnet: 172.20.0.0/16
