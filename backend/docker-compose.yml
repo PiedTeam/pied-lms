@@ -1,0 +1,56 @@
+services:
+    postgres:
+        image: ${POSTGRES_IMAGE}
+        container_name: ${POSTGRES_CONTAINER_NAME}
+        restart: ${RESTART_POLICY}
+        environment:
+            POSTGRES_DB: ${POSTGRES_DB}
+            POSTGRES_USER: ${POSTGRES_USER}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+        ports:
+            - "${POSTGRES_PORT}:5432"
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+        healthcheck:
+            test:
+                [
+                    "CMD-SHELL",
+                    "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}",
+                ]
+            interval: 5s
+            timeout: 3s
+            retries: 20
+        networks:
+            default:
+                aliases:
+                    - ${POSTGRES_SERVICE_ALIAS}
+                    - ${POSTGRES_CONTAINER_NAME}
+
+    api:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        container_name: ${API_CONTAINER_NAME}
+        restart: ${RESTART_POLICY}
+        user: ${API_RUN_AS_USER}
+        depends_on:
+            postgres:
+                condition: service_healthy
+        environment:
+            ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+            ASPNETCORE_URLS: ${ASPNETCORE_URLS}
+            DATABASE__HOST: ${DATABASE_HOST}
+            DATABASE__PORT: ${DATABASE_PORT}
+            DATABASE__NAME: ${DATABASE_NAME}
+            DATABASE__USER: ${DATABASE_USER}
+            DATABASE__PASSWORD: ${DATABASE_PASSWORD}
+            Compiler__ContainerImage: ${COMPILER_CONTAINER_IMAGE}
+        ports:
+            - "${API_PORT}:8080"
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+        networks:
+            - default
+
+volumes:
+    postgres_data:

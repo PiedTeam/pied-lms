@@ -1,6 +1,8 @@
+using Microsoft.EntityFrameworkCore;
 using PIED_LMS.API;
 using PIED_LMS.Application;
 using PIED_LMS.Infrastructure;
+using PIED_LMS.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +21,9 @@ using (var scope = app.Services.CreateScope())
     var services = scope.ServiceProvider;
     try
     {
+        var dbContext = services.GetRequiredService<PiedLmsDbContext>();
+        await dbContext.Database.MigrateAsync();
+
         await PIED_LMS.Infrastructure.DbInitializer.SeedAsync(services);
     }
     catch (Exception ex)

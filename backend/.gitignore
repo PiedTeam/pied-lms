@@ -90,6 +90,8 @@ TestResults/
 *.db
 appsettings.Development.json
 env.local
+.env
+.env.*
 
 # --- FIXED SECTION ---
 volume

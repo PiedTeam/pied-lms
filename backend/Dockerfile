@@ -1,7 +1,7 @@
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS base
 WORKDIR /app
 EXPOSE 8080
-RUN apk add --no-cache icu-libs
+RUN apk add --no-cache icu-libs docker-cli
 USER app
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS build
@@ -20,15 +20,13 @@ COPY ["Directory.Build.props", "./"]
 COPY ["Directory.Packages.props", "./"]
 COPY ["global.json", "./"]
 
-RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
-    dotnet restore "Src/PIED_LMS.API/PIED_LMS.API.csproj"
+RUN dotnet restore "Src/PIED_LMS.API/PIED_LMS.API.csproj"
 
 # 2. Copy toàn bộ source code vào (BẮT BUỘC TRƯỚC KHI PUBLISH)
 COPY . .
 
 # 3. Publish (Chỉ cần 1 lần duy nhất ở đây)
-RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
-    dotnet publish "Src/PIED_LMS.API/PIED_LMS.API.csproj" \
+RUN dotnet publish "Src/PIED_LMS.API/PIED_LMS.API.csproj" \
     -c $BUILD_CONFIGURATION \
     -o /app/publish \
     /p:UseAppHost=false
