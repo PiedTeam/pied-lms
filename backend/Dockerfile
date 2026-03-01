@@ -3,6 +3,7 @@ WORKDIR /app
 EXPOSE 8080
 RUN apk add --no-cache icu-libs docker-cli
 
+// Permission for write log, upload file, etc.
 RUN mkdir -p /app/storage && chown -R app:app /app/storage
 
 USER app
