@@ -72,7 +72,6 @@ services:
     build:
       context: ../../../backend
       dockerfile: Dockerfile
-      target: production
       args:
         ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
         BUILDKIT_INLINE_CACHE: 1
