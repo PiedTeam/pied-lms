@@ -42,6 +42,7 @@ export interface ExamRoomDetailResponse {
   endTime: string;
   durationInMinutes: number;
   status: string;
+  roomCode?: string;
   exams: ExamRoomExamResponse[];
   enrolledStudentsCount?: number;
   createdAt: string;

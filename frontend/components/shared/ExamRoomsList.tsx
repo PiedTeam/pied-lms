@@ -444,11 +444,24 @@ export function ExamRoomsList({ basePath }: ExamRoomsListProps) {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Exam Room Name</TableHead>
-                          <TableHead>Time</TableHead>
-                          <TableHead>Duration</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
+                          <TableHead className="text-xs sm:text-sm">
+                            Exam Room Name
+                          </TableHead>
+                          <TableHead className="text-xs sm:text-sm">
+                            Room Code
+                          </TableHead>
+                          <TableHead className="text-xs sm:text-sm">
+                            Time
+                          </TableHead>
+                          <TableHead className="text-xs sm:text-sm">
+                            Duration
+                          </TableHead>
+                          <TableHead className="text-xs sm:text-sm">
+                            Status
+                          </TableHead>
+                          <TableHead className="text-right text-xs sm:text-sm">
+                            Actions
+                          </TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -469,6 +482,14 @@ export function ExamRoomsList({ basePath }: ExamRoomsListProps) {
                                     (Hidden)
                                   </span>
                                 )}
+                              </TableCell>
+                              <TableCell data-testid="room-code-cell">
+                                <code
+                                  className="text-xs sm:text-sm font-mono bg-muted px-1.5 py-0.5 sm:px-2 sm:py-1 rounded wrap-break-word inline-block max-w-full"
+                                  data-testid="room-code-value"
+                                >
+                                  {room.roomCode || "N/A"}
+                                </code>
                               </TableCell>
                               <TableCell>
                                 <div className="flex flex-col gap-1 text-sm">
