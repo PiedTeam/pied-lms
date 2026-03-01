@@ -3,9 +3,7 @@ WORKDIR /app
 EXPOSE 8080
 RUN apk add --no-cache icu-libs docker-cli
 
-RUN mkdir -p /app/storage && chown -R app:app /app/storage
-
-USER app
+RUN mkdir -p /app/storage && chmod -R 777 /app/storage
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS build
 ARG BUILD_CONFIGURATION=Release
@@ -37,6 +35,8 @@ RUN dotnet publish "Src/PIED_LMS.API/PIED_LMS.API.csproj" \
 FROM base AS final
 WORKDIR /app
 COPY --from=build /app/publish .
+COPY entrypoint.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
 ENV ASPNETCORE_ENVIRONMENT=Production
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
-ENTRYPOINT ["dotnet", "PIED_LMS.API.dll"]
+ENTRYPOINT ["./entrypoint.sh"]

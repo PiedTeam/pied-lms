@@ -62,7 +62,7 @@ services:
       - "com.piedteam.backup.enabled=true"
       - "com.piedteam.backup.schedule=daily"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DATABASE__USER:-postgres} -d ${DATABASE__NAME:-piedlms}"]
+      test: [ "CMD-SHELL", "pg_isready -U ${DATABASE__USER:-postgres} -d ${DATABASE__NAME:-piedlms}" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -138,6 +138,9 @@ services:
         reservations:
           cpus: '1.0'
           memory: 512M
+    volumes:
+      - pied-lms-backend-storage:/app/storage
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       lms-postgres:
         condition: service_healthy
@@ -154,7 +157,7 @@ services:
       - "com.piedteam.healthcheck.endpoint=/health"
       - "com.piedteam.framework=dotnet"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -168,6 +171,13 @@ volumes:
       - "com.piedteam.service=postgres-data"
       - "com.piedteam.description=PostgreSQL data volume"
       - "com.piedteam.backup.required=true"
+  pied-lms-backend-storage:
+    name: pied-lms-backend-storage
+    driver: local
+    labels:
+      - "com.piedteam.project=pied-lms"
+      - "com.piedteam.service=backend-storage"
+      - "com.piedteam.description=Backend file storage for test cases"
   pied-lms-cloudflare-config:
     name: pied-lms-cloudflare-config
     driver: local

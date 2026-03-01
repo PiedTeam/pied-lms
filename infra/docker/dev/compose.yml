@@ -12,14 +12,14 @@ services:
     networks:
       - pied-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DATABASE__USER:-postgres} -d ${DATABASE__NAME:-piedlms}"]
+      test: [ "CMD-SHELL", "pg_isready -U ${DATABASE__USER:-postgres} -d ${DATABASE__NAME:-piedlms}" ]
       interval: 10s
       timeout: 5s
       retries: 5
 
   backend:
     build:
-      context: ./backend
+      context: ../../../backend
       dockerfile: Dockerfile
     image: ${DOCKERHUB_USERNAME}/pied-lms-backend:latest
     container_name: pied-lms-backend
@@ -59,6 +59,9 @@ services:
       CompilerOptions__CompileSuccessMarker: ${COMPILER__COMPILE_SUCCESS_MARKER:-_COMPILE_SUCCESS_}
       CompilerOptions__TestCaseBasePath: ${COMPILER__TEST_CASE_BASE_PATH:-/testcases}
       CompilerOptions__GccStandard: ${COMPILER__GCC_STANDARD:-c11}
+    volumes:
+      - backend_storage:/app/storage
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       postgres:
         condition: service_healthy
@@ -67,6 +70,7 @@ services:
 
 volumes:
   postgres_data:
+  backend_storage:
 networks:
   pied-network:
     driver: bridge
