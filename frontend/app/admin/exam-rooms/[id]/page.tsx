@@ -426,7 +426,7 @@ export default function ExamRoomDetailPage() {
                         </div>
                         <div className="grid gap-2">
                           <Label>Exam List</Label>
-                          <div className="border rounded-lg overflow-hidden">
+                          <div className="border rounded-lg flex flex-col">
                             <div className="max-h-[400px] overflow-y-auto">
                               {!allExams.length ? (
                                 <div className="text-center py-8 text-muted-foreground">
@@ -525,7 +525,7 @@ export default function ExamRoomDetailPage() {
 
                             {/* Pagination - outside scrollable area */}
                             {examDialogTotalPages > 1 && (
-                              <div className="flex items-center justify-between px-4 py-2 border-t bg-muted/50">
+                              <div className="flex items-center justify-between px-4 py-2 border-t bg-muted/50 shrink-0">
                                 <div className="text-sm text-muted-foreground">
                                   Page {examDialogPage} of{" "}
                                   {examDialogTotalPages}
