@@ -179,7 +179,7 @@ export function ExamInfoPanel({
           <h3 className="font-semibold mb-2">Instructions:</h3>
           <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
             <li>Write your C code in the editor on the right</li>
-            <li>Click &quot;Test Code&quot; to check with sample test cases</li>
+            <li>Click &quot;Run Code&quot; to check with sample test cases</li>
             <li>
               Click &quot;Save Draft&quot; to save code (can continue later)
             </li>

@@ -5,6 +5,7 @@ import { Search, FileText, CheckCircle2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { ExamResponse } from "@/interface/exam/exam.interface";
 
@@ -12,12 +13,18 @@ interface ExamSelectorProps {
   exams: ExamResponse[];
   selectedExamId: string | null;
   onSelectExam: (examId: string) => void;
+  currentPage?: number;
+  totalPages?: number;
+  onPageChange?: (page: number) => void;
 }
 
 export function ExamSelector({
   exams = [],
   selectedExamId,
   onSelectExam,
+  currentPage = 1,
+  totalPages = 1,
+  onPageChange,
 }: ExamSelectorProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("active");
@@ -74,10 +81,11 @@ export function ExamSelector({
               filteredExams.map((exam) => (
                 <Card
                   key={exam.id}
-                  className={`cursor-pointer transition-all hover:shadow-md ${selectedExamId === exam.id
-                    ? "border-primary bg-primary/5 ring-2 ring-primary"
-                    : "hover:border-primary/50"
-                    }`}
+                  className={`cursor-pointer transition-all hover:shadow-md ${
+                    selectedExamId === exam.id
+                      ? "border-primary bg-primary/5 ring-2 ring-primary"
+                      : "hover:border-primary/50"
+                  }`}
                   onClick={() => onSelectExam(exam.id)}
                 >
                   <CardContent className="p-4">
@@ -114,6 +122,33 @@ export function ExamSelector({
               ))
             )}
           </div>
+
+          {/* Pagination Controls */}
+          {onPageChange && totalPages > 1 && (
+            <div className="flex items-center justify-between mt-4 pt-4 border-t">
+              <div className="text-sm text-muted-foreground">
+                Page {currentPage} of {totalPages}
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onPageChange(currentPage - 1)}
+                  disabled={currentPage <= 1}
+                >
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onPageChange(currentPage + 1)}
+                  disabled={currentPage >= totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>

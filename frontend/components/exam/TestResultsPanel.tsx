@@ -29,7 +29,7 @@ export function TestResultsPanel({
         <div className="text-center">
           <Play className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
           <p className="text-muted-foreground">
-            Click &quot;Test Code&quot; to run test cases
+            Click &quot;Run Code&quot; to run test cases
           </p>
         </div>
       </div>

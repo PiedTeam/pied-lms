@@ -19,16 +19,26 @@ import { useGetExamsByMentor } from "@/service";
 export default function MentorTestCasesPage() {
   const router = useRouter();
   const [selectedExamId, setSelectedExamId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 12; // 12 exams per page (3x4 grid)
 
   const { data: examsData, isLoading } = useGetExamsByMentor({
-    pageNumber: 1,
-    pageSize: 100,
+    pageNumber: currentPage,
+    pageSize: pageSize,
   });
   const exams = examsData?.items || [];
+  const totalPages = examsData
+    ? Math.ceil(examsData.totalCount / examsData.pageSize)
+    : 1;
   const selectedExam = exams.find((exam) => exam.id === selectedExamId);
 
   const handleExamSelect = (examId: string) => {
     setSelectedExamId(examId);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    setSelectedExamId(null); // Clear selection when changing page
   };
 
   return (
@@ -54,6 +64,9 @@ export default function MentorTestCasesPage() {
               exams={exams}
               selectedExamId={selectedExamId}
               onSelectExam={handleExamSelect}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
             />
           )}
         </CardContent>

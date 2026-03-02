@@ -51,7 +51,7 @@ This page has been refactored following clean architecture principles with separ
 #### `ExamHeader.tsx`
 - Top navigation bar
 - Timer display
-- Action buttons (Save Draft, Test Code, Submit)
+- Action buttons (Save Draft, Run Code, Submit)
 - Props: exam, timeRemaining, handlers
 
 #### `ExamInfoPanel.tsx`
