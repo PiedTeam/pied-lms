@@ -65,11 +65,13 @@ export default function ExamRoomDetailPage() {
   const [examSearchQuery, setExamSearchQuery] = useState("");
   const [examListSearchQuery, setExamListSearchQuery] = useState("");
   const [studentSearchQuery, setStudentSearchQuery] = useState("");
+  const [examDialogPage, setExamDialogPage] = useState(1);
+  const examDialogPageSize = 10;
 
   const { data: room, isLoading } = useGetExamRoomById(roomId);
   const { data: examsData } = useGetExamsByMentor({
-    pageNumber: 1,
-    pageSize: 100,
+    pageNumber: examDialogPage,
+    pageSize: examDialogPageSize,
   });
   const { data: enrollmentsData, isLoading: isLoadingEnrollments } =
     useGetExamRoomEnrollments({
@@ -187,7 +189,14 @@ export default function ExamRoomDetailPage() {
     setIsAssignDialogOpen(false);
     setSelectedExamIds([]);
     setExamSearchQuery("");
+    setExamDialogPage(1);
   };
+
+  const examDialogTotalPages = examsData
+    ? Math.ceil(examsData.totalCount / examsData.pageSize)
+    : 1;
+  const hasNextExamPage = examDialogPage < examDialogTotalPages;
+  const hasPrevExamPage = examDialogPage > 1;
 
   const handleRemoveExam = (examId: string) => {
     removeExam(
@@ -506,6 +515,39 @@ export default function ExamRoomDetailPage() {
                               </div>
                             )}
                           </div>
+
+                          {/* Pagination */}
+                          {examDialogTotalPages > 1 && (
+                            <div className="flex items-center justify-between px-4 py-2 border-t bg-muted/50">
+                              <div className="text-sm text-muted-foreground">
+                                Page {examDialogPage} of {examDialogTotalPages}
+                              </div>
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() =>
+                                    setExamDialogPage((p) => Math.max(1, p - 1))
+                                  }
+                                  disabled={!hasPrevExamPage}
+                                >
+                                  Previous
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() =>
+                                    setExamDialogPage((p) =>
+                                      Math.min(examDialogTotalPages, p + 1),
+                                    )
+                                  }
+                                  disabled={!hasNextExamPage}
+                                >
+                                  Next
+                                </Button>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                       <DialogFooter>
@@ -515,6 +557,7 @@ export default function ExamRoomDetailPage() {
                             setIsAssignDialogOpen(false);
                             setSelectedExamIds([]);
                             setExamSearchQuery("");
+                            setExamDialogPage(1);
                           }}
                           disabled={isAssigning}
                         >

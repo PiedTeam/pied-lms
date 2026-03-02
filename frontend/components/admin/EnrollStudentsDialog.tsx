@@ -35,11 +35,13 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
 
   const { data: studentsData, isLoading: isLoadingStudents } =
     useGetAllStudents({
-      pageNumber: 1,
-      pageSize: 100,
+      pageNumber: currentPage,
+      pageSize: pageSize,
     });
 
   const { data: enrollmentsData } = useGetExamRoomEnrollments({
@@ -145,7 +147,14 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
     setIsOpen(false);
     setSelectedStudentIds([]);
     setSearchQuery("");
+    setCurrentPage(1);
   };
+
+  const totalPages = studentsData
+    ? Math.ceil(studentsData.totalCount / studentsData.pageSize)
+    : 1;
+  const hasNextPage = currentPage < totalPages;
+  const hasPrevPage = currentPage > 1;
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -285,6 +294,35 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
                 </div>
               )}
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between px-4 py-2 border-t bg-muted/50 flex-shrink-0">
+                <div className="text-sm text-muted-foreground">
+                  Page {currentPage} of {totalPages}
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={!hasPrevPage || isLoadingStudents}
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCurrentPage((p) => Math.min(totalPages, p + 1))
+                    }
+                    disabled={!hasNextPage || isLoadingStudents}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
