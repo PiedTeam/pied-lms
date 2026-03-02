@@ -17,10 +17,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.25'
+          cpus: "0.25"
           memory: 128M
         reservations:
-          cpus: '0.1'
+          cpus: "0.1"
           memory: 64M
     labels:
       - "com.piedteam.project=pied-lms"
@@ -48,10 +48,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1.0'
+          cpus: "1.0"
           memory: 512M
         reservations:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 256M
     labels:
       - "com.piedteam.project=pied-lms"
@@ -62,7 +62,11 @@ services:
       - "com.piedteam.backup.enabled=true"
       - "com.piedteam.backup.schedule=daily"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DATABASE__USER:-postgres} -d ${DATABASE__NAME:-piedlms}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${DATABASE__USER:-postgres} -d ${DATABASE__NAME:-piedlms}",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -106,14 +110,43 @@ services:
       Seed__TeacherPassword: ${SEED__TEACHER_PASSWORD}
       Seed__MentorPassword: ${SEED__MENTOR_PASSWORD}
       AllowedHosts: ${ALLOWED_HOSTS:-localhost;127.0.0.1}
+      CompilerOptions__Enabled: ${COMPILER__ENABLED:-true}
+      CompilerOptions__ContainerPoolSize: ${COMPILER__CONTAINER_POOL_SIZE:-3}
+      CompilerOptions__MaxConcurrentCompilations: ${COMPILER__MAX_CONCURRENT_COMPILATIONS:-3}
+      CompilerOptions__MaxConcurrentTestCases: ${COMPILER__MAX_CONCURRENT_TEST_CASES:-8}
+      CompilerOptions__SemaphoreWaitTimeoutMs: ${COMPILER__SEMAPHORE_WAIT_TIMEOUT_MS:-2000}
+      CompilerOptions__ContainerNamePrefix: ${COMPILER__CONTAINER_NAME_PREFIX:-compiler-}
+      CompilerOptions__ContainerImage: ${COMPILER__CONTAINER_IMAGE:-gcc:13}
+      CompilerOptions__ContainerWorkDir: ${COMPILER__CONTAINER_WORK_DIR:-/work}
+      CompilerOptions__ContainerWorkVolume: ${COMPILER__CONTAINER_WORK_VOLUME:-pied-judge-work}
+      CompilerOptions__ContainerNetwork: ${COMPILER__CONTAINER_NETWORK:-none}
+      CompilerOptions__ContainerCpuLimit: ${COMPILER__CONTAINER_CPU_LIMIT:-0.5}
+      CompilerOptions__ContainerMemoryLimitMb: ${COMPILER__CONTAINER_MEMORY_LIMIT_MB:-256}
+      CompilerOptions__ContainerMemorySwapMb: ${COMPILER__CONTAINER_MEMORY_SWAP_MB:-256}
+      CompilerOptions__ContainerPidsLimit: ${COMPILER__CONTAINER_PIDS_LIMIT:-64}
+      CompilerOptions__ContainerReadOnlyRootFs: ${COMPILER__CONTAINER_READONLY_ROOTFS:-true}
+      CompilerOptions__ContainerTmpfsMount: ${COMPILER__CONTAINER_TMPFS_MOUNT:-/tmp:rw,size=64m}
+      CompilerOptions__DefaultTimeLimitMs: ${COMPILER__DEFAULT_TIME_LIMIT_MS:-5000}
+      CompilerOptions__DefaultMemoryLimitMb: ${COMPILER__DEFAULT_MEMORY_LIMIT_MB:-256}
+      CompilerOptions__WorkDirCleanupIntervalSeconds: ${COMPILER__WORKDIR_CLEANUP_INTERVAL_SECONDS:-60}
+      CompilerOptions__WorkDirMaxAgeMinutes: ${COMPILER__WORKDIR_MAX_AGE_MINUTES:-10}
+      CompilerOptions__OutputLimitBytes: ${COMPILER__OUTPUT_LIMIT_BYTES:-1048576}
+      CompilerOptions__StderrLimitBytes: ${COMPILER__STDERR_LIMIT_BYTES:-262144}
+      CompilerOptions__CompileSuccessMarker: ${COMPILER__COMPILE_SUCCESS_MARKER:-_COMPILE_SUCCESS_}
+      CompilerOptions__TestCaseBasePath: ${COMPILER__TEST_CASE_BASE_PATH:-/testcases}
+      CompilerOptions__GccStandard: ${COMPILER__GCC_STANDARD:-c11}
     deploy:
       resources:
         limits:
-          cpus: '2.0'
+          cpus: "2.0"
           memory: 1G
         reservations:
-          cpus: '1.0'
+          cpus: "1.0"
           memory: 512M
+    volumes:
+      - pied-lms-backend-storage:/app/storage
+      - /var/run/docker.sock:/var/run/docker.sock
+      - pied-judge-work:/work
     depends_on:
       lms-postgres:
         condition: service_healthy
@@ -144,6 +177,13 @@ volumes:
       - "com.piedteam.service=postgres-data"
       - "com.piedteam.description=PostgreSQL data volume"
       - "com.piedteam.backup.required=true"
+  pied-lms-backend-storage:
+    name: pied-lms-backend-storage
+    driver: local
+    labels:
+      - "com.piedteam.project=pied-lms"
+      - "com.piedteam.service=backend-storage"
+      - "com.piedteam.description=Backend file storage for test cases"
   pied-lms-cloudflare-config:
     name: pied-lms-cloudflare-config
     driver: local
@@ -151,6 +191,13 @@ volumes:
       - "com.piedteam.project=pied-lms"
       - "com.piedteam.service=cloudflare-config"
       - "com.piedteam.description=Cloudflare tunnel configuration"
+  pied-judge-work:
+    name: pied-judge-work
+    driver: local
+    labels:
+      - "com.piedteam.project=pied-lms"
+      - "com.piedteam.service=compiler-workdir"
+      - "com.piedteam.description=Shared compiler session working directory"
 
 networks:
   pied-lms-network:

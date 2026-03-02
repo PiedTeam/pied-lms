@@ -7,8 +7,10 @@ import {
   Calendar,
   Clock,
   Copy,
+  Copy,
   Eye,
   FileText,
+  Hash,
   Hash,
   Plus,
   Trash2,
@@ -299,6 +301,28 @@ export default function ExamRoomDetailPage() {
                 <p className="text-sm text-muted-foreground">
                   {room.durationInMinutes} minutes
                 </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-2">
+              <Hash className="h-4 w-4 mt-0.5 text-muted-foreground" />
+              <div className="flex-1">
+                <p className="text-sm font-medium">Room Code</p>
+                <div className="flex items-center gap-2">
+                  <code className="text-xs sm:text-sm text-muted-foreground font-mono bg-muted px-1.5 py-0.5 sm:px-2 sm:py-1 rounded">
+                    {room.roomCode || "N/A"}
+                  </code>
+                  {room.roomCode && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-11 w-11 sm:h-6 sm:w-6"
+                      onClick={() => handleCopyRoomCode(room.roomCode!)}
+                      title="Copy room code"
+                    >
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
             <div className="flex items-start gap-2">
