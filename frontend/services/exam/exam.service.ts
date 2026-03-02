@@ -214,3 +214,24 @@ export function useDeleteExam() {
     },
   });
 }
+
+// Get Test Cases for Student (only visible test cases)
+export function useGetStudentTestCases(examId: string) {
+  return useQuery({
+    queryKey: ["student-testcases", examId],
+    queryFn: async (): Promise<any[]> => {
+      const { data } = await axios.get<ApiResponse<any[]>>(
+        `/students/testcases/${examId}`,
+      );
+
+      if (!data.success || !data.data) {
+        throw new Error(data.message || "Failed to load test cases");
+      }
+
+      return data.data;
+    },
+    enabled: !!examId,
+    retry: 1,
+    staleTime: 60000, // Cache for 1 minute
+  });
+}

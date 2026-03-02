@@ -53,7 +53,14 @@ export function TestCaseForm({
       inputPath: testCase?.inputPath || "",
       outputPath: testCase?.outputPath || "",
       isHidden: testCase?.isHidden || false,
-      index: testCase?.index || 1,
+      index:
+        testCase?.index ||
+        (() => {
+          // Auto-calculate next index when creating new test case
+          if (existingTestCases.length === 0) return 1;
+          const maxIndex = Math.max(...existingTestCases.map((tc) => tc.index));
+          return maxIndex + 1;
+        })(),
     },
   });
 
@@ -183,11 +190,16 @@ export function TestCaseForm({
                   <Input
                     type="number"
                     min={1}
+                    readOnly
+                    disabled
                     {...field}
                     onChange={(e) => field.onChange(Number(e.target.value))}
+                    className="bg-muted cursor-not-allowed"
                   />
                 </FormControl>
-                <FormDescription>Order/index of this test case</FormDescription>
+                <FormDescription>
+                  Auto-generated index (read-only)
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}

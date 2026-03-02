@@ -52,6 +52,7 @@ export {
   useGetExamById,
   useUpdateExam,
   useDeleteExam,
+  useGetStudentTestCases,
 } from "./exam/exam.service";
 
 // Exam Participation Services (Student - taking exams)

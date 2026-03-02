@@ -617,11 +617,7 @@ export default function ExamRoomDetailPage() {
                           {formatDateTime(enrollment.enrolledAt)}
                         </TableCell>
                         <TableCell>
-                          {enrollment.emailSent ? (
-                            <Badge variant="default">Sent</Badge>
-                          ) : (
-                            <Badge variant="outline">Not Sent</Badge>
-                          )}
+                          <Badge variant="default">Sent</Badge>
                         </TableCell>
                       </TableRow>
                     ))}

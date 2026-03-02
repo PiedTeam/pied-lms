@@ -6,4 +6,5 @@ export {
   useGetExamById,
   useUpdateExam,
   useDeleteExam,
+  useGetStudentTestCases,
 } from "./exam.service";
