@@ -67,6 +67,10 @@ export default function ExamRoomDetailPage() {
   const [studentSearchQuery, setStudentSearchQuery] = useState("");
   const [examDialogPage, setExamDialogPage] = useState(1);
   const examDialogPageSize = 7; // 7 exams per page
+  const [examListPage, setExamListPage] = useState(1);
+  const examListPageSize = 5; // 5 exams per page in the main table
+  const [studentListPage, setStudentListPage] = useState(1);
+  const studentListPageSize = 5; // 5 students per page
 
   const { data: room, isLoading } = useGetExamRoomById(roomId);
   // Fetch all exams (backend doesn't support pagination yet)
@@ -115,6 +119,17 @@ export default function ExamRoomDetailPage() {
       )
     : assignedExams;
 
+  // Client-side pagination for exam list
+  const examListTotalPages = Math.ceil(
+    filteredAssignedExams.length / examListPageSize,
+  );
+  const examListStartIndex = (examListPage - 1) * examListPageSize;
+  const examListEndIndex = examListStartIndex + examListPageSize;
+  const paginatedAssignedExams = filteredAssignedExams.slice(
+    examListStartIndex,
+    examListEndIndex,
+  );
+
   const filteredStudents = enrolledStudents.filter(
     (enrollment) =>
       enrollment.studentEmail
@@ -125,6 +140,17 @@ export default function ExamRoomDetailPage() {
         .includes(studentSearchQuery.toLowerCase()),
   );
 
+  // Client-side pagination for student list
+  const studentListTotalPages = Math.ceil(
+    filteredStudents.length / studentListPageSize,
+  );
+  const studentListStartIndex = (studentListPage - 1) * studentListPageSize;
+  const studentListEndIndex = studentListStartIndex + studentListPageSize;
+  const paginatedStudents = filteredStudents.slice(
+    studentListStartIndex,
+    studentListEndIndex,
+  );
+
   const formatDateTime = (dateString: string) => {
     return new Date(dateString).toLocaleString("en-US", {
       year: "numeric",
@@ -133,6 +159,17 @@ export default function ExamRoomDetailPage() {
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  // Reset to page 1 when search changes
+  const handleExamListSearchChange = (value: string) => {
+    setExamListSearchQuery(value);
+    setExamListPage(1);
+  };
+
+  const handleStudentSearchChange = (value: string) => {
+    setStudentSearchQuery(value);
+    setStudentListPage(1);
   };
 
   const getStatusBadge = (status: string) => {
@@ -394,7 +431,7 @@ export default function ExamRoomDetailPage() {
                   <Input
                     placeholder="Search exams..."
                     value={examListSearchQuery}
-                    onChange={(e) => setExamListSearchQuery(e.target.value)}
+                    onChange={(e) => handleExamListSearchChange(e.target.value)}
                     className="w-64"
                   />
                   <Dialog
@@ -596,54 +633,90 @@ export default function ExamRoomDetailPage() {
                     : "No exams yet. Assign exams to this room!"}
                 </div>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Exam Title</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead>Max Score</TableHead>
-                      <TableHead>Passing Score</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredAssignedExams.map((exam) => (
-                      <TableRow key={exam.id}>
-                        <TableCell className="font-medium">
-                          {exam.title}
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {exam.description}
-                        </TableCell>
-                        <TableCell>{exam.totalMarks}</TableCell>
-                        <TableCell>{exam.passingMarks}</TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() =>
-                                router.push(`/admin/exams/${exam.id}`)
-                              }
-                              title="View details"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleRemoveExam(exam.id)}
-                              disabled={isRemoving}
-                              title="Remove from room"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
+                <>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Exam Title</TableHead>
+                        <TableHead>Description</TableHead>
+                        <TableHead>Max Score</TableHead>
+                        <TableHead>Passing Score</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedAssignedExams.map((exam) => (
+                        <TableRow key={exam.id}>
+                          <TableCell className="font-medium">
+                            {exam.title}
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {exam.description}
+                          </TableCell>
+                          <TableCell>{exam.totalMarks}</TableCell>
+                          <TableCell>{exam.passingMarks}</TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() =>
+                                  router.push(`/admin/exams/${exam.id}`)
+                                }
+                                title="View details"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleRemoveExam(exam.id)}
+                                disabled={isRemoving}
+                                title="Remove from room"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+
+                  {/* Pagination Controls for Exam List */}
+                  {examListTotalPages > 1 && (
+                    <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                      <div className="text-sm text-muted-foreground">
+                        Page {examListPage} of {examListTotalPages} (
+                        {filteredAssignedExams.length} exams)
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            setExamListPage((p) => Math.max(1, p - 1))
+                          }
+                          disabled={examListPage <= 1}
+                        >
+                          Previous
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            setExamListPage((p) =>
+                              Math.min(examListTotalPages, p + 1),
+                            )
+                          }
+                          disabled={examListPage >= examListTotalPages}
+                        >
+                          Next
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>
@@ -670,7 +743,7 @@ export default function ExamRoomDetailPage() {
                 <Input
                   placeholder="Search students by name or email..."
                   value={studentSearchQuery}
-                  onChange={(e) => setStudentSearchQuery(e.target.value)}
+                  onChange={(e) => handleStudentSearchChange(e.target.value)}
                 />
               </div>
               {isLoadingEnrollments ? (
@@ -691,33 +764,69 @@ export default function ExamRoomDetailPage() {
                   No matching students found
                 </div>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Full Name</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Enrolled At</TableHead>
-                      <TableHead>Email Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredStudents.map((enrollment) => (
-                      <TableRow key={enrollment.id}>
-                        <TableCell className="font-medium">
-                          {enrollment.studentFirstName}{" "}
-                          {enrollment.studentLastName}
-                        </TableCell>
-                        <TableCell>{enrollment.studentEmail}</TableCell>
-                        <TableCell>
-                          {formatDateTime(enrollment.enrolledAt)}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="default">Sent</Badge>
-                        </TableCell>
+                <>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Full Name</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Enrolled At</TableHead>
+                        <TableHead>Email Status</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedStudents.map((enrollment) => (
+                        <TableRow key={enrollment.id}>
+                          <TableCell className="font-medium">
+                            {enrollment.studentFirstName}{" "}
+                            {enrollment.studentLastName}
+                          </TableCell>
+                          <TableCell>{enrollment.studentEmail}</TableCell>
+                          <TableCell>
+                            {formatDateTime(enrollment.enrolledAt)}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="default">Sent</Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+
+                  {/* Pagination Controls for Student List */}
+                  {studentListTotalPages > 1 && (
+                    <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                      <div className="text-sm text-muted-foreground">
+                        Page {studentListPage} of {studentListTotalPages} (
+                        {filteredStudents.length} students)
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            setStudentListPage((p) => Math.max(1, p - 1))
+                          }
+                          disabled={studentListPage <= 1}
+                        >
+                          Previous
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            setStudentListPage((p) =>
+                              Math.min(studentListTotalPages, p + 1),
+                            )
+                          }
+                          disabled={studentListPage >= studentListTotalPages}
+                        >
+                          Next
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>
