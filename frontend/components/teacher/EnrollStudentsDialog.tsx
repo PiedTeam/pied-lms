@@ -36,7 +36,7 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 10;
+  const pageSize = 7; // 7 students per page
 
   // Fetch all students (backend doesn't support pagination yet)
   const { data: studentsData, isLoading: isLoadingStudents } =

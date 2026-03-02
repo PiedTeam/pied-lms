@@ -66,7 +66,7 @@ export default function ExamRoomDetailPage() {
   const [examListSearchQuery, setExamListSearchQuery] = useState("");
   const [studentSearchQuery, setStudentSearchQuery] = useState("");
   const [examDialogPage, setExamDialogPage] = useState(1);
-  const examDialogPageSize = 10;
+  const examDialogPageSize = 7; // 7 exams per page
 
   const { data: room, isLoading } = useGetExamRoomById(roomId);
   // Fetch all exams (backend doesn't support pagination yet)
@@ -85,9 +85,11 @@ export default function ExamRoomDetailPage() {
 
   const allExams = examsData?.items || [];
 
-  // Filter exams by search query
-  const filteredExams = allExams.filter((exam) =>
-    exam.title.toLowerCase().includes(examSearchQuery.toLowerCase()),
+  // Filter exams by search query and exclude deleted exams
+  const filteredExams = allExams.filter(
+    (exam) =>
+      !exam.isDeleted &&
+      exam.title.toLowerCase().includes(examSearchQuery.toLowerCase()),
   );
 
   // Client-side pagination for exams
