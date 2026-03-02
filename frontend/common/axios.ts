@@ -99,7 +99,9 @@ axiosGeneral.interceptors.response.use(
         // Call refresh endpoint
         const { data } = await axiosGeneral.post("/auth/refresh");
 
-        console.log("Refresh token response:", data); // Debug log
+        if (process.env.NODE_ENV === "development") {
+          console.log("Refresh token response:", data);
+        }
 
         if (data.success && data.data?.accessToken) {
           const newToken = data.data.accessToken;
@@ -108,10 +110,12 @@ axiosGeneral.interceptors.response.use(
           if (typeof window !== "undefined") {
             const { useAuthStore } = await import("@/store/auth.store");
             useAuthStore.getState().setToken(newToken);
-            console.log(
-              "Token updated in store:",
-              newToken.substring(0, 20) + "...",
-            ); // Debug log
+            if (process.env.NODE_ENV === "development") {
+              console.log(
+                "Token updated in store:",
+                newToken.substring(0, 20) + "...",
+              );
+            }
           }
 
           // Process queued requests with new token
@@ -119,15 +123,21 @@ axiosGeneral.interceptors.response.use(
 
           // Retry original request with new token
           originalRequest.headers.Authorization = `Bearer ${newToken}`;
-          console.log("Retrying original request with new token"); // Debug log
+          if (process.env.NODE_ENV === "development") {
+            console.log("Retrying original request with new token");
+          }
           return axiosGeneral(originalRequest);
         } else {
-          console.error("Refresh token failed - invalid response:", data);
+          if (process.env.NODE_ENV === "development") {
+            console.error("Refresh token failed - invalid response:", data);
+          }
           throw new Error("Token refresh failed");
         }
       } catch (refreshError) {
         const error = refreshError as AxiosError;
-        console.error("Refresh token error:", error);
+        if (process.env.NODE_ENV === "development") {
+          console.error("Refresh token error:", error);
+        }
 
         // Only logout if refresh token is actually invalid (401)
         if (error.response?.status === 401) {
@@ -166,27 +176,35 @@ axiosGeneral.interceptors.response.use(
 
     // Handle 404 Not Found
     if (error.response?.status === 404) {
-      console.error("Resource not found:", error.config?.url);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Resource not found:", error.config?.url);
+      }
     }
 
     // Handle 5xx Server Errors
     if (error.response?.status >= 500) {
-      console.error("Server error:", error.response?.status, error.message);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Server error:", error.response?.status, error.message);
+      }
     }
 
     // Handle network errors
     if (!error.response) {
-      console.error("Network error:", error.message);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Network error:", error.message);
+      }
     }
 
     // Log all errors for debugging
-    console.error("API Error:", {
-      url: error.config?.url,
-      method: error.config?.method,
-      status: error.response?.status,
-      data: error.response?.data,
-      message: error.message,
-    });
+    if (process.env.NODE_ENV === "development") {
+      console.error("API Error:", {
+        url: error.config?.url,
+        method: error.config?.method,
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message,
+      });
+    }
 
     return Promise.reject(error);
   },

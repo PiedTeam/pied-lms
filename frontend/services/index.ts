@@ -53,6 +53,7 @@ export {
   useUpdateExam,
   useDeleteExam,
   useGetStudentTestCases,
+  useVerifyRoomCode,
 } from "./exam/exam.service";
 
 // Exam Participation Services (Student - taking exams)

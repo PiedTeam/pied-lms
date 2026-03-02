@@ -61,7 +61,7 @@ export default function ExamRoomDetailPage() {
   const roomId = params.id as string;
 
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
-  const [selectedExamId, setSelectedExamId] = useState("");
+  const [selectedExamIds, setSelectedExamIds] = useState<string[]>([]);
   const [examSearchQuery, setExamSearchQuery] = useState("");
   const [examListSearchQuery, setExamListSearchQuery] = useState("");
   const [studentSearchQuery, setStudentSearchQuery] = useState("");
@@ -134,38 +134,59 @@ export default function ExamRoomDetailPage() {
     }
   };
 
-  const handleAssignExam = () => {
-    if (!selectedExamId) {
+  const handleAssignExam = async () => {
+    if (selectedExamIds.length === 0) {
       toast({
         title: "Error",
-        description: "Please select an exam",
+        description: "Please select at least one exam",
         variant: "destructive",
       });
       return;
     }
 
-    assignExam(
-      { roomId, payload: { examId: selectedExamId } },
-      {
-        onSuccess: () => {
-          toast({
-            title: "Success",
-            description: EXAM_ROOM_MESSAGES.SUCCESS.EXAM_ASSIGNED,
-          });
-          setIsAssignDialogOpen(false);
-          setSelectedExamId("");
-          setExamSearchQuery("");
-        },
-        onError: (error: Error) => {
-          toast({
-            title: "Error",
-            description:
-              error.message || EXAM_ROOM_MESSAGES.ERROR.ASSIGN_EXAM_FAILED,
-            variant: "destructive",
-          });
-        },
-      },
-    );
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const examId of selectedExamIds) {
+      try {
+        await new Promise<void>((resolve, reject) => {
+          assignExam(
+            { roomId, payload: { examId } },
+            {
+              onSuccess: () => {
+                successCount++;
+                resolve();
+              },
+              onError: () => {
+                failCount++;
+                reject();
+              },
+            },
+          );
+        });
+      } catch {
+        // Error already counted in failCount
+      }
+    }
+
+    if (successCount > 0) {
+      toast({
+        title: "Success",
+        description: `${successCount} exam(s) assigned successfully${failCount > 0 ? `, ${failCount} failed` : ""}`,
+      });
+    }
+
+    if (failCount > 0 && successCount === 0) {
+      toast({
+        title: "Error",
+        description: "Failed to assign exams",
+        variant: "destructive",
+      });
+    }
+
+    setIsAssignDialogOpen(false);
+    setSelectedExamIds([]);
+    setExamSearchQuery("");
   };
 
   const handleRemoveExam = (examId: string) => {
@@ -406,18 +427,25 @@ export default function ExamRoomDetailPage() {
                                   const isAssigned = room.exams?.some(
                                     (e) => e.id === exam.id,
                                   );
+                                  const isSelected = selectedExamIds.includes(
+                                    exam.id,
+                                  );
                                   return (
                                     <div
                                       key={exam.id}
                                       className={`p-4 hover:bg-accent cursor-pointer transition-colors ${
-                                        selectedExamId === exam.id
-                                          ? "bg-accent"
-                                          : ""
+                                        isSelected ? "bg-accent" : ""
                                       } ${isAssigned ? "opacity-50" : ""}`}
-                                      onClick={() =>
-                                        !isAssigned &&
-                                        setSelectedExamId(exam.id)
-                                      }
+                                      onClick={() => {
+                                        if (isAssigned) return;
+                                        setSelectedExamIds((prev) =>
+                                          prev.includes(exam.id)
+                                            ? prev.filter(
+                                                (id) => id !== exam.id,
+                                              )
+                                            : [...prev, exam.id],
+                                        );
+                                      }}
                                     >
                                       <div className="flex items-start justify-between">
                                         <div className="flex-1">
@@ -446,10 +474,16 @@ export default function ExamRoomDetailPage() {
                                             </span>
                                           </div>
                                         </div>
-                                        {selectedExamId === exam.id &&
-                                          !isAssigned && (
-                                            <div className="ml-2">
-                                              <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center">
+                                        {!isAssigned && (
+                                          <div className="ml-2">
+                                            <div
+                                              className={`h-5 w-5 rounded border-2 flex items-center justify-center ${
+                                                isSelected
+                                                  ? "bg-primary border-primary"
+                                                  : "border-muted-foreground"
+                                              }`}
+                                            >
+                                              {isSelected && (
                                                 <svg
                                                   className="h-3 w-3 text-primary-foreground"
                                                   fill="none"
@@ -461,9 +495,10 @@ export default function ExamRoomDetailPage() {
                                                 >
                                                   <path d="M5 13l4 4L19 7"></path>
                                                 </svg>
-                                              </div>
+                                              )}
                                             </div>
-                                          )}
+                                          </div>
+                                        )}
                                       </div>
                                     </div>
                                   );
@@ -478,7 +513,7 @@ export default function ExamRoomDetailPage() {
                           variant="outline"
                           onClick={() => {
                             setIsAssignDialogOpen(false);
-                            setSelectedExamId("");
+                            setSelectedExamIds([]);
                             setExamSearchQuery("");
                           }}
                           disabled={isAssigning}
@@ -487,9 +522,11 @@ export default function ExamRoomDetailPage() {
                         </Button>
                         <Button
                           onClick={handleAssignExam}
-                          disabled={isAssigning || !selectedExamId}
+                          disabled={isAssigning || selectedExamIds.length === 0}
                         >
-                          {isAssigning ? "Assigning..." : "Assign exam"}
+                          {isAssigning
+                            ? "Assigning..."
+                            : `Assign ${selectedExamIds.length > 0 ? `(${selectedExamIds.length})` : "exam"}`}
                         </Button>
                       </DialogFooter>
                     </DialogContent>

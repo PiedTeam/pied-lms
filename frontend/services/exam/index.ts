@@ -7,4 +7,5 @@ export {
   useUpdateExam,
   useDeleteExam,
   useGetStudentTestCases,
+  useVerifyRoomCode,
 } from "./exam.service";

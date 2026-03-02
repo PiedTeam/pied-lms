@@ -121,6 +121,19 @@ export default function TakeExamPage() {
       return;
     }
 
+    // Get participationId from localStorage
+    const participationKey = `exam_participation_${roomId}_${examId}`;
+    const participationId = localStorage.getItem(participationKey);
+
+    if (!participationId) {
+      toast({
+        title: "Error",
+        description: "Participation ID not found. Please start the exam again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     toast({
       title: "Submitting...",
@@ -131,9 +144,10 @@ export default function TakeExamPage() {
       {
         code: code,
         examId: examId,
+        participationId: participationId,
         timeLimit: 2000,
         memoryLimit: 128,
-        optimizationLevel: 2,
+        optimizationLevel: 1,
       },
       {
         onSuccess: (response) => {

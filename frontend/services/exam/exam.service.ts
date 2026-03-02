@@ -235,3 +235,24 @@ export function useGetStudentTestCases(examId: string) {
     staleTime: 60000, // Cache for 1 minute
   });
 }
+
+// Verify Room Code (Student only)
+export function useVerifyRoomCode() {
+  return useMutation({
+    mutationFn: async (payload: {
+      examRoomId: string;
+      roomCode: string;
+    }): Promise<{ exams: ExamResponse[] }> => {
+      const { data } = await axios.post<ApiResponse<{ exams: ExamResponse[] }>>(
+        "/exams/verify-room",
+        payload,
+      );
+
+      if (!data.success || !data.data) {
+        throw new Error(data.message || "Invalid room code");
+      }
+
+      return data.data;
+    },
+  });
+}
