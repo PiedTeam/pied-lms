@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http;
+using PIED_LMS.Application.Abstractions;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Contract.Services.TestCase;
 using PIED_LMS.Domain.Abstractions;
@@ -7,6 +8,7 @@ namespace PIED_LMS.Application.UserCases.Queries.TestCase;
 
 public class GetVisibleTestCasesByExamHandler(
     IUnitOfWork unitOfWork,
+    ITestCaseStorageService storageService,
     IHttpContextAccessor httpContextAccessor,
     ILogger<GetVisibleTestCasesByExamHandler> logger
 ) : IRequestHandler<GetVisibleTestCasesByExamQuery, ServiceResponse<List<TestCaseResponse>>>
@@ -45,12 +47,13 @@ public class GetVisibleTestCasesByExamHandler(
             var testCases = unitOfWork.Repository<Domain.Entities.TestCase>()
                 .FindAll(tc => tc.ExamId == request.ExamId && !tc.IsHidden)
                 .OrderBy(tc => tc.Index)
+                .AsEnumerable()
                 .Select(tc => new TestCaseResponse(
                     tc.ExamId,
                     tc.Id,
                     tc.Index,
-                    tc.InputPath,
-                    tc.OutputPath,
+                    storageService.ReadInputAsync(tc.InputPath).Result,
+                    storageService.ReadOutputAsync(tc.OutputPath).Result,
                     tc.IsHidden
                 ))
                 .ToList();

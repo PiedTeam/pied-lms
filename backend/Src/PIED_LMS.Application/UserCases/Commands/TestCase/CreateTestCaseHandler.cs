@@ -79,8 +79,8 @@ public class CreateTestCaseHandler(
                 testCase.ExamId,
                 testCase.Id,
                 testCase.Index,
-                testCase.InputPath,
-                testCase.OutputPath,
+                request.Input,
+                request.Output,
                 testCase.IsHidden
             );
 

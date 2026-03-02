@@ -244,7 +244,7 @@ public class TestCaseStorageService : ITestCaseStorageService
   private string GetRelativePath(Guid examId, int index, string fileName)
   {
     // Returns format: {examId}/tc_{index}/{fileName}
-    return Path.Combine(examId.ToString(), $"tc_{index}", fileName);
+    return $"{examId}/tc_{index}/{fileName}";
   }
 
   /// <summary>

@@ -889,8 +889,8 @@ int main() {
                                 </p>
                                 <pre
                                   className={`p-2 rounded text-sm mt-1 ${result.passed
-                                      ? "bg-green-50 text-green-900"
-                                      : "bg-red-50 text-red-900"
+                                    ? "bg-green-50 text-green-900"
+                                    : "bg-red-50 text-red-900"
                                     }`}
                                 >
                                   {result.actualOutput}
