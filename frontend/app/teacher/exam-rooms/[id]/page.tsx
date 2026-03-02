@@ -430,133 +430,139 @@ export default function ExamRoomDetailPage() {
                         </div>
                         <div className="grid gap-2">
                           <Label>Exam List</Label>
-                          <div className="border rounded-lg max-h-[400px] overflow-y-auto">
-                            {!allExams.length ? (
-                              <div className="text-center py-8 text-muted-foreground">
-                                No exams available
-                              </div>
-                            ) : paginatedExams.length === 0 ? (
-                              <div className="text-center py-8 text-muted-foreground">
-                                No matching exams found
-                              </div>
-                            ) : (
-                              <div className="divide-y">
-                                {paginatedExams.map((exam) => {
-                                  const isAssigned = room.exams?.some(
-                                    (e) => e.id === exam.id,
-                                  );
-                                  const isSelected = selectedExamIds.includes(
-                                    exam.id,
-                                  );
-                                  return (
-                                    <div
-                                      key={exam.id}
-                                      className={`p-4 hover:bg-accent cursor-pointer transition-colors ${
-                                        isSelected ? "bg-accent" : ""
-                                      } ${isAssigned ? "opacity-50" : ""}`}
-                                      onClick={() => {
-                                        if (isAssigned) return;
-                                        setSelectedExamIds((prev) =>
-                                          prev.includes(exam.id)
-                                            ? prev.filter(
-                                                (id) => id !== exam.id,
-                                              )
-                                            : [...prev, exam.id],
-                                        );
-                                      }}
-                                    >
-                                      <div className="flex items-start justify-between">
-                                        <div className="flex-1">
-                                          <div className="flex items-center gap-2">
-                                            <h4 className="font-medium">
-                                              {exam.title}
-                                            </h4>
-                                            {isAssigned && (
-                                              <Badge
-                                                variant="secondary"
-                                                className="text-xs"
-                                              >
-                                                Assigned
-                                              </Badge>
-                                            )}
-                                          </div>
-                                          <p className="text-sm text-muted-foreground mt-1">
-                                            {exam.description}
-                                          </p>
-                                          <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                                            <span>
-                                              Max score: {exam.totalMarks}
-                                            </span>
-                                            <span>
-                                              Passing score: {exam.passingMarks}
-                                            </span>
-                                          </div>
-                                        </div>
-                                        {!isAssigned && (
-                                          <div className="ml-2">
-                                            <div
-                                              className={`h-5 w-5 rounded border-2 flex items-center justify-center ${
-                                                isSelected
-                                                  ? "bg-primary border-primary"
-                                                  : "border-muted-foreground"
-                                              }`}
-                                            >
-                                              {isSelected && (
-                                                <svg
-                                                  className="h-3 w-3 text-primary-foreground"
-                                                  fill="none"
-                                                  strokeLinecap="round"
-                                                  strokeLinejoin="round"
-                                                  strokeWidth="2"
-                                                  viewBox="0 0 24 24"
-                                                  stroke="currentColor"
+                          <div className="border rounded-lg overflow-hidden">
+                            <div className="max-h-[400px] overflow-y-auto">
+                              {!allExams.length ? (
+                                <div className="text-center py-8 text-muted-foreground">
+                                  No exams available
+                                </div>
+                              ) : paginatedExams.length === 0 ? (
+                                <div className="text-center py-8 text-muted-foreground">
+                                  No matching exams found
+                                </div>
+                              ) : (
+                                <div className="divide-y">
+                                  {paginatedExams.map((exam) => {
+                                    const isAssigned = room.exams?.some(
+                                      (e) => e.id === exam.id,
+                                    );
+                                    const isSelected = selectedExamIds.includes(
+                                      exam.id,
+                                    );
+                                    return (
+                                      <div
+                                        key={exam.id}
+                                        className={`p-4 hover:bg-accent cursor-pointer transition-colors ${
+                                          isSelected ? "bg-accent" : ""
+                                        } ${isAssigned ? "opacity-50" : ""}`}
+                                        onClick={() => {
+                                          if (isAssigned) return;
+                                          setSelectedExamIds((prev) =>
+                                            prev.includes(exam.id)
+                                              ? prev.filter(
+                                                  (id) => id !== exam.id,
+                                                )
+                                              : [...prev, exam.id],
+                                          );
+                                        }}
+                                      >
+                                        <div className="flex items-start justify-between">
+                                          <div className="flex-1">
+                                            <div className="flex items-center gap-2">
+                                              <h4 className="font-medium">
+                                                {exam.title}
+                                              </h4>
+                                              {isAssigned && (
+                                                <Badge
+                                                  variant="secondary"
+                                                  className="text-xs"
                                                 >
-                                                  <path d="M5 13l4 4L19 7"></path>
-                                                </svg>
+                                                  Assigned
+                                                </Badge>
                                               )}
                                             </div>
+                                            <p className="text-sm text-muted-foreground mt-1">
+                                              {exam.description}
+                                            </p>
+                                            <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                                              <span>
+                                                Max score: {exam.totalMarks}
+                                              </span>
+                                              <span>
+                                                Passing score:{" "}
+                                                {exam.passingMarks}
+                                              </span>
+                                            </div>
                                           </div>
-                                        )}
+                                          {!isAssigned && (
+                                            <div className="ml-2">
+                                              <div
+                                                className={`h-5 w-5 rounded border-2 flex items-center justify-center ${
+                                                  isSelected
+                                                    ? "bg-primary border-primary"
+                                                    : "border-muted-foreground"
+                                                }`}
+                                              >
+                                                {isSelected && (
+                                                  <svg
+                                                    className="h-3 w-3 text-primary-foreground"
+                                                    fill="none"
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth="2"
+                                                    viewBox="0 0 24 24"
+                                                    stroke="currentColor"
+                                                  >
+                                                    <path d="M5 13l4 4L19 7"></path>
+                                                  </svg>
+                                                )}
+                                              </div>
+                                            </div>
+                                          )}
+                                        </div>
                                       </div>
-                                    </div>
-                                  );
-                                })}
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Pagination - outside scrollable area */}
+                            {examDialogTotalPages > 1 && (
+                              <div className="flex items-center justify-between px-4 py-2 border-t bg-muted/50">
+                                <div className="text-sm text-muted-foreground">
+                                  Page {examDialogPage} of{" "}
+                                  {examDialogTotalPages}
+                                </div>
+                                <div className="flex gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() =>
+                                      setExamDialogPage((p) =>
+                                        Math.max(1, p - 1),
+                                      )
+                                    }
+                                    disabled={!hasPrevExamPage}
+                                  >
+                                    Previous
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() =>
+                                      setExamDialogPage((p) =>
+                                        Math.min(examDialogTotalPages, p + 1),
+                                      )
+                                    }
+                                    disabled={!hasNextExamPage}
+                                  >
+                                    Next
+                                  </Button>
+                                </div>
                               </div>
                             )}
                           </div>
-
-                          {/* Pagination */}
-                          {examDialogTotalPages > 1 && (
-                            <div className="flex items-center justify-between px-4 py-2 border-t bg-muted/50">
-                              <div className="text-sm text-muted-foreground">
-                                Page {examDialogPage} of {examDialogTotalPages}
-                              </div>
-                              <div className="flex gap-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() =>
-                                    setExamDialogPage((p) => Math.max(1, p - 1))
-                                  }
-                                  disabled={!hasPrevExamPage}
-                                >
-                                  Previous
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() =>
-                                    setExamDialogPage((p) =>
-                                      Math.min(examDialogTotalPages, p + 1),
-                                    )
-                                  }
-                                  disabled={!hasNextExamPage}
-                                >
-                                  Next
-                                </Button>
-                              </div>
-                            </div>
-                          )}
                         </div>
                       </div>
                       <DialogFooter>
