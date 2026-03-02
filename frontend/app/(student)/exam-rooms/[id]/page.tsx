@@ -20,7 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { useGetExamRoomById } from "@/service";
+import { useGetExamRoomById, useStartExam } from "@/service";
 import { useState, useEffect } from "react";
 import { useExamRoomScores } from "@/hooks/use-exam-scores";
 
@@ -35,6 +35,7 @@ export default function StudentExamRoomDetailPage() {
     isLoading: isLoadingRoom,
     refetch,
   } = useGetExamRoomById(roomId);
+  const { mutate: startExam, isPending: isStartingExam } = useStartExam();
   const [timeRemaining, setTimeRemaining] = useState<string>("");
   const [hasAutoRedirected, setHasAutoRedirected] = useState(false);
 
@@ -143,6 +144,8 @@ export default function StudentExamRoomDetailPage() {
         description: "This exam room has ended. You can only view the exam.",
         variant: "default",
       });
+      router.push(`/exam-rooms/${roomId}/exams/${examId}/take`);
+      return;
     }
 
     // Save room data to localStorage for time calculation
@@ -159,9 +162,35 @@ export default function StudentExamRoomDetailPage() {
       );
     }
 
-    // Simply navigate to exam taking page
-    // No API call here, just show the UI
-    router.push(`/exam-rooms/${roomId}/exams/${examId}/take`);
+    // Call API to start exam and get participationId
+    startExam(
+      {
+        roomCode: room?.roomCode || "",
+        examId: examId,
+      },
+      {
+        onSuccess: (participation) => {
+          // Save participationId to localStorage
+          const participationKey = `exam_participation_${roomId}_${examId}`;
+          localStorage.setItem(participationKey, participation.id);
+
+          toast({
+            title: "Exam Started",
+            description: "Good luck with your exam!",
+          });
+
+          // Navigate to exam taking page
+          router.push(`/exam-rooms/${roomId}/exams/${examId}/take`);
+        },
+        onError: (error: Error) => {
+          toast({
+            title: "Error",
+            description: error.message || "Failed to start exam",
+            variant: "destructive",
+          });
+        },
+      },
+    );
   };
 
   if (isLoadingRoom) {
@@ -320,6 +349,7 @@ export default function StudentExamRoomDetailPage() {
                           size="sm"
                           variant={isClosed ? "outline" : "default"}
                           onClick={() => handleStartExam(exam.id)}
+                          disabled={isStartingExam}
                         >
                           {isClosed ? (
                             <>
@@ -329,7 +359,7 @@ export default function StudentExamRoomDetailPage() {
                           ) : (
                             <>
                               <Play className="mr-2 h-4 w-4" />
-                              Start
+                              {isStartingExam ? "Starting..." : "Start"}
                             </>
                           )}
                         </Button>

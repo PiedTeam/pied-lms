@@ -214,3 +214,45 @@ export function useDeleteExam() {
     },
   });
 }
+
+// Get Test Cases for Student (only visible test cases)
+export function useGetStudentTestCases(examId: string) {
+  return useQuery({
+    queryKey: ["student-testcases", examId],
+    queryFn: async (): Promise<any[]> => {
+      const { data } = await axios.get<ApiResponse<any[]>>(
+        `/students/testcases/${examId}`,
+      );
+
+      if (!data.success || !data.data) {
+        throw new Error(data.message || "Failed to load test cases");
+      }
+
+      return data.data;
+    },
+    enabled: !!examId,
+    retry: 1,
+    staleTime: 60000, // Cache for 1 minute
+  });
+}
+
+// Verify Room Code (Student only)
+export function useVerifyRoomCode() {
+  return useMutation({
+    mutationFn: async (payload: {
+      examRoomId: string;
+      roomCode: string;
+    }): Promise<{ exams: ExamResponse[] }> => {
+      const { data } = await axios.post<ApiResponse<{ exams: ExamResponse[] }>>(
+        "/exams/verify-room",
+        payload,
+      );
+
+      if (!data.success || !data.data) {
+        throw new Error(data.message || "Invalid room code");
+      }
+
+      return data.data;
+    },
+  });
+}
