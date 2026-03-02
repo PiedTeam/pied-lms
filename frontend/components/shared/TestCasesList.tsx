@@ -157,8 +157,8 @@ export function TestCasesList({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Input Path</TableHead>
-                  <TableHead>Output Path</TableHead>
+                  <TableHead>Input (preview)</TableHead>
+                  <TableHead>Expected Output (preview)</TableHead>
                   <TableHead>Index</TableHead>
                   <TableHead>Trạng thái</TableHead>
                   <TableHead className="text-right">Thao tác</TableHead>
@@ -171,12 +171,18 @@ export function TestCasesList({
                     {/* Changed from testCase.id */}
                     <TableCell className="font-mono text-sm max-w-xs">
                       <div className="truncate" title={testCase.inputPath}>
-                        {testCase.inputPath || "—"}
+                        {testCase.inputPath
+                          ? testCase.inputPath.slice(0, 60) +
+                          (testCase.inputPath.length > 60 ? "..." : "")
+                          : "—"}
                       </div>
                     </TableCell>
                     <TableCell className="font-mono text-sm max-w-xs">
                       <div className="truncate" title={testCase.outputPath}>
-                        {testCase.outputPath || "—"}
+                        {testCase.outputPath
+                          ? testCase.outputPath.slice(0, 60) +
+                          (testCase.outputPath.length > 60 ? "..." : "")
+                          : "—"}
                       </div>
                     </TableCell>
                     <TableCell>

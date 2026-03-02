@@ -157,6 +157,7 @@ export default function StudentExamRoomDetailPage() {
           startTime: room.startTime,
           durationInMinutes: room.durationInMinutes,
           isClosed: isClosed,
+          roomCode: room.roomCode,
         }),
       );
     }

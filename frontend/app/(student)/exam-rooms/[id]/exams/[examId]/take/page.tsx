@@ -52,6 +52,7 @@ export default function TakeExamPage() {
   // Compiler mutations
   const { mutate: judgeCodeFromFile } = useJudgeCodeFromFile();
   const { mutate: compileCode, isPending: isCompiling } = useCompileCode();
+  const { mutate: startExam } = useStartExam();
 
   // Custom hooks
   const exam = useMemo(() => examData || null, [examData]);
