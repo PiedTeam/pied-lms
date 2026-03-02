@@ -5,13 +5,6 @@ namespace PIED_LMS.Application.Abstractions;
 /// </summary>
 public interface IRoomCodeService
 {
-    /// <summary>
-    /// Generates a unique room code that doesn't exist in the database
-    /// Retries up to 5 times if collision occurs
-    /// </summary>
-    /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>A unique 8-character room code</returns>
-    /// <exception cref="InvalidOperationException">Thrown when unable to generate unique code after max attempts</exception>
     Task<string> GenerateUniqueRoomCodeAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
