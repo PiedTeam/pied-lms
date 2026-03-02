@@ -69,9 +69,10 @@ export default function ExamRoomDetailPage() {
   const examDialogPageSize = 10;
 
   const { data: room, isLoading } = useGetExamRoomById(roomId);
+  // Fetch all exams (backend doesn't support pagination yet)
   const { data: examsData } = useGetExamsByMentor({
-    pageNumber: examDialogPage,
-    pageSize: examDialogPageSize,
+    pageNumber: 1,
+    pageSize: 9999, // Get all exams
   });
   const { data: enrollmentsData, isLoading: isLoadingEnrollments } =
     useGetExamRoomEnrollments({
@@ -82,10 +83,19 @@ export default function ExamRoomDetailPage() {
   const { mutate: assignExam, isPending: isAssigning } = useAssignExamToRoom();
   const { mutate: removeExam, isPending: isRemoving } = useRemoveExamFromRoom();
 
-  const filteredExams =
-    examsData?.items.filter((exam) =>
-      exam.title.toLowerCase().includes(examSearchQuery.toLowerCase()),
-    ) || [];
+  const allExams = examsData?.items || [];
+
+  // Filter exams by search query
+  const filteredExams = allExams.filter((exam) =>
+    exam.title.toLowerCase().includes(examSearchQuery.toLowerCase()),
+  );
+
+  // Client-side pagination for exams
+  const totalExamCount = filteredExams.length;
+  const examDialogTotalPages = Math.ceil(totalExamCount / examDialogPageSize);
+  const examStartIndex = (examDialogPage - 1) * examDialogPageSize;
+  const examEndIndex = examStartIndex + examDialogPageSize;
+  const paginatedExams = filteredExams.slice(examStartIndex, examEndIndex);
 
   const enrolledStudents = enrollmentsData?.items || [];
 
@@ -192,9 +202,6 @@ export default function ExamRoomDetailPage() {
     setExamDialogPage(1);
   };
 
-  const examDialogTotalPages = examsData
-    ? Math.ceil(examsData.totalCount / examsData.pageSize)
-    : 1;
   const hasNextExamPage = examDialogPage < examDialogTotalPages;
   const hasPrevExamPage = examDialogPage > 1;
 
@@ -418,17 +425,17 @@ export default function ExamRoomDetailPage() {
                         <div className="grid gap-2">
                           <Label>Exam List</Label>
                           <div className="border rounded-lg max-h-[400px] overflow-y-auto">
-                            {!examsData?.items.length ? (
+                            {!allExams.length ? (
                               <div className="text-center py-8 text-muted-foreground">
                                 No exams available
                               </div>
-                            ) : filteredExams.length === 0 ? (
+                            ) : paginatedExams.length === 0 ? (
                               <div className="text-center py-8 text-muted-foreground">
                                 No matching exams found
                               </div>
                             ) : (
                               <div className="divide-y">
-                                {filteredExams.map((exam) => {
+                                {paginatedExams.map((exam) => {
                                   const isAssigned = room.exams?.some(
                                     (e) => e.id === exam.id,
                                   );

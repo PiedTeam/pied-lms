@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { UserPlus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,10 +38,11 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
+  // Fetch all students (backend doesn't support pagination yet)
   const { data: studentsData, isLoading: isLoadingStudents } =
     useGetAllStudents({
-      pageNumber: currentPage,
-      pageSize: pageSize,
+      pageNumber: 1,
+      pageSize: 9999, // Get all students
     });
 
   const { data: enrollmentsData } = useGetExamRoomEnrollments({
@@ -70,6 +71,18 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
         .includes(searchQuery.toLowerCase()),
   );
 
+  // Client-side pagination
+  const totalFilteredCount = filteredStudents.length;
+  const totalPages = Math.ceil(totalFilteredCount / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedStudents = filteredStudents.slice(startIndex, endIndex);
+
+  // Reset to page 1 when search query changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
   const handleToggleStudent = (studentId: string, isEnrolled: boolean) => {
     if (isEnrolled) return; // Don't allow toggling enrolled students
 
@@ -81,15 +94,27 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
   };
 
   const handleSelectAll = () => {
-    // Only select students who are not already enrolled
-    const selectableStudents = filteredStudents.filter(
+    // Only select students who are not already enrolled (from current page)
+    const selectableStudents = paginatedStudents.filter(
       (s) => !enrolledStudentIds.has(s.id),
     );
 
-    if (selectedStudentIds.length === selectableStudents.length) {
-      setSelectedStudentIds([]);
+    const selectableIds = selectableStudents.map((s) => s.id);
+    const allSelected = selectableIds.every((id) =>
+      selectedStudentIds.includes(id),
+    );
+
+    if (allSelected) {
+      // Deselect all from current page
+      setSelectedStudentIds((prev) =>
+        prev.filter((id) => !selectableIds.includes(id)),
+      );
     } else {
-      setSelectedStudentIds(selectableStudents.map((s) => s.id));
+      // Select all from current page
+      setSelectedStudentIds((prev) => [
+        ...prev.filter((id) => !selectableIds.includes(id)),
+        ...selectableIds,
+      ]);
     }
   };
 
@@ -150,9 +175,6 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
     setCurrentPage(1);
   };
 
-  const totalPages = studentsData
-    ? Math.ceil(studentsData.totalCount / studentsData.pageSize)
-    : 1;
   const hasNextPage = currentPage < totalPages;
   const hasPrevPage = currentPage > 1;
 
@@ -208,7 +230,7 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
           <div className="grid gap-2">
             <div className="flex items-center justify-between">
               <Label>Student List</Label>
-              {filteredStudents.filter((s) => !enrolledStudentIds.has(s.id))
+              {paginatedStudents.filter((s) => !enrolledStudentIds.has(s.id))
                 .length > 0 && (
                 <Button
                   variant="ghost"
@@ -216,11 +238,7 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
                   onClick={handleSelectAll}
                   className="h-8"
                 >
-                  {selectedStudentIds.length ===
-                  filteredStudents.filter((s) => !enrolledStudentIds.has(s.id))
-                    .length
-                    ? "Deselect All"
-                    : "Select All"}
+                  Select All on Page
                 </Button>
               )}
             </div>
@@ -240,7 +258,7 @@ export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
                 </div>
               ) : (
                 <div className="divide-y">
-                  {filteredStudents.map((student: UserResponse) => {
+                  {paginatedStudents.map((student: UserResponse) => {
                     const isEnrolled = enrolledStudentIds.has(student.id);
                     const isSelected = selectedStudentIds.includes(student.id);
 
