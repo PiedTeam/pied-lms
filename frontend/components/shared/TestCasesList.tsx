@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Play,
   Plus,
@@ -10,8 +10,10 @@ import {
   EyeOff,
   Clock,
   HardDrive,
+  Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Card,
   CardContent,
@@ -68,9 +70,39 @@ export function TestCasesList({
     useState<TestCaseResponse | null>(null);
   const [runningTestCase, setRunningTestCase] =
     useState<TestCaseResponse | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 5; // 5 test cases per page
 
   const { data: testCases, isLoading } = useGetTestCasesByExam(examId); // Changed from useGetTestCasesByQuestion
   const { mutate: deleteTestCase, isPending: isDeleting } = useDeleteTestCase();
+
+  // Filter test cases by search query
+  const filteredTestCases = useMemo(() => {
+    if (!testCases) return [];
+    if (!searchQuery) return testCases;
+
+    return testCases.filter((tc) => {
+      const searchLower = searchQuery.toLowerCase();
+      return (
+        tc.inputPath?.toLowerCase().includes(searchLower) ||
+        tc.outputPath?.toLowerCase().includes(searchLower) ||
+        tc.index.toString().includes(searchQuery)
+      );
+    });
+  }, [testCases, searchQuery]);
+
+  // Client-side pagination
+  const totalPages = Math.ceil(filteredTestCases.length / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedTestCases = filteredTestCases.slice(startIndex, endIndex);
+
+  // Reset to page 1 when search changes
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    setCurrentPage(1);
+  };
 
   const handleDelete = (id: string) => {
     deleteTestCase(id, {
@@ -145,122 +177,185 @@ export function TestCasesList({
 
       <Card>
         <CardHeader>
-          <CardTitle>Danh sách Test Cases</CardTitle>
-          <CardDescription>{testCases?.length || 0} test case</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Danh sách Test Cases</CardTitle>
+              <CardDescription>
+                {filteredTestCases.length} test case
+                {searchQuery && ` (filtered from ${testCases?.length || 0})`}
+              </CardDescription>
+            </div>
+            {/* Search Bar */}
+            <div className="relative w-64">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search test cases..."
+                value={searchQuery}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <div className="text-center py-8 text-muted-foreground">
               Đang tải...
             </div>
-          ) : testCases && testCases.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Input (preview)</TableHead>
-                  <TableHead>Expected Output (preview)</TableHead>
-                  <TableHead>Index</TableHead>
-                  <TableHead>Trạng thái</TableHead>
-                  <TableHead className="text-right">Thao tác</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {testCases.map((testCase) => (
-                  <TableRow key={testCase.testCaseId}>
-                    {" "}
-                    {/* Changed from testCase.id */}
-                    <TableCell className="font-mono text-sm max-w-xs">
-                      <div className="truncate" title={testCase.inputPath}>
-                        {testCase.inputPath
-                          ? testCase.inputPath.slice(0, 60) +
-                          (testCase.inputPath.length > 60 ? "..." : "")
-                          : "—"}
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-mono text-sm max-w-xs">
-                      <div className="truncate" title={testCase.outputPath}>
-                        {testCase.outputPath
-                          ? testCase.outputPath.slice(0, 60) +
-                          (testCase.outputPath.length > 60 ? "..." : "")
-                          : "—"}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2 text-sm">
-                        <Badge variant="outline">Index: {testCase.index}</Badge>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={testCase.isHidden ? "secondary" : "default"}
-                        className="flex items-center gap-1 w-fit"
-                      >
-                        {testCase.isHidden ? (
-                          <>
-                            <EyeOff className="h-3 w-3" />
-                            Ẩn
-                          </>
-                        ) : (
-                          <>
-                            <Eye className="h-3 w-3" />
-                            Công khai
-                          </>
-                        )}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setRunningTestCase(testCase)}
-                        >
-                          <Play className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setEditingTestCase(testCase)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              disabled={isDeleting}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Bạn có chắc chắn muốn xóa test case này? Hành
-                                động này không thể hoàn tác.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Hủy</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() =>
-                                  handleDelete(testCase.testCaseId)
-                                }
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              >
-                                Xóa
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </TableCell>
+          ) : paginatedTestCases.length > 0 ? (
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Input (preview)</TableHead>
+                    <TableHead>Expected Output (preview)</TableHead>
+                    <TableHead>Index</TableHead>
+                    <TableHead>Trạng thái</TableHead>
+                    <TableHead className="text-right">Thao tác</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {paginatedTestCases.map((testCase) => (
+                    <TableRow key={testCase.testCaseId}>
+                      {" "}
+                      {/* Changed from testCase.id */}
+                      <TableCell className="font-mono text-sm max-w-xs">
+                        <div className="truncate" title={testCase.inputPath}>
+                          {testCase.inputPath
+                            ? testCase.inputPath.slice(0, 60) +
+                              (testCase.inputPath.length > 60 ? "..." : "")
+                            : "—"}
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-mono text-sm max-w-xs">
+                        <div className="truncate" title={testCase.outputPath}>
+                          {testCase.outputPath
+                            ? testCase.outputPath.slice(0, 60) +
+                              (testCase.outputPath.length > 60 ? "..." : "")
+                            : "—"}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2 text-sm">
+                          <Badge variant="outline">
+                            Index: {testCase.index}
+                          </Badge>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={testCase.isHidden ? "secondary" : "default"}
+                          className="flex items-center gap-1 w-fit"
+                        >
+                          {testCase.isHidden ? (
+                            <>
+                              <EyeOff className="h-3 w-3" />
+                              Ẩn
+                            </>
+                          ) : (
+                            <>
+                              <Eye className="h-3 w-3" />
+                              Công khai
+                            </>
+                          )}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setRunningTestCase(testCase)}
+                          >
+                            <Play className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setEditingTestCase(testCase)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                disabled={isDeleting}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  Xác nhận xóa
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Bạn có chắc chắn muốn xóa test case này? Hành
+                                  động này không thể hoàn tác.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Hủy</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() =>
+                                    handleDelete(testCase.testCaseId)
+                                  }
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Xóa
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                  <div className="text-sm text-muted-foreground">
+                    Page {currentPage} of {totalPages} (
+                    {filteredTestCases.length} test cases)
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage <= 1}
+                    >
+                      Previous
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setCurrentPage((p) => Math.min(totalPages, p + 1))
+                      }
+                      disabled={currentPage >= totalPages}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : searchQuery ? (
+            <div className="text-center py-12">
+              <Search className="mx-auto h-12 w-12 text-muted-foreground" />
+              <h3 className="mt-4 text-lg font-semibold">
+                Không tìm thấy test case
+              </h3>
+              <p className="text-sm text-muted-foreground mt-2">
+                Thử tìm kiếm với từ khóa khác
+              </p>
+            </div>
           ) : (
             <div className="text-center py-12">
               <Play className="mx-auto h-12 w-12 text-muted-foreground" />
