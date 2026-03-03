@@ -514,9 +514,6 @@ export default function ExamRoomDetailPage() {
                                                 </Badge>
                                               )}
                                             </div>
-                                            <p className="text-sm text-muted-foreground mt-1">
-                                              {exam.description}
-                                            </p>
                                             <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
                                               <span>
                                                 Max Score: {exam.totalMarks}
