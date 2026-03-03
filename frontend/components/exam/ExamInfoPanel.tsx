@@ -35,9 +35,6 @@ export function ExamInfoPanel({
     <Card className="h-full overflow-hidden flex flex-col border-0 rounded-none">
       <CardHeader className="border-b shrink-0">
         <CardTitle>{exam.title}</CardTitle>
-        <CardDescription className="whitespace-pre-line">
-          {exam.description}
-        </CardDescription>
         <div className="flex gap-4 mt-3 text-sm">
           <div className="flex items-center gap-1">
             <span className="font-medium">Total Score:</span>
