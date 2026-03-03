@@ -107,6 +107,11 @@ export default function TakeExamPage() {
     });
   }, [code, saveDraft, toast]);
 
+  // Helper function to determine if navigation should occur
+  const shouldNavigate = (passed: number, total: number): boolean => {
+    return passed === total && total > 0;
+  };
+
   const handleSubmit = useCallback(async () => {
     if (!code.trim()) {
       toast({
@@ -191,9 +196,12 @@ export default function TakeExamPage() {
               }
             }
 
-            setTimeout(() => {
-              router.push(`/exam-rooms/${roomId}`);
-            }, 2000);
+            // Only navigate if all tests passed
+            if (shouldNavigate(passedCount, totalCount)) {
+              setTimeout(() => {
+                router.push(`/exam-rooms/${roomId}`);
+              }, 2000);
+            }
           } else {
             toast({
               title: "Submission completed with errors",
