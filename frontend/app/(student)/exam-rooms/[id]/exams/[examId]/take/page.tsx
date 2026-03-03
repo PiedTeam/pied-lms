@@ -64,10 +64,15 @@ export default function TakeExamPage() {
 
   // State
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRunningTestCases, setIsRunningTestCases] = useState(false);
   const [testResults, setTestResults] = useState<JudgeTestCaseResult[]>([]);
   const [activeTab, setActiveTab] = useState("question");
   const [isTestInputDialogOpen, setIsTestInputDialogOpen] = useState(false);
   const [testInput, setTestInput] = useState("");
+
+  // Check if test cases are available
+  const testCases = useMemo(() => testCasesData || [], [testCasesData]);
+  const hasTestCases = testCases.length > 0;
 
   // Auto-submit handler
   const handleAutoSubmit = useCallback(async () => {
@@ -329,6 +334,112 @@ export default function TakeExamPage() {
     setIsTestInputDialogOpen(false);
   }, [testInput, handleTestCodeWithInput]);
 
+  const handleRunTestCases = useCallback(async () => {
+    if (!code.trim()) {
+      toast({
+        title: "No code to test",
+        description: "Please write some code before running test cases",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (testCases.length === 0) {
+      toast({
+        title: "No test cases",
+        description: "There are no test cases available for this exam",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsRunningTestCases(true);
+    setActiveTab("results");
+    setTestResults([]);
+
+    toast({
+      title: "Running test cases",
+      description: `Testing your code with ${testCases.length} test case(s)...`,
+    });
+
+    const results: JudgeTestCaseResult[] = [];
+
+    // Run each test case sequentially
+    for (let i = 0; i < testCases.length; i++) {
+      const testCase = testCases[i];
+
+      try {
+        const response = await new Promise<any>((resolve, reject) => {
+          compileCode(
+            {
+              code: code,
+              input: testCase.inputPath || "",
+              timeLimit: 2000,
+              memoryLimit: 128,
+              optimizationLevel: 2,
+            },
+            {
+              onSuccess: resolve,
+              onError: reject,
+            },
+          );
+        });
+
+        if (response.data && response.data.success) {
+          const actualOutput = (response.data.output || "").trim();
+          const expectedOutput = (testCase.outputPath || "").trim();
+          const passed = actualOutput === expectedOutput;
+
+          results.push({
+            testCase: i + 1,
+            passed: passed,
+            input: testCase.inputPath || "",
+            expectedOutput: expectedOutput,
+            actualOutput: actualOutput,
+            executionTime: response.data.executionTime,
+            error: null,
+            errorCode: null,
+          });
+        } else {
+          results.push({
+            testCase: i + 1,
+            passed: false,
+            input: testCase.inputPath || "",
+            expectedOutput: testCase.outputPath || "",
+            actualOutput: null,
+            executionTime: response.data?.executionTime || 0,
+            error:
+              response.data?.error || response.message || "Execution failed",
+            errorCode: response.data?.errorCode || null,
+          });
+        }
+      } catch (error: any) {
+        results.push({
+          testCase: i + 1,
+          passed: false,
+          input: testCase.inputPath || "",
+          expectedOutput: testCase.outputPath || "",
+          actualOutput: null,
+          executionTime: 0,
+          error: error.message || "Network error",
+          errorCode: null,
+        });
+      }
+    }
+
+    setTestResults(results);
+    setIsRunningTestCases(false);
+
+    const passedCount = results.filter((r) => r.passed).length;
+    const totalCount = results.length;
+
+    toast({
+      title: "Test cases completed",
+      description: `${passedCount}/${totalCount} test case(s) passed`,
+      variant: passedCount === totalCount ? "default" : "destructive",
+    });
+  }, [code, testCases, toast, compileCode]);
+
   const handleEditorDidMount = (editor: unknown) => {
     editorRef.current = editor;
   };
@@ -370,9 +481,12 @@ export default function TakeExamPage() {
         formatTime={formatTime}
         isCompiling={isCompiling}
         isSubmitting={isSubmitting}
+        isRunningTestCases={isRunningTestCases}
+        hasTestCases={hasTestCases}
         onBack={() => router.back()}
         onSaveDraft={handleSaveDraft}
         onTestCode={handleTestCode}
+        onRunTestCases={handleRunTestCases}
         onSubmit={handleSubmit}
       />
 
