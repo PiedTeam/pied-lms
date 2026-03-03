@@ -310,7 +310,7 @@ export default function StudentExamRoomDetailPage() {
                       <TableCell className="font-medium">
                         {exam.title}
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
+                      <TableCell className="text-sm text-muted-foreground whitespace-pre-line">
                         {exam.description}
                       </TableCell>
                       <TableCell>{exam.totalMarks}</TableCell>

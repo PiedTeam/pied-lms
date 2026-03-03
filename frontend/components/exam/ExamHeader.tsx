@@ -35,7 +35,7 @@ export function ExamHeader({
             </Button>
             <div>
               <h1 className="text-xl font-bold">{exam.title}</h1>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground whitespace-pre-line">
                 {exam.description}
               </p>
             </div>
