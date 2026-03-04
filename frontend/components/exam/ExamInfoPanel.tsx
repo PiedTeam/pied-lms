@@ -35,7 +35,6 @@ export function ExamInfoPanel({
     <Card className="h-full overflow-hidden flex flex-col border-0 rounded-none">
       <CardHeader className="border-b shrink-0">
         <CardTitle>{exam.title}</CardTitle>
-        <CardDescription>{exam.description}</CardDescription>
         <div className="flex gap-4 mt-3 text-sm">
           <div className="flex items-center gap-1">
             <span className="font-medium">Total Score:</span>
@@ -108,7 +107,9 @@ export function ExamInfoPanel({
 
         <div>
           <h3 className="font-semibold mb-2">Description:</h3>
-          <p className="text-sm text-muted-foreground">{exam.description}</p>
+          <p className="text-sm text-muted-foreground whitespace-pre-line">
+            {exam.description}
+          </p>
         </div>
 
         {/* Sample Test Cases */}

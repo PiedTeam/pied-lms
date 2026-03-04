@@ -290,7 +290,6 @@ export default function StudentExamRoomDetailPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Exam Name</TableHead>
-                  <TableHead>Description</TableHead>
                   <TableHead>Max Score</TableHead>
                   <TableHead>Passing Score</TableHead>
                   <TableHead>Your Score</TableHead>
@@ -309,9 +308,6 @@ export default function StudentExamRoomDetailPage() {
                     <TableRow key={exam.id}>
                       <TableCell className="font-medium">
                         {exam.title}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {exam.description}
                       </TableCell>
                       <TableCell>{exam.totalMarks}</TableCell>
                       <TableCell>{exam.passingMarks}</TableCell>

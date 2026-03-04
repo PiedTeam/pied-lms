@@ -448,15 +448,15 @@ export default function ExamRoomDetailPage() {
                         Assign exam
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-2xl max-h-[80vh]">
-                      <DialogHeader>
+                    <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+                      <DialogHeader className="shrink-0">
                         <DialogTitle>Assign exam to room</DialogTitle>
                         <DialogDescription>
                           Search and select an exam to assign to this room
                         </DialogDescription>
                       </DialogHeader>
-                      <div className="grid gap-4 py-4">
-                        <div className="grid gap-2">
+                      <div className="grid gap-4 py-4 overflow-hidden flex-1 flex flex-col">
+                        <div className="grid gap-2 shrink-0">
                           <Label htmlFor="search">Search exams</Label>
                           <Input
                             id="search"
@@ -465,10 +465,10 @@ export default function ExamRoomDetailPage() {
                             onChange={(e) => setExamSearchQuery(e.target.value)}
                           />
                         </div>
-                        <div className="grid gap-2">
-                          <Label>Exam List</Label>
-                          <div className="border rounded-lg flex flex-col">
-                            <div className="max-h-[400px] overflow-y-auto">
+                        <div className="grid gap-2 overflow-hidden flex-1 flex flex-col">
+                          <Label className="shrink-0">Exam List</Label>
+                          <div className="border rounded-lg flex flex-col overflow-hidden flex-1">
+                            <div className="overflow-y-auto flex-1">
                               {!allExams.length ? (
                                 <div className="text-center py-8 text-muted-foreground">
                                   No exams available
@@ -518,9 +518,6 @@ export default function ExamRoomDetailPage() {
                                                 </Badge>
                                               )}
                                             </div>
-                                            <p className="text-sm text-muted-foreground mt-1">
-                                              {exam.description}
-                                            </p>
                                             <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
                                               <span>
                                                 Max score: {exam.totalMarks}
@@ -602,7 +599,7 @@ export default function ExamRoomDetailPage() {
                           </div>
                         </div>
                       </div>
-                      <DialogFooter>
+                      <DialogFooter className="shrink-0">
                         <Button
                           variant="outline"
                           onClick={() => {

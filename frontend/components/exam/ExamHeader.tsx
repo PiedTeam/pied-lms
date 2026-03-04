@@ -1,4 +1,11 @@
-import { ArrowLeft, Play, Send, Loader2, Clock } from "lucide-react";
+import {
+  ArrowLeft,
+  Play,
+  Send,
+  Loader2,
+  Clock,
+  CheckCircle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Exam } from "@/interface/exam/exam.types";
 
@@ -8,9 +15,12 @@ interface ExamHeaderProps {
   formatTime: (seconds: number) => string;
   isCompiling: boolean;
   isSubmitting: boolean;
+  isRunningTestCases: boolean;
+  hasTestCases: boolean;
   onBack: () => void;
   onSaveDraft: () => void;
   onTestCode: () => void;
+  onRunTestCases: () => void;
   onSubmit: () => void;
 }
 
@@ -20,9 +30,12 @@ export function ExamHeader({
   formatTime,
   isCompiling,
   isSubmitting,
+  isRunningTestCases,
+  hasTestCases,
   onBack,
   onSaveDraft,
   onTestCode,
+  onRunTestCases,
   onSubmit,
 }: ExamHeaderProps) {
   return (
@@ -35,9 +48,6 @@ export function ExamHeader({
             </Button>
             <div>
               <h1 className="text-xl font-bold">{exam.title}</h1>
-              <p className="text-sm text-muted-foreground">
-                {exam.description}
-              </p>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -52,14 +62,14 @@ export function ExamHeader({
             <Button
               variant="outline"
               onClick={onSaveDraft}
-              disabled={isCompiling || isSubmitting}
+              disabled={isCompiling || isSubmitting || isRunningTestCases}
             >
               Save Draft
             </Button>
             <Button
               variant="outline"
               onClick={onTestCode}
-              disabled={isCompiling || isSubmitting}
+              disabled={isCompiling || isSubmitting || isRunningTestCases}
             >
               {isCompiling ? (
                 <>
@@ -73,7 +83,29 @@ export function ExamHeader({
                 </>
               )}
             </Button>
-            <Button onClick={onSubmit} disabled={isCompiling || isSubmitting}>
+            {hasTestCases && (
+              <Button
+                variant="outline"
+                onClick={onRunTestCases}
+                disabled={isCompiling || isSubmitting || isRunningTestCases}
+              >
+                {isRunningTestCases ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Running Tests...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Run Test Cases
+                  </>
+                )}
+              </Button>
+            )}
+            <Button
+              onClick={onSubmit}
+              disabled={isCompiling || isSubmitting || isRunningTestCases}
+            >
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
