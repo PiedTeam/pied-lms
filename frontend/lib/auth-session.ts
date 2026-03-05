@@ -31,6 +31,24 @@ export async function forceLogout({
     console.warn(`[auth] force logout: ${reason}`);
   }
 
+  // Broadcast logout to other tabs immediately
+  try {
+    if (typeof BroadcastChannel !== "undefined") {
+      const channel = new BroadcastChannel("auth-channel");
+      channel.postMessage({
+        type: "AUTH_STATE_CHANGE",
+        state: {
+          token: null,
+          user: null,
+          isAuthenticated: false,
+        },
+      });
+      channel.close();
+    }
+  } catch {
+    // Ignore broadcast errors, logout must continue
+  }
+
   authCleanupHandlers.forEach((handler) => {
     try {
       handler();
