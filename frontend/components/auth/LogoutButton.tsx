@@ -1,10 +1,10 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
-import { useLogout } from "@/service";
-import { useAuthStore } from "@/store/auth.store";
+import { axiosGeneral as axios } from "@/common/axios";
+import { forceLogout } from "@/lib/auth-session";
 
 interface LogoutButtonProps {
   variant?:
@@ -25,21 +25,19 @@ export function LogoutButton({
   className = "",
   showIcon = true,
 }: LogoutButtonProps) {
-  const router = useRouter();
-  const { mutate: logout, isPending } = useLogout();
-  const logoutStore = useAuthStore((state) => state.logout);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const handleLogout = () => {
-    logout(undefined, {
-      onSuccess: () => {
-        logoutStore();
-        router.push("/login");
-      },
-      onError: () => {
-        logoutStore();
-        router.push("/login");
-      },
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+
+    setIsLoggingOut(true);
+
+    // Best-effort server logout, do not block UI logout flow.
+    void axios.post("/auth/logout", undefined, { timeout: 5000 }).catch(() => {
+      // Ignore API logout failures - local logout still must succeed.
     });
+
+    await forceLogout({ reason: "manual-logout" });
   };
 
   return (
@@ -47,11 +45,11 @@ export function LogoutButton({
       variant={variant}
       size={size}
       onClick={handleLogout}
-      disabled={isPending}
+      disabled={isLoggingOut}
       className={className}
     >
       {showIcon && <LogOut className="mr-2 h-4 w-4" />}
-      {isPending ? "Logging out..." : "Logout"}
+      {isLoggingOut ? "Logging out..." : "Logout"}
     </Button>
   );
 }
