@@ -1,46 +1,60 @@
 import axios from "axios";
 import type { AxiosError } from "@/interface/axios.interface";
+import { forceLogout, registerAuthCleanup } from "@/lib/auth-session";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 export const axiosGeneral = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000, // 30 seconds timeout
+  timeout: 30000,
   headers: {
     "Content-Type": "application/json",
   },
   withCredentials: true,
 });
 
-// Token refresh state management
 let isRefreshing = false;
 let failedQueue: Array<{
   resolve: (token: string) => void;
-  reject: (error: AxiosError) => void;
+  reject: (error: unknown) => void;
 }> = [];
 
-function processQueue(error: AxiosError | null, token: string | null = null) {
+function processQueue(error: unknown, token: string | null = null) {
   failedQueue.forEach((prom) => {
     if (error) {
       prom.reject(error);
     } else {
-      prom.resolve(token!);
+      prom.resolve(token || "");
     }
   });
 
   failedQueue = [];
 }
 
-// Request interceptor - dynamically import auth store to avoid circular dependency
+function isAuthEndpoint(url?: string): boolean {
+  if (!url) return false;
+
+  return (
+    url.includes("/auth/login") ||
+    url.includes("/auth/register") ||
+    url.includes("/auth/refresh") ||
+    url.includes("/auth/logout") ||
+    url.includes("/auth/reset-password")
+  );
+}
+
+registerAuthCleanup(() => {
+  isRefreshing = false;
+  processQueue(new Error("Session terminated"), null);
+});
+
 axiosGeneral.interceptors.request.use(
   async (config) => {
     if (typeof window !== "undefined") {
       const { useAuthStore } = await import("@/store/auth.store");
-
-      // Wait for store to hydrate before accessing token
       const state = useAuthStore.getState();
+
       if (!state._hasHydrated) {
-        // Wait for hydration to complete
         await new Promise<void>((resolve) => {
           const unsubscribe = useAuthStore.subscribe((newState) => {
             if (newState._hasHydrated) {
@@ -48,7 +62,7 @@ axiosGeneral.interceptors.request.use(
               resolve();
             }
           });
-          // Check again in case it hydrated while we were subscribing
+
           if (useAuthStore.getState()._hasHydrated) {
             unsubscribe();
             resolve();
@@ -61,144 +75,93 @@ axiosGeneral.interceptors.request.use(
         config.headers.Authorization = `Bearer ${token}`;
       }
     }
+
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  },
+  (error) => Promise.reject(error),
 );
 
-// Response interceptor
 axiosGeneral.interceptors.response.use(
-  (response) => {
-    return response;
-  },
-  async (error) => {
-    const originalRequest = error.config;
+  (response) => response,
+  async (rawError) => {
+    const error = rawError as AxiosError & {
+      config?: Record<string, unknown> & {
+        _retry?: boolean;
+        headers?: Record<string, string>;
+        url?: string;
+        method?: string;
+      };
+    };
 
-    // Handle 401 Unauthorized - Token expired
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    const originalRequest = error.config;
+    const originalUrl = originalRequest?.url;
+    const shouldSkipRefresh = isAuthEndpoint(originalUrl);
+
+    if (
+      error.response?.status === 401 &&
+      originalRequest &&
+      !originalRequest._retry &&
+      !shouldSkipRefresh
+    ) {
       if (isRefreshing) {
-        // Queue request and wait for refresh
-        return new Promise((resolve, reject) => {
+        return new Promise<string>((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
           .then((token) => {
+            originalRequest.headers = originalRequest.headers || {};
             originalRequest.headers.Authorization = `Bearer ${token}`;
             return axiosGeneral(originalRequest);
           })
-          .catch((err) => {
-            return Promise.reject(err);
-          });
+          .catch((queueError) => Promise.reject(queueError));
       }
 
       originalRequest._retry = true;
       isRefreshing = true;
 
       try {
-        // Call refresh endpoint
-        const { data } = await axiosGeneral.post("/auth/refresh");
+        const { data } = await axiosGeneral.post("/auth/refresh", undefined, {
+          headers: {
+            "x-skip-auth-refresh": "true",
+          },
+        });
 
-        if (process.env.NODE_ENV === "development") {
-          console.log("Refresh token response:", data);
+        if (!data.success || !data.data?.accessToken) {
+          throw new Error(data?.message || "Token refresh failed");
         }
 
-        if (data.success && data.data?.accessToken) {
-          const newToken = data.data.accessToken;
+        const newToken = data.data.accessToken;
 
-          // Update store FIRST
-          if (typeof window !== "undefined") {
-            const { useAuthStore } = await import("@/store/auth.store");
-            useAuthStore.getState().setToken(newToken);
-            if (process.env.NODE_ENV === "development") {
-              console.log(
-                "Token updated in store:",
-                newToken.substring(0, 20) + "...",
-              );
-            }
-          }
-
-          // Process queued requests with new token
-          processQueue(null, newToken);
-
-          // Retry original request with new token
-          originalRequest.headers.Authorization = `Bearer ${newToken}`;
-          if (process.env.NODE_ENV === "development") {
-            console.log("Retrying original request with new token");
-          }
-          return axiosGeneral(originalRequest);
-        } else {
-          if (process.env.NODE_ENV === "development") {
-            console.error("Refresh token failed - invalid response:", data);
-          }
-          throw new Error("Token refresh failed");
+        if (typeof window !== "undefined") {
+          const { useAuthStore } = await import("@/store/auth.store");
+          useAuthStore.getState().setToken(newToken);
         }
+
+        processQueue(null, newToken);
+
+        originalRequest.headers = originalRequest.headers || {};
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        return axiosGeneral(originalRequest);
       } catch (refreshError) {
-        const error = refreshError as AxiosError;
-        if (process.env.NODE_ENV === "development") {
-          console.error("Refresh token error:", error);
-        }
-
-        // Only logout if refresh token is actually invalid (401)
-        if (error.response?.status === 401) {
-          processQueue(error, null);
-
-          if (typeof window !== "undefined") {
-            const { useAuthStore } = await import("@/store/auth.store");
-            useAuthStore.getState().logout();
-            window.location.href = "/login";
-          }
-        }
-
-        return Promise.reject(error);
+        processQueue(refreshError, null);
+        await forceLogout({ reason: "refresh-token-failed" });
+        return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
       }
     }
 
-    // Handle banned user - check for 403 with banned message
     if (error.response?.status === 403) {
       const errorMessage =
         error.response?.data?.error || error.response?.data?.message || "";
+
       if (errorMessage.toLowerCase().includes("banned")) {
-        if (typeof window !== "undefined") {
-          const { useAuthStore } = await import("@/store/auth.store");
-          // Show alert about account being banned
-          alert(
-            "Tài khoản của bạn đã bị cấm. Bạn không thể tiếp tục sử dụng hệ thống. Vui lòng liên hệ quản trị viên để được hỗ trợ.",
-          );
-          // Logout and redirect to login page
-          useAuthStore.getState().logout();
-          window.location.href = "/login";
-        }
+        await forceLogout({ reason: "account-banned" });
       }
     }
 
-    // Handle 404 Not Found
-    if (error.response?.status === 404) {
-      if (process.env.NODE_ENV === "development") {
-        console.error("Resource not found:", error.config?.url);
-      }
-    }
-
-    // Handle 5xx Server Errors
-    if (error.response?.status >= 500) {
-      if (process.env.NODE_ENV === "development") {
-        console.error("Server error:", error.response?.status, error.message);
-      }
-    }
-
-    // Handle network errors
-    if (!error.response) {
-      if (process.env.NODE_ENV === "development") {
-        console.error("Network error:", error.message);
-      }
-    }
-
-    // Log all errors for debugging
     if (process.env.NODE_ENV === "development") {
       console.error("API Error:", {
-        url: error.config?.url,
+        url: originalUrl,
         method: error.config?.method,
         status: error.response?.status,
         data: error.response?.data,
