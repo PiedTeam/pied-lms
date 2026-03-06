@@ -13,6 +13,7 @@ public class PiedLmsDbContext(DbContextOptions<PiedLmsDbContext> options) : Iden
     IdentityUserToken<Guid>>(options)
 {
     public DbSet<ExamRoomEnrollment> ExamRoomEnrollments { get; set; }
+    public DbSet<CodeSubmission> CodeSubmissions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
