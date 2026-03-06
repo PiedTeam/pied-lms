@@ -310,6 +310,74 @@ namespace PIED_LMS.Persistence.Migrations
                     b.ToTable("users", (string)null);
                 });
 
+            modelBuilder.Entity("PIED_LMS.Domain.Entities.CodeSubmission", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("code");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("ExamId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("exam_id");
+
+                    b.Property<string>("Language")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("language");
+
+                    b.Property<double?>("Memory")
+                        .HasColumnType("double precision")
+                        .HasColumnName("memory");
+
+                    b.Property<int>("PassedTestCases")
+                        .HasColumnType("integer")
+                        .HasColumnName("passed_test_cases");
+
+                    b.Property<double?>("Runtime")
+                        .HasColumnType("double precision")
+                        .HasColumnName("runtime");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("student_id");
+
+                    b.Property<int>("TotalTestCases")
+                        .HasColumnType("integer")
+                        .HasColumnName("total_test_cases");
+
+                    b.HasKey("Id")
+                        .HasName("pk_code_submissions");
+
+                    b.HasIndex("CreatedAt")
+                        .HasDatabaseName("ix_code_submissions_created_at");
+
+                    b.HasIndex("ExamId")
+                        .HasDatabaseName("ix_code_submissions_exam_id");
+
+                    b.HasIndex("StudentId")
+                        .HasDatabaseName("ix_code_submissions_student_id");
+
+                    b.ToTable("code_submissions", (string)null);
+                });
+
             modelBuilder.Entity("PIED_LMS.Domain.Entities.Exam", b =>
                 {
                     b.Property<Guid>("Id")
@@ -883,6 +951,27 @@ namespace PIED_LMS.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_user_tokens_users_user_id");
+                });
+
+            modelBuilder.Entity("PIED_LMS.Domain.Entities.CodeSubmission", b =>
+                {
+                    b.HasOne("PIED_LMS.Domain.Entities.Exam", "Exam")
+                        .WithMany()
+                        .HasForeignKey("ExamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_code_submissions_exam_exam_id");
+
+                    b.HasOne("PIED_LMS.Domain.Entities.ApplicationUser", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_code_submissions_users_student_id");
+
+                    b.Navigation("Exam");
+
+                    b.Navigation("Student");
                 });
 
             modelBuilder.Entity("PIED_LMS.Domain.Entities.Exam", b =>

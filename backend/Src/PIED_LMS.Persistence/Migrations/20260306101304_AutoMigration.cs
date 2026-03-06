@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace PIED_LMS.Persistence.Migrations;
 
 /// <inheritdoc />
-public partial class init : Migration
+public partial class AutoMigration : Migration
 {
     /// <inheritdoc />
     protected override void Up(MigrationBuilder migrationBuilder)
@@ -303,6 +303,39 @@ public partial class init : Migration
             });
 
         migrationBuilder.CreateTable(
+            name: "code_submissions",
+            columns: table => new
+            {
+                id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                exam_id = table.Column<Guid>(type: "uuid", nullable: false),
+                student_id = table.Column<Guid>(type: "uuid", nullable: false),
+                language = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                code = table.Column<string>(type: "text", nullable: false),
+                status = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                runtime = table.Column<double>(type: "double precision", nullable: true),
+                memory = table.Column<double>(type: "double precision", nullable: true),
+                passed_test_cases = table.Column<int>(type: "integer", nullable: false),
+                total_test_cases = table.Column<int>(type: "integer", nullable: false),
+                created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+            },
+            constraints: table =>
+            {
+                table.PrimaryKey("pk_code_submissions", x => x.id);
+                table.ForeignKey(
+                    name: "fk_code_submissions_exam_exam_id",
+                    column: x => x.exam_id,
+                    principalTable: "exams",
+                    principalColumn: "id",
+                    onDelete: ReferentialAction.Cascade);
+                table.ForeignKey(
+                    name: "fk_code_submissions_users_student_id",
+                    column: x => x.student_id,
+                    principalTable: "users",
+                    principalColumn: "id",
+                    onDelete: ReferentialAction.Cascade);
+            });
+
+        migrationBuilder.CreateTable(
             name: "exam_participations",
             columns: table => new
             {
@@ -431,6 +464,21 @@ public partial class init : Migration
                     principalColumn: "id",
                     onDelete: ReferentialAction.Cascade);
             });
+
+        migrationBuilder.CreateIndex(
+            name: "ix_code_submissions_created_at",
+            table: "code_submissions",
+            column: "created_at");
+
+        migrationBuilder.CreateIndex(
+            name: "ix_code_submissions_exam_id",
+            table: "code_submissions",
+            column: "exam_id");
+
+        migrationBuilder.CreateIndex(
+            name: "ix_code_submissions_student_id",
+            table: "code_submissions",
+            column: "student_id");
 
         migrationBuilder.CreateIndex(
             name: "ix_exam_participations_exam_id_student_id",
@@ -572,6 +620,9 @@ public partial class init : Migration
     /// <inheritdoc />
     protected override void Down(MigrationBuilder migrationBuilder)
     {
+        migrationBuilder.DropTable(
+            name: "code_submissions");
+
         migrationBuilder.DropTable(
             name: "exam_participations");
 

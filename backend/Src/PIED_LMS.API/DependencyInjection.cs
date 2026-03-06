@@ -87,6 +87,7 @@ public static class InfrastructureExtensions
         services.AddProblemDetails();
         services.AddCarter();
         services.AddValidatorsFromAssemblyContaining<CompileCommandValidator>();
+        services.AddValidatorsFromAssemblyContaining<PIED_LMS.Application.UserCases.Commands.Submission.SubmitCodeCommandValidator>();
         services.AddHealthChecks()
             .AddCheck("self", () => HealthCheckResult.Healthy("API is reachable"));
         services.AddResponseCaching();

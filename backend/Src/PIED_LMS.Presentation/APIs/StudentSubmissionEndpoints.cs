@@ -22,13 +22,13 @@ public sealed class StudentSubmissionEndpoints : ICarterModule
         // Submit code for an exam
         group.MapPost("/exams/{examId:guid}/submissions", SubmitCode)
             .WithName("SubmitExamCode")
-            .RequireAuthorization("StudentOnly") // or whatever policy is used
+            .RequireAuthorization(policy => policy.RequireRole("Student"))
             .Produces<ServiceResponse<JudgeResult>>();
 
         // Get submission history for an exam
         group.MapGet("/exams/{examId:guid}/submissions", GetSubmissions)
             .WithName("GetExamSubmissions")
-            .RequireAuthorization("StudentOnly")
+            .RequireAuthorization(policy => policy.RequireRole("Student"))
             .Produces<ServiceResponse<List<SubmissionResponse>>>();
 
         // Get submission details
