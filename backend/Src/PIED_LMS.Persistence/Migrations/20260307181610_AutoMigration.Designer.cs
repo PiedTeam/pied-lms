@@ -12,7 +12,7 @@ using PIED_LMS.Persistence;
 namespace PIED_LMS.Persistence.Migrations
 {
     [DbContext(typeof(PiedLmsDbContext))]
-    [Migration("20260306101304_AutoMigration")]
+    [Migration("20260307181610_AutoMigration")]
     partial class AutoMigration
     {
         /// <inheritdoc />
