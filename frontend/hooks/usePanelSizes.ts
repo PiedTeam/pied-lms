@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 export interface PanelSizes {
   [key: string]: number;
@@ -27,6 +27,7 @@ export function usePanelSizes(
   panelCount: number = 2,
 ): UsePanelSizesReturn {
   const [sizes, setSizesState] = useState<PanelSizes>(defaultSizes);
+  const initializedRef = useRef(false);
 
   const storageKey = `exam-room-panel-sizes-${roomId}`;
 
@@ -53,43 +54,6 @@ export function usePanelSizes(
   );
 
   /**
-   * Loads sizes from localStorage with validation and fallback
-   */
-  const loadSizesFromStorage = useCallback((): PanelSizes => {
-    try {
-      if (typeof window === "undefined") {
-        return defaultSizes;
-      }
-
-      const stored = localStorage.getItem(storageKey);
-      if (!stored) {
-        return defaultSizes;
-      }
-
-      const parsed = JSON.parse(stored);
-
-      if (validateSizes(parsed)) {
-        return parsed as PanelSizes;
-      }
-
-      // Invalid data - clear it and use defaults
-      try {
-        localStorage.removeItem(storageKey);
-      } catch (error) {
-        console.warn(
-          "Failed to clear invalid panel sizes from localStorage:",
-          error,
-        );
-      }
-
-      return defaultSizes;
-    } catch (error) {
-      console.warn("Failed to load panel sizes from localStorage:", error);
-      return defaultSizes;
-    }
-  }, [storageKey, defaultSizes, validateSizes]);
-
-  /**
    * Saves sizes to localStorage with error handling
    */
   const saveSizesToStorage = useCallback(
@@ -110,10 +74,41 @@ export function usePanelSizes(
     [storageKey, validateSizes],
   );
 
-  // Load sizes from localStorage on mount
+  // Load sizes from localStorage on mount only
   useEffect(() => {
-    setSizesState(loadSizesFromStorage());
-  }, [loadSizesFromStorage]);
+    if (initializedRef.current) return;
+
+    try {
+      if (typeof window === "undefined") {
+        return;
+      }
+
+      const stored = localStorage.getItem(storageKey);
+      if (!stored) {
+        return;
+      }
+
+      const parsed = JSON.parse(stored);
+
+      if (validateSizes(parsed)) {
+        setSizesState(parsed as PanelSizes);
+      } else {
+        // Invalid data - clear it and use defaults
+        try {
+          localStorage.removeItem(storageKey);
+        } catch (error) {
+          console.warn(
+            "Failed to clear invalid panel sizes from localStorage:",
+            error,
+          );
+        }
+      }
+    } catch (error) {
+      console.warn("Failed to load panel sizes from localStorage:", error);
+    } finally {
+      initializedRef.current = true;
+    }
+  }, [storageKey, validateSizes]);
 
   /**
    * Updates sizes and saves to localStorage

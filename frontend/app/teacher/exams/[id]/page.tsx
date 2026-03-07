@@ -4,7 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Calendar, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useGetExamById } from "@/service";
+import { useGetExamById } from "@/services";
 
 export default function ExamDetailPage() {
   const params = useParams();

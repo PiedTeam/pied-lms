@@ -23,11 +23,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  ResizablePanelGroup,
-  ResizablePanel,
-  ResizableHandle,
-} from "@/components/ui/resizable";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -420,19 +416,19 @@ export default function ExamRoomDetailPage() {
         </Card>
       </div>
 
-      <ResizablePanelGroup
-        direction="horizontal"
-        onLayout={(newSizes) => {
-          setSizes({ exams: newSizes[0], students: newSizes[1] });
-        }}
-        className="w-full"
-      >
-        <ResizablePanel
-          defaultSize={sizes.exams}
-          minSize={20}
-          maxSize={80}
-          className="overflow-auto"
-        >
+      <Tabs defaultValue="exams" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="exams" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            Exam List ({room.exams?.length || 0})
+          </TabsTrigger>
+          <TabsTrigger value="students" className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            Student List ({room.enrolledStudentsCount || 0})
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="exams" className="mt-6">
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -653,7 +649,6 @@ export default function ExamRoomDetailPage() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Exam Title</TableHead>
-                        <TableHead>Description</TableHead>
                         <TableHead>Max Score</TableHead>
                         <TableHead>Passing Score</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
@@ -664,9 +659,6 @@ export default function ExamRoomDetailPage() {
                         <TableRow key={exam.id}>
                           <TableCell className="font-medium">
                             {exam.title}
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {exam.description}
                           </TableCell>
                           <TableCell>{exam.totalMarks}</TableCell>
                           <TableCell>{exam.passingMarks}</TableCell>
@@ -735,16 +727,9 @@ export default function ExamRoomDetailPage() {
               )}
             </CardContent>
           </Card>
-        </ResizablePanel>
+        </TabsContent>
 
-        <ResizableHandle />
-
-        <ResizablePanel
-          defaultSize={sizes.students}
-          minSize={20}
-          maxSize={80}
-          className="overflow-auto"
-        >
+        <TabsContent value="students" className="mt-6">
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -852,8 +837,8 @@ export default function ExamRoomDetailPage() {
               )}
             </CardContent>
           </Card>
-        </ResizablePanel>
-      </ResizablePanelGroup>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
