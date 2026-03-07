@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import Editor from "@monaco-editor/react";
-import { AlertCircle, Loader2, RefreshCw } from "lucide-react";
+import { AlertCircle, Loader2, RefreshCw, Copy, Check } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -31,24 +32,20 @@ import {
   useGetSubmissionDetail,
   useGetStudentSubmissions,
 } from "@/services/submission/submission.service";
-import type {
-  StudentSubmissionDetail,
-} from "@/interface/student/code-submission.interface";
+import type { StudentSubmissionDetail } from "@/interface/student/code-submission.interface";
+import type { SubmissionHistoryTabProps } from "@/interface/components/student.types";
 import {
   getMockSubmissionDetail,
   getMockSubmissions,
 } from "@/utils/submission-history.utils";
 
-interface SubmissionHistoryTabProps {
-  examId: string;
-  refreshSignal?: number;
-  pageSize?: number;
-}
-
-function getStatusVariant(status: string): "default" | "success" | "destructive" | "warning" {
+function getStatusVariant(
+  status: string,
+): "default" | "success" | "destructive" | "warning" {
   const normalized = status.toLowerCase();
   if (normalized.includes("accepted")) return "success";
-  if (normalized.includes("wrong") || normalized.includes("fail")) return "destructive";
+  if (normalized.includes("wrong") || normalized.includes("fail"))
+    return "destructive";
   if (normalized.includes("error")) return "warning";
   return "default";
 }
@@ -72,30 +69,24 @@ export function SubmissionHistoryTab({
   const [pageNumber, setPageNumber] = useState(1);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
   const [selectedSubmissionId, setSelectedSubmissionId] = useState("");
+  const [isCopied, setIsCopied] = useState(false);
+  const { toast } = useToast();
 
-  const {
-    data,
-    isLoading,
-    isFetching,
-    error,
-    refetch,
-  } = useGetStudentSubmissions(
-    {
-      examId,
-      pageNumber,
-      pageSize,
-    },
-    !!examId,
-  );
+  const { data, isLoading, isFetching, error, refetch } =
+    useGetStudentSubmissions(
+      {
+        examId,
+        pageNumber,
+        pageSize,
+      },
+      !!examId,
+    );
 
   const useMockData = !!error;
-  const mockSubmissions = useMemo(
-    () => {
-      void refreshSignal;
-      return getMockSubmissions(examId);
-    },
-    [examId, refreshSignal],
-  );
+  const mockSubmissions = useMemo(() => {
+    void refreshSignal;
+    return getMockSubmissions(examId);
+  }, [examId, refreshSignal]);
 
   const paginatedMockData = useMemo(() => {
     const start = Math.max(0, (pageNumber - 1) * pageSize);
@@ -105,10 +96,10 @@ export function SubmissionHistoryTab({
     };
   }, [mockSubmissions, pageNumber, pageSize]);
 
-  const rows = useMockData ? paginatedMockData.items : data?.items ?? [];
+  const rows = useMockData ? paginatedMockData.items : (data?.items ?? []);
   const totalCount = useMockData
     ? paginatedMockData.totalCount
-    : data?.totalCount ?? 0;
+    : (data?.totalCount ?? 0);
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
   const currentPage = Math.min(pageNumber, totalPages);
 
@@ -140,6 +131,27 @@ export function SubmissionHistoryTab({
   const closeCodeViewer = () => {
     setIsViewerOpen(false);
     setSelectedSubmissionId("");
+    setIsCopied(false);
+  };
+
+  const handleCopyCode = async () => {
+    if (detailData?.code) {
+      try {
+        await navigator.clipboard.writeText(detailData.code);
+        setIsCopied(true);
+        toast({
+          title: "Copied!",
+          description: "Code copied to clipboard",
+        });
+        setTimeout(() => setIsCopied(false), 2000);
+      } catch (err) {
+        toast({
+          title: "Failed to copy",
+          description: "Could not copy code to clipboard",
+          variant: "destructive",
+        });
+      }
+    }
   };
 
   return (
@@ -206,16 +218,26 @@ export function SubmissionHistoryTab({
                 <TableBody>
                   {rows.map((submission) => (
                     <TableRow key={submission.id}>
-                      <TableCell className="font-mono text-xs">{submission.id}</TableCell>
-                      <TableCell>{formatDateTime(submission.createdAt)}</TableCell>
-                      <TableCell className="uppercase">{submission.language}</TableCell>
+                      <TableCell className="font-mono text-xs">
+                        {submission.id}
+                      </TableCell>
+                      <TableCell>
+                        {formatDateTime(submission.createdAt)}
+                      </TableCell>
+                      <TableCell className="uppercase">
+                        {submission.language}
+                      </TableCell>
                       <TableCell>
                         <Badge variant={getStatusVariant(submission.status)}>
                           {submission.status}
                         </Badge>
                       </TableCell>
-                      <TableCell>{formatMetric(submission.runtime, " ms")}</TableCell>
-                      <TableCell>{formatMetric(submission.memory, " MB")}</TableCell>
+                      <TableCell>
+                        {formatMetric(submission.runtime, " ms")}
+                      </TableCell>
+                      <TableCell>
+                        {formatMetric(submission.memory, " MB")}
+                      </TableCell>
                       <TableCell>
                         {submission.passedTestCases}/{submission.totalTestCases}
                       </TableCell>
@@ -249,7 +271,9 @@ export function SubmissionHistoryTab({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setPageNumber(Math.min(totalPages, currentPage + 1))}
+                    onClick={() =>
+                      setPageNumber(Math.min(totalPages, currentPage + 1))
+                    }
                     disabled={currentPage >= totalPages}
                   >
                     Next
@@ -261,14 +285,42 @@ export function SubmissionHistoryTab({
         </CardContent>
       </Card>
 
-      <Dialog open={isViewerOpen} onOpenChange={(open) => (!open ? closeCodeViewer() : setIsViewerOpen(true))}>
+      <Dialog
+        open={isViewerOpen}
+        onOpenChange={(open) =>
+          !open ? closeCodeViewer() : setIsViewerOpen(true)
+        }
+      >
         <DialogContent className="sm:max-w-5xl">
           <DialogHeader>
-            <DialogTitle>Submitted Code</DialogTitle>
-            <DialogDescription>
-              Submission ID: {selectedSubmissionId}
-              {isUsingMockDetail ? " (mock data)" : ""}
-            </DialogDescription>
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <DialogTitle>Submitted Code</DialogTitle>
+                <DialogDescription>
+                  Submission ID: {selectedSubmissionId}
+                  {isUsingMockDetail ? " (mock data)" : ""}
+                </DialogDescription>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCopyCode}
+                disabled={!detailData?.code}
+                className="gap-2"
+              >
+                {isCopied ? (
+                  <>
+                    <Check className="h-4 w-4" />
+                    Copied
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-4 w-4" />
+                    Copy Code
+                  </>
+                )}
+              </Button>
+            </div>
           </DialogHeader>
 
           {isLoadingDetail ? (
@@ -279,10 +331,15 @@ export function SubmissionHistoryTab({
           ) : detailData ? (
             <div className="space-y-3">
               <div className="flex flex-wrap items-center gap-2 text-sm">
-                <Badge variant={getStatusVariant(detailData.status)}>{detailData.status}</Badge>
-                <Badge variant="outline">{detailData.language.toUpperCase()}</Badge>
+                <Badge variant={getStatusVariant(detailData.status)}>
+                  {detailData.status}
+                </Badge>
                 <Badge variant="outline">
-                  {detailData.passedTestCases}/{detailData.totalTestCases} passed
+                  {detailData.language.toUpperCase()}
+                </Badge>
+                <Badge variant="outline">
+                  {detailData.passedTestCases}/{detailData.totalTestCases}{" "}
+                  passed
                 </Badge>
               </div>
               <div className="h-[500px] overflow-hidden rounded-md border">

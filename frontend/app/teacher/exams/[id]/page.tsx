@@ -47,9 +47,6 @@ export default function ExamDetailPage() {
         </Button>
         <div className="flex-1">
           <h1 className="text-3xl font-bold tracking-tight">{exam.title}</h1>
-          <p className="text-muted-foreground whitespace-pre-line">
-            {exam.description}
-          </p>
         </div>
         <Button onClick={() => router.push(`/teacher/exams/${examId}/edit`)}>
           Chỉnh sửa

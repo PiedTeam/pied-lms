@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutDashboard, User, FileText, Calendar } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils/cn";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 
 const menuItems = [

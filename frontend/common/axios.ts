@@ -1,6 +1,6 @@
 import axios from "axios";
 import type { AxiosError } from "@/interface/axios.interface";
-import { forceLogout, registerAuthCleanup } from "@/lib/auth-session";
+import { forceLogout, registerAuthCleanup } from "@/utils/auth-session";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
 

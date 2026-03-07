@@ -25,10 +25,7 @@ import {
 import { EXAM_ROOM_MESSAGES } from "@/constants/messages";
 import type { UserResponse } from "@/interface/user/user.interface";
 import type { EnrollmentResultResponse } from "@/interface/exam-room/exam-room.interface";
-
-interface EnrollStudentsDialogProps {
-  roomId: string;
-}
+import type { EnrollStudentsDialogProps } from "@/interface/components/teacher.types";
 
 export function EnrollStudentsDialog({ roomId }: EnrollStudentsDialogProps) {
   const { toast } = useToast();

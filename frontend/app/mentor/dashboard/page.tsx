@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth.store";
 import {
   Card,
@@ -14,7 +16,31 @@ import { useGetQuizletCount } from "@/services/quizlet/quizlet.service";
 import { useGetStudentCount } from "@/services/user/user.service";
 
 export default function MentorDashboardPage() {
+  const router = useRouter();
   const user = useAuthStore((state) => state.user);
+  const token = useAuthStore((state) => state.token);
+
+  useEffect(() => {
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+
+    const normalizedRole = user?.role?.toLowerCase();
+
+    if (normalizedRole !== "mentor") {
+      if (normalizedRole === "admin") {
+        router.push("/admin/dashboard");
+      } else if (normalizedRole === "teacher") {
+        router.push("/teacher/dashboard");
+      } else {
+        router.push("/student/dashboard");
+      }
+      return;
+    }
+  }, [token, user, router]);
+
+  if (!token || user?.role?.toLowerCase() !== "mentor") return null;
 
   const { data: examRoomsData } = useGetExamRoomsByMentor({
     pageNumber: 1,
@@ -99,9 +125,7 @@ export default function MentorDashboardPage() {
           </CardHeader>
           <CardContent>
             {!examRoomsData?.items.length ? (
-              <p className="text-sm text-muted-foreground">
-                No exam rooms yet
-              </p>
+              <p className="text-sm text-muted-foreground">No exam rooms yet</p>
             ) : (
               <div className="space-y-4">
                 {examRoomsData.items.slice(0, 5).map((room) => (
@@ -134,9 +158,7 @@ export default function MentorDashboardPage() {
           </CardHeader>
           <CardContent>
             {!examsData?.items.length ? (
-              <p className="text-sm text-muted-foreground">
-                No exams yet
-              </p>
+              <p className="text-sm text-muted-foreground">No exams yet</p>
             ) : (
               <div className="space-y-4">
                 {examsData.items.slice(0, 5).map((exam) => (

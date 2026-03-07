@@ -11,13 +11,7 @@ import {
   Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useGetStudentQuizlets } from "@/service";
@@ -211,9 +205,7 @@ export default function StudentQuizzesPage() {
               <FileSpreadsheet className="h-12 w-12 text-muted-foreground" />
             </div>
             <h3 className="text-xl font-semibold">
-              {searchQuery
-                ? "No quizzes found"
-                : "No quizzes available"}
+              {searchQuery ? "No quizzes found" : "No quizzes available"}
             </h3>
             <p className="text-sm text-muted-foreground mt-2">
               {searchQuery

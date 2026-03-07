@@ -22,7 +22,7 @@ export function getAllExamScores(): ExamScore[] {
   try {
     const scoresStr = localStorage.getItem(EXAM_SCORES_KEY);
     if (!scoresStr) return [];
-    return JSON.parse(scoresStr);
+    return JSON.parse(scoresStr) as ExamScore[];
   } catch (error) {
     console.error("Error reading exam scores:", error);
     return [];
@@ -40,7 +40,7 @@ export function saveExamScore(score: ExamScore): void {
 
     // Check if score already exists for this student/room/exam
     const existingIndex = scores.findIndex(
-      (s) =>
+      (s: ExamScore) =>
         s.studentId === score.studentId &&
         s.examRoomId === score.examRoomId &&
         s.examId === score.examId,
@@ -71,7 +71,7 @@ export function getExamScore(
   const scores = getAllExamScores();
   return (
     scores.find(
-      (s) =>
+      (s: ExamScore) =>
         s.studentId === studentId &&
         s.examRoomId === examRoomId &&
         s.examId === examId,
@@ -84,7 +84,7 @@ export function getExamScore(
  */
 export function getStudentExamScores(studentId: string): ExamScore[] {
   const scores = getAllExamScores();
-  return scores.filter((s) => s.studentId === studentId);
+  return scores.filter((s: ExamScore) => s.studentId === studentId);
 }
 
 /**
@@ -96,7 +96,7 @@ export function getExamRoomScores(
 ): ExamScore[] {
   const scores = getAllExamScores();
   return scores.filter(
-    (s) => s.studentId === studentId && s.examRoomId === examRoomId,
+    (s: ExamScore) => s.studentId === studentId && s.examRoomId === examRoomId,
   );
 }
 
@@ -113,7 +113,7 @@ export function deleteExamScore(
   try {
     const scores = getAllExamScores();
     const filteredScores = scores.filter(
-      (s) =>
+      (s: ExamScore) =>
         !(
           s.studentId === studentId &&
           s.examRoomId === examRoomId &&

@@ -12,11 +12,25 @@ export function TeacherDashboard() {
   // TODO: Replace with new services
   // const { data: roomsData } = useGetAdminRooms();
   // const { data: questionsData } = useGetAdminQuestions();
-  const roomsData = null;
-  const questionsData = null;
+  interface RoomData {
+    uuid: string;
+    name: string;
+    code: string;
+  }
 
-  const rooms = (roomsData as any)?.data || [];
-  const questions = (questionsData as any)?.data?.listQuestion || [];
+  interface QuestionData {
+    id: string;
+    title: string;
+  }
+
+  const roomsData: { data: RoomData[] } | null = null;
+  const questionsData: { data: { listQuestion: QuestionData[] } } | null = null;
+
+  const rooms: RoomData[] =
+    (roomsData as { data: RoomData[] } | null)?.data || [];
+  const questions: QuestionData[] =
+    (questionsData as { data: { listQuestion: QuestionData[] } } | null)?.data
+      ?.listQuestion || [];
 
   const stats = [
     {
@@ -95,24 +109,26 @@ export function TeacherDashboard() {
             </p>
           ) : (
             <div className="space-y-4">
-              {rooms.slice(0, 5).map((room: any) => (
-                <div
-                  key={room.uuid}
-                  className="flex items-center justify-between border-b pb-4 last:border-0"
-                >
-                  <div>
-                    <p className="font-medium">{room.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      Code: {room.code}
-                    </p>
+              {rooms
+                .slice(0, 5)
+                .map((room: { uuid: string; name: string; code: string }) => (
+                  <div
+                    key={room.uuid}
+                    className="flex items-center justify-between border-b pb-4 last:border-0"
+                  >
+                    <div>
+                      <p className="font-medium">{room.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        Code: {room.code}
+                      </p>
+                    </div>
+                    <Link href={`/teacher/rooms/${room.uuid}`}>
+                      <Button variant="outline" size="sm">
+                        View
+                      </Button>
+                    </Link>
                   </div>
-                  <Link href={`/teacher/rooms/${room.uuid}`}>
-                    <Button variant="outline" size="sm">
-                      View
-                    </Button>
-                  </Link>
-                </div>
-              ))}
+                ))}
             </div>
           )}
         </CardContent>

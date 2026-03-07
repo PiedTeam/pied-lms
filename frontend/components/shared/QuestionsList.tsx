@@ -21,11 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGetQuestions } from "@/services";
 import { Question } from "@/interface/question/question.interface";
-
-interface QuestionsListProps {
-  onQuestionSelect: (question: Question) => void;
-  selectedQuestionId?: string;
-}
+import type { QuestionsListProps } from "@/interface/components/shared.types";
 
 export function QuestionsList({
   onQuestionSelect,

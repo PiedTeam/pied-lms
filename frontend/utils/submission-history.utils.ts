@@ -4,7 +4,8 @@ import type {
   StudentSubmissionDetail,
 } from "@/interface/student/code-submission.interface";
 
-const getStorageKey = (examId: string) => `mock_submission_history_${examId}`;
+const getStorageKey = (examId: string): string =>
+  `mock_submission_history_${examId}`;
 
 export function getMockSubmissions(examId: string): StudentSubmission[] {
   if (typeof window === "undefined") return [];
@@ -16,10 +17,10 @@ export function getMockSubmissions(examId: string): StudentSubmission[] {
 
     return parsed
       .sort(
-        (a, b) =>
+        (a: StudentSubmissionDetail, b: StudentSubmissionDetail) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       )
-      .map((item) => ({
+      .map((item: StudentSubmissionDetail) => ({
         id: item.id,
         examId: item.examId,
         language: item.language,
@@ -62,7 +63,9 @@ export function saveMockSubmission(
   try {
     const raw = localStorage.getItem(getStorageKey(examId));
     const list = raw ? (JSON.parse(raw) as StudentSubmissionDetail[]) : [];
-    const existingIndex = list.findIndex((item) => item.id === submission.id);
+    const existingIndex = list.findIndex(
+      (item: StudentSubmissionDetail) => item.id === submission.id,
+    );
 
     if (existingIndex >= 0) {
       list[existingIndex] = submission;
@@ -84,8 +87,8 @@ export function createMockSubmissionFromJudgeResult(
 ): StudentSubmissionDetail {
   const now = new Date().toISOString();
   const runtimeValues = judgeResult.results
-    .map((item) => item.executionTime)
-    .filter((value): value is number => value !== null);
+    .map((item: { executionTime: number | null }) => item.executionTime)
+    .filter((value: number | null): value is number => value !== null);
   const runtime = runtimeValues.length > 0 ? Math.max(...runtimeValues) : null;
 
   return {

@@ -68,7 +68,7 @@ export default function EditQuizletPage() {
   const handleQuestionChange = (
     index: number,
     field: keyof UpdateQuestionDto,
-    value: any,
+    value: string | number | boolean | string[],
   ) => {
     const newQuestions = [...questions];
     newQuestions[index] = { ...newQuestions[index], [field]: value };

@@ -5,7 +5,7 @@ import { Calendar as CalendarIcon, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils/cn";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -15,13 +15,7 @@ import {
 } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-interface DateTimePickerProps {
-  value?: string;
-  onChange?: (value: string) => void;
-  placeholder?: string;
-  disabled?: boolean;
-}
+import type { DateTimePickerProps } from "@/interface/components/ui.types";
 
 export function DateTimePicker({
   value,

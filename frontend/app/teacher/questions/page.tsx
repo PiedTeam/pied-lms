@@ -19,21 +19,34 @@ import {
 export default function TeacherQuestionsPage() {
   // TODO: Replace with new service
   // const { data, isLoading, error } = useGetAdminQuestions();
-  const data = null;
+  interface Question {
+    uuid: string;
+    code: string;
+    title: string;
+    score: number;
+    timeLimit: number;
+    memoryLimit: number;
+    order: number;
+  }
+
+  const data: { listQuestion: Question[] } | null = null;
   const isLoading = false;
   const error = null;
   const [searchQuery, setSearchQuery] = useState("");
 
-  const questions = (data as any)?.listQuestion || [];
+  const questions: Question[] =
+    (data as { listQuestion: Question[] } | null)?.listQuestion || [];
 
-  const filteredQuestions = questions.filter((question: any) => {
-    if (!searchQuery.trim()) return true;
-    const query = searchQuery.toLowerCase();
-    return (
-      question.title.toLowerCase().includes(query) ||
-      question.code.toLowerCase().includes(query)
-    );
-  });
+  const filteredQuestions = questions.filter(
+    (question: { title: string; code: string }) => {
+      if (!searchQuery.trim()) return true;
+      const query = searchQuery.toLowerCase();
+      return (
+        question.title.toLowerCase().includes(query) ||
+        question.code.toLowerCase().includes(query)
+      );
+    },
+  );
 
   return (
     <div className="container mx-auto p-6">
@@ -116,25 +129,35 @@ export default function TeacherQuestionsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredQuestions.map((question: any) => (
-                <TableRow key={question.uuid}>
-                  <TableCell className="font-mono">{question.code}</TableCell>
-                  <TableCell className="font-medium">
-                    {question.title}
-                  </TableCell>
-                  <TableCell>{question.score}</TableCell>
-                  <TableCell>{question.timeLimit}s</TableCell>
-                  <TableCell>{question.memoryLimit}MB</TableCell>
-                  <TableCell>{question.order}</TableCell>
-                  <TableCell>
-                    <Link href={`/teacher/questions/${question.uuid}`}>
-                      <Button variant="ghost" size="sm">
-                        View
-                      </Button>
-                    </Link>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {filteredQuestions.map(
+                (question: {
+                  uuid: string;
+                  code: string;
+                  title: string;
+                  score: number;
+                  timeLimit: number;
+                  memoryLimit: number;
+                  order: number;
+                }) => (
+                  <TableRow key={question.uuid}>
+                    <TableCell className="font-mono">{question.code}</TableCell>
+                    <TableCell className="font-medium">
+                      {question.title}
+                    </TableCell>
+                    <TableCell>{question.score}</TableCell>
+                    <TableCell>{question.timeLimit}s</TableCell>
+                    <TableCell>{question.memoryLimit}MB</TableCell>
+                    <TableCell>{question.order}</TableCell>
+                    <TableCell>
+                      <Link href={`/teacher/questions/${question.uuid}`}>
+                        <Button variant="ghost" size="sm">
+                          View
+                        </Button>
+                      </Link>
+                    </TableCell>
+                  </TableRow>
+                ),
+              )}
             </TableBody>
           </Table>
         </div>

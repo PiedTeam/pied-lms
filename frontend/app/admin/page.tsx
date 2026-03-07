@@ -1,5 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/store/auth.store";
 import {
   Card,
   CardContent,
@@ -20,13 +23,7 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { useGetExamRoomsByAdmin } from "@/services/exam-room/exam-room.service";
 import { useGetExamsByAdmin } from "@/services/exam/exam.service";
 import { useGetQuizletCount } from "@/services/quizlet/quizlet.service";
@@ -52,6 +49,31 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export default function AdminDashboardPage() {
+  const router = useRouter();
+  const user = useAuthStore((state) => state.user);
+  const token = useAuthStore((state) => state.token);
+
+  useEffect(() => {
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+
+    const normalizedRole = user?.role?.toLowerCase();
+
+    if (normalizedRole !== "admin") {
+      if (normalizedRole === "teacher") {
+        router.push("/teacher/dashboard");
+      } else if (normalizedRole === "mentor") {
+        router.push("/mentor/dashboard");
+      } else {
+        router.push("/student/dashboard");
+      }
+      return;
+    }
+  }, [token, user, router]);
+
+  if (!token || user?.role?.toLowerCase() !== "admin") return null;
   const {
     data: examRooms,
     isLoading: isLoadingExamRooms,
@@ -61,14 +83,12 @@ export default function AdminDashboardPage() {
     pageSize: 1,
   });
 
-  const {
-    data: activeExamRooms,
-    isLoading: isLoadingActiveExamRooms,
-  } = useGetExamRoomsByAdmin({
-    pageNumber: 1,
-    pageSize: 1,
-    status: "active",
-  });
+  const { data: activeExamRooms, isLoading: isLoadingActiveExamRooms } =
+    useGetExamRoomsByAdmin({
+      pageNumber: 1,
+      pageSize: 1,
+      status: "active",
+    });
 
   const {
     data: exams,
@@ -95,7 +115,10 @@ export default function AdminDashboardPage() {
     isExamRoomsError || isExamsError || isQuizletsError || isStudentsError;
 
   const isLoadingChart =
-    isLoadingExamRooms || isLoadingExams || isLoadingQuizlets || isLoadingStudents;
+    isLoadingExamRooms ||
+    isLoadingExams ||
+    isLoadingQuizlets ||
+    isLoadingStudents;
 
   const overviewChartData = [
     {
@@ -156,7 +179,7 @@ export default function AdminDashboardPage() {
               {isLoadingExamRooms ? (
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               ) : (
-                examRooms?.totalCount ?? "-"
+                (examRooms?.totalCount ?? "-")
               )}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -183,7 +206,7 @@ export default function AdminDashboardPage() {
               {isLoadingExams ? (
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               ) : (
-                exams?.totalCount ?? "-"
+                (exams?.totalCount ?? "-")
               )}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -205,7 +228,7 @@ export default function AdminDashboardPage() {
               {isLoadingQuizlets ? (
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               ) : (
-                quizletCount ?? "-"
+                (quizletCount ?? "-")
               )}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -227,7 +250,7 @@ export default function AdminDashboardPage() {
               {isLoadingStudents ? (
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               ) : (
-                studentCount ?? "-"
+                (studentCount ?? "-")
               )}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -297,9 +320,7 @@ export default function AdminDashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle>Exam rooms status</CardTitle>
-            <CardDescription>
-              Total vs active exam rooms
-            </CardDescription>
+            <CardDescription>Total vs active exam rooms</CardDescription>
           </CardHeader>
           <CardContent>
             {isLoadingExamRooms || isLoadingActiveExamRooms ? (

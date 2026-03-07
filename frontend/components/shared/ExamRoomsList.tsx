@@ -52,10 +52,7 @@ import {
 } from "@/service";
 import { EXAM_ROOM_MESSAGES } from "@/constants/messages";
 import type { CreateExamRoomRequest } from "@/interface/exam-room/exam-room.interface";
-
-interface ExamRoomsListProps {
-  basePath: string; // "/admin", "/teacher", or "/mentor"
-}
+import type { ExamRoomsListProps } from "@/interface/components/shared.types";
 
 export function ExamRoomsList({ basePath }: ExamRoomsListProps) {
   const router = useRouter();

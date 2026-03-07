@@ -16,16 +16,21 @@ export default function StudentDashboardPage() {
       return;
     }
 
-    if (user?.role === "ADMIN" || user?.role === "Admin") {
-      router.push("/admin");
+    const normalizedRole = user?.role?.toLowerCase();
+
+    if (normalizedRole === "admin") {
+      router.push("/admin/dashboard");
+      return;
     }
 
-    if (user?.role === "MENTOR" || user?.role === "Mentor") {
+    if (normalizedRole === "mentor") {
       router.push("/mentor/dashboard");
+      return;
     }
 
-    if (user?.role === "TEACHER" || user?.role === "Teacher") {
+    if (normalizedRole === "teacher") {
       router.push("/teacher/dashboard");
+      return;
     }
   }, [token, user, router]);
 
