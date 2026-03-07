@@ -1,27 +1,9 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { decodeJwtToken, isTokenExpired } from "@/utils/jwt.utils";
+import type { User, AuthState } from "@/interface/store/auth.types";
 
-export interface User {
-  uuid: string;
-  email: string;
-  fullName: string | null;
-  role?: string;
-  createdAt?: string | null;
-  lastLogin?: string | null;
-}
-
-interface AuthState {
-  token: string | null;
-  user: User | null;
-  isAuthenticated: boolean;
-  _hasHydrated: boolean;
-  setToken: (token: string | null) => void;
-  setUser: (user: User | null) => void;
-  login: (accessToken: string, user: User) => void;
-  logout: () => void;
-  setHasHydrated: (state: boolean) => void;
-}
+export type { User, AuthState } from "@/interface/store/auth.types";
 
 // Cross-tab communication channel
 let broadcastChannel: BroadcastChannel | null = null;
@@ -31,7 +13,7 @@ let expiryTimer: NodeJS.Timeout | null = null;
 let periodicCheckInterval: NodeJS.Timeout | null = null;
 
 // Clear all session expiry timers
-function clearExpiryTimers() {
+function clearExpiryTimers(): void {
   if (expiryTimer) {
     clearTimeout(expiryTimer);
     expiryTimer = null;
@@ -43,7 +25,7 @@ function clearExpiryTimers() {
 }
 
 // Handle token expiry by calling forceLogout
-async function handleTokenExpiry() {
+async function handleTokenExpiry(): Promise<void> {
   if (typeof window === "undefined") {
     return;
   }
@@ -51,7 +33,7 @@ async function handleTokenExpiry() {
   clearExpiryTimers();
 
   try {
-    const { forceLogout } = await import("@/lib/auth-session");
+    const { forceLogout } = await import("@/utils/auth-session");
     await forceLogout({ reason: "Session expired" });
   } catch (error) {
     console.error("[auth] Error during token expiry logout:", error);
@@ -61,7 +43,7 @@ async function handleTokenExpiry() {
 }
 
 // Check if current token is expired and handle it
-async function checkTokenExpiry() {
+async function checkTokenExpiry(): Promise<void> {
   const state = useAuthStore.getState();
 
   if (!state.token || !state.isAuthenticated) {
@@ -75,7 +57,7 @@ async function checkTokenExpiry() {
 }
 
 // Setup session expiry detection for a token
-function setupExpiryDetection(token: string | null) {
+function setupExpiryDetection(token: string | null): void {
   // Clear any existing timers
   clearExpiryTimers();
 
@@ -132,13 +114,14 @@ function handleCrossTabAuthChange(newState: {
   token: string | null;
   user: User | null;
   isAuthenticated: boolean;
-}) {
+}): void {
   const currentState = useAuthStore.getState();
 
   // Only process if state actually changed
   if (
     currentState.token === newState.token &&
-    currentState.isAuthenticated === newState.isAuthenticated
+    currentState.isAuthenticated === newState.isAuthenticated &&
+    currentState.user?.role === newState.user?.role
   ) {
     return;
   }
@@ -168,11 +151,42 @@ function handleCrossTabAuthChange(newState: {
     ) {
       window.location.replace("/login");
     }
+
+    // If user role changed on another tab (e.g., logout admin and login student)
+    // and we're on a role-specific page, redirect to appropriate dashboard
+    if (
+      newState.isAuthenticated &&
+      currentState.user?.role !== newState.user?.role &&
+      currentState.isAuthenticated
+    ) {
+      // Check if current path is a role-specific route
+      const isStudentRoute = currentPath.startsWith("/student");
+      const isTeacherRoute = currentPath.startsWith("/teacher");
+      const isMentorRoute = currentPath.startsWith("/mentor");
+      const isAdminRoute = currentPath.startsWith("/admin");
+
+      const newRole = newState.user?.role?.toLowerCase();
+      const isNewRoleStudent = newRole === "student";
+      const isNewRoleTeacher = newRole === "teacher";
+      const isNewRoleMentor = newRole === "mentor";
+      const isNewRoleAdmin = newRole === "admin";
+
+      // If current route doesn't match new role, redirect to appropriate dashboard
+      if (
+        (isStudentRoute && !isNewRoleStudent) ||
+        (isTeacherRoute && !isNewRoleTeacher) ||
+        (isMentorRoute && !isNewRoleMentor) ||
+        (isAdminRoute && !isNewRoleAdmin)
+      ) {
+        const dashboardRoute = getDashboardRoute(newState.user?.role);
+        window.location.replace(dashboardRoute);
+      }
+    }
   }
 }
 
 // Initialize cross-tab synchronization
-function initCrossTabSync() {
+function initCrossTabSync(): (() => void) | void {
   if (typeof window === "undefined") {
     return;
   }
@@ -182,7 +196,7 @@ function initCrossTabSync() {
     try {
       broadcastChannel = new BroadcastChannel("auth-channel");
 
-      broadcastChannel.onmessage = (event) => {
+      broadcastChannel.onmessage = (event: MessageEvent) => {
         if (event.data?.type === "AUTH_STATE_CHANGE") {
           handleCrossTabAuthChange(event.data.state);
         }
@@ -196,7 +210,7 @@ function initCrossTabSync() {
   }
 
   // StorageEvent listener as fallback (works in all browsers)
-  const handleStorageChange = (event: StorageEvent) => {
+  const handleStorageChange = (event: StorageEvent): void => {
     // Only process changes to our auth storage key
     if (event.key !== "auth-storage" || event.newValue === null) {
       return;
@@ -221,7 +235,7 @@ function initCrossTabSync() {
   window.addEventListener("storage", handleStorageChange);
 
   // Return cleanup function
-  return () => {
+  return (): void => {
     if (broadcastChannel) {
       broadcastChannel.close();
       broadcastChannel = null;
@@ -235,7 +249,7 @@ function broadcastAuthStateChange(state: {
   token: string | null;
   user: User | null;
   isAuthenticated: boolean;
-}) {
+}): void {
   if (broadcastChannel) {
     try {
       broadcastChannel.postMessage({
@@ -255,7 +269,7 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       isAuthenticated: false,
       _hasHydrated: false,
-      setToken: (token) => {
+      setToken: (token: string | null): void => {
         const newState = {
           token,
           isAuthenticated: !!token,
@@ -270,7 +284,7 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: !!token,
         });
       },
-      setUser: (user) => {
+      setUser: (user: User | null): void => {
         set({
           user,
         });
@@ -282,7 +296,7 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: state.isAuthenticated,
         });
       },
-      login: (accessToken, user) => {
+      login: (accessToken: string, user: User): void => {
         const newState = {
           token: accessToken,
           user,
@@ -294,7 +308,7 @@ export const useAuthStore = create<AuthState>()(
         // Broadcast to other tabs
         broadcastAuthStateChange(newState);
       },
-      logout: () => {
+      logout: (): void => {
         // Clear expiry timers
         clearExpiryTimers();
         // Clear auth data but preserve exam scores
@@ -309,7 +323,7 @@ export const useAuthStore = create<AuthState>()(
         // Note: exam_scores in localStorage will NOT be cleared
         // Only auth-storage will be cleared by zustand persist
       },
-      setHasHydrated: (state) => {
+      setHasHydrated: (state: boolean): void => {
         set({
           _hasHydrated: state,
         });
@@ -317,19 +331,21 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "auth-storage",
-      onRehydrateStorage: () => (state, error) => {
-        if (!error && state) {
-          state.setHasHydrated(true);
-          // Setup expiry detection for hydrated token
-          if (state.token) {
-            setupExpiryDetection(state.token);
+      onRehydrateStorage:
+        () =>
+        (state: AuthState | undefined, error: unknown): void => {
+          if (!error && state) {
+            state.setHasHydrated(true);
+            // Setup expiry detection for hydrated token
+            if (state.token) {
+              setupExpiryDetection(state.token);
+            }
+          } else {
+            // If there's an error or no state, still mark as hydrated
+            // This handles the case where there's no stored data
+            useAuthStore.getState().setHasHydrated(true);
           }
-        } else {
-          // If there's an error or no state, still mark as hydrated
-          // This handles the case where there's no stored data
-          useAuthStore.getState().setHasHydrated(true);
-        }
-      },
+        },
     },
   ),
 );

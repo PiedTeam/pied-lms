@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { axiosGeneral as axios } from "@/common/axios";
-import { forceLogout } from "@/lib/auth-session";
+import { forceLogout } from "@/utils/auth-session";
 
 interface LogoutButtonProps {
   variant?:

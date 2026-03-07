@@ -46,10 +46,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useGetExamsByMentor, useCreateExam, useDeleteExam } from "@/service";
 import type { CreateExamRequest } from "@/interface/exam/exam.interface";
-
-interface ExamsListProps {
-  basePath: string; // "/admin", "/teacher", or "/mentor"
-}
+import type { ExamsListProps } from "@/interface/components/shared.types";
 
 export function ExamsList({ basePath }: ExamsListProps) {
   const router = useRouter();
@@ -84,10 +81,10 @@ export function ExamsList({ basePath }: ExamsListProps) {
   // Apply search filter
   const filteredExams = searchQuery
     ? allExams.filter(
-      (exam) =>
-        exam.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        exam.description?.toLowerCase().includes(searchQuery.toLowerCase()),
-    )
+        (exam) =>
+          exam.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          exam.description?.toLowerCase().includes(searchQuery.toLowerCase()),
+      )
     : allExams;
 
   const currentExams =

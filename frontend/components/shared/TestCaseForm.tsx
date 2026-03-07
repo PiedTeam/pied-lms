@@ -19,21 +19,10 @@ import { useToast } from "@/hooks/use-toast";
 import { useCreateTestCase, useUpdateTestCase } from "@/service";
 import { TESTCASE_MESSAGES } from "@/constants/messages";
 import type { TestCaseResponse } from "@/interface/testcase/testcase.interface";
-
-interface TestCaseFormData {
-  input: string;
-  output: string;
-  isHidden: boolean;
-  index: number;
-}
-
-interface TestCaseFormProps {
-  examId: string; // Changed from questionId to examId
-  testCase?: TestCaseResponse;
-  existingTestCases?: TestCaseResponse[]; // Add existing test cases for validation
-  onSuccess: () => void;
-  onCancel: () => void;
-}
+import type {
+  TestCaseFormData,
+  TestCaseFormProps,
+} from "@/interface/components/shared.types";
 
 export function TestCaseForm({
   examId, // Changed from questionId
@@ -50,15 +39,17 @@ export function TestCaseForm({
 
   const form = useForm<TestCaseFormData>({
     defaultValues: {
-      input: testCase?.inputPath || "",
-      output: testCase?.outputPath || "",
-      isHidden: testCase?.isHidden || false,
+      input: testCase?.inputPath ?? "",
+      output: testCase?.outputPath ?? "",
+      isHidden: testCase?.isHidden ?? false,
       index:
-        testCase?.index ||
+        testCase?.index ??
         (() => {
           // Auto-calculate next index when creating new test case
           if (existingTestCases.length === 0) return 1;
-          const maxIndex = Math.max(...existingTestCases.map((tc) => tc.index));
+          const maxIndex = Math.max(
+            ...existingTestCases.map((tc: TestCaseResponse) => tc.index),
+          );
           return maxIndex + 1;
         })(),
     },
@@ -84,7 +75,7 @@ export function TestCaseForm({
       return;
     }
 
-    if (data.index < 1) {
+    if (!data.index || data.index < 1) {
       toast({
         title: "Lỗi",
         description: "Index must be greater than 0",
@@ -113,10 +104,10 @@ export function TestCaseForm({
 
     const payload = {
       examId: examId,
-      index: data.index,
+      index: data.index ?? 1,
       input: data.input,
       output: data.output,
-      isHidden: data.isHidden,
+      isHidden: data.isHidden ?? false,
     };
 
     if (testCase) {
@@ -126,10 +117,10 @@ export function TestCaseForm({
           id: testCase.testCaseId,
           payload: {
             examId: examId,
-            index: data.index,
+            index: data.index ?? 1,
             input: data.input,
             output: data.output,
-            isHidden: data.isHidden,
+            isHidden: data.isHidden ?? false,
           },
         },
         {

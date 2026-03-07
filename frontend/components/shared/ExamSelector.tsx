@@ -8,15 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { ExamResponse } from "@/interface/exam/exam.interface";
-
-interface ExamSelectorProps {
-  exams: ExamResponse[];
-  selectedExamId: string | null;
-  onSelectExam: (examId: string) => void;
-  currentPage?: number;
-  totalPages?: number;
-  onPageChange?: (page: number) => void;
-}
+import type { ExamSelectorProps } from "@/interface/components/shared.types";
 
 export function ExamSelector({
   exams = [],

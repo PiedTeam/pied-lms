@@ -14,10 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import type { QuizletResponse } from "@/interface/quizlet/quizlet.interface";
-
-interface QuizletViewDetailProps {
-  quizlet: QuizletResponse;
-}
+import type { QuizletViewDetailProps } from "@/interface/components/shared.types";
 
 export function QuizletViewDetail({ quizlet }: QuizletViewDetailProps) {
   const [currentPage, setCurrentPage] = useState(1);
@@ -97,10 +94,11 @@ export function QuizletViewDetail({ quizlet }: QuizletViewDetailProps) {
                         return (
                           <div
                             key={optIndex}
-                            className={`flex items-center gap-2 p-2 rounded ${isCorrect
+                            className={`flex items-center gap-2 p-2 rounded ${
+                              isCorrect
                                 ? "bg-green-50 border border-green-200"
                                 : "bg-muted"
-                              }`}
+                            }`}
                           >
                             <span className="font-mono text-sm">
                               {String.fromCharCode(65 + optIndex)}.

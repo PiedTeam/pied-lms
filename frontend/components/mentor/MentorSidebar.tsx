@@ -16,9 +16,9 @@ import {
   FileText,
   TestTube,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils/cn";
 import { useAuthStore } from "@/store/auth.store";
-import { forceLogout } from "@/lib/auth-session";
+import { forceLogout } from "@/utils/auth-session";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,

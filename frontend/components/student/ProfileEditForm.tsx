@@ -34,20 +34,10 @@ const profileFormSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
-interface Profile {
-  full_name: string;
-  email: string;
-  studentId: string;
-}
-
-interface UpdateProfileMutation {
-  mutate: () => void;
-  mutateAsync: (payload: Profile) => Promise<void>;
-  isPending: boolean;
-  isSuccess: boolean;
-  isError: boolean;
-  error: Error | null;
-}
+import type {
+  Profile,
+  UpdateProfileMutation,
+} from "@/interface/components/student.types";
 
 export function ProfileEditForm() {
   const router = useRouter();

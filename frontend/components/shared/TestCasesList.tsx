@@ -54,11 +54,7 @@ import { TestCaseForm } from "@/components/shared/TestCaseForm";
 import { TestCaseRunner } from "@/components/shared/TestCaseRunner";
 import { useGetTestCasesByExam, useDeleteTestCase } from "@/service";
 import type { TestCaseResponse } from "@/interface/testcase/testcase.interface";
-
-interface TestCasesListProps {
-  examId: string; // Changed from questionId
-  examTitle?: string; // Changed from questionTitle
-}
+import type { TestCasesListProps } from "@/interface/components/shared.types";
 
 export function TestCasesList({
   examId, // Changed from questionId
@@ -151,7 +147,7 @@ export function TestCasesList({
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[600px] max-h-[85vh] flex flex-col">
-            <DialogHeader className="flex-shrink-0">
+            <DialogHeader className="shrink-0">
               <DialogTitle>Tạo Test Case mới</DialogTitle>
               <DialogDescription>
                 Tạo test case để kiểm tra tính đúng đắn của code
@@ -384,7 +380,7 @@ export function TestCasesList({
           onOpenChange={() => setEditingTestCase(null)}
         >
           <DialogContent className="sm:max-w-[600px] max-h-[85vh] flex flex-col">
-            <DialogHeader className="flex-shrink-0">
+            <DialogHeader className="shrink-0">
               <DialogTitle>Chỉnh sửa Test Case</DialogTitle>
               <DialogDescription>
                 Cập nhật thông tin test case
@@ -416,7 +412,7 @@ export function TestCasesList({
           onOpenChange={() => setRunningTestCase(null)}
         >
           <DialogContent className="sm:max-w-[800px] max-h-[90vh] flex flex-col">
-            <DialogHeader className="flex-shrink-0">
+            <DialogHeader className="shrink-0">
               <DialogTitle>Chạy Test Case</DialogTitle>
               <DialogDescription>
                 Nhập code để test với test case này

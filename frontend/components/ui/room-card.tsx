@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils/cn";
 import { Eye, Plus, Loader2, FileCode } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -19,23 +19,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
+import type { RoomCardProps } from "@/interface/components/ui.types";
 // TODO: Old project services - need to be replaced or removed
 // import { useCreateQuestion } from '@/service/admin/question.service'
 // import { useCreateTestCase } from '@/service/admin/testcase.service'
-
-interface RoomCardProps {
-  roomId: string;
-  roomUuid?: string;
-  roomName: string;
-
-  creatorName?: string;
-  creatorEmail?: string;
-  openTime: string;
-  openDate: string;
-  closeTime: string;
-  closeDate: string;
-  className?: string;
-}
 
 export const RoomCard = React.forwardRef<HTMLDivElement, RoomCardProps>(
   (
@@ -60,13 +47,39 @@ export const RoomCard = React.forwardRef<HTMLDivElement, RoomCardProps>(
     // const createQuestion = useCreateQuestion();
     // const createTestCase = useCreateTestCase();
     const createQuestion = {
-      mutate: (payload: any, options?: any) => {
+      mutate: (
+        payload: {
+          roomId: string;
+          title: string;
+          descriptionPath: string;
+          score: number;
+          timeLimit: number;
+          memoryLimit: number;
+          order: number;
+        },
+        options?: {
+          onSuccess?: (data: { data?: { questionUuid: string } }) => void;
+          onError?: (error: unknown) => void;
+        },
+      ) => {
         console.log("Create question not implemented", payload, options);
       },
       isPending: false,
     };
     const createTestCase = {
-      mutate: (payload: any, options?: any) => {
+      mutate: (
+        payload: {
+          questionId: string;
+          index: number;
+          input_path: string;
+          output_path: string;
+          is_hidden: boolean;
+        },
+        options?: {
+          onSuccess?: () => void;
+          onError?: (error: unknown) => void;
+        },
+      ) => {
         console.log("Create test case not implemented", payload, options);
       },
       isPending: false,
@@ -109,7 +122,7 @@ export const RoomCard = React.forwardRef<HTMLDivElement, RoomCardProps>(
           descriptionPath: questionForm.descriptionPath,
         },
         {
-          onSuccess: (data: any) => {
+          onSuccess: (data: { data?: { questionUuid: string } }) => {
             const newId = data?.data?.questionUuid;
             setCreatedQuestionId(newId || null);
             setCurrentStep(2);

@@ -58,10 +58,7 @@ import {
   useTogglePublishQuizlet,
 } from "@/service";
 import { QuizletLevel } from "@/interface/quizlet/quizlet.interface";
-
-interface QuizletsListProps {
-  role: "admin" | "teacher" | "mentor";
-}
+import type { QuizletsListProps } from "@/interface/components/shared.types";
 
 export function QuizletsList({ role }: QuizletsListProps) {
   const router = useRouter();
@@ -231,7 +228,9 @@ export function QuizletsList({ role }: QuizletsListProps) {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Quizlet Management</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Quizlet Management
+          </h1>
           <p className="text-muted-foreground">
             Create and manage question sets from Excel files
           </p>
@@ -257,8 +256,8 @@ export function QuizletsList({ role }: QuizletsListProps) {
                 <DialogHeader>
                   <DialogTitle>Create New Quizlet</DialogTitle>
                   <DialogDescription>
-                    Upload an Excel file containing questions. File must be .xlsx
-                    or .xls format
+                    Upload an Excel file containing questions. File must be
+                    .xlsx or .xls format
                   </DialogDescription>
                 </DialogHeader>
 
@@ -326,8 +325,8 @@ export function QuizletsList({ role }: QuizletsListProps) {
                       <FileSpreadsheet className="h-5 w-5 text-muted-foreground" />
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      The Excel file must follow the template structure. Download
-                      the template to see the structure.
+                      The Excel file must follow the template structure.
+                      Download the template to see the structure.
                     </p>
                   </div>
 
@@ -515,9 +514,7 @@ export function QuizletsList({ role }: QuizletsListProps) {
                               }
                               disabled={isToggling}
                             >
-                              {quizlet.isPublished
-                                ? "Unpublish"
-                                : "Publish"}
+                              {quizlet.isPublished ? "Unpublish" : "Publish"}
                             </Button>
                           </div>
                         </TableCell>
@@ -582,8 +579,8 @@ export function QuizletsList({ role }: QuizletsListProps) {
                   hide/show the difficulty level of the question
                 </li>
                 <li>
-                  <span className="font-medium">Level:</span> 1 = Easy, 2 = Medium,
-                  3 = Hard
+                  <span className="font-medium">Level:</span> 1 = Easy, 2 =
+                  Medium, 3 = Hard
                 </li>
               </ul>
             </div>
@@ -605,7 +602,9 @@ export function QuizletsList({ role }: QuizletsListProps) {
                 IsHidden: TRUE to hide difficulty level of question, FALSE to
                 show level
               </li>
-              <li>Download the template to see detailed structure and examples</li>
+              <li>
+                Download the template to see detailed structure and examples
+              </li>
             </ul>
           </div>
 

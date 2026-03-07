@@ -115,7 +115,7 @@ export default function QuizResultPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 via-white to-purple-50">
       <div className="container mx-auto p-6 space-y-6 max-w-6xl">
         {/* Header */}
         <div className="flex items-center gap-4">
@@ -135,10 +135,11 @@ export default function QuizResultPage() {
 
         {/* Result Summary Card */}
         <Card
-          className={`border-4 shadow-2xl ${isPassed
-              ? "border-green-500 bg-gradient-to-br from-green-50 to-white"
-              : "border-orange-500 bg-gradient-to-br from-orange-50 to-white"
-            }`}
+          className={`border-4 shadow-2xl ${
+            isPassed
+              ? "border-green-500 bg-linear-to-br from-green-50 to-white"
+              : "border-orange-500 bg-linear-to-br from-orange-50 to-white"
+          }`}
         >
           <CardHeader className="text-center pb-4">
             <div className="flex justify-center mb-4">
@@ -240,7 +241,7 @@ export default function QuizResultPage() {
 
         {/* Answer Review */}
         <Card className="border-2 shadow-lg">
-          <CardHeader className="bg-gradient-to-r from-primary/5 to-purple-50 border-b-2">
+          <CardHeader className="bg-linear-to-r from-primary/5 to-purple-50 border-b-2">
             <CardTitle className="text-2xl">Review Answers</CardTitle>
             <CardDescription className="text-base">
               Review your answers and the correct solutions
@@ -314,12 +315,13 @@ export default function QuizResultPage() {
                           return (
                             <div
                               key={aIndex}
-                              className={`p-4 rounded-xl border-2 transition-all ${isCorrectAnswer
+                              className={`p-4 rounded-xl border-2 transition-all ${
+                                isCorrectAnswer
                                   ? "border-green-500 bg-green-50 shadow-md"
                                   : isUserAnswer
                                     ? "border-red-500 bg-red-50 shadow-md"
                                     : "border-gray-200 bg-white"
-                                }`}
+                              }`}
                             >
                               <div className="flex items-center gap-3">
                                 <span className="font-mono text-base font-bold bg-primary/10 px-3 py-1 rounded">

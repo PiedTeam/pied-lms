@@ -26,16 +26,21 @@ export default function TeacherDashboardPage() {
       return;
     }
 
-    if (user?.role !== "TEACHER" && user?.role !== "Teacher") {
-      if (user?.role === "ADMIN" || user?.role === "Admin") {
-        router.push("/admin");
-      } else if (user?.role === "STUDENT" || user?.role === "Student") {
+    const normalizedRole = user?.role?.toLowerCase();
+
+    if (normalizedRole !== "teacher") {
+      if (normalizedRole === "admin") {
+        router.push("/admin/dashboard");
+      } else if (normalizedRole === "student") {
         router.push("/student/dashboard");
-      } else if (user?.role === "MENTOR" || user?.role === "Mentor") {
+      } else if (normalizedRole === "mentor") {
         router.push("/mentor/dashboard");
       }
+      return;
     }
   }, [token, user, router]);
+
+  if (!token || user?.role?.toLowerCase() !== "teacher") return null;
 
   const { data: examRoomsData } = useGetExamRoomsByMentor({
     pageNumber: 1,
@@ -134,9 +139,7 @@ export default function TeacherDashboardPage() {
           </CardHeader>
           <CardContent>
             {!examRoomsData?.items.length ? (
-              <p className="text-sm text-muted-foreground">
-                No exam rooms yet
-              </p>
+              <p className="text-sm text-muted-foreground">No exam rooms yet</p>
             ) : (
               <div className="space-y-4">
                 {examRoomsData.items.slice(0, 5).map((room) => (

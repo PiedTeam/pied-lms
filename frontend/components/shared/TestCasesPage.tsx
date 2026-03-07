@@ -5,11 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { TestCasesList } from "./TestCasesList";
-
-interface TestCasesPageProps {
-  role: "admin" | "teacher" | "mentor";
-  examTitle?: string;
-}
+import type { TestCasesPageProps } from "@/interface/components/shared.types";
 
 export function TestCasesPage({ role, examTitle }: TestCasesPageProps) {
   const params = useParams();

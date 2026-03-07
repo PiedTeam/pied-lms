@@ -25,29 +25,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { useRunTestCase } from "@/service";
-import { TESTCASE_MESSAGES, COMPILER_MESSAGES } from "@/constants/messages";
 import { useCompileCode } from "@/service";
-import type {
-  TestCaseResponse,
-  RunTestCaseResponse,
-} from "@/interface/testcase/testcase.interface";
+import { COMPILER_MESSAGES } from "@/constants/messages";
 import type { CompileCodeResponse } from "@/interface/compiler/compiler.interface";
-
-interface RunTestCaseFormData {
-  code: string;
-  language: "c" | "python" | "java" | "cpp" | "javascript";
-}
-
-interface TestCaseRunnerProps {
-  testCase: TestCaseResponse;
-  onClose: () => void;
-}
+import type {
+  RunTestCaseFormData,
+  TestCaseRunnerProps,
+} from "@/interface/components/shared.types";
 
 export function TestCaseRunner({ testCase, onClose }: TestCaseRunnerProps) {
   const { toast } = useToast();
   const [result, setResult] = useState<CompileCodeResponse | null>(null);
   const [testInput, setTestInput] = useState("");
+  const [isComparingWithTestCase, setIsComparingWithTestCase] = useState(false);
 
   const { mutate: compileCode, isPending: isRunning } = useCompileCode();
 
@@ -153,6 +143,95 @@ int main() {
       return `${(ms / 1000).toFixed(2)}s`;
     }
     return `${ms}ms`;
+  };
+
+  const handleRunTestCase = (data: RunTestCaseFormData) => {
+    // Basic validation
+    if (!data.code.trim()) {
+      toast({
+        title: "Lỗi",
+        description: COMPILER_MESSAGES.VALIDATION.CODE_REQUIRED,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (data.code.trim().length < 10) {
+      toast({
+        title: "Lỗi",
+        description: COMPILER_MESSAGES.VALIDATION.CODE_MIN_LENGTH,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Only support C language for now
+    if (data.language !== "c") {
+      toast({
+        title: "Lỗi",
+        description: "Hiện tại chỉ hỗ trợ ngôn ngữ C",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setResult(null);
+
+    toast({
+      title: COMPILER_MESSAGES.INFO.COMPILING,
+      description: COMPILER_MESSAGES.INFO.EXECUTING,
+    });
+
+    // Use compile API with test case input
+    compileCode(
+      {
+        code: data.code,
+        input: testCase.inputPath || "",
+        timeLimit: 2000,
+        memoryLimit: 128,
+        optimizationLevel: 2,
+      },
+      {
+        onSuccess: (response) => {
+          if (response.data) {
+            setResult(response.data);
+
+            if (response.data.success) {
+              const actualOutput = (response.data.output || "").trim();
+              const expectedOutput = (testCase.outputPath || "").trim();
+              const passed = actualOutput === expectedOutput;
+
+              toast({
+                title: passed ? "Test Case Passed ✓" : "Test Case Failed ✗",
+                description: passed
+                  ? `Output matches expected result`
+                  : `Output does not match expected result`,
+                variant: passed ? "default" : "destructive",
+              });
+            } else {
+              toast({
+                title: "Compilation/Runtime Error",
+                description:
+                  response.message || "Check the error details below",
+              });
+            }
+          } else {
+            toast({
+              title: COMPILER_MESSAGES.ERROR.EXECUTION_FAILED,
+              description: response.message || "No response data",
+              variant: "destructive",
+            });
+          }
+        },
+        onError: (error: Error) => {
+          toast({
+            title: "Network Error",
+            description: error.message || "Could not connect to server",
+            variant: "destructive",
+          });
+        },
+      },
+    );
   };
 
   return (
@@ -265,19 +344,49 @@ int main() {
             <Button type="button" variant="outline" onClick={onClose}>
               Close
             </Button>
-            <Button type="submit" disabled={isRunning}>
-              {isRunning ? (
-                <>
-                  <Play className="mr-2 h-4 w-4 animate-spin" />
-                  Running...
-                </>
-              ) : (
-                <>
-                  <Play className="mr-2 h-4 w-4" />
-                  Run Test Case
-                </>
-              )}
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                type="submit"
+                variant="outline"
+                disabled={isRunning}
+                onClick={() => {
+                  setIsComparingWithTestCase(false);
+                  form.handleSubmit(onSubmit)();
+                }}
+              >
+                {isRunning ? (
+                  <>
+                    <Play className="mr-2 h-4 w-4 animate-spin" />
+                    Running...
+                  </>
+                ) : (
+                  <>
+                    <Play className="mr-2 h-4 w-4" />
+                    Run Code
+                  </>
+                )}
+              </Button>
+              <Button
+                type="submit"
+                disabled={isRunning}
+                onClick={() => {
+                  setIsComparingWithTestCase(true);
+                  form.handleSubmit(handleRunTestCase)();
+                }}
+              >
+                {isRunning ? (
+                  <>
+                    <Play className="mr-2 h-4 w-4 animate-spin" />
+                    Running...
+                  </>
+                ) : (
+                  <>
+                    <Play className="mr-2 h-4 w-4" />
+                    Run Test Case
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </form>
       </Form>
@@ -320,8 +429,43 @@ int main() {
 
             <Separator />
 
+            {/* Test Case Comparison (when running test case) */}
+            {isComparingWithTestCase && result.success && (
+              <>
+                <div>
+                  <h4 className="font-medium mb-2">Expected Output:</h4>
+                  <pre className="bg-blue-50 border border-blue-200 p-3 rounded-md text-sm font-mono whitespace-pre-wrap max-h-40 overflow-auto">
+                    {testCase.outputPath || "No expected output"}
+                  </pre>
+                </div>
+
+                <div>
+                  <h4 className="font-medium mb-2">Your Output:</h4>
+                  <pre className="bg-green-50 border border-green-200 p-3 rounded-md text-sm font-mono whitespace-pre-wrap max-h-40 overflow-auto">
+                    {result.output || "No output"}
+                  </pre>
+                </div>
+
+                <div>
+                  <h4 className="font-medium mb-2">Comparison:</h4>
+                  {(result.output || "").trim() ===
+                  (testCase.outputPath || "").trim() ? (
+                    <div className="bg-green-50 border border-green-200 p-3 rounded-md flex items-center gap-2 text-green-700">
+                      <CheckCircle className="h-5 w-5" />
+                      <span className="font-medium">Test Case Passed ✓</span>
+                    </div>
+                  ) : (
+                    <div className="bg-red-50 border border-red-200 p-3 rounded-md flex items-center gap-2 text-red-700">
+                      <XCircle className="h-5 w-5" />
+                      <span className="font-medium">Test Case Failed ✗</span>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+
             {/* Output */}
-            {result.output && (
+            {result.output && !isComparingWithTestCase && (
               <div>
                 <h4 className="font-medium mb-2 text-green-700">Output:</h4>
                 <pre className="bg-green-50 border border-green-200 p-3 rounded-md text-sm font-mono whitespace-pre-wrap max-h-40 overflow-auto">

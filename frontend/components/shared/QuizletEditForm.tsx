@@ -14,11 +14,7 @@ import type {
   UpdateQuestionDto,
   QuizletLevel,
 } from "@/interface/quizlet/quizlet.interface";
-
-interface QuizletEditFormProps {
-  questions: UpdateQuestionDto[];
-  onQuestionsChange: (questions: UpdateQuestionDto[]) => void;
-}
+import type { QuizletEditFormProps } from "@/interface/components/shared.types";
 
 export function QuizletEditForm({
   questions,
@@ -44,7 +40,7 @@ export function QuizletEditForm({
   const handleQuestionChange = (
     originalIndex: number,
     field: keyof UpdateQuestionDto,
-    value: any,
+    value: string | number | boolean | string[],
   ) => {
     const newQuestions = [...questions];
     newQuestions[originalIndex] = {

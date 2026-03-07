@@ -9,24 +9,7 @@ import { ExamTimer } from "./ExamTimer";
 import { Play, Send, Loader2, Zap } from "lucide-react";
 import type { Exam } from "@/interface/student/exam.interface";
 import type { Room } from "@/interface/student/room.interface";
-
-interface ExamQuestionViewProps {
-  question: Exam;
-  room: Room;
-  serverTime?: Date | string;
-  onTest?: (code: string) => void;
-  onExecute?: (code: string) => void;
-  onSubmit?: (code: string) => void;
-  isTesting?: boolean;
-  isExecuting?: boolean;
-  isSubmitting?: boolean;
-  testOutput?: string;
-  testError?: string;
-  executeOutput?: string;
-  executeError?: string;
-}
-
-const STORAGE_KEY_PREFIX = "exam_code_";
+import type { ExamQuestionViewProps } from "@/interface/components/student.types";
 
 function getDefaultCode() {
   return `#include <stdio.h>
@@ -53,6 +36,7 @@ export function ExamQuestionView({
   executeOutput = "",
   executeError = "",
 }: ExamQuestionViewProps) {
+  const STORAGE_KEY_PREFIX = "exam_code_";
   const storageKey = `${STORAGE_KEY_PREFIX}${question.questionId}`;
 
   // Initialize code from localStorage or empty

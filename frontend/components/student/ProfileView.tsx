@@ -10,14 +10,9 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { StudentProfileResponse } from "@/interface/student/profile.interface";
+import type { ProfileViewProps } from "@/interface/components/student.types";
 import { Loader2, AlertCircle, Edit } from "lucide-react";
 import { ChangePasswordDialog } from "@/components/common/ChangePasswordDialog";
-
-interface ProfileViewProps {
-  profile: StudentProfileResponse | undefined;
-  isLoading: boolean;
-  error: Error | null;
-}
 
 export function ProfileView({ profile, isLoading, error }: ProfileViewProps) {
   if (isLoading) {

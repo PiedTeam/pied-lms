@@ -23,7 +23,7 @@ export function useExamTimer({ roomId, onTimeUp }: UseExamTimerProps) {
     return 60 * 60; // Fallback to 60 minutes if no room data
   });
 
-  const formatTime = useCallback((seconds: number) => {
+  const formatTime = useCallback((seconds: number): string => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
@@ -35,7 +35,7 @@ export function useExamTimer({ roomId, onTimeUp }: UseExamTimerProps) {
     if (timeRemaining <= 0) return;
 
     const timer = setInterval(() => {
-      setTimeRemaining((prev) => {
+      setTimeRemaining((prev: number) => {
         if (prev <= 1) {
           clearInterval(timer);
           onTimeUp();

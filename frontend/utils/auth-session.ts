@@ -1,11 +1,11 @@
-import { queryClient } from "@/lib/query-client";
+import { queryClient } from "@/utils/query-client";
 
 type AuthCleanupHandler = () => void;
 
 const authCleanupHandlers = new Set<AuthCleanupHandler>();
 let isForceLoggingOut = false;
 
-export function registerAuthCleanup(handler: AuthCleanupHandler) {
+export function registerAuthCleanup(handler: AuthCleanupHandler): () => void {
   authCleanupHandlers.add(handler);
   return () => authCleanupHandlers.delete(handler);
 }
@@ -16,7 +16,7 @@ export async function forceLogout({
 }: {
   redirectTo?: string;
   reason?: string;
-} = {}) {
+} = {}): Promise<void> {
   if (typeof window === "undefined") {
     return;
   }
@@ -49,7 +49,7 @@ export async function forceLogout({
     // Ignore broadcast errors, logout must continue
   }
 
-  authCleanupHandlers.forEach((handler) => {
+  authCleanupHandlers.forEach((handler: AuthCleanupHandler) => {
     try {
       handler();
     } catch {
