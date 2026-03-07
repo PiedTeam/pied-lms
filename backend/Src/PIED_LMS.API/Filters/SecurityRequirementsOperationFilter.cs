@@ -14,7 +14,7 @@ public sealed class SecurityRequirementsOperationFilter : IOperationFilter
         var path = context.ApiDescription.RelativePath;
         var normalizedPath = path?.Split('?', '#')[0].TrimStart('/');
 
-        // Remove security requirement for public endpoints
+        // Remove security requirement for public endpoint
         if (normalizedPath is not null && _publicEndpoints.Contains(normalizedPath, StringComparer.OrdinalIgnoreCase))
             operation.Security = null;
     }

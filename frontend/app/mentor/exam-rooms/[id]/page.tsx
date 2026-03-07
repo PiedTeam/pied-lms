@@ -23,11 +23,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  ResizablePanelGroup,
-  ResizablePanel,
-  ResizableHandle,
-} from "@/components/ui/resizable";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -733,16 +729,9 @@ export default function ExamRoomDetailPage() {
               )}
             </CardContent>
           </Card>
-        </ResizablePanel>
+        </TabsContent>
 
-        <ResizableHandle />
-
-        <ResizablePanel
-          defaultSize={sizes.students}
-          minSize={20}
-          maxSize={80}
-          className="overflow-auto"
-        >
+        <TabsContent value="students" className="mt-6">
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -850,8 +839,8 @@ export default function ExamRoomDetailPage() {
               )}
             </CardContent>
           </Card>
-        </ResizablePanel>
-      </ResizablePanelGroup>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

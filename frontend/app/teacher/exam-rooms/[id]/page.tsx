@@ -23,11 +23,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  ResizablePanelGroup,
-  ResizablePanel,
-  ResizableHandle,
-} from "@/components/ui/resizable";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -48,7 +44,6 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { usePanelSizes } from "@/hooks/usePanelSizes";
 import {
   useGetExamRoomById,
   useGetExamsByMentor,
@@ -76,13 +71,6 @@ export default function ExamRoomDetailPage() {
   const examListPageSize = 5; // 5 exams per page in the main table
   const [studentListPage, setStudentListPage] = useState(1);
   const studentListPageSize = 5; // 5 students per page
-
-  // Initialize panel sizes with usePanelSizes hook
-  const { sizes, setSizes } = usePanelSizes(
-    roomId,
-    { exams: 50, students: 50 },
-    2,
-  );
 
   const { data: room, isLoading } = useGetExamRoomById(roomId);
   // Fetch all exams (backend doesn't support pagination yet)
@@ -735,16 +723,9 @@ export default function ExamRoomDetailPage() {
               )}
             </CardContent>
           </Card>
-        </ResizablePanel>
+        </TabsContent>
 
-        <ResizableHandle />
-
-        <ResizablePanel
-          defaultSize={sizes.students}
-          minSize={20}
-          maxSize={80}
-          className="overflow-auto"
-        >
+        <TabsContent value="students" className="mt-6">
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -852,8 +833,8 @@ export default function ExamRoomDetailPage() {
               )}
             </CardContent>
           </Card>
-        </ResizablePanel>
-      </ResizablePanelGroup>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
