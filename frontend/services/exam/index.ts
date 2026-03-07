@@ -6,4 +6,6 @@ export {
   useGetExamById,
   useUpdateExam,
   useDeleteExam,
+  useGetStudentTestCases,
+  useVerifyRoomCode,
 } from "./exam.service";

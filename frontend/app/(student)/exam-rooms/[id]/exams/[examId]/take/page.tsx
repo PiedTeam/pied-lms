@@ -1,16 +1,10 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useMemo, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Play, Send, Loader2, Clock } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -20,14 +14,13 @@ import {
 } from "@/components/ui/resizable";
 import { SubmissionHistoryTab } from "@/components/student/SubmissionHistoryTab";
 import { useToast } from "@/hooks/use-toast";
-import Editor from "@monaco-editor/react";
 import { useJudgeCodeFromFile, useCompileCode } from "@/service";
 import { useGetExamById, useSubmitStudentCode } from "@/services";
-import { useStartExam } from "@/services/exam-participation/exam-participation.service";
+import { useGetStudentTestCases } from "@/services";
 import { COMPILER_MESSAGES } from "@/constants/messages";
 import type { JudgeCodeResponse } from "@/interface/compiler/compiler.interface";
 import { useAuthStore } from "@/store/auth.store";
-import { saveExamScore, type ExamScore } from "@/utils/exam-score.utils";
+import { saveExamScore } from "@/utils/exam-score.utils";
 import { useExamScore } from "@/hooks/use-exam-scores";
 import {
   createMockSubmissionFromJudgeResult,
@@ -88,6 +81,7 @@ int main() {
     return 0;
 }`);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRunningTestCases, setIsRunningTestCases] = useState(false);
   const [testResults, setTestResults] = useState<JudgeTestCaseResult[]>([]);
   const [activeTab, setActiveTab] = useState("question");
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
@@ -95,82 +89,26 @@ int main() {
     useState<ReturnType<typeof useExamScore>>(null);
   const [submissionRefreshSignal, setSubmissionRefreshSignal] = useState(0);
 
-  // Get exam score if already submitted
-  const savedScore = useExamScore(roomId, examId);
+  // Check if test cases are available
+  const testCases = useMemo(() => testCasesData || [], [testCasesData]);
+  const hasTestCases = testCases.length > 0;
 
-  // Use currentScore if available, otherwise use savedScore
-  const examScore = currentScore || savedScore;
+  // Auto-submit handler
+  const handleAutoSubmit = useCallback(async () => {
+    toast({
+      title: "Time is up",
+      description: "Your exam has been automatically submitted",
+    });
+    // Will implement submit logic below
+  }, [toast]);
 
-  // Update currentScore when savedScore changes
-  useEffect(() => {
-    if (savedScore) {
-      setCurrentScore(savedScore);
-    }
-  }, [savedScore]);
+  // Timer hook
+  const { timeRemaining, formatTime } = useExamTimer({
+    roomId,
+    onTimeUp: handleAutoSubmit,
+  });
 
-  // Load saved code from localStorage and call start exam API on mount
-  useEffect(() => {
-    // Set exam data from API response
-    if (examData) {
-      setExam(examData);
-    }
-
-    // Load saved code from localStorage
-    const savedCode = localStorage.getItem(`exam_code_${roomId}_${examId}`);
-    if (savedCode) {
-      setCode(savedCode);
-    }
-
-    // Get room data (saved by exam room detail page before navigation)
-    const roomDataStr = localStorage.getItem(`roomData_${roomId}`);
-    let roomCode: string | null = null;
-    if (roomDataStr) {
-      try {
-        const roomData = JSON.parse(roomDataStr);
-        const endTime = new Date(roomData.endTime).getTime();
-        const now = Date.now();
-        const remainingSeconds = Math.max(
-          0,
-          Math.floor((endTime - now) / 1000),
-        );
-        setTimeRemaining(remainingSeconds);
-        roomCode = roomData.roomCode ?? null;
-      } catch (error) {
-        console.error("Error parsing room data:", error);
-        setTimeRemaining(60 * 60);
-      }
-    } else {
-      setTimeRemaining(60 * 60);
-    }
-
-    // Call POST /api/participations/start to create/resume exam participation
-    if (roomCode) {
-      startExam(
-        { roomCode, examId },
-        {
-          onSuccess: (participation) => {
-            setParticipationId(participation.id);
-          },
-          onError: (error: Error) => {
-            setStartExamError(error.message);
-          },
-        },
-      );
-    } else {
-      setStartExamError("Room code not found. Please go back and try again.");
-    }
-
-    setIsLoading(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [examData, examId, roomId]);
-
-  const formatTime = (seconds: number) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-  };
-
+  // Handlers
   const handleSaveDraft = useCallback(() => {
     if (!code.trim()) {
       toast({
@@ -181,9 +119,7 @@ int main() {
       return;
     }
 
-    // Save code to localStorage
-    localStorage.setItem(`exam_code_${roomId}_${examId}`, code);
-
+    saveDraft();
     toast({
       title: "Draft saved",
       description: "Your code has been saved locally",
@@ -275,12 +211,9 @@ int main() {
       return;
     }
 
-    setIsSubmitting(true);
-
-    toast({
-      title: "Submitting...",
-      description: COMPILER_MESSAGES.INFO.JUDGING,
-    });
+    // Get participationId from localStorage
+    const participationKey = `exam_participation_${roomId}_${examId}`;
+    const participationId = localStorage.getItem(participationKey);
 
     let switchedToFallback = false;
 
@@ -334,7 +267,8 @@ int main() {
                 } else {
                   toast({
                     title: "Submission completed with errors",
-                    description: legacyResult.message || "Check your code for errors",
+                    description:
+                      legacyResult.message || "Check your code for errors",
                   });
                 }
               },
@@ -400,7 +334,7 @@ int main() {
     editorRef.current = editor;
   };
 
-  const handleTestCode = async () => {
+  const handleTestCode = useCallback(() => {
     if (!code.trim()) {
       toast({
         title: COMPILER_MESSAGES.ERROR.NO_CODE,
@@ -419,96 +353,209 @@ int main() {
       return;
     }
 
-    setActiveTab("results");
-    setTestResults([]); // Clear previous results
+    setIsTestInputDialogOpen(true);
+  }, [code, toast]);
 
-    toast({
-      title: COMPILER_MESSAGES.INFO.COMPILING,
-      description: COMPILER_MESSAGES.INFO.EXECUTING,
-    });
+  const handleTestCodeWithInput = useCallback(
+    (input: string) => {
+      setActiveTab("results");
+      setTestResults([]);
 
-    // Use compile API to just compile and run the code
-    compileCode(
-      {
-        code: code,
-        input: "", // Empty input for simple test
-        timeLimit: 2000, // 2 seconds
-        memoryLimit: 128, // 128 MB
-        optimizationLevel: 2, // Use number instead of string
-      },
-      {
-        onSuccess: (response) => {
-          // Always display response if we have data (status 200)
-          // Backend returns status 200 even for compilation/runtime errors
-          if (response.data) {
-            if (response.data.success) {
-              // Compilation and execution successful
-              toast({
-                title: COMPILER_MESSAGES.SUCCESS.EXECUTED,
-                description: `Compilation: ${response.data.compilationTime}ms, Execution: ${response.data.executionTime}ms`,
-              });
+      toast({
+        title: COMPILER_MESSAGES.INFO.COMPILING,
+        description: COMPILER_MESSAGES.INFO.EXECUTING,
+      });
 
-              // Create a mock test result to display the output
-              const mockResult: JudgeTestCaseResult = {
-                testCase: 1,
-                passed: true,
-                input: "",
-                expectedOutput: "Code compiled and ran successfully",
-                actualOutput: response.data.output || "No output",
-                executionTime: response.data.executionTime,
-                error: null,
-                errorCode: null,
-              };
+      compileCode(
+        {
+          code: code,
+          input: input,
+          timeLimit: 2000,
+          memoryLimit: 128,
+          optimizationLevel: 2,
+        },
+        {
+          onSuccess: (response) => {
+            if (response.data) {
+              if (response.data.success) {
+                toast({
+                  title: COMPILER_MESSAGES.SUCCESS.EXECUTED,
+                  description: `Compilation: ${response.data.compilationTime}ms, Execution: ${response.data.executionTime}ms`,
+                });
 
-              setTestResults([mockResult]);
+                const mockResult: JudgeTestCaseResult = {
+                  testCase: 1,
+                  passed: true,
+                  input: input,
+                  expectedOutput: "Code compiled and ran successfully",
+                  actualOutput: response.data.output || "No output",
+                  executionTime: response.data.executionTime,
+                  error: null,
+                  errorCode: null,
+                };
+
+                setTestResults([mockResult]);
+              } else {
+                toast({
+                  title: "Compilation/Runtime Error",
+                  description:
+                    response.message || "Check the error details below",
+                });
+
+                const errorResult: JudgeTestCaseResult = {
+                  testCase: 1,
+                  passed: false,
+                  input: input,
+                  expectedOutput: "",
+                  actualOutput: null,
+                  executionTime: response.data.executionTime,
+                  error:
+                    response.data.error || response.message || "Unknown error",
+                  errorCode: response.data.errorCode || null,
+                };
+
+                setTestResults([errorResult]);
+              }
             } else {
-              // Compilation or runtime error (still status 200)
-              // Display error in UI, not as toast error
               toast({
-                title: "Compilation/Runtime Error",
-                description:
-                  response.message || "Check the error details below",
+                title: COMPILER_MESSAGES.ERROR.EXECUTION_FAILED,
+                description: response.message || "No response data",
+                variant: "destructive",
               });
-
-              // Create error result to display in UI
-              const errorResult: JudgeTestCaseResult = {
-                testCase: 1,
-                passed: false,
-                input: "",
-                expectedOutput: "",
-                actualOutput: null,
-                executionTime: response.data.executionTime,
-                error:
-                  response.data.error || response.message || "Unknown error",
-                errorCode: response.data.errorCode || null,
-              };
-
-              setTestResults([errorResult]);
+              setTestResults([]);
             }
-          } else {
-            // No data in response (shouldn't happen with status 200)
+          },
+          onError: (error: Error) => {
             toast({
-              title: COMPILER_MESSAGES.ERROR.EXECUTION_FAILED,
-              description: response.message || "No response data",
+              title: "Network Error",
+              description: error.message || "Could not connect to server",
               variant: "destructive",
             });
             setTestResults([]);
-          }
+          },
         },
-        onError: (error: Error) => {
-          // Only for network errors or non-200 status codes
-          toast({
-            title: "Network Error",
-            description: error.message || "Could not connect to server",
-            variant: "destructive",
+      );
+    },
+    [code, toast, compileCode],
+  );
+
+  const handleRunTest = useCallback(() => {
+    handleTestCodeWithInput(testInput);
+    setIsTestInputDialogOpen(false);
+  }, [testInput, handleTestCodeWithInput]);
+
+  const handleRunTestCases = useCallback(async () => {
+    if (!code.trim()) {
+      toast({
+        title: "No code to test",
+        description: "Please write some code before running test cases",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (testCases.length === 0) {
+      toast({
+        title: "No test cases",
+        description: "There are no test cases available for this exam",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsRunningTestCases(true);
+    setActiveTab("results");
+    setTestResults([]);
+
+    toast({
+      title: "Running test cases",
+      description: `Testing your code with ${testCases.length} test case(s)...`,
+    });
+
+    const results: JudgeTestCaseResult[] = [];
+
+    // Run each test case sequentially
+    for (let i = 0; i < testCases.length; i++) {
+      const testCase = testCases[i];
+
+      try {
+        const response = await new Promise<any>((resolve, reject) => {
+          compileCode(
+            {
+              code: code,
+              input: testCase.inputPath || "",
+              timeLimit: 2000,
+              memoryLimit: 128,
+              optimizationLevel: 2,
+            },
+            {
+              onSuccess: resolve,
+              onError: reject,
+            },
+          );
+        });
+
+        if (response.data && response.data.success) {
+          const actualOutput = (response.data.output || "").trim();
+          const expectedOutput = (testCase.outputPath || "").trim();
+          const passed = actualOutput === expectedOutput;
+
+          results.push({
+            testCase: i + 1,
+            passed: passed,
+            input: testCase.inputPath || "",
+            expectedOutput: expectedOutput,
+            actualOutput: actualOutput,
+            executionTime: response.data.executionTime,
+            error: null,
+            errorCode: null,
           });
-          setTestResults([]);
-        },
-      },
-    );
+        } else {
+          results.push({
+            testCase: i + 1,
+            passed: false,
+            input: testCase.inputPath || "",
+            expectedOutput: testCase.outputPath || "",
+            actualOutput: null,
+            executionTime: response.data?.executionTime || 0,
+            error:
+              response.data?.error || response.message || "Execution failed",
+            errorCode: response.data?.errorCode || null,
+          });
+        }
+      } catch (error: any) {
+        results.push({
+          testCase: i + 1,
+          passed: false,
+          input: testCase.inputPath || "",
+          expectedOutput: testCase.outputPath || "",
+          actualOutput: null,
+          executionTime: 0,
+          error: error.message || "Network error",
+          errorCode: null,
+        });
+      }
+    }
+
+    setTestResults(results);
+    setIsRunningTestCases(false);
+
+    const passedCount = results.filter((r) => r.passed).length;
+    const totalCount = results.length;
+
+    toast({
+      title: "Test cases completed",
+      description: `${passedCount}/${totalCount} test case(s) passed`,
+      variant: passedCount === totalCount ? "default" : "destructive",
+    });
+  }, [code, testCases, toast, compileCode]);
+
+  const handleEditorDidMount = (editor: unknown) => {
+    editorRef.current = editor;
   };
 
-  if (isLoading || isLoadingExam) {
+  // Loading state
+  if (isLoadingExam) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -519,37 +566,8 @@ int main() {
     );
   }
 
-  if (startExamError) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <p className="text-destructive font-semibold">Cannot start exam</p>
-          <p className="text-muted-foreground">{startExamError}</p>
-          <Button onClick={() => router.push(`/exam-rooms/${roomId}`)}>
-            Go back
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  if (examError) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-muted-foreground">Exam not found</p>
-          <Button
-            className="mt-4"
-            onClick={() => router.push(`/exam-rooms/${roomId}`)}
-          >
-            Go back
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!exam) {
+  // Error state
+  if (examError || !exam) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -567,82 +585,26 @@ int main() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="border-b">
-        <div className="container mx-auto p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon" onClick={() => router.back()}>
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-              <div>
-                <h1 className="text-xl font-bold">{exam.title}</h1>
-                <p className="text-sm text-muted-foreground">
-                  {exam.description}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 text-sm">
-                <Clock className="h-4 w-4" />
-                <span
-                  className={
-                    timeRemaining < 300 ? "text-red-600 font-bold" : ""
-                  }
-                >
-                  {formatTime(timeRemaining)}
-                </span>
-              </div>
-              <Button
-                variant="outline"
-                onClick={handleSaveDraft}
-                disabled={isCompiling || isSubmitting}
-              >
-                Save Draft
-              </Button>
-              <Button
-                variant="outline"
-                onClick={handleTestCode}
-                disabled={isCompiling || isSubmitting}
-              >
-                {isCompiling ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Testing...
-                  </>
-                ) : (
-                  <>
-                    <Play className="mr-2 h-4 w-4" />
-                    Test Code
-                  </>
-                )}
-              </Button>
-              <Button
-                onClick={handleSubmit}
-                disabled={isCompiling || isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Submitting...
-                  </>
-                ) : (
-                  <>
-                    <Send className="mr-2 h-4 w-4" />
-                    Submit
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <ExamHeader
+        exam={exam}
+        timeRemaining={timeRemaining}
+        formatTime={formatTime}
+        isCompiling={isCompiling}
+        isSubmitting={isSubmitting}
+        isRunningTestCases={isRunningTestCases}
+        hasTestCases={hasTestCases}
+        onBack={() => router.back()}
+        onSaveDraft={handleSaveDraft}
+        onTestCode={handleTestCode}
+        onRunTestCases={handleRunTestCases}
+        onSubmit={handleSubmit}
+      />
 
       <div className="container mx-auto p-4 h-[calc(100vh-140px)]">
         <ResizablePanelGroup
           direction="horizontal"
           className="rounded-lg border"
         >
-          {/* Left Panel - Exam Info */}
           <ResizablePanel defaultSize={40} minSize={25} maxSize={60}>
             <Card className="h-full overflow-hidden flex flex-col border-0 rounded-none">
               <CardHeader className="border-b shrink-0">
@@ -757,7 +719,6 @@ int main() {
 
           <ResizableHandle withHandle />
 
-          {/* Right Panel - Code Editor & Results */}
           <ResizablePanel defaultSize={60} minSize={40}>
             <Card className="h-full overflow-hidden flex flex-col border-0 rounded-none">
               <Tabs
@@ -783,35 +744,11 @@ int main() {
                   value="question"
                   className="flex-1 m-0 p-0 data-[state=active]:flex data-[state=active]:flex-col overflow-hidden"
                 >
-                  <div className="flex-1 w-full h-full min-h-[600px]">
-                    <Editor
-                      height="100%"
-                      width="100%"
-                      defaultLanguage="c"
-                      value={code}
-                      onChange={(value) => setCode(value || "")}
-                      onMount={handleEditorDidMount}
-                      theme="vs-dark"
-                      loading={
-                        <div className="flex items-center justify-center h-full bg-[#1e1e1e]">
-                          <div className="text-center">
-                            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-blue-500" />
-                            <p className="text-gray-300 text-sm">
-                              Loading &lt;Stdlib&gt;
-                            </p>
-                          </div>
-                        </div>
-                      }
-                      options={{
-                        minimap: { enabled: false },
-                        fontSize: 14,
-                        lineNumbers: "on",
-                        scrollBeyondLastLine: false,
-                        automaticLayout: true,
-                        tabSize: 4,
-                      }}
-                    />
-                  </div>
+                  <CodeEditor
+                    code={code}
+                    onChange={setCode}
+                    onMount={handleEditorDidMount}
+                  />
                 </TabsContent>
 
                 <TabsContent
@@ -918,10 +855,11 @@ int main() {
                                   Your Output:
                                 </p>
                                 <pre
-                                  className={`p-2 rounded text-sm mt-1 ${result.passed
-                                    ? "bg-green-50 text-green-900"
-                                    : "bg-red-50 text-red-900"
-                                    }`}
+                                  className={`p-2 rounded text-sm mt-1 ${
+                                    result.passed
+                                      ? "bg-green-50 text-green-900"
+                                      : "bg-red-50 text-red-900"
+                                  }`}
                                 >
                                   {result.actualOutput}
                                 </pre>
@@ -934,7 +872,10 @@ int main() {
                   )}
                 </TabsContent>
 
-                <TabsContent value="submissions" className="flex-1 m-0 overflow-hidden">
+                <TabsContent
+                  value="submissions"
+                  className="flex-1 m-0 overflow-hidden"
+                >
                   <SubmissionHistoryTab
                     key={`${examId}-${submissionRefreshSignal}`}
                     examId={examId}
@@ -947,6 +888,14 @@ int main() {
           </ResizablePanel>
         </ResizablePanelGroup>
       </div>
+
+      <TestInputDialog
+        open={isTestInputDialogOpen}
+        testInput={testInput}
+        onOpenChange={setIsTestInputDialogOpen}
+        onTestInputChange={setTestInput}
+        onRunTest={handleRunTest}
+      />
     </div>
   );
 }

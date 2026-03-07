@@ -7,3 +7,4 @@ export * from "./user/user.interface";
 export * from "./question/question.interface";
 export * from "./testcase/testcase.interface";
 export * from "./leaderboard/leaderboard.interface";
+export * from "./exam/exam.types";

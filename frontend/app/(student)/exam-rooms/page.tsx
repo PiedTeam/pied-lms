@@ -30,7 +30,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useGetAvailableExamRooms } from "@/service";
+import { useGetAvailableExamRooms, useVerifyRoomCode } from "@/service";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import type { ExamRoomResponse } from "@/interface/exam-room/exam-room.interface";
@@ -52,6 +52,8 @@ export default function StudentExamRoomsPage() {
     pageNumber: 1,
     pageSize: 100, // Get all rooms, paginate on FE
   });
+  const { mutate: verifyRoomCode, isPending: isVerifying } =
+    useVerifyRoomCode();
 
   const formatDateTime = (dateString: string) => {
     return new Date(dateString).toLocaleString("en-US", {
@@ -156,27 +158,35 @@ export default function StudentExamRoomsPage() {
       return;
     }
 
-    if (roomCode.toUpperCase() !== selectedRoom?.roomCode) {
-      toast({
-        title: "Incorrect room code",
-        description: "Please check the room code again",
-        variant: "destructive",
-      });
-      return;
-    }
+    if (!selectedRoom) return;
 
-    // Save room code to localStorage for later use when starting exam
-    localStorage.setItem(`roomCode_${selectedRoom.id}`, roomCode.toUpperCase());
+    // Call API to verify room code
+    verifyRoomCode(
+      {
+        examRoomId: selectedRoom.id,
+        roomCode: roomCode.toUpperCase(),
+      },
+      {
+        onSuccess: (response) => {
+          toast({
+            title: "Success",
+            description: "Successfully joined the exam room",
+          });
 
-    toast({
-      title: "Success",
-      description: "Successfully joined the exam room",
-    });
-
-    // Navigate to exam room
-    router.push(`/exam-rooms/${selectedRoom.id}`);
-    setIsJoinDialogOpen(false);
-    setRoomCode("");
+          // Navigate to exam room
+          router.push(`/exam-rooms/${selectedRoom.id}`);
+          setIsJoinDialogOpen(false);
+          setRoomCode("");
+        },
+        onError: (error: Error) => {
+          toast({
+            title: "Incorrect room code",
+            description: error.message || "Please check the room code again",
+            variant: "destructive",
+          });
+        },
+      },
+    );
   };
 
   return (
@@ -384,10 +394,13 @@ export default function StudentExamRoomsPage() {
                 setIsJoinDialogOpen(false);
                 setRoomCode("");
               }}
+              disabled={isVerifying}
             >
               Cancel
             </Button>
-            <Button onClick={handleSubmitJoin}>Join Room</Button>
+            <Button onClick={handleSubmitJoin} disabled={isVerifying}>
+              {isVerifying ? "Verifying..." : "Join Room"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -46,6 +47,7 @@ interface TestCaseRunnerProps {
 export function TestCaseRunner({ testCase, onClose }: TestCaseRunnerProps) {
   const { toast } = useToast();
   const [result, setResult] = useState<CompileCodeResponse | null>(null);
+  const [testInput, setTestInput] = useState("");
 
   const { mutate: compileCode, isPending: isRunning } = useCompileCode();
 
@@ -100,21 +102,17 @@ int main() {
       description: COMPILER_MESSAGES.INFO.EXECUTING,
     });
 
-    // Read input from testCase.inputPath (this should be the actual input content)
-    // For now, we'll use empty string as input since we don't have the actual file content
-    const input = ""; // TODO: Read from file or pass as prop
-
+    // Use compile API with user input
     compileCode(
       {
         code: data.code,
-        input: input,
-        timeLimit: 2000, // 2 seconds
-        memoryLimit: 128, // 128 MB
-        optimizationLevel: 2, // Use number instead of string
+        input: testInput,
+        timeLimit: 2000,
+        memoryLimit: 128,
+        optimizationLevel: 2,
       },
       {
         onSuccess: (response) => {
-          // Always display response if we have data (status 200)
           if (response.data) {
             setResult(response.data);
 
@@ -124,7 +122,6 @@ int main() {
                 description: `Execution time: ${response.data.executionTime}ms`,
               });
             } else {
-              // Compilation or runtime error (still status 200)
               toast({
                 title: "Compilation/Runtime Error",
                 description:
@@ -140,7 +137,6 @@ int main() {
           }
         },
         onError: (error: Error) => {
-          // Only for network errors or non-200 status codes
           toast({
             title: "Network Error",
             description: error.message || "Could not connect to server",
@@ -250,6 +246,20 @@ int main() {
               </FormItem>
             )}
           />
+
+          <div className="space-y-2">
+            <Label htmlFor="testInput">Test Input</Label>
+            <Textarea
+              id="testInput"
+              placeholder="Enter test input here..."
+              value={testInput}
+              onChange={(e) => setTestInput(e.target.value)}
+              className="min-h-[100px] font-mono text-sm"
+            />
+            <p className="text-sm text-muted-foreground">
+              Enter the input data for testing your code
+            </p>
+          </div>
 
           <div className="flex justify-between">
             <Button type="button" variant="outline" onClick={onClose}>

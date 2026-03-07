@@ -47,7 +47,9 @@ export default function ExamDetailPage() {
         </Button>
         <div className="flex-1">
           <h1 className="text-3xl font-bold tracking-tight">{exam.title}</h1>
-          <p className="text-muted-foreground">{exam.description}</p>
+          <p className="text-muted-foreground whitespace-pre-line">
+            {exam.description}
+          </p>
         </div>
         <Button onClick={() => router.push(`/mentor/exams/${examId}/edit`)}>
           Edit
@@ -106,8 +108,12 @@ export default function ExamDetailPage() {
             <p className="text-base">{exam.title}</p>
           </div>
           <div>
-            <p className="text-sm font-medium text-muted-foreground">Description</p>
-            <p className="text-base">{exam.description || "No description provided"}</p>
+            <p className="text-sm font-medium text-muted-foreground">
+              Description
+            </p>
+            <p className="text-base whitespace-pre-line">
+              {exam.description || "No description provided"}
+            </p>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             <div>
