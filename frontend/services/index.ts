@@ -89,3 +89,10 @@ export {
   useJudgeCode,
   useJudgeCodeFromFile,
 } from "./compiler/compiler.mutation";
+
+// Student Submissions Services
+export {
+  useGetStudentSubmissions,
+  useGetSubmissionDetail,
+  useSubmitStudentCode,
+} from "./submission/submission.service";

@@ -18,25 +18,21 @@ import {
   ResizablePanel,
   ResizableHandle,
 } from "@/components/ui/resizable";
+import { SubmissionHistoryTab } from "@/components/student/SubmissionHistoryTab";
 import { useToast } from "@/hooks/use-toast";
 import Editor from "@monaco-editor/react";
 import { useJudgeCodeFromFile, useCompileCode } from "@/service";
-import { useGetExamById } from "@/services";
+import { useGetExamById, useSubmitStudentCode } from "@/services";
 import { useStartExam } from "@/services/exam-participation/exam-participation.service";
 import { COMPILER_MESSAGES } from "@/constants/messages";
-import type { TestCaseResult } from "@/interface/compiler/compiler.interface";
+import type { JudgeCodeResponse } from "@/interface/compiler/compiler.interface";
 import { useAuthStore } from "@/store/auth.store";
 import { saveExamScore, type ExamScore } from "@/utils/exam-score.utils";
 import { useExamScore } from "@/hooks/use-exam-scores";
-
-interface TestCase {
-  examId: string;
-  testCaseId: string;
-  index: number;
-  inputPath: string;
-  outputPath: string;
-  isHidden: boolean;
-}
+import {
+  createMockSubmissionFromJudgeResult,
+  saveMockSubmission,
+} from "@/utils/submission-history.utils";
 
 interface Exam {
   id: string;
@@ -74,13 +70,12 @@ export default function TakeExamPage() {
   } = useGetExamById(examId);
 
   // Compiler mutation
-  const { mutate: judgeCodeFromFile, isPending: isJudging } =
-    useJudgeCodeFromFile();
+  const { mutate: judgeCodeFromFile } = useJudgeCodeFromFile();
   const { mutate: compileCode, isPending: isCompiling } = useCompileCode();
+  const { mutate: submitStudentCode } = useSubmitStudentCode();
   const { mutate: startExam } = useStartExam();
 
   const [exam, setExam] = useState<Exam | null>(null);
-  const [testCases, setTestCases] = useState<TestCase[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [participationId, setParticipationId] = useState<string | null>(null);
   const [startExamError, setStartExamError] = useState<string | null>(null);
@@ -98,6 +93,7 @@ int main() {
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
   const [currentScore, setCurrentScore] =
     useState<ReturnType<typeof useExamScore>>(null);
+  const [submissionRefreshSignal, setSubmissionRefreshSignal] = useState(0);
 
   // Get exam score if already submitted
   const savedScore = useExamScore(roomId, examId);
@@ -194,6 +190,72 @@ int main() {
     });
   }, [code, roomId, examId, toast]);
 
+  const handleSubmissionSuccess = useCallback(
+    (
+      judgeResult: JudgeCodeResponse,
+      options: { fromFallback?: boolean } = {},
+    ) => {
+      const passedCount = judgeResult.passed;
+      const totalCount = judgeResult.total;
+      const allTestsPassed = passedCount === totalCount && totalCount > 0;
+
+      localStorage.removeItem(`exam_code_${roomId}_${examId}`);
+
+      if (exam) {
+        const user = useAuthStore.getState().user;
+        if (user) {
+          const score = allTestsPassed ? exam.totalMarks : 0;
+          const newScore: ExamScore = {
+            studentId: user.uuid,
+            examRoomId: roomId,
+            examId: examId,
+            score: score,
+            totalMarks: exam.totalMarks,
+            passedTestCases: passedCount,
+            totalTestCases: totalCount,
+            submittedAt: new Date().toISOString(),
+          };
+
+          saveExamScore(newScore);
+          setCurrentScore(newScore);
+
+          if (allTestsPassed) {
+            toast({
+              title: "Submitted successfully!",
+              description: `Perfect! You scored ${score}/${exam.totalMarks} points (${passedCount}/${totalCount} test cases passed)`,
+            });
+          } else {
+            toast({
+              title: "Submitted",
+              description: `Score: ${score}/${exam.totalMarks} (${passedCount}/${totalCount} test cases passed). Keep practicing!`,
+            });
+          }
+        }
+      }
+
+      // Keep local mock snapshot so UI can still work when history APIs are unavailable.
+      const mockSubmission = createMockSubmissionFromJudgeResult(
+        examId,
+        code,
+        "c",
+        judgeResult,
+      );
+      saveMockSubmission(examId, mockSubmission);
+
+      if (options.fromFallback) {
+        toast({
+          title: "Fallback mode",
+          description:
+            "Submission saved through legacy judge flow and local history cache.",
+        });
+      }
+
+      setActiveTab("submissions");
+      setSubmissionRefreshSignal((prev) => prev + 1);
+    },
+    [code, exam, examId, roomId, toast],
+  );
+
   const handleSubmit = useCallback(async () => {
     if (!code.trim()) {
       toast({
@@ -220,100 +282,92 @@ int main() {
       description: COMPILER_MESSAGES.INFO.JUDGING,
     });
 
-    if (!participationId) {
-      toast({
-        title: "Error",
-        description: "Exam session not started. Please go back and try again.",
-        variant: "destructive",
-      });
-      setIsSubmitting(false);
-      return;
-    }
+    let switchedToFallback = false;
 
-    // Use judge-from-file API to submit exam
-    judgeCodeFromFile(
+    submitStudentCode(
       {
-        code: code,
+        code,
         examId: examId,
-        participationId: participationId,
-        timeLimit: 2000,
-        memoryLimit: 128,
+        language: "c",
         optimizationLevel: 2,
       },
       {
-        onSuccess: (response) => {
-          // Always display response if we have data (status 200)
-          if (response.data) {
-            const passedCount = response.data.passed;
-            const totalCount = response.data.total;
-            const allTestsPassed = passedCount === totalCount && totalCount > 0;
+        onSuccess: (judgeResult) => {
+          handleSubmissionSuccess(judgeResult);
+          setIsSubmitting(false);
+        },
+        onError: (submitError: Error) => {
+          if (!participationId) {
+            toast({
+              title: "Submit failed",
+              description:
+                submitError.message ||
+                "Could not submit by new API and no legacy participation session was found.",
+              variant: "destructive",
+            });
+            setIsSubmitting(false);
+            return;
+          }
 
-            // Clear saved draft after successful submission
-            localStorage.removeItem(`exam_code_${roomId}_${examId}`);
+          switchedToFallback = true;
+          toast({
+            title: "Submission API unavailable",
+            description:
+              "Switching to legacy judge endpoint and local submission history cache.",
+          });
 
-            // Always save score (0 if failed, full marks if passed)
-            if (exam) {
-              const user = useAuthStore.getState().user;
-              if (user) {
-                const score = allTestsPassed ? exam.totalMarks : 0;
-
-                const newScore = {
-                  studentId: user.uuid,
-                  examRoomId: roomId,
-                  examId: examId,
-                  score: score,
-                  totalMarks: exam.totalMarks,
-                  passedTestCases: passedCount,
-                  totalTestCases: totalCount,
-                  submittedAt: new Date().toISOString(),
-                };
-
-                // Save score to localStorage (will update if exists)
-                saveExamScore(newScore);
-
-                // Update current score state to trigger re-render
-                setCurrentScore(newScore);
-
-                if (allTestsPassed) {
-                  toast({
-                    title: "Submitted successfully!",
-                    description: `Perfect! You scored ${score}/${exam.totalMarks} points (${passedCount}/${totalCount} test cases passed)`,
+          judgeCodeFromFile(
+            {
+              code: code,
+              examId: examId,
+              participationId: participationId,
+              timeLimit: 2000,
+              memoryLimit: 128,
+              optimizationLevel: 2,
+            },
+            {
+              onSuccess: (legacyResult) => {
+                if (legacyResult.data) {
+                  handleSubmissionSuccess(legacyResult.data, {
+                    fromFallback: true,
                   });
                 } else {
                   toast({
-                    title: "Submitted",
-                    description: `Score: ${score}/${exam.totalMarks} (${passedCount}/${totalCount} test cases passed). Keep practicing!`,
+                    title: "Submission completed with errors",
+                    description: legacyResult.message || "Check your code for errors",
                   });
                 }
-              }
-            }
-
-            // Navigate back to exam room after submission
-            setTimeout(() => {
-              router.push(`/exam-rooms/${roomId}`);
-            }, 2000);
-          } else {
-            // No data but status 200 (compilation error before judging)
-            toast({
-              title: "Submission completed with errors",
-              description: response.message || "Check your code for errors",
-            });
-          }
-        },
-        onError: (error: Error) => {
-          // Only for network errors or non-200 status codes
-          toast({
-            title: "Network Error",
-            description: error.message || "Could not connect to server",
-            variant: "destructive",
-          });
+              },
+              onError: (fallbackError: Error) => {
+                toast({
+                  title: "Network Error",
+                  description:
+                    fallbackError.message || "Could not connect to server",
+                  variant: "destructive",
+                });
+              },
+              onSettled: () => {
+                setIsSubmitting(false);
+              },
+            },
+          );
         },
         onSettled: () => {
-          setIsSubmitting(false);
+          if (!switchedToFallback) {
+            setIsSubmitting(false);
+          }
         },
       },
     );
-  }, [code, toast, router, roomId, examId, exam, judgeCodeFromFile, participationId]);
+  }, [
+    code,
+    examId,
+    handleSubmissionSuccess,
+    judgeCodeFromFile,
+    participationId,
+    submitStudentCode,
+    toast,
+  ]);
 
   const handleAutoSubmit = useCallback(async () => {
     toast({
@@ -679,31 +733,6 @@ int main() {
                   </p>
                 </div>
 
-                {testCases.length > 0 && (
-                  <div>
-                    <h3 className="font-semibold mb-2">
-                      Sample test cases ({testCases.length}):
-                    </h3>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      You can view sample test cases to better understand the
-                      expected input and output.
-                    </p>
-                    <div className="space-y-2">
-                      {testCases.slice(0, 2).map((tc, index) => (
-                        <div key={tc.testCaseId} className="text-sm">
-                          <Badge variant="outline">Test case {index + 1}</Badge>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Input: {tc.inputPath}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            Output: {tc.outputPath}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
                 <div>
                   <h3 className="font-semibold mb-2">Instructions:</h3>
                   <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
@@ -747,6 +776,7 @@ int main() {
                       </Badge>
                     )}
                   </TabsTrigger>
+                  <TabsTrigger value="submissions">Submissions</TabsTrigger>
                 </TabsList>
 
                 <TabsContent
@@ -902,6 +932,15 @@ int main() {
                       ))}
                     </div>
                   )}
+                </TabsContent>
+
+                <TabsContent value="submissions" className="flex-1 m-0 overflow-hidden">
+                  <SubmissionHistoryTab
+                    key={`${examId}-${submissionRefreshSignal}`}
+                    examId={examId}
+                    refreshSignal={submissionRefreshSignal}
+                    pageSize={8}
+                  />
                 </TabsContent>
               </Tabs>
             </Card>

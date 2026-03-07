@@ -39,3 +39,5 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+IMGbug
+AUTH_AND_SESSION_MODULE.md
