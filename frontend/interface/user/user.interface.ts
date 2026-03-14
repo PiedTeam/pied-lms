@@ -1,21 +1,34 @@
-// User interfaces
+// User Management Interfaces
 
-export interface User {
-	studentId: string
-	fullName: string
-	email: string
-	lastLogin: string
-	createdAt: string
-	updatedAt: string
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
 }
 
-// API interfaces for users
-export interface UserRequest {
-	fullName: string
-	email: string
-	password?: string
+export interface ChangePasswordResponse {
+  success: boolean;
+  message: string;
 }
 
-export interface UserResponse extends User {
-	id: string
+export interface UserResponse {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  roles: string[]; // Backend returns array of roles
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface GetAllUsersRequest {
+  pageNumber?: number;
+  pageSize?: number;
+}
+
+export interface GetAllUsersResponse {
+  items: UserResponse[];
+  pageNumber: number;
+  pageSize: number;
+  totalCount: number;
 }

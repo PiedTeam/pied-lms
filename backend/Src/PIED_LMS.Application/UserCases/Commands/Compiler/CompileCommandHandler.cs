@@ -29,7 +29,8 @@ public sealed class CompileCommandHandler(
                 $"Requested memory limit exceeds container maximum ({_options.ContainerMemoryLimitMb} MB).",
                 null,
                 null,
-                CompilerErrorCode.InvalidRequest);
+                IsNotFound: false,
+                ErrorCode: CompilerErrorCode.InvalidRequest);
 
         var timeLimit = request.TimeLimit ?? _options.DefaultTimeLimitMs;
 
@@ -49,7 +50,8 @@ public sealed class CompileCommandHandler(
                 serviceResult.ErrorMessage ?? "Server is busy.",
                 null,
                 null,
-                serviceResult.ErrorCode);
+                IsNotFound: false,
+                ErrorCode: serviceResult.ErrorCode);
         }
 
         var compileResult = serviceResult.Data!;
@@ -74,7 +76,8 @@ public sealed class CompileCommandHandler(
             message,
             updatedResult,
             null,
-            errorCode);
+            IsNotFound: false,
+            ErrorCode: errorCode);
     }
 
     private static ServiceResponse<CompileResult> CreateInvalidRequestResponse(ValidationResult validation)
@@ -88,8 +91,9 @@ public sealed class CompileCommandHandler(
         return new ServiceResponse<CompileResult>(
             false,
             "Invalid request",
-            null,
-            errors,
-            CompilerErrorCode.InvalidRequest);
+            Data: null,
+            Errors: errors,
+            IsNotFound: false,
+            ErrorCode: CompilerErrorCode.InvalidRequest);
     }
 }

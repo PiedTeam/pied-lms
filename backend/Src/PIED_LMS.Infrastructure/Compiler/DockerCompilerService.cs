@@ -136,14 +136,11 @@ public sealed class DockerCompilerService(
 
             var inputsDir = Path.Combine(workDir, "inputs");
             await WriteInputsAsync(inputsDir, testCases, cancellationToken);
-            await File.WriteAllTextAsync(
-                Path.Combine(workDir, "main.c"),
-                code,
-                Encoding.UTF8,
-                cancellationToken);
 
+            var base64Code = Convert.ToBase64String(Encoding.UTF8.GetBytes(code));
             var optimizationFlag = optimizationLevel?.ToGccFlag() ?? "-O0";
             var unifiedScript = BuildUnifiedScript(
+                base64Code,
                 timeLimitMs,
                 _options.OutputLimitBytes,
                 _options.GccStandard,
@@ -419,7 +416,7 @@ public sealed class DockerCompilerService(
             await File.WriteAllTextAsync(
                 filePath,
                 testCases[index].Input,
-                Encoding.UTF8,
+                new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
                 cancellationToken);
         }
     }
@@ -536,6 +533,7 @@ public sealed class DockerCompilerService(
     }
 
     private static string BuildUnifiedScript(
+        string base64Code,
         int timeLimitMs,
         int outputLimitBytes,
         string gccStandard,
@@ -545,6 +543,7 @@ public sealed class DockerCompilerService(
         var timeoutSeconds = Math.Max(1, (int)Math.Ceiling(timeLimitMs / 1000d));
         var builder = new StringBuilder();
         builder.AppendLine("set -o pipefail");
+        builder.AppendLine($"echo '{base64Code}' | base64 -d > main.c");
         builder.AppendLine(
             $"gcc main.c -o main {optimizationFlag} -std={gccStandard} 2>&1 || " +
             "{ printf '###COMPILE_FAILED###\\n'; exit 0; }");
@@ -575,7 +574,7 @@ public sealed class DockerCompilerService(
         builder.AppendLine("  i=$((i+1))");
         builder.AppendLine("done");
 
-        return builder.ToString();
+        return builder.ToString().Replace("\r", "");
     }
 
     private static string? ExtractCompileError(string stdout)
@@ -653,11 +652,11 @@ public sealed class DockerCompilerService(
         CancellationToken cancellationToken)
     {
         var scopedScript =
-            $"cd {_options.ContainerWorkDir} && " +
-            $"mkdir -p {sessionId} && " +
-            $"cd {sessionId}; " +
-            $"trap 'cd {_options.ContainerWorkDir}; rm -rf {sessionId}' EXIT; " +
+            $"mkdir -p {_options.ContainerWorkDir}/{sessionId} && " +
+            $"cd {_options.ContainerWorkDir}/{sessionId} && " +
             $"{script}";
+
+        scopedScript = scopedScript.Replace("\r", "");
 
         var startInfo = new ProcessStartInfo
         {

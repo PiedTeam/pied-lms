@@ -1,13 +1,16 @@
 using Microsoft.AspNetCore.Http;
+using PIED_LMS.Application.Abstractions;
 using PIED_LMS.Contract.Services.ExamRoom;
 using PIED_LMS.Contract.Services.Identity;
-using PIED_LMS.Persistence;
+using PIED_LMS.Domain.Abstractions;
+
 
 namespace PIED_LMS.Application.UserCases.Commands.ExamRoom;
 
 public class CreateExamRoomHandler(
-    PiedLmsDbContext dbContext,
+    IUnitOfWork unitOfWork,
     IHttpContextAccessor httpContextAccessor,
+    IRoomCodeService roomCodeService,
     ILogger<CreateExamRoomHandler> logger
 ) : IRequestHandler<CreateExamRoomCommand, ServiceResponse<ExamRoomResponse>>
 {
@@ -49,6 +52,9 @@ public class CreateExamRoomHandler(
                 );
             }
 
+            // Generate unique room code
+            var roomCode = await roomCodeService.GenerateUniqueRoomCodeAsync(cancellationToken);
+
             // Create ExamRoom entity
             var examRoom = new Domain.Entities.ExamRoom
             {
@@ -58,18 +64,20 @@ public class CreateExamRoomHandler(
                 StartTime = request.StartTime,
                 EndTime = request.EndTime,
                 DurationInMinutes = request.DurationInMinutes,
+                RoomCode = roomCode,
                 CreatedBy = userId,
                 CreatedAt = DateTime.UtcNow,
                 IsDeleted = false
             };
 
-            dbContext.ExamRooms.Add(examRoom);
-            await dbContext.SaveChangesAsync(cancellationToken);
+            await unitOfWork.Repository<Domain.Entities.ExamRoom>().AddAsync(examRoom, cancellationToken);
+            await unitOfWork.CommitAsync(cancellationToken);
 
             logger.LogInformation(
-                "Exam room created successfully. Id: {ExamRoomId}, Name: {Name}, CreatedBy: {UserId}",
+                "Exam room created successfully. Id: {ExamRoomId}, Name: {Name}, RoomCode: {RoomCode}, CreatedBy: {UserId}",
                 examRoom.Id,
                 examRoom.Name,
+                examRoom.RoomCode,
                 userId
             );
 
@@ -85,8 +93,11 @@ public class CreateExamRoomHandler(
                 examRoom.StartTime,
                 examRoom.EndTime,
                 examRoom.DurationInMinutes,
+                examRoom.RoomCode,
                 status,
                 0, // No exams assigned yet
+                examRoom.IsDeleted,
+                examRoom.DeletedAt,
                 examRoom.CreatedAt
             );
 

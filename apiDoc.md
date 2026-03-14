@@ -388,6 +388,151 @@
 
 ---
 
+## 7. Student Quizlet APIs
+
+### 7.1. Lấy danh sách quizlets (Student)
+
+- **Method:** `GET`
+- **Endpoint:** `/api/students/quizlets`
+- **Description:** Lấy danh sách tất cả quizlets đã xuất bản (isPublished=true) cho sinh viên
+- **Roles:** Student
+- **Response:**
+```json
+{
+  "success": true,
+  "message": "success",
+  "data": [
+    {
+      "id": 1,
+      "title": "string",
+      "description": "string",
+      "userName": "string",
+      "isPublished": true,
+      "quantityQuestion": 10,
+      "createdAt": "2026-02-23T06:35:07.588393Z",
+      "updatedAt": "2026-02-23T06:35:07.588393Z"
+    }
+  ]
+}
+```
+
+### 7.2. Lấy chi tiết quizlet (Student)
+
+- **Method:** `GET`
+- **Endpoint:** `/api/students/quizlets/{id}`
+- **Description:** Lấy chi tiết quizlet đã xuất bản (bao gồm câu hỏi và đáp án) cho sinh viên
+- **Roles:** Student
+- **Response:**
+```json
+{
+  "success": true,
+  "message": "success",
+  "data": {
+    "id": 1,
+    "title": "string",
+    "userName": "string",
+    "createdAt": "2026-02-23T06:35:07.588393Z",
+    "updatedAt": "2026-02-23T06:35:07.588393Z",
+    "isPublished": true,
+    "listQuestion": [
+      {
+        "content": "string",
+        "score": 10,
+        "answers": ["A", "B", "C", "D"],
+        "correctAnswers": ["A"],
+        "questionType": "SingleChoice"
+      }
+    ]
+  }
+}
+```
+
+---
+
+## 8. TestCase Management
+
+### 8.1. Tạo test case mới
+
+- **Method:** `POST`
+- **Endpoint:** `/api/testcases`
+- **Description:** Tạo test case mới cho một exam
+- **Roles:** Admin, Mentor, Lecturer
+- **Request Body:**
+```json
+{
+  "examId": "guid",
+  "index": 1,
+  "inputPath": "string",
+  "outputPath": "string",
+  "isHidden": false
+}
+```
+- **Response:**
+```json
+{
+  "success": true,
+  "message": "success",
+  "data": {
+    "examId": "guid",
+    "testCaseId": "guid",
+    "index": 1,
+    "inputPath": "string",
+    "outputPath": "string",
+    "isHidden": false
+  }
+}
+```
+
+### 8.2. Lấy danh sách test cases theo exam
+
+- **Method:** `GET`
+- **Endpoint:** `/api/testcases/{examId}`
+- **Description:** Lấy tất cả test cases của một exam
+- **Roles:** Admin, Mentor, Lecturer
+- **Response:**
+```json
+{
+  "success": true,
+  "message": "success",
+  "data": [
+    {
+      "examId": "guid",
+      "testCaseId": "guid",
+      "index": 1,
+      "inputPath": "string",
+      "outputPath": "string",
+      "isHidden": false
+    }
+  ]
+}
+```
+
+### 8.3. Cập nhật test case
+
+- **Method:** `PUT`
+- **Endpoint:** `/api/testcases/{testcaseId}`
+- **Description:** Cập nhật thông tin test case
+- **Roles:** Admin, Mentor, Lecturer
+- **Request Body:**
+```json
+{
+  "examId": "guid",
+  "index": 1,
+  "inputPath": "string",
+  "outputPath": "string",
+  "isHidden": false
+}
+```
+
+### 8.4. Xóa test case
+
+- **Method:** `DELETE`
+- **Endpoint:** `/api/testcases/{testcaseId}`
+- **Description:** Xóa test case
+- **Roles:** Admin, Mentor, Lecturer
+
+---
+
 ## Notes
 
 - Tất cả các endpoint (trừ Authentication) yêu cầu xác thực qua Bearer Token

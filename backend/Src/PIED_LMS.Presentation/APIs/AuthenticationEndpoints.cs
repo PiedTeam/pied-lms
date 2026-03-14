@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity.Data;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Constants;
 
@@ -44,6 +45,12 @@ public class AuthenticationEndpoints : ICarterModule
             .Produces<ServiceResponse<string>>()
             .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest);
 
+        group.MapPost("/reset-password", ResetPassword)
+           .WithName("ResetPassword")
+           .WithOpenApi()
+           .Produces<ServiceResponse<string>>()
+           .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest);
+
         group.MapPost("/assign-role", AssignRole)
             .WithName("AssignRole")
             .WithOpenApi()
@@ -62,6 +69,12 @@ public class AuthenticationEndpoints : ICarterModule
             .WithName("GetAllUsers")
             .WithOpenApi()
             .RequireAuthorization(new AuthorizeAttribute { Roles = RoleConstants.Administrator })
+            .Produces<ServiceResponse<PaginatedResponse<UserResponse>>>();
+
+        group.MapGet("/students", GetAllStudents)
+            .WithName("GetAllStudents")
+            .WithOpenApi()
+            .RequireAuthorization(new AuthorizeAttribute { Roles = $"{RoleConstants.Administrator},{RoleConstants.Mentor},{RoleConstants.Teacher}" })
             .Produces<ServiceResponse<PaginatedResponse<UserResponse>>>();
     }
 
@@ -106,7 +119,7 @@ public class AuthenticationEndpoints : ICarterModule
         var result = await mediator.Send(request, cancellationToken);
 
         if (!result.Success || result.Data == null)
-            return Results.Unauthorized();
+            return Results.BadRequest(result);
 
         // Extract login result (contains response and refresh token)
         var loginResult = result.Data;
@@ -205,6 +218,20 @@ public class AuthenticationEndpoints : ICarterModule
         var result = await mediator.Send(command, cancellationToken);
         return result.Success ? Results.Ok(result) : Results.BadRequest(result);
     }
+    private static async Task<IResult> ResetPassword(
+       ResetPasswordRequest request,
+       IMediator mediator,
+       CancellationToken cancellationToken)
+    {
+        var command = new PIED_LMS.Application.UserCases.Commands.Auth.ResetPasswordCommand(
+            request.Email,
+            request.Token,
+            request.NewPassword
+        );
+
+        var result = await mediator.Send(command, cancellationToken);
+        return result.Success ? Results.Ok(result) : Results.BadRequest(result);
+    }
 
     private static async Task<IResult> AssignRole(
         AssignRoleRequest request,
@@ -235,6 +262,16 @@ public class AuthenticationEndpoints : ICarterModule
         var result = await mediator.Send(query, cancellationToken);
         return result.Success ? Results.Ok(result) : Results.BadRequest(result);
     }
+
+    private static async Task<IResult> GetAllStudents(
+        [AsParameters] GetAllStudentsRequest request,
+        IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        var query = new GetAllStudentsQuery(request.PageNumber, request.PageSize);
+        var result = await mediator.Send(query, cancellationToken);
+        return result.Success ? Results.Ok(result) : Results.BadRequest(result);
+    }
 }
 
 public sealed record ChangePasswordRequest(
@@ -247,8 +284,18 @@ public sealed record AssignRoleRequest(
     Guid UserId,
     string RoleName
 );
+public sealed record ResetPasswordRequest(
+    string Email,
+    string Token,
+    string NewPassword
+);
 
 public sealed record GetAllUsersRequest(
+    int PageNumber = 1,
+    int PageSize = 10
+);
+
+public sealed record GetAllStudentsRequest(
     int PageNumber = 1,
     int PageSize = 10
 );

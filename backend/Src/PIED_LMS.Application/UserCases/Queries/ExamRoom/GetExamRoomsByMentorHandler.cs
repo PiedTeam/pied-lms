@@ -2,12 +2,13 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Contract.Services.ExamRoom;
 using PIED_LMS.Contract.Services.Identity;
-using PIED_LMS.Persistence;
+using PIED_LMS.Domain.Abstractions;
+
 
 namespace PIED_LMS.Application.UserCases.Queries.ExamRoom;
 
 public class GetExamRoomsByMentorHandler(
-    PiedLmsDbContext dbContext,
+    IUnitOfWork unitOfWork,
     IHttpContextAccessor httpContextAccessor,
     ILogger<GetExamRoomsByMentorHandler> logger
 ) : IRequestHandler<GetExamRoomsByMentorQuery, ServiceResponse<PaginatedResponse<ExamRoomResponse>>>
@@ -30,9 +31,10 @@ public class GetExamRoomsByMentorHandler(
             }
 
             // Query exam rooms created by mentor
-            var query = dbContext.ExamRooms
+            IQueryable<Domain.Entities.ExamRoom> query = unitOfWork.Repository<Domain.Entities.ExamRoom>()
+                .FindAll(er => er.CreatedBy == userId && !er.IsDeleted)
                 .Include(er => er.ExamRoomExams)
-                .Where(er => er.CreatedBy == userId && !er.IsDeleted);
+                .ThenInclude(ere => ere.Exam);
 
             // Filter by status if provided
             var now = DateTime.UtcNow;
@@ -47,11 +49,24 @@ public class GetExamRoomsByMentorHandler(
                 };
             }
 
+            IQueryable<Domain.Entities.ExamRoom> queryTyped = query;
+
+            if (!string.IsNullOrWhiteSpace(request.Status))
+            {
+                queryTyped = request.Status.ToLower() switch
+                {
+                    "upcoming" => queryTyped.Where(er => er.StartTime > now),
+                    "ongoing" => queryTyped.Where(er => er.StartTime <= now && er.EndTime >= now),
+                    "completed" => queryTyped.Where(er => er.EndTime < now),
+                    _ => queryTyped
+                };
+            }
+
             // Get total count
-            var totalCount = await query.CountAsync(cancellationToken);
+            var totalCount = await queryTyped.CountAsync(cancellationToken);
 
             // Apply pagination
-            var examRooms = await query
+            var examRooms = await queryTyped
                 .OrderByDescending(er => er.CreatedAt)
                 .Skip((request.PageNumber - 1) * request.PageSize)
                 .Take(request.PageSize)
@@ -63,7 +78,8 @@ public class GetExamRoomsByMentorHandler(
                 var status = now < er.StartTime ? "Upcoming" :
                             now > er.EndTime ? "Completed" : "Ongoing";
 
-                var examCount = er.ExamRoomExams.Count(ere => !dbContext.Exams.Any(e => e.Id == ere.ExamId && e.IsDeleted));
+                // Since we included Exams, we can check IsDeleted on the existing navigation property
+                var examCount = er.ExamRoomExams.Count(ere => ere.Exam != null && !ere.Exam.IsDeleted);
 
                 return new ExamRoomResponse(
                     er.Id,
@@ -72,8 +88,11 @@ public class GetExamRoomsByMentorHandler(
                     er.StartTime,
                     er.EndTime,
                     er.DurationInMinutes,
+                    er.RoomCode,
                     status,
                     examCount,
+                    er.IsDeleted,
+                    er.DeletedAt,
                     er.CreatedAt
                 );
             }).ToList();

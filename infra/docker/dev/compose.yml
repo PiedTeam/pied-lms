@@ -1,0 +1,84 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: pied-lms-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DATABASE__NAME:-piedlms}
+      POSTGRES_USER: ${DATABASE__USER:-postgres}
+      POSTGRES_PASSWORD: ${DATABASE__PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - pied-network
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${DATABASE__USER:-postgres} -d ${DATABASE__NAME:-piedlms}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ../../../backend
+      dockerfile: Dockerfile
+    image: ${DOCKERHUB_USERNAME}/pied-lms-backend:latest
+    container_name: pied-lms-backend
+    restart: unless-stopped
+    ports:
+      - "${API_PORT:-5000}:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=${DATABASE__NAME};Username=${DATABASE__USER};Password=${DATABASE__PASSWORD}"
+      DATABASE__HOST: postgres
+      DATABASE__PORT: 5432
+      DATABASE__NAME: ${DATABASE__NAME}
+      DATABASE__USER: ${DATABASE__USER}
+      DATABASE__PASSWORD: ${DATABASE__PASSWORD}
+      CompilerOptions__Enabled: ${COMPILER__ENABLED:-true}
+      CompilerOptions__ContainerPoolSize: ${COMPILER__CONTAINER_POOL_SIZE:-3}
+      CompilerOptions__MaxConcurrentCompilations: ${COMPILER__MAX_CONCURRENT_COMPILATIONS:-3}
+      CompilerOptions__MaxConcurrentTestCases: ${COMPILER__MAX_CONCURRENT_TEST_CASES:-8}
+      CompilerOptions__SemaphoreWaitTimeoutMs: ${COMPILER__SEMAPHORE_WAIT_TIMEOUT_MS:-2000}
+      CompilerOptions__ContainerNamePrefix: ${COMPILER__CONTAINER_NAME_PREFIX:-compiler-}
+      CompilerOptions__ContainerImage: ${COMPILER__CONTAINER_IMAGE:-gcc:13}
+      CompilerOptions__ContainerWorkDir: ${COMPILER__CONTAINER_WORK_DIR:-/work}
+      CompilerOptions__ContainerWorkVolume: ${COMPILER__CONTAINER_WORK_VOLUME:-pied-judge-work}
+      CompilerOptions__ContainerNetwork: ${COMPILER__CONTAINER_NETWORK:-none}
+      CompilerOptions__ContainerCpuLimit: ${COMPILER__CONTAINER_CPU_LIMIT:-0.5}
+      CompilerOptions__ContainerMemoryLimitMb: ${COMPILER__CONTAINER_MEMORY_LIMIT_MB:-256}
+      CompilerOptions__ContainerMemorySwapMb: ${COMPILER__CONTAINER_MEMORY_SWAP_MB:-256}
+      CompilerOptions__ContainerPidsLimit: ${COMPILER__CONTAINER_PIDS_LIMIT:-64}
+      CompilerOptions__ContainerReadOnlyRootFs: ${COMPILER__CONTAINER_READONLY_ROOTFS:-true}
+      CompilerOptions__ContainerTmpfsMount: ${COMPILER__CONTAINER_TMPFS_MOUNT:-/tmp:rw,size=64m}
+      CompilerOptions__DefaultTimeLimitMs: ${COMPILER__DEFAULT_TIME_LIMIT_MS:-5000}
+      CompilerOptions__DefaultMemoryLimitMb: ${COMPILER__DEFAULT_MEMORY_LIMIT_MB:-256}
+      CompilerOptions__WorkDirCleanupIntervalSeconds: ${COMPILER__WORKDIR_CLEANUP_INTERVAL_SECONDS:-60}
+      CompilerOptions__WorkDirMaxAgeMinutes: ${COMPILER__WORKDIR_MAX_AGE_MINUTES:-10}
+      CompilerOptions__OutputLimitBytes: ${COMPILER__OUTPUT_LIMIT_BYTES:-1048576}
+      CompilerOptions__StderrLimitBytes: ${COMPILER__STDERR_LIMIT_BYTES:-262144}
+      CompilerOptions__CompileSuccessMarker: ${COMPILER__COMPILE_SUCCESS_MARKER:-_COMPILE_SUCCESS_}
+      CompilerOptions__TestCaseBasePath: ${COMPILER__TEST_CASE_BASE_PATH:-/testcases}
+      CompilerOptions__GccStandard: ${COMPILER__GCC_STANDARD:-c11}
+    volumes:
+      - backend_storage:/app/storage
+      - /var/run/docker.sock:/var/run/docker.sock
+      - pied-judge-work:/work
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - pied-network
+
+volumes:
+  postgres_data:
+  backend_storage:
+  pied-judge-work:
+    name: pied-judge-work
+networks:
+  pied-network:
+    driver: bridge

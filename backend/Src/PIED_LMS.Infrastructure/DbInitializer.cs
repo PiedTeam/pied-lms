@@ -60,7 +60,8 @@ public static class DbInitializer
 
         var adminPassword = configuration["Seed:AdminPassword"];
         var teacherPassword = configuration["Seed:TeacherPassword"];
-        
+        var mentorPassword = configuration["Seed:MentorPassword"];
+
         if (string.IsNullOrEmpty(adminPassword))
         {
             if (env.IsDevelopment())
@@ -199,6 +200,67 @@ public static class DbInitializer
 
             logger.LogInformation("Successfully created/ensured teacher user: {UserName} with role: {Role}", 
                 teacherUser.UserName, RoleConstants.Teacher);
+        }
+        // 4. Seed Mentor User
+        if (!string.IsNullOrEmpty(mentorPassword))
+        {
+            var mentorEmail = "mentor@pied.com";
+            var mentorUser = await userManager.FindByEmailAsync(mentorEmail);
+            if (mentorUser == null)
+            {
+                mentorUser = new ApplicationUser
+                {
+                    UserName = mentorEmail,
+                    Email = mentorEmail,
+                    FirstName = "Bình",
+                    LastName = "Mentor",
+                    IsActive = true,
+                    EmailConfirmed = true
+                };
+
+                var createResult = await userManager.CreateAsync(mentorUser, mentorPassword);
+                if (!createResult.Succeeded)
+                {
+                    if (createResult.Errors.Any(e => e.Code is "DuplicateUserName" or "DuplicateEmail"))
+                    {
+                        logger.LogInformation("Teacher user collision detected (race condition), re-fetching...");
+                        mentorUser = await userManager.FindByEmailAsync(mentorEmail);
+                        if (mentorUser == null)
+                        {
+                            var errors = string.Join(", ", createResult.Errors.Select(e => e.Description));
+                            throw new InvalidOperationException($"Teacher user duplicate error but could not re-fetch user: {errors}");
+                        }
+                    }
+                    else
+                    {
+                        var errors = string.Join(", ", createResult.Errors.Select(e => e.Description));
+                        logger.LogError("Failed to create teacher user {UserName} with role {Role}. Errors: {Errors}",
+                            mentorUser.UserName, RoleConstants.Teacher, errors);
+                        throw new InvalidOperationException($"Failed to create teacher user '{mentorUser.UserName}': {errors}");
+                    }
+                }
+            }
+
+            if (!await userManager.IsInRoleAsync(mentorUser, RoleConstants.Mentor))
+            {
+                var roleResult = await userManager.AddToRoleAsync(mentorUser, RoleConstants.Mentor);
+                if (!roleResult.Succeeded)
+                {
+                    var alreadyInRole = roleResult.Errors.Any(e => e.Code == "UserAlreadyInRole");
+                    if (!alreadyInRole)
+                    {
+                        var errors = string.Join(", ", roleResult.Errors.Select(e => e.Description));
+                        logger.LogError("Failed to assign role {Role} to user {UserName}. Errors: {Errors}",
+                            RoleConstants.Mentor, mentorUser.UserName, errors);
+                        throw new InvalidOperationException($"Failed to assign role '{RoleConstants.Mentor}' to user '{mentorUser.UserName}': {errors}");
+                    }
+                    logger.LogInformation("Mentor user already in role: {UserName} / {Role}",
+                        mentorUser.UserName, RoleConstants.Mentor);
+                }
+            }
+
+            logger.LogInformation("Successfully created/ensured mentor user: {UserName} with role: {Role}",
+                mentorUser.UserName, RoleConstants.Mentor);
         }
     }
 }

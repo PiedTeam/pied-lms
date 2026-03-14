@@ -1,12 +1,14 @@
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Contract.Services.ExamRoom;
 using PIED_LMS.Contract.Services.Identity;
-using PIED_LMS.Persistence;
+using PIED_LMS.Domain.Abstractions;
+
 
 namespace PIED_LMS.Application.UserCases.Commands.ExamRoom;
 
 public class RemoveExamFromRoomHandler(
-    PiedLmsDbContext dbContext,
+    IUnitOfWork unitOfWork,
     IHttpContextAccessor httpContextAccessor,
     ILogger<RemoveExamFromRoomHandler> logger
 ) : IRequestHandler<RemoveExamFromRoomCommand, ServiceResponse<string>>
@@ -17,7 +19,7 @@ public class RemoveExamFromRoomHandler(
     {
         try
         {
-            // Get current user ID from HttpContext claims
+            // Get current user ID and roles from HttpContext claims
             var userIdClaim = httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier);
             if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
             {
@@ -28,10 +30,17 @@ public class RemoveExamFromRoomHandler(
                 );
             }
 
+            var userRoles = httpContextAccessor.HttpContext?.User.FindAll(ClaimTypes.Role)
+                .Select(c => c.Value)
+                .ToList() ?? [];
+
+            var isAdmin = userRoles.Contains("Admin");
+
             // Find exam room by ID
-            var examRoom = await dbContext.ExamRooms
+            var examRoom = await unitOfWork.Repository<Domain.Entities.ExamRoom>()
+                .FindAll(er => er.Id == request.ExamRoomId && !er.IsDeleted)
                 .Include(er => er.Participations.Where(p => p.ExamId == request.ExamId))
-                .FirstOrDefaultAsync(er => er.Id == request.ExamRoomId && !er.IsDeleted, cancellationToken);
+                .FirstOrDefaultAsync(cancellationToken);
 
             if (examRoom == null)
             {
@@ -39,16 +48,6 @@ public class RemoveExamFromRoomHandler(
                     false,
                     "Exam room not found",
                     ErrorCode: "NOT_FOUND"
-                );
-            }
-
-            // Verify user is the creator
-            if (examRoom.CreatedBy != userId)
-            {
-                return new ServiceResponse<string>(
-                    false,
-                    "You are not authorized to remove exams from this exam room",
-                    ErrorCode: "FORBIDDEN"
                 );
             }
 
@@ -67,11 +66,9 @@ public class RemoveExamFromRoomHandler(
             }
 
             // Find and delete ExamRoomExam association
-            var examRoomExam = await dbContext.ExamRoomExams
-                .FirstOrDefaultAsync(
-                    ere => ere.ExamRoomId == request.ExamRoomId && ere.ExamId == request.ExamId,
-                    cancellationToken
-                );
+            var examRoomExam = await unitOfWork.Repository<Domain.Entities.ExamRoomExam>()
+                .FindAll(ere => ere.ExamRoomId == request.ExamRoomId && ere.ExamId == request.ExamId)
+                .FirstOrDefaultAsync(cancellationToken);
 
             if (examRoomExam == null)
             {
@@ -82,14 +79,15 @@ public class RemoveExamFromRoomHandler(
                 );
             }
 
-            dbContext.ExamRoomExams.Remove(examRoomExam);
-            await dbContext.SaveChangesAsync(cancellationToken);
+            unitOfWork.Repository<Domain.Entities.ExamRoomExam>().Remove(examRoomExam);
+            await unitOfWork.CommitAsync(cancellationToken);
 
             logger.LogInformation(
-                "Exam removed from room successfully. ExamRoomId: {ExamRoomId}, ExamId: {ExamId}, RemovedBy: {UserId}",
+                "Exam removed from room successfully. ExamRoomId: {ExamRoomId}, ExamId: {ExamId}, RemovedBy: {UserId}, IsAdmin: {IsAdmin}",
                 request.ExamRoomId,
                 request.ExamId,
-                userId
+                userId,
+                isAdmin
             );
 
             return new ServiceResponse<string>(

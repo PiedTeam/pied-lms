@@ -8,13 +8,16 @@ public class ExamRoom
     public DateTime StartTime { get; set; }
     public DateTime EndTime { get; set; }
     public int DurationInMinutes { get; set; }
+    public string RoomCode { get; set; } = string.Empty;
     public Guid CreatedBy { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
     public bool IsDeleted { get; set; }
+    public DateTime? DeletedAt { get; set; }
     
     // Navigation properties
     public ApplicationUser Creator { get; set; } = null!;
-    public ICollection<ExamRoomExam> ExamRoomExams { get; set; } = new List<ExamRoomExam>();
-    public ICollection<ExamParticipation> Participations { get; set; } = new List<ExamParticipation>();
+    public ICollection<ExamRoomExam> ExamRoomExams { get; set; } = [];
+    public ICollection<ExamParticipation> Participations { get; set; } = [];
+    public ICollection<ExamRoomEnrollment> Enrollments { get; set; } = [];
 }

@@ -38,11 +38,20 @@ public class ExamRoomConfiguration : IEntityTypeConfiguration<ExamRoom>
             .IsRequired()
             .HasDefaultValue(false);
 
+        builder.Property(e => e.RoomCode)
+            .IsRequired()
+            .HasMaxLength(8);
+
+        builder.Property(e => e.DeletedAt)
+            .IsRequired(false);
+
         // Indexes
         builder.HasIndex(e => e.CreatedBy);
         builder.HasIndex(e => e.StartTime);
         builder.HasIndex(e => e.EndTime);
         builder.HasIndex(e => e.IsDeleted);
+        builder.HasIndex(e => e.RoomCode)
+            .IsUnique();
 
         // Relationships
         builder.HasOne(e => e.Creator)
@@ -60,7 +69,7 @@ public class ExamRoomConfiguration : IEntityTypeConfiguration<ExamRoom>
             .HasForeignKey(p => p.ExamRoomId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Soft delete filter
-        builder.HasQueryFilter(e => !e.IsDeleted);
+        // Soft delete filter - Removed to allow querying deleted items
+        // builder.HasQueryFilter(e => !e.IsDeleted);
     }
 }

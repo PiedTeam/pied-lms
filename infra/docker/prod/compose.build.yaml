@@ -1,0 +1,15 @@
+services:
+  lms-backend:
+    build:
+      context: ../../../backend
+      dockerfile: Dockerfile
+      args:
+        ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+        BUILDKIT_INLINE_CACHE: 1
+    image: ${REGISTRY}/backend:${TAG:-latest}
+    profiles:
+      - backend
+      - prod
+      - full-stack
+
+

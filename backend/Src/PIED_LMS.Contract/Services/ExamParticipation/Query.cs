@@ -12,3 +12,10 @@ public record GetStudentParticipationsQuery(
     int PageNumber = 1,
     int PageSize = 10
 ) : IRequest<ServiceResponse<PaginatedResponse<ExamParticipationResponse>>>;
+
+// Get Exam Room Enrollments Query (for Admin/Mentor/Teacher)
+public record GetExamRoomEnrollmentsQuery(
+    Guid ExamRoomId,
+    int PageNumber = 1,
+    int PageSize = 10
+) : IRequest<ServiceResponse<PaginatedResponse<ExamRoomEnrollmentResponse>>>;

@@ -2,12 +2,12 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Contract.Services.Exam;
 using PIED_LMS.Contract.Services.Identity;
-using PIED_LMS.Persistence;
+using PIED_LMS.Domain.Abstractions;
 
 namespace PIED_LMS.Application.UserCases.Commands.Exam;
 
 public class UpdateExamHandler(
-    PiedLmsDbContext dbContext,
+    IUnitOfWork unitOfWork,
     IHttpContextAccessor httpContextAccessor,
     ILogger<UpdateExamHandler> logger
 ) : IRequestHandler<UpdateExamCommand, ServiceResponse<ExamResponse>>
@@ -30,8 +30,9 @@ public class UpdateExamHandler(
             }
 
             // Find exam by ID
-            var exam = await dbContext.Exams
-                .FirstOrDefaultAsync(e => e.Id == request.Id && !e.IsDeleted, cancellationToken);
+            var exam = await unitOfWork.Repository<Domain.Entities.Exam>()
+                .FindAll(e => e.Id == request.Id && !e.IsDeleted)
+                .FirstOrDefaultAsync(cancellationToken);
 
             if (exam == null)
             {
@@ -39,16 +40,6 @@ public class UpdateExamHandler(
                     false,
                     "Exam not found",
                     ErrorCode: "NOT_FOUND"
-                );
-            }
-
-            // Verify user is the creator
-            if (exam.CreatedBy != userId)
-            {
-                return new ServiceResponse<ExamResponse>(
-                    false,
-                    "You are not authorized to update this exam",
-                    ErrorCode: "FORBIDDEN"
                 );
             }
 
@@ -69,7 +60,7 @@ public class UpdateExamHandler(
             exam.PassingMarks = request.PassingMarks;
             exam.UpdatedAt = DateTime.UtcNow;
 
-            await dbContext.SaveChangesAsync(cancellationToken);
+            await unitOfWork.CommitAsync(cancellationToken);
 
             logger.LogInformation(
                 "Exam updated successfully. Id: {ExamId}, Title: {Title}, UpdatedBy: {UserId}",
@@ -84,6 +75,8 @@ public class UpdateExamHandler(
                 exam.Description,
                 exam.TotalMarks,
                 exam.PassingMarks,
+                exam.IsDeleted,
+                exam.DeletedAt,
                 exam.CreatedAt
             );
 

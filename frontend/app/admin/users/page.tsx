@@ -1,299 +1,254 @@
-'use client'
+"use client";
 
-import { useState, useMemo } from 'react'
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Users, Search, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
-	useGetAdminUsers,
-	useBanUser,
-	useUnbanUser
-} from '@/service/admin/user.service'
-import { useToast } from '@/hooks/use-toast'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow
-} from '@/components/ui/table'
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import {
-	Users,
-	Loader2,
-	Search,
-	Ban,
-	ShieldCheck,
-	ChevronLeft,
-	ChevronRight
-} from 'lucide-react'
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useGetAllUsers } from "@/service";
 
-const ITEMS_PER_PAGE = 10
+export default function UsersPage() {
+  const router = useRouter();
+  const [pageNumber, setPageNumber] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [searchQuery, setSearchQuery] = useState("");
 
-export default function AdminUsersPage() {
-	const { data, isLoading, error } = useGetAdminUsers()
-	const [searchQuery, setSearchQuery] = useState('')
-	const [currentPage, setCurrentPage] = useState(1)
+  const {
+    data: usersData,
+    isLoading,
+    error,
+  } = useGetAllUsers({
+    pageNumber,
+    pageSize,
+  });
 
-	// Filter users based on search query
-	const filteredUsers = useMemo(() => {
-		const users = data?.data || []
-		if (!searchQuery.trim()) return users
+  const filteredUsers = usersData?.items?.filter(
+    (user) =>
+      user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.firstName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.lastName?.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
 
-		const query = searchQuery.toLowerCase()
-		return users.filter(
-			user =>
-				user.studentId.toLowerCase().includes(query) ||
-				user.studentFullName.toLowerCase().includes(query) ||
-				user.studentEmail.toLowerCase().includes(query)
-		)
-	}, [data?.data, searchQuery])
+  // Calculate total pages
+  const totalPages = usersData?.totalCount
+    ? Math.ceil(usersData.totalCount / pageSize)
+    : 1;
 
-	// Pagination
-	const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE)
-	const paginatedUsers = useMemo(() => {
-		const start = (currentPage - 1) * ITEMS_PER_PAGE
-		return filteredUsers.slice(start, start + ITEMS_PER_PAGE)
-	}, [filteredUsers, currentPage])
+  const getRoleBadgeVariant = (roles: string[]) => {
+    // Get the first role (primary role)
+    const role = roles[0] || "";
+    switch (role) {
+      case "Admin":
+        return "destructive";
+      case "Teacher":
+        return "default";
+      case "Mentor":
+        return "secondary";
+      case "Student":
+        return "outline";
+      default:
+        return "outline";
+    }
+  };
 
-	// Reset to page 1 when search changes
-	const handleSearch = (value: string) => {
-		setSearchQuery(value)
-		setCurrentPage(1)
-	}
+  return (
+    <div className="container mx-auto p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">
+            User Management
+          </h1>
+          <p className="text-muted-foreground">
+            View and manage all users in the system
+          </p>
+        </div>
+      </div>
 
-	const formatDate = (dateString: string) => {
-		if (!dateString) return 'N/A'
-		return new Date(dateString).toLocaleDateString('vi-VN', {
-			day: '2-digit',
-			month: '2-digit',
-			year: 'numeric'
-		})
-	}
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Failed to load user list. Please try again later.
+          </AlertDescription>
+        </Alert>
+      )}
 
-	const { toast } = useToast()
-	const banUser = useBanUser()
-	const unbanUser = useUnbanUser()
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>User List</CardTitle>
+              <CardDescription>
+                {usersData?.totalCount || 0} users
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="relative w-64">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-8"
+                />
+              </div>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="text-center py-8 text-muted-foreground">
+              Loading...
+            </div>
+          ) : filteredUsers && filteredUsers.length > 0 ? (
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Full Name</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Created At</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredUsers.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell className="font-medium">
+                        {user.email}
+                      </TableCell>
+                      <TableCell>
+                        {user.firstName} {user.lastName}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {user.roles.map((role) => (
+                            <Badge
+                              key={role}
+                              variant={getRoleBadgeVariant(user.roles)}
+                            >
+                              {role}
+                            </Badge>
+                          ))}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={user.isActive ? "default" : "secondary"}
+                        >
+                          {user.isActive ? "Active" : "Inactive"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {new Date(user.createdAt).toLocaleDateString("en-US")}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => router.push(`/admin/users/${user.id}`)}
+                        >
+                          View details
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
 
-	const handleBanUser = (userId: string, isBanned: boolean) => {
-		if (isBanned) {
-			unbanUser.mutate(userId, {
-				onSuccess: () => {
-					toast({ title: 'Thành công', description: 'Đã bỏ cấm người dùng' })
-				},
-				onError: () => {
-					toast({
-						title: 'Lỗi',
-						description: 'Không thể bỏ cấm người dùng',
-						variant: 'destructive'
-					})
-				}
-			})
-		} else {
-			banUser.mutate(userId, {
-				onSuccess: () => {
-					toast({ title: 'Thành công', description: 'Đã cấm người dùng' })
-				},
-				onError: () => {
-					toast({
-						title: 'Lỗi',
-						description: 'Không thể cấm người dùng',
-						variant: 'destructive'
-					})
-				}
-			})
-		}
-	}
+              <div className="flex items-center justify-between mt-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">
+                    Show
+                  </span>
+                  <Select
+                    value={pageSize.toString()}
+                    onValueChange={(value) => {
+                      setPageSize(Number(value));
+                      setPageNumber(1);
+                    }}
+                  >
+                    <SelectTrigger className="w-20">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="20">20</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                      <SelectItem value="100">100</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <span className="text-sm text-muted-foreground">
+                    per page
+                  </span>
+                </div>
 
-	const isActionLoading = banUser.isPending || unbanUser.isPending
-
-	if (isLoading) {
-		return (
-			<div className="flex items-center justify-center py-12">
-				<Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-			</div>
-		)
-	}
-
-	if (error) {
-		return (
-			<div className="rounded-md bg-destructive/10 p-4 text-center text-destructive">
-				Failed to load users
-			</div>
-		)
-	}
-
-	const allUsers = data?.data || []
-
-	return (
-		<div className="container mx-auto p-6">
-			{/* Header - same style as Rooms */}
-			<div className="mb-6 flex items-center justify-between">
-				<div>
-					<h1 className="text-2xl font-bold">User Management</h1>
-					<p className="text-muted-foreground text-sm">
-						Manage all users in the system
-					</p>
-				</div>
-				<div className="flex items-center gap-2">
-					<Users className="h-5 w-5 text-muted-foreground" />
-					<span className="text-sm font-medium">{allUsers.length} users</span>
-				</div>
-			</div>
-
-			{/* Search Bar */}
-			<div className="mb-6 flex items-center justify-between gap-4">
-				<div className="relative flex-1 max-w-md">
-					<Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-					<Input
-						placeholder="Search by student ID, full name or email..."
-						value={searchQuery}
-						onChange={e => handleSearch(e.target.value)}
-						className="pl-10"
-					/>
-				</div>
-				<span className="text-sm text-muted-foreground whitespace-nowrap">
-					Showing {paginatedUsers.length} / {filteredUsers.length} results
-				</span>
-			</div>
-
-			{/* Empty State */}
-			{filteredUsers.length === 0 && (
-				<div className="rounded-md border border-dashed p-12 text-center">
-					<p className="text-muted-foreground">
-						{searchQuery ? 'No matching users found' : 'No users yet'}
-					</p>
-				</div>
-			)}
-
-			{/* Users Table */}
-			{filteredUsers.length > 0 && (
-				<div className="rounded-lg border bg-card">
-					<Table>
-						<TableHeader>
-							<TableRow>
-								<TableHead className="w-[220px]">Student ID</TableHead>
-								<TableHead className="w-[180px]">Full name</TableHead>
-								<TableHead className="w-[200px]">Email</TableHead>
-								<TableHead className="w-[120px]">Status</TableHead>
-								<TableHead className="w-[140px]">Last login</TableHead>
-								<TableHead className="w-[140px]">Created at</TableHead>
-								<TableHead className="w-[100px] text-center">Action</TableHead>
-							</TableRow>
-						</TableHeader>
-						<TableBody>
-							{paginatedUsers.map(user => (
-								<TableRow key={user.studentId}>
-									<TableCell className="font-mono text-sm">
-										{user.studentId}
-									</TableCell>
-									<TableCell className="font-medium">
-										{user.studentFullName}
-									</TableCell>
-									<TableCell className="text-muted-foreground">
-										{user.studentEmail}
-									</TableCell>
-									<TableCell>
-										{user.isBanned ? (
-											<Badge variant="destructive" className="gap-1">
-												<Ban className="h-3 w-3" />
-												Banned
-											</Badge>
-										) : (
-											<Badge className="gap-1 bg-green-600 hover:bg-green-700">
-												<ShieldCheck className="h-3 w-3" />
-												Active
-											</Badge>
-										)}
-									</TableCell>
-									<TableCell className="text-muted-foreground text-sm">
-										{formatDate(user.lastLogin)}
-									</TableCell>
-									<TableCell className="text-muted-foreground text-sm">
-										{formatDate(user.createdAt)}
-									</TableCell>
-									<TableCell className="text-center">
-										<Button
-											variant={user.isBanned ? 'outline' : 'destructive'}
-											size="sm"
-											disabled={isActionLoading}
-											onClick={() =>
-												handleBanUser(user.studentId, user.isBanned)
-											}
-										>
-											{user.isBanned ? (
-												<>
-													<ShieldCheck className="h-4 w-4 mr-1" />
-													Unban
-												</>
-											) : (
-												<>
-													<Ban className="h-4 w-4 mr-1" />
-													Ban
-												</>
-											)}
-										</Button>
-									</TableCell>
-								</TableRow>
-							))}
-						</TableBody>
-					</Table>
-
-					{/* Pagination */}
-					{totalPages > 1 && (
-						<div className="flex items-center justify-between px-4 py-3 border-t">
-							<span className="text-sm text-muted-foreground">
-								Page {currentPage} / {totalPages}
-							</span>
-							<div className="flex items-center gap-1">
-								<Button
-									variant="outline"
-									size="sm"
-									onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-									disabled={currentPage === 1}
-								>
-									<ChevronLeft className="h-4 w-4" />
-									Previous
-								</Button>
-								{Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-									let pageNum: number
-									if (totalPages <= 5) {
-										pageNum = i + 1
-									} else if (currentPage <= 3) {
-										pageNum = i + 1
-									} else if (currentPage >= totalPages - 2) {
-										pageNum = totalPages - 4 + i
-									} else {
-										pageNum = currentPage - 2 + i
-									}
-									return (
-										<Button
-											key={pageNum}
-											variant={currentPage === pageNum ? 'default' : 'outline'}
-											size="sm"
-											className="w-8 h-8 p-0"
-											onClick={() => setCurrentPage(pageNum)}
-										>
-											{pageNum}
-										</Button>
-									)
-								})}
-								<Button
-									variant="outline"
-									size="sm"
-									onClick={() =>
-										setCurrentPage(p => Math.min(totalPages, p + 1))
-									}
-									disabled={currentPage === totalPages}
-								>
-									Next
-									<ChevronRight className="h-4 w-4" />
-								</Button>
-							</div>
-						</div>
-					)}
-				</div>
-			)}
-		</div>
-	)
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setPageNumber((prev) => Math.max(1, prev - 1))
+                    }
+                    disabled={pageNumber === 1}
+                  >
+                    &lt;
+                  </Button>
+                  <span className="text-sm text-muted-foreground">
+                    Page {pageNumber} / {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPageNumber((prev) => prev + 1)}
+                    disabled={pageNumber >= totalPages}
+                  >
+                    &gt;
+                  </Button>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="text-center py-12">
+              <Users className="mx-auto h-12 w-12 text-muted-foreground" />
+              <h3 className="mt-4 text-lg font-semibold">
+                No users found
+              </h3>
+              <p className="text-sm text-muted-foreground mt-2">
+                {searchQuery
+                  ? "Try searching with a different keyword"
+                  : "No users in the system yet"}
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
 }

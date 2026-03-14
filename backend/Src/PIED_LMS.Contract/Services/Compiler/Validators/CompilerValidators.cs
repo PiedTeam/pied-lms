@@ -194,11 +194,11 @@ public class JudgeFromFileCommandValidator : AbstractValidator<JudgeFromFileComm
             .Must(CompilerValidationRules.IsSafeCode)
             .WithMessage("Code contains forbidden headers, APIs, or directives");
 
-        RuleFor(x => x.RoomId)
-            .NotEmpty().WithMessage("RoomId is required");
+        RuleFor(x => x.ExamId)
+            .NotEmpty().WithMessage("ExamId is required");
 
-        RuleFor(x => x.QuestionId)
-            .NotEmpty().WithMessage("QuestionId is required");
+        RuleFor(x => x.ParticipationId)
+            .NotEmpty().WithMessage("ParticipationId is required");
 
         RuleFor(x => x.TimeLimit)
             .GreaterThan(0).When(x => x.TimeLimit.HasValue)

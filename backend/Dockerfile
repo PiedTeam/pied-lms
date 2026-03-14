@@ -1,8 +1,9 @@
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS base
 WORKDIR /app
 EXPOSE 8080
-RUN apk add --no-cache icu-libs
-USER app
+RUN apk add --no-cache icu-libs docker-cli
+
+RUN mkdir -p /app/storage && chmod -R 777 /app/storage
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS build
 ARG BUILD_CONFIGURATION=Release
@@ -20,15 +21,13 @@ COPY ["Directory.Build.props", "./"]
 COPY ["Directory.Packages.props", "./"]
 COPY ["global.json", "./"]
 
-RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
-    dotnet restore "Src/PIED_LMS.API/PIED_LMS.API.csproj"
+RUN dotnet restore "Src/PIED_LMS.API/PIED_LMS.API.csproj"
 
 # 2. Copy toàn bộ source code vào (BẮT BUỘC TRƯỚC KHI PUBLISH)
 COPY . .
 
 # 3. Publish (Chỉ cần 1 lần duy nhất ở đây)
-RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
-    dotnet publish "Src/PIED_LMS.API/PIED_LMS.API.csproj" \
+RUN dotnet publish "Src/PIED_LMS.API/PIED_LMS.API.csproj" \
     -c $BUILD_CONFIGURATION \
     -o /app/publish \
     /p:UseAppHost=false
@@ -36,6 +35,8 @@ RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
 FROM base AS final
 WORKDIR /app
 COPY --from=build /app/publish .
+COPY entrypoint.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
 ENV ASPNETCORE_ENVIRONMENT=Production
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
-ENTRYPOINT ["dotnet", "PIED_LMS.API.dll"]
+ENTRYPOINT ["./entrypoint.sh"]
