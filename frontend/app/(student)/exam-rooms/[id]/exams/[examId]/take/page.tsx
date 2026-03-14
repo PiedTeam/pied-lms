@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/resizable";
 import { SubmissionHistoryTab } from "@/components/student/SubmissionHistoryTab";
 import { useToast } from "@/hooks/use-toast";
-import { useJudgeCodeFromFile, useCompileCode } from "@/service";
+import { useJudgeCodeFromFile } from "@/service";
 import { useGetExamById, useSubmitStudentCode } from "@/services";
 import { useGetStudentTestCases } from "@/services";
 import { compileCode as compileCodeService } from "@/services/compiler/compiler.service";
@@ -120,7 +120,6 @@ const ExamHeader = ({
   formatTime,
   onBack,
   onSaveDraft,
-  onTestCode,
   onRunTestCases,
   onSubmit,
 }: {
@@ -129,7 +128,6 @@ const ExamHeader = ({
   formatTime: (seconds: number) => string;
   onBack: () => void;
   onSaveDraft: () => void;
-  onTestCode: () => void;
   onRunTestCases: () => void;
   onSubmit: () => void;
 }) => (
@@ -148,11 +146,8 @@ const ExamHeader = ({
         <Button variant="outline" onClick={onSaveDraft}>
           Save Draft
         </Button>
-        <Button variant="outline" onClick={onTestCode}>
-          Test Code
-        </Button>
         <Button variant="outline" onClick={onRunTestCases}>
-          Run Test Case
+          Run Test Cases
         </Button>
         <Button onClick={onSubmit}>Submit</Button>
       </div>
@@ -577,28 +572,6 @@ int main() {
     return () => clearInterval(timer);
   }, [timeRemaining, handleAutoSubmit]);
 
-  const handleTestCode = useCallback(() => {
-    if (!code.trim()) {
-      toast({
-        title: COMPILER_MESSAGES.ERROR.NO_CODE,
-        description: COMPILER_MESSAGES.VALIDATION.CODE_REQUIRED,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (code.trim().length < 10) {
-      toast({
-        title: COMPILER_MESSAGES.ERROR.CODE_TOO_SHORT,
-        description: COMPILER_MESSAGES.VALIDATION.CODE_MIN_LENGTH,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsTestInputDialogOpen(true);
-  }, [code, toast]);
-
   const handleRunTestCases = useCallback(async () => {
     if (!code.trim()) {
       toast({
@@ -747,9 +720,6 @@ int main() {
             <Button variant="outline" onClick={() => saveDraft()}>
               Save Draft
             </Button>
-            <Button variant="outline" onClick={handleTestCode}>
-              Test Code
-            </Button>
             <Button variant="outline" onClick={handleRunTestCases}>
               Run Test Cases
             </Button>
@@ -861,12 +831,8 @@ int main() {
                       later)
                     </li>
                     <li>
-                      Click &quot;Run Code&quot; to test code with using manual
-                      input.
-                    </li>
-                    <li>
-                      Click &quot;Run Test Case&quot; to check with sample test
-                      cases
+                      Click &quot;Run Test Cases&quot; to check your solution
+                      against the sample test cases.
                     </li>
                     <li>
                       Click &quot;Submit&quot; to submit your final answer
@@ -1001,7 +967,8 @@ int main() {
                       <div className="text-center">
                         <Play className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                         <p className="text-muted-foreground">
-                          Click &quot;Test Code&quot; to run test cases
+                          Click &quot;Run Test Cases&quot; to execute the
+                          sample tests
                         </p>
                       </div>
                     </div>

@@ -1,8 +1,8 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
-import { ArrowLeft, Clock, CheckCircle2, Award } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowLeft, Award, CheckCircle2, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,9 +13,22 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useGetStudentQuizletById } from "@/service";
 import { QuizletLevel } from "@/interface/quizlet/quizlet.interface";
+import { cn } from "@/utils/cn";
 
 interface Answer {
   questionIndex: number;
@@ -25,8 +38,7 @@ interface Answer {
 export default function TakeQuizPage() {
   const params = useParams();
   const router = useRouter();
-  const { toast } = useToast();
-  const id = parseInt(params.id as string);
+  const id = parseInt(params.id as string, 10);
 
   const { data: quizlet, isLoading } = useGetStudentQuizletById(id);
 
@@ -35,7 +47,6 @@ export default function TakeQuizPage() {
   const [timeElapsed, setTimeElapsed] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Timer
   useEffect(() => {
     const timer = setInterval(() => {
       setTimeElapsed((prev) => prev + 1);
@@ -51,21 +62,21 @@ export default function TakeQuizPage() {
       case QuizletLevel.Easy:
         return (
           <Badge className="bg-green-600 hover:bg-green-700">
-            <Award className="h-3 w-3 mr-1" />
+            <Award className="mr-1 h-3 w-3" />
             Easy
           </Badge>
         );
       case QuizletLevel.Medium:
         return (
           <Badge className="bg-yellow-600 hover:bg-yellow-700">
-            <Award className="h-3 w-3 mr-1" />
+            <Award className="mr-1 h-3 w-3" />
             Medium
           </Badge>
         );
       case QuizletLevel.Hard:
         return (
           <Badge className="bg-red-600 hover:bg-red-700">
-            <Award className="h-3 w-3 mr-1" />
+            <Award className="mr-1 h-3 w-3" />
             Hard
           </Badge>
         );
@@ -77,7 +88,7 @@ export default function TakeQuizPage() {
   if (isLoading) {
     return (
       <div className="container mx-auto p-6">
-        <div className="text-center py-12">
+        <div className="py-12 text-center">
           <p className="text-muted-foreground">Loading quiz...</p>
         </div>
       </div>
@@ -87,7 +98,7 @@ export default function TakeQuizPage() {
   if (!quizlet) {
     return (
       <div className="container mx-auto p-6">
-        <div className="text-center py-12">
+        <div className="py-12 text-center">
           <p className="text-destructive">Quiz not found</p>
           <Button className="mt-4" onClick={() => router.back()}>
             Go back
@@ -100,9 +111,13 @@ export default function TakeQuizPage() {
   const question = quizlet.listQuestion[currentQuestion];
   const totalQuestions = quizlet.listQuestion.length;
   const progress = ((currentQuestion + 1) / totalQuestions) * 100;
+  const answeredCount = answers.filter(
+    (answer) => answer.selectedAnswers.length > 0,
+  ).length;
+  const unansweredCount = totalQuestions - answeredCount;
 
   const currentAnswer = answers.find(
-    (a) => a.questionIndex === currentQuestion,
+    (answer) => answer.questionIndex === currentQuestion,
   );
   const selectedAnswers = currentAnswer?.selectedAnswers || [];
 
@@ -112,16 +127,16 @@ export default function TakeQuizPage() {
     let newSelectedAnswers: string[];
     if (isSingleChoice) {
       newSelectedAnswers = [answer];
+    } else if (selectedAnswers.includes(answer)) {
+      newSelectedAnswers = selectedAnswers.filter(
+        (selectedAnswer) => selectedAnswer !== answer,
+      );
     } else {
-      if (selectedAnswers.includes(answer)) {
-        newSelectedAnswers = selectedAnswers.filter((a) => a !== answer);
-      } else {
-        newSelectedAnswers = [...selectedAnswers, answer];
-      }
+      newSelectedAnswers = [...selectedAnswers, answer];
     }
 
     const newAnswers = answers.filter(
-      (a) => a.questionIndex !== currentQuestion,
+      (existingAnswer) => existingAnswer.questionIndex !== currentQuestion,
     );
     newAnswers.push({
       questionIndex: currentQuestion,
@@ -131,15 +146,6 @@ export default function TakeQuizPage() {
   };
 
   const handleNext = () => {
-    if (selectedAnswers.length === 0) {
-      toast({
-        title: "Please select an answer",
-        description: "You must choose at least one answer before continuing",
-        variant: "destructive",
-      });
-      return;
-    }
-
     if (currentQuestion < totalQuestions - 1) {
       setCurrentQuestion(currentQuestion + 1);
     }
@@ -152,38 +158,30 @@ export default function TakeQuizPage() {
   };
 
   const handleSubmit = () => {
-    if (answers.length < totalQuestions) {
-      toast({
-        title: "Incomplete",
-        description: "Please answer all questions before submitting",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsSubmitting(true);
+    const completedAnswers = answers.filter(
+      (answer) => answer.selectedAnswers.length > 0,
+    );
 
-    // Calculate score
     let correctCount = 0;
     let totalScore = 0;
     let earnedScore = 0;
 
-    quizlet.listQuestion.forEach((q, index) => {
-      totalScore += q.score;
-      const userAnswer = answers.find((a) => a.questionIndex === index);
+    quizlet.listQuestion.forEach((quizQuestion, index) => {
+      totalScore += quizQuestion.score;
 
-      if (userAnswer) {
-        const correctAnswers = q.correctAnswers.sort();
-        const userAnswers = userAnswer.selectedAnswers.sort();
+      const userAnswer = answers.find((answer) => answer.questionIndex === index);
+      if (!userAnswer) return;
 
-        if (JSON.stringify(correctAnswers) === JSON.stringify(userAnswers)) {
-          correctCount++;
-          earnedScore += q.score;
-        }
+      const correctAnswers = [...quizQuestion.correctAnswers].sort();
+      const userAnswers = [...userAnswer.selectedAnswers].sort();
+
+      if (JSON.stringify(correctAnswers) === JSON.stringify(userAnswers)) {
+        correctCount++;
+        earnedScore += quizQuestion.score;
       }
     });
 
-    // Navigate to result page with data
     const resultData = {
       quizletId: id,
       quizletTitle: quizlet.title,
@@ -192,7 +190,7 @@ export default function TakeQuizPage() {
       totalScore,
       earnedScore,
       timeElapsed,
-      answers,
+      answers: completedAnswers,
       questions: quizlet.listQuestion,
     };
 
@@ -203,16 +201,17 @@ export default function TakeQuizPage() {
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+    return `${mins.toString().padStart(2, "0")}:${secs
+      .toString()
+      .padStart(2, "0")}`;
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      <div className="container mx-auto p-6 space-y-6 max-w-4xl">
-        {/* Header */}
+      <div className="container mx-auto max-w-4xl space-y-6 p-6">
         <Card className="border-2 shadow-lg">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
+            <div className="mb-4 flex items-center justify-between gap-4">
               <div className="flex items-center gap-4">
                 <Button
                   variant="ghost"
@@ -231,26 +230,35 @@ export default function TakeQuizPage() {
                   </p>
                 </div>
               </div>
+
               <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-lg">
+                <div className="flex items-center gap-2 rounded-lg bg-primary/10 px-4 py-2">
                   <Clock className="h-5 w-5 text-primary" />
                   <span className="font-mono text-lg font-semibold text-primary">
                     {formatTime(timeElapsed)}
                   </span>
                 </div>
+                <div className="hidden rounded-lg border bg-background px-4 py-2 text-sm shadow-sm sm:block">
+                  <p className="font-medium text-foreground">
+                    {answeredCount}/{totalQuestions} answered
+                  </p>
+                  <p className="text-muted-foreground">
+                    {unansweredCount} remaining
+                  </p>
+                </div>
               </div>
             </div>
+
             <Progress value={progress} className="h-3" />
           </CardContent>
         </Card>
 
-        {/* Question Card */}
         <Card className="border-2 shadow-xl">
-          <CardHeader className="bg-gradient-to-r from-primary/5 to-purple-50 border-b-2">
+          <CardHeader className="border-b-2 bg-gradient-to-r from-primary/5 to-purple-50">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
-                <div className="flex items-center gap-3 mb-3">
-                  <Badge variant="outline" className="text-base px-3 py-1">
+                <div className="mb-3 flex items-center gap-3">
+                  <Badge variant="outline" className="px-3 py-1 text-base">
                     Question {currentQuestion + 1}
                   </Badge>
                   {getLevelBadge(question.level, question.isHidden)}
@@ -261,7 +269,7 @@ export default function TakeQuizPage() {
                 <CardDescription className="mt-3 flex items-center gap-2">
                   <Badge
                     variant="secondary"
-                    className="text-sm bg-blue-100 text-blue-700"
+                    className="bg-blue-100 text-sm text-blue-700"
                   >
                     {question.questionType === "SingleChoice"
                       ? "Single Choice"
@@ -276,50 +284,92 @@ export default function TakeQuizPage() {
               </div>
               <Badge
                 variant="secondary"
-                className="text-lg px-4 py-2 bg-blue-100 text-blue-700"
+                className="bg-blue-100 px-4 py-2 text-lg text-blue-700"
               >
                 {question.score} points
               </Badge>
             </div>
           </CardHeader>
-          <CardContent className="p-6 space-y-4">
-            {question.answers.map((answer, index) => {
-              const isSelected = selectedAnswers.includes(answer);
-              return (
-                <button
-                  key={index}
-                  onClick={() => handleAnswerToggle(answer)}
-                  className={`w-full text-left p-5 rounded-xl border-2 transition-all duration-200 ${isSelected
-                      ? "border-primary bg-primary/10 shadow-md scale-[1.02]"
-                      : "border-gray-200 hover:border-primary/50 hover:bg-gray-50"
-                    }`}
-                >
-                  <div className="flex items-center gap-4">
-                    <div
-                      className={`shrink-0 w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all ${isSelected
-                          ? "border-primary bg-primary"
-                          : "border-gray-300"
-                        }`}
-                    >
-                      {isSelected && (
-                        <CheckCircle2 className="h-5 w-5 text-white" />
+
+          <CardContent className="space-y-4 p-6">
+            {question.questionType === "SingleChoice" ? (
+              <RadioGroup
+                value={selectedAnswers[0] || ""}
+                onValueChange={handleAnswerToggle}
+                className="space-y-4"
+              >
+                {question.answers.map((answer, index) => {
+                  const isSelected = selectedAnswers.includes(answer);
+                  const optionId = `question-${currentQuestion}-option-${index}`;
+
+                  return (
+                    <label
+                      key={optionId}
+                      htmlFor={optionId}
+                      className={cn(
+                        "flex w-full cursor-pointer items-center gap-4 rounded-xl border-2 p-5 text-left transition-all duration-200",
+                        isSelected
+                          ? "scale-[1.02] border-primary bg-primary/10 shadow-md"
+                          : "border-gray-200 hover:border-primary/50 hover:bg-gray-50",
                       )}
-                    </div>
-                    <span className="font-mono text-base font-bold text-primary mr-2 bg-primary/10 px-3 py-1 rounded">
-                      {String.fromCharCode(65 + index)}.
-                    </span>
-                    <span className="flex-1 text-base">{answer}</span>
-                  </div>
-                </button>
-              );
-            })}
+                    >
+                      <RadioGroupItem
+                        id={optionId}
+                        value={answer}
+                        className="size-5 border-2"
+                      />
+                      <span className="mr-2 rounded bg-primary/10 px-3 py-1 font-mono text-base font-bold text-primary">
+                        {String.fromCharCode(65 + index)}.
+                      </span>
+                      <span className="flex-1 text-base">{answer}</span>
+                    </label>
+                  );
+                })}
+              </RadioGroup>
+            ) : (
+              <div className="space-y-4">
+                {question.answers.map((answer, index) => {
+                  const isSelected = selectedAnswers.includes(answer);
+                  const optionId = `question-${currentQuestion}-option-${index}`;
+
+                  return (
+                    <label
+                      key={optionId}
+                      htmlFor={optionId}
+                      className={cn(
+                        "flex w-full cursor-pointer items-center gap-4 rounded-xl border-2 p-5 text-left transition-all duration-200",
+                        isSelected
+                          ? "scale-[1.02] border-primary bg-primary/10 shadow-md"
+                          : "border-gray-200 hover:border-primary/50 hover:bg-gray-50",
+                      )}
+                    >
+                      <Checkbox
+                        id={optionId}
+                        checked={isSelected}
+                        onCheckedChange={() => handleAnswerToggle(answer)}
+                        className="size-5"
+                        aria-label={`Select answer ${String.fromCharCode(
+                          65 + index,
+                        )}`}
+                      />
+                      <span className="mr-2 rounded bg-primary/10 px-3 py-1 font-mono text-base font-bold text-primary">
+                        {String.fromCharCode(65 + index)}.
+                      </span>
+                      <span className="flex-1 text-base">{answer}</span>
+                      {isSelected && (
+                        <CheckCircle2 className="h-5 w-5 text-primary" />
+                      )}
+                    </label>
+                  );
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Navigation */}
         <Card className="border-2 shadow-lg">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
+            <div className="mb-4 flex items-center justify-between gap-4">
               <Button
                 variant="outline"
                 onClick={handlePrevious}
@@ -330,21 +380,27 @@ export default function TakeQuizPage() {
                 Previous
               </Button>
 
-              <div className="flex flex-wrap gap-2 justify-center">
+              <div className="flex flex-wrap justify-center gap-2">
                 {Array.from({ length: totalQuestions }).map((_, index) => {
                   const hasAnswer = answers.some(
-                    (a) => a.questionIndex === index,
+                    (answer) =>
+                      answer.questionIndex === index &&
+                      answer.selectedAnswers.length > 0,
                   );
+
                   return (
                     <button
                       key={index}
+                      type="button"
                       onClick={() => setCurrentQuestion(index)}
-                      className={`w-10 h-10 rounded-lg text-sm font-bold transition-all ${index === currentQuestion
-                          ? "bg-primary text-white shadow-lg scale-110"
+                      className={cn(
+                        "h-10 w-10 rounded-lg text-sm font-bold transition-all",
+                        index === currentQuestion
+                          ? "scale-110 bg-primary text-white shadow-lg"
                           : hasAnswer
-                            ? "bg-green-500 text-white border-2 border-green-600"
-                            : "bg-gray-200 text-gray-600 hover:bg-gray-300"
-                        }`}
+                            ? "border-2 border-green-600 bg-green-500 text-white"
+                            : "bg-gray-200 text-gray-600 hover:bg-gray-300",
+                      )}
                     >
                       {index + 1}
                     </button>
@@ -352,31 +408,66 @@ export default function TakeQuizPage() {
                 })}
               </div>
 
-              {currentQuestion === totalQuestions - 1 ? (
-                <Button
-                  onClick={handleSubmit}
-                  disabled={isSubmitting}
-                  size="lg"
-                  className="px-8 bg-green-600 hover:bg-green-700"
-                >
-                  {isSubmitting ? "Submitting..." : "Submit"}
-                </Button>
-              ) : (
-                <Button onClick={handleNext} size="lg" className="px-8">
-                  Next
-                </Button>
-              )}
+              <div className="flex items-center gap-2">
+                {currentQuestion < totalQuestions - 1 && (
+                  <Button onClick={handleNext} size="lg" className="px-8">
+                    Next
+                  </Button>
+                )}
+
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      disabled={isSubmitting}
+                      size="lg"
+                      className="bg-green-600 px-8 hover:bg-green-700"
+                    >
+                      {isSubmitting ? "Submitting..." : "Submit"}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Submit quiz now?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        {unansweredCount > 0
+                          ? `You still have ${unansweredCount} unanswered question${unansweredCount > 1 ? "s" : ""}. If you submit now, those questions will be counted as incorrect.`
+                          : "All questions are answered. Your result will be calculated immediately after submission."}
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Continue Quiz</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleSubmit}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        Confirm Submit
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
             </div>
-            <div className="text-center text-sm text-muted-foreground">
-              <span className="inline-flex items-center gap-2">
-                <span className="w-4 h-4 bg-green-500 rounded"></span>
-                Answered
-              </span>
-              <span className="mx-3">•</span>
-              <span className="inline-flex items-center gap-2">
-                <span className="w-4 h-4 bg-gray-200 rounded"></span>
-                Unanswered
-              </span>
+
+            <div className="flex flex-col gap-3 text-center text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center justify-center gap-3">
+                <span className="inline-flex items-center gap-2">
+                  <span className="h-4 w-4 rounded bg-green-500"></span>
+                  Answered
+                </span>
+                <span>•</span>
+                <span className="inline-flex items-center gap-2">
+                  <span className="h-4 w-4 rounded bg-gray-200"></span>
+                  Unanswered
+                </span>
+                <span>•</span>
+                <span className="inline-flex items-center gap-2">
+                  <span className="h-4 w-4 rounded bg-primary"></span>
+                  Current
+                </span>
+              </div>
+              <p>
+                {answeredCount} answered, {unansweredCount} remaining
+              </p>
             </div>
           </CardContent>
         </Card>
