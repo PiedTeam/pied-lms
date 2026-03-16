@@ -34,19 +34,17 @@ export default function EditQuizletPage() {
 
   const { mutate: updateQuizlet, isPending } = useUpdateQuizlet();
 
-  const [title, setTitle] = useState("");
-  const [isPublished, setIsPublished] = useState(false);
-  const [isHidden, setIsHidden] = useState(false);
-  const [level, setLevel] = useState<QuizletLevel>(1); // Default to Easy
-  const [questions, setQuestions] = useState<UpdateQuestionDto[]>([]);
+  const [formData, setFormData] = useState({
+    title: "",
+    isPublished: false,
+    isHidden: false,
+    level: null as QuizletLevel | null,
+    questions: [] as UpdateQuestionDto[],
+  });
 
   // Initialize state when quizlet data is loaded
   useEffect(() => {
     if (quizlet) {
-      const initialTitle = quizlet.title;
-      const initialIsPublished = quizlet.isPublished;
-      const initialIsHidden = quizlet.isHidden;
-      const initialLevel = quizlet.level;
       const initialQuestions = quizlet.listQuestion.map((q) => ({
         content: q.content,
         score: q.score,
@@ -57,21 +55,48 @@ export default function EditQuizletPage() {
         level: q.level,
       }));
 
-      setTitle(initialTitle);
-      setIsPublished(initialIsPublished);
-      setIsHidden(initialIsHidden);
-      setLevel(initialLevel);
-      setQuestions(initialQuestions);
+      const levelToSet =
+        quizlet.level ||
+        (initialQuestions.length > 0 ? initialQuestions[0].level : null);
+
+      setFormData({
+        title: quizlet.title,
+        isPublished: quizlet.isPublished,
+        isHidden: quizlet.isHidden,
+        level: levelToSet,
+        questions: initialQuestions,
+      });
     }
   }, [quizlet]);
+
+  const { title, isPublished, isHidden, level, questions } = formData;
+  const setTitle = (value: string) =>
+    setFormData((prev) => ({ ...prev, title: value }));
+  const setIsPublished = (value: boolean) =>
+    setFormData((prev) => ({ ...prev, isPublished: value }));
+  const setIsHidden = (value: boolean) =>
+    setFormData((prev) => ({ ...prev, isHidden: value }));
+  const setLevel = (value: QuizletLevel | null) =>
+    setFormData((prev) => ({ ...prev, level: value }));
+  const setQuestions = (value: UpdateQuestionDto[]) =>
+    setFormData((prev) => ({ ...prev, questions: value }));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!title.trim()) {
       toast({
-        title: "Lỗi",
-        description: "Vui lòng nhập tiêu đề",
+        title: "Error",
+        description: "Please enter a title",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!level) {
+      toast({
+        title: "Error",
+        description: "Please select a difficulty level",
         variant: "destructive",
       });
       return;
@@ -79,8 +104,8 @@ export default function EditQuizletPage() {
 
     if (questions.length === 0) {
       toast({
-        title: "Lỗi",
-        description: "Phải có ít nhất một câu hỏi",
+        title: "Error",
+        description: "At least one question is required",
         variant: "destructive",
       });
       return;
@@ -90,24 +115,24 @@ export default function EditQuizletPage() {
       const q = questions[i];
       if (!q.content.trim()) {
         toast({
-          title: "Lỗi",
-          description: `Câu hỏi ${i + 1}: Nội dung không được để trống`,
+          title: "Error",
+          description: `Question ${i + 1}: Content cannot be empty`,
           variant: "destructive",
         });
         return;
       }
       if (q.answers.length < 2) {
         toast({
-          title: "Lỗi",
-          description: `Câu hỏi ${i + 1}: Phải có ít nhất 2 đáp án`,
+          title: "Error",
+          description: `Question ${i + 1}: At least 2 answers are required`,
           variant: "destructive",
         });
         return;
       }
       if (q.correctAnswers.length === 0) {
         toast({
-          title: "Lỗi",
-          description: `Câu hỏi ${i + 1}: Phải chọn ít nhất một đáp án đúng`,
+          title: "Error",
+          description: `Question ${i + 1}: At least one correct answer must be selected`,
           variant: "destructive",
         });
         return;
@@ -128,14 +153,14 @@ export default function EditQuizletPage() {
       {
         onSuccess: (message) => {
           toast({
-            title: "Thành công",
+            title: "Success",
             description: message,
           });
           router.push(`/admin/quizlets`);
         },
         onError: (error: Error) => {
           toast({
-            title: "Lỗi",
+            title: "Error",
             description: error.message,
             variant: "destructive",
           });
@@ -147,7 +172,7 @@ export default function EditQuizletPage() {
   if (isLoading) {
     return (
       <div className="container mx-auto p-6">
-        <div className="text-center py-12">Đang tải...</div>
+        <div className="text-center py-12">Loading...</div>
       </div>
     );
   }
@@ -156,9 +181,9 @@ export default function EditQuizletPage() {
     return (
       <div className="container mx-auto p-6">
         <div className="text-center py-12">
-          <p className="text-destructive">Không tìm thấy quizlet</p>
+          <p className="text-destructive">Quizlet not found</p>
           <Button className="mt-4" onClick={() => router.back()}>
-            Quay lại
+            Back
           </Button>
         </div>
       </div>
@@ -172,51 +197,60 @@ export default function EditQuizletPage() {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            Chỉnh sửa Quizlet
-          </h1>
-          <p className="text-muted-foreground">Cập nhật thông tin quizlet</p>
+          <h1 className="text-3xl font-bold tracking-tight">Edit Quizlet</h1>
+          <p className="text-muted-foreground">Update quizlet information</p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Thông tin cơ bản</CardTitle>
+            <CardTitle>Basic Information</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="title">
-                Tiêu đề <span className="text-red-500">*</span>
+                Title <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="Nhập tiêu đề"
+                placeholder="Enter title"
                 required
               />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="level">
-                Độ khó <span className="text-red-500">*</span>
+                Difficulty <span className="text-red-500">*</span>
               </Label>
-              <Select
-                value={level.toString()}
-                onValueChange={(value) =>
-                  setLevel(parseInt(value) as QuizletLevel)
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Chọn độ khó" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">Dễ</SelectItem>
-                  <SelectItem value="2">Trung bình</SelectItem>
-                  <SelectItem value="3">Khó</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex gap-2">
+                <div className="flex-1 px-3 py-2 rounded-md border border-input bg-background text-sm">
+                  {level === 1
+                    ? "Easy"
+                    : level === 2
+                      ? "Medium"
+                      : level === 3
+                        ? "Hard"
+                        : "Not selected"}
+                </div>
+                <Select
+                  value={level?.toString() || ""}
+                  onValueChange={(value) =>
+                    setLevel(parseInt(value) as QuizletLevel)
+                  }
+                >
+                  <SelectTrigger className="w-32">
+                    <SelectValue placeholder="Change" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">Easy</SelectItem>
+                    <SelectItem value="2">Medium</SelectItem>
+                    <SelectItem value="3">Hard</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="flex items-center space-x-2">
@@ -226,7 +260,7 @@ export default function EditQuizletPage() {
                 onCheckedChange={setIsPublished}
               />
               <Label htmlFor="isPublished" className="cursor-pointer">
-                Xuất bản
+                Published
               </Label>
             </div>
 
@@ -237,7 +271,7 @@ export default function EditQuizletPage() {
                 onCheckedChange={setIsHidden}
               />
               <Label htmlFor="isHidden" className="cursor-pointer">
-                Ẩn level (độ khó) của quizlet
+                Hide difficulty level
               </Label>
             </div>
           </CardContent>
@@ -255,18 +289,18 @@ export default function EditQuizletPage() {
             onClick={() => router.back()}
             disabled={isPending}
           >
-            Hủy
+            Cancel
           </Button>
           <Button type="submit" disabled={isPending}>
             {isPending ? (
               <>
                 <Save className="mr-2 h-4 w-4 animate-spin" />
-                Đang lưu...
+                Saving...
               </>
             ) : (
               <>
                 <Save className="mr-2 h-4 w-4" />
-                Lưu thay đổi
+                Save Changes
               </>
             )}
           </Button>
