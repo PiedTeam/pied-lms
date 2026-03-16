@@ -18,10 +18,14 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useGetQuizletById, useUpdateQuizlet } from "@/service";
 import { QuizletEditForm } from "@/components/shared/QuizletEditForm";
-import type {
-  UpdateQuestionDto,
+import {
   QuizletLevel,
+  type UpdateQuestionDto,
 } from "@/interface/quizlet/quizlet.interface";
+import {
+  getQuizletLevelLabel,
+  normalizeQuizletLevel,
+} from "@/utils/quizlet-level.utils";
 
 export default function EditQuizletPage() {
   const params = useParams();
@@ -50,13 +54,14 @@ export default function EditQuizletPage() {
         score: q.score,
         answers: q.answers || [],
         correctAnswers: q.correctAnswers || [],
-        questionType: q.questionType === "SingleChoice" ? 0 : 1,
+        questionType:
+          q.questionType === "MultipleChoice" || q.type === 1 ? 1 : 0,
         isHidden: q.isHidden,
-        level: q.level,
+        level: normalizeQuizletLevel(q.level) ?? QuizletLevel.Easy,
       }));
 
       const levelToSet =
-        quizlet.level ||
+        normalizeQuizletLevel(quizlet.level) ??
         (initialQuestions.length > 0 ? initialQuestions[0].level : null);
 
       setFormData({
@@ -225,32 +230,24 @@ export default function EditQuizletPage() {
               <Label htmlFor="level">
                 Difficulty <span className="text-red-500">*</span>
               </Label>
-              <div className="flex gap-2">
-                <div className="flex-1 px-3 py-2 rounded-md border border-input bg-background text-sm">
-                  {level === 1
-                    ? "Easy"
-                    : level === 2
-                      ? "Medium"
-                      : level === 3
-                        ? "Hard"
-                        : "Not selected"}
-                </div>
-                <Select
-                  value={level?.toString() || ""}
-                  onValueChange={(value) =>
-                    setLevel(parseInt(value) as QuizletLevel)
-                  }
-                >
-                  <SelectTrigger className="w-32">
-                    <SelectValue placeholder="Change" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">Easy</SelectItem>
-                    <SelectItem value="2">Medium</SelectItem>
-                    <SelectItem value="3">Hard</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <Select
+                value={level?.toString()}
+                onValueChange={(value) =>
+                  setLevel(parseInt(value, 10) as QuizletLevel)
+                }
+              >
+                <SelectTrigger id="level" className="w-full">
+                  <SelectValue placeholder="Select difficulty" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">Easy</SelectItem>
+                  <SelectItem value="2">Medium</SelectItem>
+                  <SelectItem value="3">Hard</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Current selection: {getQuizletLevelLabel(level)}
+              </p>
             </div>
 
             <div className="flex items-center space-x-2">

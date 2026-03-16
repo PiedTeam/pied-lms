@@ -3,6 +3,7 @@
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
+  AlertCircle,
   ArrowLeft,
   Award,
   CheckCircle2,
@@ -105,12 +106,14 @@ export default function QuizResultPage() {
     );
   }
 
-  const percentage = (result.earnedScore / result.totalScore) * 100;
+  const percentage =
+    result.totalScore > 0 ? (result.earnedScore / result.totalScore) * 100 : 0;
   const isPassed = percentage >= 60;
   const answeredCount = result.answers.filter(
     (answer) => answer.selectedAnswers.length > 0,
   ).length;
   const unansweredCount = result.totalQuestions - answeredCount;
+  const incorrectCount = Math.max(answeredCount - result.correctCount, 0);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -210,15 +213,12 @@ export default function QuizResultPage() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-red-600">
-                {result.totalQuestions - result.correctCount}
+                {incorrectCount}
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
-                {(
-                  ((result.totalQuestions - result.correctCount) /
-                    result.totalQuestions) *
-                  100
-                ).toFixed(1)}
-                % wrong
+                {answeredCount > 0
+                  ? `${((incorrectCount / answeredCount) * 100).toFixed(1)}% of answered questions`
+                  : "No wrong answers"}
               </p>
             </CardContent>
           </Card>
@@ -269,9 +269,16 @@ export default function QuizResultPage() {
               );
               const userAnswers = userAnswer?.selectedAnswers || [];
               const correctAnswers = question.correctAnswers;
+              const isUnanswered = userAnswers.length === 0;
               const isCorrect =
                 JSON.stringify([...userAnswers].sort()) ===
                 JSON.stringify([...correctAnswers].sort());
+              const correctAnswerSummaries = question.answers
+                .map((answer, answerIndex) => ({
+                  answer,
+                  label: String.fromCharCode(65 + answerIndex),
+                }))
+                .filter(({ answer }) => correctAnswers.includes(answer));
 
               return (
                 <div key={questionIndex} className="space-y-4">
@@ -311,11 +318,12 @@ export default function QuizResultPage() {
                               <CheckCircle2 className="mr-2 h-4 w-4" />
                               Correct
                             </Badge>
-                          ) : userAnswers.length === 0 ? (
+                          ) : isUnanswered ? (
                             <Badge
                               variant="outline"
-                              className="border-dashed px-4 py-2 text-base"
+                              className="border-amber-300 bg-amber-50 px-4 py-2 text-base text-amber-800"
                             >
+                              <AlertCircle className="mr-2 h-4 w-4" />
                               Not answered
                             </Badge>
                           ) : (
@@ -340,7 +348,9 @@ export default function QuizResultPage() {
                             <div
                               key={answerIndex}
                               className={`rounded-xl border-2 p-4 transition-all ${
-                                isCorrectAnswer
+                                isUnanswered
+                                  ? "border-slate-200 bg-slate-50/70"
+                                  : isCorrectAnswer
                                   ? "border-green-500 bg-green-50 shadow-md"
                                   : isUserAnswer
                                     ? "border-red-500 bg-red-50 shadow-md"
@@ -354,21 +364,55 @@ export default function QuizResultPage() {
                                 <span className="flex-1 text-base">
                                   {answer}
                                 </span>
-                                {isCorrectAnswer && (
+                                {!isUnanswered && isCorrectAnswer && (
                                   <Badge className="bg-green-600 text-white">
                                     Correct Answer
                                   </Badge>
                                 )}
-                                {isUserAnswer && !isCorrectAnswer && (
+                                {!isUnanswered &&
+                                  isUserAnswer &&
+                                  !isCorrectAnswer && (
                                   <Badge variant="destructive">
                                     You selected
                                   </Badge>
-                                )}
+                                  )}
                               </div>
                             </div>
                           );
                         })}
                       </div>
+
+                      {isUnanswered && (
+                        <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-4">
+                          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                            <div className="flex items-start gap-3">
+                              <div className="rounded-full bg-amber-100 p-2 text-amber-700">
+                                <AlertCircle className="h-4 w-4" />
+                              </div>
+                              <div>
+                                <p className="text-sm font-semibold text-amber-900">
+                                  You did not answer this question.
+                                </p>
+                                <p className="text-sm text-amber-800">
+                                  The correct answer is shown below instead of
+                                  being highlighted inside the options.
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex flex-wrap gap-2">
+                              {correctAnswerSummaries.map(({ answer, label }) => (
+                                <div
+                                  key={`${label}-${answer}`}
+                                  className="rounded-full border border-green-200 bg-white px-3 py-1 text-sm font-medium text-green-700 shadow-sm"
+                                >
+                                  {label}. {answer}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
