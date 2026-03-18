@@ -12,7 +12,6 @@ import {
   FileSpreadsheet,
   Settings,
   FileText,
-  TestTube,
 } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { useAuthStore } from "@/store/auth.store";
@@ -46,11 +45,6 @@ const menuItems = [
     title: "Quizlets",
     href: "/admin/quizlets",
     icon: FileSpreadsheet,
-  },
-  {
-    title: "Test Cases",
-    href: "/admin/testcases",
-    icon: TestTube,
   },
   {
     title: "Users",

@@ -107,10 +107,10 @@ export function QuizletEditForm({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Câu hỏi ({questions.length})</CardTitle>
+        <CardTitle>Questions ({questions.length})</CardTitle>
         <div className="pt-4">
           <Input
-            placeholder="Tìm kiếm câu hỏi..."
+            placeholder="Search questions..."
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
@@ -133,7 +133,7 @@ export function QuizletEditForm({
                     <div className="flex-1 space-y-4">
                       <div className="space-y-2">
                         <Label htmlFor={`question-${originalIndex}`}>
-                          Nội dung câu hỏi{" "}
+                          Question Content{" "}
                           <span className="text-red-500">*</span>
                         </Label>
                         <Textarea
@@ -146,7 +146,7 @@ export function QuizletEditForm({
                               e.target.value,
                             )
                           }
-                          placeholder="Nhập nội dung câu hỏi"
+                          placeholder="Enter question content"
                           rows={2}
                         />
                       </div>
@@ -154,7 +154,7 @@ export function QuizletEditForm({
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label htmlFor={`score-${originalIndex}`}>
-                            Điểm số
+                            Points
                           </Label>
                           <Input
                             id={`score-${originalIndex}`}
@@ -173,7 +173,7 @@ export function QuizletEditForm({
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor={`type-${originalIndex}`}>
-                            Loại câu hỏi
+                            Question Type
                           </Label>
                           <select
                             id={`type-${originalIndex}`}
@@ -187,8 +187,8 @@ export function QuizletEditForm({
                             }
                             className="w-full h-10 px-3 rounded-md border border-input bg-background"
                           >
-                            <option value="0">Một đáp án</option>
-                            <option value="1">Nhiều đáp án</option>
+                            <option value="0">Single Choice</option>
+                            <option value="1">Multiple Choice</option>
                           </select>
                         </div>
                       </div>
@@ -196,7 +196,7 @@ export function QuizletEditForm({
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label htmlFor={`level-${originalIndex}`}>
-                            Độ khó
+                            Difficulty
                           </Label>
                           <select
                             id={`level-${originalIndex}`}
@@ -210,9 +210,9 @@ export function QuizletEditForm({
                             }
                             className="w-full h-10 px-3 rounded-md border border-input bg-background"
                           >
-                            <option value="1">Dễ</option>
-                            <option value="2">Trung bình</option>
-                            <option value="3">Khó</option>
+                            <option value="1">Easy</option>
+                            <option value="2">Medium</option>
+                            <option value="3">Hard</option>
                           </select>
                         </div>
                         <div className="flex items-center space-x-2 pt-8">
@@ -231,14 +231,14 @@ export function QuizletEditForm({
                             htmlFor={`isHidden-${originalIndex}`}
                             className="cursor-pointer"
                           >
-                            Ẩn level câu hỏi
+                            Hide question difficulty
                           </Label>
                         </div>
                       </div>
 
                       <div className="space-y-2">
                         <Label>
-                          Đáp án <span className="text-red-500">*</span>
+                          Answers <span className="text-red-500">*</span>
                         </Label>
                         <div className="space-y-2">
                           {question.answers.map((answer, aIndex) => (
@@ -268,7 +268,7 @@ export function QuizletEditForm({
                                     e.target.value,
                                   )
                                 }
-                                placeholder={`Đáp án ${String.fromCharCode(65 + aIndex)}`}
+                                placeholder={`Answer ${String.fromCharCode(65 + aIndex)}`}
                                 className="flex-1"
                               />
                             </div>
@@ -276,8 +276,8 @@ export function QuizletEditForm({
                         </div>
                         <p className="text-xs text-muted-foreground">
                           {question.questionType === 0
-                            ? "Chọn 1 checkbox để đánh dấu đáp án đúng (Một đáp án)"
-                            : "Chọn checkbox để đánh dấu các đáp án đúng (Nhiều đáp án)"}
+                            ? "Check 1 checkbox to mark the correct answer (Single Choice)"
+                            : "Check checkboxes to mark correct answers (Multiple Choice)"}
                         </p>
                       </div>
                     </div>
@@ -301,7 +301,7 @@ export function QuizletEditForm({
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
                 <span className="text-sm text-muted-foreground">
-                  Trang {currentPage} / {totalPages}
+                  Page {currentPage} / {totalPages}
                 </span>
                 <Button
                   variant="outline"
@@ -319,8 +319,8 @@ export function QuizletEditForm({
         ) : (
           <p className="text-center text-muted-foreground">
             {searchQuery
-              ? "Không tìm thấy câu hỏi phù hợp"
-              : "Không có câu hỏi nào"}
+              ? "No matching questions found"
+              : "No questions available"}
           </p>
         )}
       </CardContent>

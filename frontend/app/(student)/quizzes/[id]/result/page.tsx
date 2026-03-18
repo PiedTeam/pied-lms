@@ -3,14 +3,15 @@
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
+  AlertCircle,
   ArrowLeft,
-  CheckCircle2,
-  XCircle,
-  Clock,
-  Trophy,
   Award,
-  RotateCcw,
+  CheckCircle2,
+  Clock,
   Home,
+  RotateCcw,
+  Trophy,
+  XCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,8 +22,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
 import { QuizletLevel } from "@/interface/quizlet/quizlet.interface";
 
 interface QuizResult {
@@ -69,21 +70,21 @@ export default function QuizResultPage() {
       case QuizletLevel.Easy:
         return (
           <Badge className="bg-green-600 hover:bg-green-700">
-            <Award className="h-3 w-3 mr-1" />
+            <Award className="mr-1 h-3 w-3" />
             Easy
           </Badge>
         );
       case QuizletLevel.Medium:
         return (
           <Badge className="bg-yellow-600 hover:bg-yellow-700">
-            <Award className="h-3 w-3 mr-1" />
+            <Award className="mr-1 h-3 w-3" />
             Medium
           </Badge>
         );
       case QuizletLevel.Hard:
         return (
           <Badge className="bg-red-600 hover:bg-red-700">
-            <Award className="h-3 w-3 mr-1" />
+            <Award className="mr-1 h-3 w-3" />
             Hard
           </Badge>
         );
@@ -95,7 +96,7 @@ export default function QuizResultPage() {
   if (!result) {
     return (
       <div className="container mx-auto p-6">
-        <div className="text-center py-12">
+        <div className="py-12 text-center">
           <p className="text-destructive">Result not found</p>
           <Button className="mt-4" onClick={() => router.push("/quizzes")}>
             Back to Quiz List
@@ -105,8 +106,14 @@ export default function QuizResultPage() {
     );
   }
 
-  const percentage = (result.earnedScore / result.totalScore) * 100;
+  const percentage =
+    result.totalScore > 0 ? (result.earnedScore / result.totalScore) * 100 : 0;
   const isPassed = percentage >= 60;
+  const answeredCount = result.answers.filter(
+    (answer) => answer.selectedAnswers.length > 0,
+  ).length;
+  const unansweredCount = result.totalQuestions - answeredCount;
+  const incorrectCount = Math.max(answeredCount - result.correctCount, 0);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -116,8 +123,7 @@ export default function QuizResultPage() {
 
   return (
     <div className="min-h-screen bg-linear-to-br from-blue-50 via-white to-purple-50">
-      <div className="container mx-auto p-6 space-y-6 max-w-6xl">
-        {/* Header */}
+      <div className="container mx-auto max-w-6xl space-y-6 p-6">
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
@@ -133,7 +139,6 @@ export default function QuizResultPage() {
           </div>
         </div>
 
-        {/* Result Summary Card */}
         <Card
           className={`border-4 shadow-2xl ${
             isPassed
@@ -141,20 +146,20 @@ export default function QuizResultPage() {
               : "border-orange-500 bg-linear-to-br from-orange-50 to-white"
           }`}
         >
-          <CardHeader className="text-center pb-4">
-            <div className="flex justify-center mb-4">
+          <CardHeader className="pb-4 text-center">
+            <div className="mb-4 flex justify-center">
               {isPassed ? (
-                <div className="p-6 bg-green-100 rounded-full">
+                <div className="rounded-full bg-green-100 p-6">
                   <Trophy className="h-16 w-16 text-green-600" />
                 </div>
               ) : (
-                <div className="p-6 bg-orange-100 rounded-full">
+                <div className="rounded-full bg-orange-100 p-6">
                   <RotateCcw className="h-16 w-16 text-orange-600" />
                 </div>
               )}
             </div>
-            <CardTitle className="text-4xl font-bold mb-2">
-              {isPassed ? "Congratulations! 🎉" : "Keep trying! 💪"}
+            <CardTitle className="mb-2 text-4xl font-bold">
+              {isPassed ? "Congratulations!" : "Keep trying!"}
             </CardTitle>
             <CardDescription className="text-lg">
               {isPassed
@@ -162,17 +167,16 @@ export default function QuizResultPage() {
                 : "You need at least 60% to pass. Try again!"}
             </CardDescription>
             <div className="mt-6">
-              <div className="text-6xl font-bold text-primary mb-2">
+              <div className="mb-2 text-6xl font-bold text-primary">
                 {percentage.toFixed(1)}%
               </div>
-              <Progress value={percentage} className="h-4 mt-4" />
+              <Progress value={percentage} className="mt-4 h-4" />
             </div>
           </CardHeader>
         </Card>
 
-        {/* Stats Grid */}
-        <div className="grid gap-6 md:grid-cols-4">
-          <Card className="border-2 shadow-lg hover:shadow-xl transition-shadow">
+        <div className="grid gap-6 md:grid-cols-5">
+          <Card className="border-2 shadow-lg transition-shadow hover:shadow-xl">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Score</CardTitle>
               <Trophy className="h-5 w-5 text-yellow-600" />
@@ -181,13 +185,13 @@ export default function QuizResultPage() {
               <div className="text-3xl font-bold text-primary">
                 {result.earnedScore.toFixed(1)}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="mt-1 text-xs text-muted-foreground">
                 / {result.totalScore} points
               </p>
             </CardContent>
           </Card>
 
-          <Card className="border-2 shadow-lg hover:shadow-xl transition-shadow">
+          <Card className="border-2 shadow-lg transition-shadow hover:shadow-xl">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Correct</CardTitle>
               <CheckCircle2 className="h-5 w-5 text-green-600" />
@@ -196,33 +200,45 @@ export default function QuizResultPage() {
               <div className="text-3xl font-bold text-green-600">
                 {result.correctCount}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="mt-1 text-xs text-muted-foreground">
                 / {result.totalQuestions} questions
               </p>
             </CardContent>
           </Card>
 
-          <Card className="border-2 shadow-lg hover:shadow-xl transition-shadow">
+          <Card className="border-2 shadow-lg transition-shadow hover:shadow-xl">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Wrong</CardTitle>
               <XCircle className="h-5 w-5 text-red-600" />
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-red-600">
-                {result.totalQuestions - result.correctCount}
+                {incorrectCount}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {(
-                  ((result.totalQuestions - result.correctCount) /
-                    result.totalQuestions) *
-                  100
-                ).toFixed(1)}
-                % wrong
+              <p className="mt-1 text-xs text-muted-foreground">
+                {answeredCount > 0
+                  ? `${((incorrectCount / answeredCount) * 100).toFixed(1)}% of answered questions`
+                  : "No wrong answers"}
               </p>
             </CardContent>
           </Card>
 
-          <Card className="border-2 shadow-lg hover:shadow-xl transition-shadow">
+          <Card className="border-2 shadow-lg transition-shadow hover:shadow-xl">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Skipped</CardTitle>
+              <ArrowLeft className="h-5 w-5 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-muted-foreground">
+                {unansweredCount}
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                unanswered questions
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-2 shadow-lg transition-shadow hover:shadow-xl">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Time Taken</CardTitle>
               <Clock className="h-5 w-5 text-blue-600" />
@@ -232,51 +248,52 @@ export default function QuizResultPage() {
                 {Math.floor(result.timeElapsed / 60)}:
                 {(result.timeElapsed % 60).toString().padStart(2, "0")}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="mt-1 text-xs text-muted-foreground">
                 {formatTime(result.timeElapsed)}
               </p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Answer Review */}
         <Card className="border-2 shadow-lg">
-          <CardHeader className="bg-linear-to-r from-primary/5 to-purple-50 border-b-2">
+          <CardHeader className="border-b-2 bg-linear-to-r from-primary/5 to-purple-50">
             <CardTitle className="text-2xl">Review Answers</CardTitle>
             <CardDescription className="text-base">
               Review your answers and the correct solutions
             </CardDescription>
           </CardHeader>
-          <CardContent className="p-6 space-y-8">
-            {result.questions.map((question, qIndex) => {
+          <CardContent className="space-y-8 p-6">
+            {result.questions.map((question, questionIndex) => {
               const userAnswer = result.answers.find(
-                (a) => a.questionIndex === qIndex,
+                (answer) => answer.questionIndex === questionIndex,
               );
               const userAnswers = userAnswer?.selectedAnswers || [];
               const correctAnswers = question.correctAnswers;
+              const isUnanswered = userAnswers.length === 0;
               const isCorrect =
-                JSON.stringify(userAnswers.sort()) ===
-                JSON.stringify(correctAnswers.sort());
+                JSON.stringify([...userAnswers].sort()) ===
+                JSON.stringify([...correctAnswers].sort());
 
               return (
-                <div key={qIndex} className="space-y-4">
+                <div key={questionIndex} className="space-y-4">
                   <div className="flex items-start gap-4">
                     <Badge
                       variant="outline"
-                      className="text-base px-4 py-2 mt-1"
+                      className="mt-1 px-4 py-2 text-base"
                     >
-                      Question {qIndex + 1}
+                      Question {questionIndex + 1}
                     </Badge>
+
                     <div className="flex-1">
-                      <div className="flex items-start justify-between gap-4 mb-4">
+                      <div className="mb-4 flex items-start justify-between gap-4">
                         <div className="flex-1">
-                          <p className="font-semibold text-lg mb-3">
+                          <p className="mb-3 text-lg font-semibold">
                             {question.content}
                           </p>
-                          <div className="flex items-center gap-2 flex-wrap">
+                          <div className="flex flex-wrap items-center gap-2">
                             <Badge
                               variant="secondary"
-                              className="text-sm bg-blue-100 text-blue-700"
+                              className="bg-blue-100 text-sm text-blue-700"
                             >
                               {question.questionType === "SingleChoice"
                                 ? "Single Choice"
@@ -288,18 +305,27 @@ export default function QuizResultPage() {
                             </Badge>
                           </div>
                         </div>
+
                         <div className="flex items-center gap-2">
                           {isCorrect ? (
-                            <Badge className="bg-green-600 text-white px-4 py-2 text-base">
-                              <CheckCircle2 className="h-4 w-4 mr-2" />
+                            <Badge className="bg-green-600 px-4 py-2 text-base text-white">
+                              <CheckCircle2 className="mr-2 h-4 w-4" />
                               Correct
+                            </Badge>
+                          ) : isUnanswered ? (
+                            <Badge
+                              variant="outline"
+                              className="border-amber-300 bg-amber-50 px-4 py-2 text-base text-amber-800"
+                            >
+                              <AlertCircle className="mr-2 h-4 w-4" />
+                              Not answered
                             </Badge>
                           ) : (
                             <Badge
                               variant="destructive"
                               className="px-4 py-2 text-base"
                             >
-                              <XCircle className="h-4 w-4 mr-2" />
+                              <XCircle className="mr-2 h-4 w-4" />
                               Incorrect
                             </Badge>
                           )}
@@ -307,48 +333,69 @@ export default function QuizResultPage() {
                       </div>
 
                       <div className="space-y-3">
-                        {question.answers.map((answer, aIndex) => {
-                          const isUserAnswer = userAnswers.includes(answer);
-                          const isCorrectAnswer =
-                            correctAnswers.includes(answer);
+                        {/* Only show answer options if the student got it correct */}
+                        {isCorrect ? (
+                          question.answers.map((answer, answerIndex) => {
+                            const isUserAnswer = userAnswers.includes(answer);
+                            const isCorrectAnswer =
+                              correctAnswers.includes(answer);
 
-                          return (
-                            <div
-                              key={aIndex}
-                              className={`p-4 rounded-xl border-2 transition-all ${
-                                isCorrectAnswer
-                                  ? "border-green-500 bg-green-50 shadow-md"
-                                  : isUserAnswer
-                                    ? "border-red-500 bg-red-50 shadow-md"
+                            return (
+                              <div
+                                key={answerIndex}
+                                className={`rounded-xl border-2 p-4 transition-all ${
+                                  isCorrectAnswer
+                                    ? "border-green-500 bg-green-50 shadow-md"
                                     : "border-gray-200 bg-white"
-                              }`}
-                            >
-                              <div className="flex items-center gap-3">
-                                <span className="font-mono text-base font-bold bg-primary/10 px-3 py-1 rounded">
-                                  {String.fromCharCode(65 + aIndex)}.
-                                </span>
-                                <span className="flex-1 text-base">
-                                  {answer}
-                                </span>
-                                {isCorrectAnswer && (
-                                  <Badge className="bg-green-600 text-white">
-                                    Correct Answer
-                                  </Badge>
-                                )}
-                                {isUserAnswer && !isCorrectAnswer && (
-                                  <Badge variant="destructive">
-                                    You selected
-                                  </Badge>
-                                )}
+                                }`}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <span className="rounded bg-primary/10 px-3 py-1 font-mono text-base font-bold">
+                                    {String.fromCharCode(65 + answerIndex)}.
+                                  </span>
+                                  <span className="flex-1 text-base">
+                                    {answer}
+                                  </span>
+                                  {isCorrectAnswer && (
+                                    <Badge className="bg-green-600 text-white">
+                                      Correct Answer
+                                    </Badge>
+                                  )}
+                                  {isUserAnswer && (
+                                    <Badge className="bg-green-600 text-white">
+                                      You selected
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })
+                        ) : (
+                          /* Show message for incorrect or unanswered questions */
+                          <div className="rounded-xl border border-red-200 bg-red-50/80 p-4">
+                            <div className="flex items-start gap-3">
+                              <div className="rounded-full bg-red-100 p-2 text-red-700">
+                                <XCircle className="h-4 w-4" />
+                              </div>
+                              <div>
+                                <p className="text-sm font-semibold text-red-900">
+                                  {isUnanswered
+                                    ? "You did not answer this question."
+                                    : "Bạn đã chọn sai."}
+                                </p>
+                                <p className="text-sm text-red-800">
+                                  The correct answer is not shown. Please review
+                                  the material and try again.
+                                </p>
                               </div>
                             </div>
-                          );
-                        })}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
 
-                  {qIndex < result.questions.length - 1 && (
+                  {questionIndex < result.questions.length - 1 && (
                     <Separator className="my-6" />
                   )}
                 </div>
@@ -357,8 +404,7 @@ export default function QuizResultPage() {
           </CardContent>
         </Card>
 
-        {/* Action Buttons */}
-        <div className="flex gap-4 justify-center pb-8">
+        <div className="flex justify-center gap-4 pb-8">
           <Button
             variant="outline"
             size="lg"
@@ -371,7 +417,7 @@ export default function QuizResultPage() {
           <Button
             size="lg"
             onClick={() => router.push(`/quizzes/${id}`)}
-            className="px-8 bg-primary hover:bg-primary/90"
+            className="bg-primary px-8 hover:bg-primary/90"
           >
             <RotateCcw className="mr-2 h-5 w-5" />
             Try Again
