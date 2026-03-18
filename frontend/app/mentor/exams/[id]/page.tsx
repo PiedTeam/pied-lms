@@ -4,6 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Calendar, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { TestCasesList } from "@/components/shared/TestCasesList";
 import { useGetExamById } from "@/services";
 
 export default function ExamDetailPage() {
@@ -128,6 +129,8 @@ export default function ExamDetailPage() {
           </div>
         </CardContent>
       </Card>
+
+      <TestCasesList examId={examId} examTitle={exam.title} />
     </div>
   );
 }

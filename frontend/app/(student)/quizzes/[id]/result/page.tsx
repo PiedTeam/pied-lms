@@ -273,12 +273,6 @@ export default function QuizResultPage() {
               const isCorrect =
                 JSON.stringify([...userAnswers].sort()) ===
                 JSON.stringify([...correctAnswers].sort());
-              const correctAnswerSummaries = question.answers
-                .map((answer, answerIndex) => ({
-                  answer,
-                  label: String.fromCharCode(65 + answerIndex),
-                }))
-                .filter(({ answer }) => correctAnswers.includes(answer));
 
               return (
                 <div key={questionIndex} className="space-y-4">
@@ -339,80 +333,65 @@ export default function QuizResultPage() {
                       </div>
 
                       <div className="space-y-3">
-                        {question.answers.map((answer, answerIndex) => {
-                          const isUserAnswer = userAnswers.includes(answer);
-                          const isCorrectAnswer =
-                            correctAnswers.includes(answer);
+                        {/* Only show answer options if the student got it correct */}
+                        {isCorrect ? (
+                          question.answers.map((answer, answerIndex) => {
+                            const isUserAnswer = userAnswers.includes(answer);
+                            const isCorrectAnswer =
+                              correctAnswers.includes(answer);
 
-                          return (
-                            <div
-                              key={answerIndex}
-                              className={`rounded-xl border-2 p-4 transition-all ${
-                                isUnanswered
-                                  ? "border-slate-200 bg-slate-50/70"
-                                  : isCorrectAnswer
-                                  ? "border-green-500 bg-green-50 shadow-md"
-                                  : isUserAnswer
-                                    ? "border-red-500 bg-red-50 shadow-md"
+                            return (
+                              <div
+                                key={answerIndex}
+                                className={`rounded-xl border-2 p-4 transition-all ${
+                                  isCorrectAnswer
+                                    ? "border-green-500 bg-green-50 shadow-md"
                                     : "border-gray-200 bg-white"
-                              }`}
-                            >
-                              <div className="flex items-center gap-3">
-                                <span className="rounded bg-primary/10 px-3 py-1 font-mono text-base font-bold">
-                                  {String.fromCharCode(65 + answerIndex)}.
-                                </span>
-                                <span className="flex-1 text-base">
-                                  {answer}
-                                </span>
-                                {!isUnanswered && isCorrectAnswer && (
-                                  <Badge className="bg-green-600 text-white">
-                                    Correct Answer
-                                  </Badge>
-                                )}
-                                {!isUnanswered &&
-                                  isUserAnswer &&
-                                  !isCorrectAnswer && (
-                                  <Badge variant="destructive">
-                                    You selected
-                                  </Badge>
+                                }`}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <span className="rounded bg-primary/10 px-3 py-1 font-mono text-base font-bold">
+                                    {String.fromCharCode(65 + answerIndex)}.
+                                  </span>
+                                  <span className="flex-1 text-base">
+                                    {answer}
+                                  </span>
+                                  {isCorrectAnswer && (
+                                    <Badge className="bg-green-600 text-white">
+                                      Correct Answer
+                                    </Badge>
                                   )}
+                                  {isUserAnswer && (
+                                    <Badge className="bg-green-600 text-white">
+                                      You selected
+                                    </Badge>
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      {isUnanswered && (
-                        <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-4">
-                          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                            );
+                          })
+                        ) : (
+                          /* Show message for incorrect or unanswered questions */
+                          <div className="rounded-xl border border-red-200 bg-red-50/80 p-4">
                             <div className="flex items-start gap-3">
-                              <div className="rounded-full bg-amber-100 p-2 text-amber-700">
-                                <AlertCircle className="h-4 w-4" />
+                              <div className="rounded-full bg-red-100 p-2 text-red-700">
+                                <XCircle className="h-4 w-4" />
                               </div>
                               <div>
-                                <p className="text-sm font-semibold text-amber-900">
-                                  You did not answer this question.
+                                <p className="text-sm font-semibold text-red-900">
+                                  {isUnanswered
+                                    ? "You did not answer this question."
+                                    : "Bạn đã chọn sai."}
                                 </p>
-                                <p className="text-sm text-amber-800">
-                                  The correct answer is shown below instead of
-                                  being highlighted inside the options.
+                                <p className="text-sm text-red-800">
+                                  The correct answer is not shown. Please review
+                                  the material and try again.
                                 </p>
                               </div>
                             </div>
-
-                            <div className="flex flex-wrap gap-2">
-                              {correctAnswerSummaries.map(({ answer, label }) => (
-                                <div
-                                  key={`${label}-${answer}`}
-                                  className="rounded-full border border-green-200 bg-white px-3 py-1 text-sm font-medium text-green-700 shadow-sm"
-                                >
-                                  {label}. {answer}
-                                </div>
-                              ))}
-                            </div>
                           </div>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
                   </div>
 

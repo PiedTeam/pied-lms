@@ -4,7 +4,6 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Calendar, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { TestCasesList } from "@/components/shared/TestCasesList";
 import { useGetExamById } from "@/services";
 
@@ -132,24 +131,7 @@ export default function ExamDetailPage() {
         </CardContent>
       </Card>
 
-      <div className="space-y-4">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight">Test Cases</h2>
-            <p className="text-sm text-muted-foreground">
-              Manage test cases directly inside this exam.
-            </p>
-          </div>
-          <Button
-            variant="outline"
-            onClick={() => router.push("/admin/testcases")}
-          >
-            Open Full Test Case Page
-          </Button>
-        </div>
-        <Separator />
-        <TestCasesList examId={examId} examTitle={exam.title} />
-      </div>
+      <TestCasesList examId={examId} examTitle={exam.title} />
     </div>
   );
 }
