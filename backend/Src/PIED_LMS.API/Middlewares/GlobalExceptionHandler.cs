@@ -24,6 +24,8 @@ internal sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> log
             _ => StatusCodes.Status500InternalServerError
         };
 
+        httpContext.Items["ErrorMessage"] = exception.Message;
+
         if (statusCode != 499)
         {
             if (statusCode >= 500)

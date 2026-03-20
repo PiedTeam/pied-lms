@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Contract.Services.TestCase;
+using PIED_LMS.Presentation.Extensions;
 
 namespace PIED_LMS.Presentation.APIs;
 
@@ -53,51 +54,30 @@ public class TestCaseEndpoints : ICarterModule
     // POST /api/testcases
     private static async Task<IResult> CreateTestCase(
         CreateTestCaseCommand request,
-        IMediator mediator)
+        IMediator mediator,
+        HttpContext context)
     {
         var result = await mediator.Send(request);
-
-        if (!result.Success)
-        {
-            if (result.ErrorCode == "UNAUTHORIZED")
-                return Results.Json(result, statusCode: StatusCodes.Status401Unauthorized);
-
-            if (result.ErrorCode == "EXAM_NOT_FOUND")
-                return Results.NotFound(result);
-
-            return Results.BadRequest(result);
-        }
-
-        return Results.Json(result, statusCode: StatusCodes.Status201Created);
+        return result.ToActionResult(context);
     }
 
     // GET /api/testcases/{examId}
     private static async Task<IResult> GetTestCasesByExam(
         Guid examId,
-        IMediator mediator)
+        IMediator mediator,
+        HttpContext context)
     {
         var query = new GetTestCasesByExamQuery(examId);
         var result = await mediator.Send(query);
-
-        if (!result.Success)
-        {
-            if (result.ErrorCode == "UNAUTHORIZED")
-                return Results.Json(result, statusCode: StatusCodes.Status401Unauthorized);
-
-            if (result.ErrorCode == "EXAM_NOT_FOUND")
-                return Results.NotFound(result);
-
-            return Results.BadRequest(result);
-        }
-
-        return Results.Ok(result);
+        return result.ToActionResult(context);
     }
 
     // PUT /api/testcases/{testcaseId}
     private static async Task<IResult> UpdateTestCase(
         Guid testcaseId,
         UpdateTestCaseRequest request,
-        IMediator mediator)
+        IMediator mediator,
+        HttpContext context)
     {
         var command = new UpdateTestCaseCommand(
             testcaseId,
@@ -108,41 +88,18 @@ public class TestCaseEndpoints : ICarterModule
             request.IsHidden
         );
         var result = await mediator.Send(command);
-
-        if (!result.Success)
-        {
-            if (result.ErrorCode == "UNAUTHORIZED")
-                return Results.Json(result, statusCode: StatusCodes.Status401Unauthorized);
-
-            if (result.ErrorCode is "TESTCASE_NOT_FOUND" or "EXAM_NOT_FOUND")
-                return Results.NotFound(result);
-
-            return Results.BadRequest(result);
-        }
-
-        return Results.Ok(result);
+        return result.ToActionResult(context);
     }
 
     // DELETE /api/testcases/{testcaseId}
     private static async Task<IResult> DeleteTestCase(
         Guid testcaseId,
-        IMediator mediator)
+        IMediator mediator,
+        HttpContext context)
     {
         var command = new DeleteTestCaseCommand(testcaseId);
         var result = await mediator.Send(command);
-
-        if (!result.Success)
-        {
-            if (result.ErrorCode == "UNAUTHORIZED")
-                return Results.Json(result, statusCode: StatusCodes.Status401Unauthorized);
-
-            if (result.ErrorCode == "TESTCASE_NOT_FOUND")
-                return Results.NotFound(result);
-
-            return Results.BadRequest(result);
-        }
-
-        return Results.Ok(result);
+        return result.ToActionResult(context);
     }
 }
 

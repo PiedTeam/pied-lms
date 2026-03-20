@@ -8,6 +8,7 @@ using PIED_LMS.Application.UserCases.Queries.Submission;
 using PIED_LMS.Contract.Services.Compiler;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Contract.Services.Submission;
+using PIED_LMS.Presentation.Extensions;
 
 namespace PIED_LMS.Presentation.APIs;
 
@@ -43,46 +44,36 @@ public sealed class StudentSubmissionEndpoints : ICarterModule
         Guid examId,
         SubmitCodeRequest request,
         IMediator mediator,
+        HttpContext context,
         CancellationToken cancellationToken)
     {
         var command = new SubmitCodeCommand(examId, request.Code, request.Language, request.OptimizationLevel);
         var response = await mediator.Send(command, cancellationToken);
-        return ToResult(response);
+        return response.ToActionResult(context);
     }
 
     private static async Task<IResult> GetSubmissions(
         Guid examId,
         IMediator mediator,
+        HttpContext context,
         CancellationToken cancellationToken)
     {
         var query = new GetStudentSubmissionsQuery(examId);
         var response = await mediator.Send(query, cancellationToken);
-        return ToResult(response);
+        return response.ToActionResult(context);
     }
 
     private static async Task<IResult> GetSubmissionById(
         Guid id,
         IMediator mediator,
+        HttpContext context,
         CancellationToken cancellationToken)
     {
         var query = new GetSubmissionByIdQuery(id);
         var response = await mediator.Send(query, cancellationToken);
-        return ToResult(response);
+        return response.ToActionResult(context);
     }
 
-    private static IResult ToResult<T>(ServiceResponse<T> response)
-    {
-        if (response.Success) return Results.Ok(response);
-        
-        return response.ErrorCode switch
-        {
-            "UNAUTHORIZED" => Results.Json(response, statusCode: StatusCodes.Status401Unauthorized),
-            "FORBIDDEN" => Results.Json(response, statusCode: StatusCodes.Status403Forbidden),
-            "EXAM_NOT_FOUND" => Results.NotFound(response),
-            "NOT_FOUND" => Results.NotFound(response),
-            _ => Results.BadRequest(response) // or internal server error based on your convention
-        };
-    }
 }
 
 public sealed record SubmitCodeRequest(
