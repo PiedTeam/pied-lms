@@ -71,15 +71,23 @@ public class UpdateQuestionQuizHandler(
 
             if (qDto.Answers != null)
             {
-                foreach(var ansText in qDto.Answers)
+                for (int i = 0; i < qDto.Answers.Count; i++)
                 {
+                    var ansText = qDto.Answers[i];
                     bool isCorrect = qDto.CorrectAnswers != null && 
                                      qDto.CorrectAnswers.Any(ca => ca.Trim().Equals(ansText.Trim(), StringComparison.OrdinalIgnoreCase));
+                    
+                    string? explanation = null;
+                    if (qDto.Explanations != null && i < qDto.Explanations.Count)
+                    {
+                        explanation = qDto.Explanations[i];
+                    }
                     
                     newQ.Answers.Add(new QuestionAnswer
                     {
                         Content = ansText,
-                        IsCorrect = isCorrect
+                        IsCorrect = isCorrect,
+                        Explanation = explanation
                     });
                 }
             }

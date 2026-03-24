@@ -63,7 +63,8 @@ public class QuestionQuizService(IExcelService excelService, IUnitOfWork unitOfW
                         question.Answers.Add(new QuestionAnswer
                         {
                             Content = row.Option1,
-                            IsCorrect = IsCorrect(row.Option1, row.CorrectAnswer)
+                            IsCorrect = IsCorrect(row.Option1, row.CorrectAnswer),
+                            Explanation = row.Explanation1
                         });
                     }
 
@@ -73,7 +74,8 @@ public class QuestionQuizService(IExcelService excelService, IUnitOfWork unitOfW
                         question.Answers.Add(new QuestionAnswer
                         {
                             Content = row.Option2,
-                            IsCorrect = IsCorrect(row.Option2, row.CorrectAnswer)
+                            IsCorrect = IsCorrect(row.Option2, row.CorrectAnswer),
+                            Explanation = row.Explanation2
                         });
                     }
 
@@ -83,7 +85,8 @@ public class QuestionQuizService(IExcelService excelService, IUnitOfWork unitOfW
                         question.Answers.Add(new QuestionAnswer
                         {
                             Content = row.Option3,
-                            IsCorrect = IsCorrect(row.Option3, row.CorrectAnswer)
+                            IsCorrect = IsCorrect(row.Option3, row.CorrectAnswer),
+                            Explanation = row.Explanation3
                         });
                     }
 
@@ -93,7 +96,8 @@ public class QuestionQuizService(IExcelService excelService, IUnitOfWork unitOfW
                         question.Answers.Add(new QuestionAnswer
                         {
                             Content = row.Option4,
-                            IsCorrect = IsCorrect(row.Option4, row.CorrectAnswer)
+                            IsCorrect = IsCorrect(row.Option4, row.CorrectAnswer),
+                            Explanation = row.Explanation4
                         });
                     }
 
@@ -147,6 +151,10 @@ public class QuestionQuizService(IExcelService excelService, IUnitOfWork unitOfW
         public string Option3 { get; set; } = string.Empty;
         public string Option4 { get; set; } = string.Empty;
         public string CorrectAnswer { get; set; } = string.Empty;
+        public string? Explanation1 { get; set; }
+        public string? Explanation2 { get; set; }
+        public string? Explanation3 { get; set; }
+        public string? Explanation4 { get; set; }
         public bool? IsHidden { get; set; }
         public QuizletLevel? Level { get; set; }
     }

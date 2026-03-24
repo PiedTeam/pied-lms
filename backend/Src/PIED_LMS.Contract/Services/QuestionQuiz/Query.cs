@@ -41,6 +41,7 @@ public record QuestionResponse(
     QuestionType Type,
     List<string> Options,
     List<string> CorrectAnswers,
+    List<string?> Explanations,
     bool IsHidden,
     QuizletLevel Level
 );

@@ -53,6 +53,7 @@ public class GetQuizletByIdHandler(
                 ques.Score,
                 ques.Answers?.Select(a => a.Content).ToList() ?? [],
                 ques.Answers?.Where(a => a.IsCorrect).Select(a => a.Content).ToList() ?? [],
+                ques.Answers?.Select(a => a.Explanation).ToList() ?? [],
                 ques.QuestionType.ToString(),
                 ques.IsHidden,
                 (QuizletLevel)ques.Level
