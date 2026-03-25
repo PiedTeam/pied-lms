@@ -47,13 +47,9 @@ public class QuestionQuizService(IExcelService excelService, IUnitOfWork unitOfW
                         Content = row.Content,
                         Score = 1, // Default score
                         QuestionType = PIED_LMS.Domain.Constants.QuestionType.MultipleChoice,
-                        // If Excel row has explicitly mapped them, use them; otherwise, we can fallback to quizlet. 
-                        // But since QuestionImportDto has default false/Easy, we might trust the row if mapped correctly.
-                        // Wait, looking at QuestionImportDto: public bool IsHidden { get; set; } = false; public QuizletLevel Level { get; set; } = QuizletLevel.Easy;
-                        // To allow quizlet level as fallback, we'd need to know if the user actually typed it in excel or if it's default.
-                        // Assuming the requirement is "Excel values override Quizlet values"
                         IsHidden = row.IsHidden ?? isHidden,
                         Level = row.Level.HasValue ? (int)row.Level.Value : (int)level,
+                        Explanation = row.Explanation,
                         Answers = []
                     };
 
@@ -63,8 +59,7 @@ public class QuestionQuizService(IExcelService excelService, IUnitOfWork unitOfW
                         question.Answers.Add(new QuestionAnswer
                         {
                             Content = row.Option1,
-                            IsCorrect = IsCorrect(row.Option1, row.CorrectAnswer),
-                            Explanation = row.Explanation1
+                            IsCorrect = IsCorrect(row.Option1, row.CorrectAnswer)
                         });
                     }
 
@@ -74,8 +69,7 @@ public class QuestionQuizService(IExcelService excelService, IUnitOfWork unitOfW
                         question.Answers.Add(new QuestionAnswer
                         {
                             Content = row.Option2,
-                            IsCorrect = IsCorrect(row.Option2, row.CorrectAnswer),
-                            Explanation = row.Explanation2
+                            IsCorrect = IsCorrect(row.Option2, row.CorrectAnswer)
                         });
                     }
 
@@ -85,8 +79,7 @@ public class QuestionQuizService(IExcelService excelService, IUnitOfWork unitOfW
                         question.Answers.Add(new QuestionAnswer
                         {
                             Content = row.Option3,
-                            IsCorrect = IsCorrect(row.Option3, row.CorrectAnswer),
-                            Explanation = row.Explanation3
+                            IsCorrect = IsCorrect(row.Option3, row.CorrectAnswer)
                         });
                     }
 
@@ -96,8 +89,7 @@ public class QuestionQuizService(IExcelService excelService, IUnitOfWork unitOfW
                         question.Answers.Add(new QuestionAnswer
                         {
                             Content = row.Option4,
-                            IsCorrect = IsCorrect(row.Option4, row.CorrectAnswer),
-                            Explanation = row.Explanation4
+                            IsCorrect = IsCorrect(row.Option4, row.CorrectAnswer)
                         });
                     }
 
@@ -151,10 +143,7 @@ public class QuestionQuizService(IExcelService excelService, IUnitOfWork unitOfW
         public string Option3 { get; set; } = string.Empty;
         public string Option4 { get; set; } = string.Empty;
         public string CorrectAnswer { get; set; } = string.Empty;
-        public string? Explanation1 { get; set; }
-        public string? Explanation2 { get; set; }
-        public string? Explanation3 { get; set; }
-        public string? Explanation4 { get; set; }
+        public string? Explanation { get; set; }
         public bool? IsHidden { get; set; }
         public QuizletLevel? Level { get; set; }
     }

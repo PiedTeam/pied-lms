@@ -66,6 +66,7 @@ public class UpdateQuestionQuizHandler(
                 QuestionType = ParseQuestionType(qDto.QuestionType),
                 IsHidden = qDto.IsHidden,
                 Level = (int)qDto.Level,
+                Explanation = qDto.Explanation,
                 Answers = []
             };
 
@@ -77,17 +78,10 @@ public class UpdateQuestionQuizHandler(
                     bool isCorrect = qDto.CorrectAnswers != null && 
                                      qDto.CorrectAnswers.Any(ca => ca.Trim().Equals(ansText.Trim(), StringComparison.OrdinalIgnoreCase));
                     
-                    string? explanation = null;
-                    if (qDto.Explanations != null && i < qDto.Explanations.Count)
-                    {
-                        explanation = qDto.Explanations[i];
-                    }
-                    
                     newQ.Answers.Add(new QuestionAnswer
                     {
                         Content = ansText,
-                        IsCorrect = isCorrect,
-                        Explanation = explanation
+                        IsCorrect = isCorrect
                     });
                 }
             }
