@@ -15,8 +15,6 @@ public class QuestionAnswerConfiguration : IEntityTypeConfiguration<QuestionAnsw
         builder.Property(x => x.Content).IsRequired();
         
         builder.Property(x => x.IsCorrect).IsRequired();
-        
-        builder.Property(x => x.Explanation).IsRequired(false);
 
         builder.HasOne(x => x.Question)
             .WithMany(q => q.Answers)
