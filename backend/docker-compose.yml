@@ -83,6 +83,11 @@ services:
         restart: unless-stopped
         environment:
             - GF_SECURITY_ADMIN_PASSWORD=admin
+            - GF_SMTP_ENABLED=true
+            - GF_SMTP_HOST=smtp.gmail.com:587
+            - GF_SMTP_USER=nemnguyenhoang2907@gmail.com
+            - GF_SMTP_PASSWORD=temv rspf xvuo tloa
+            - GF_SMTP_FROM_ADDRESS=nemnguyenhoang2907@gmail.com
         ports:
             - "3000:3000"
         volumes:

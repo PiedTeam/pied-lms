@@ -72,6 +72,16 @@ public class ExamEndpoints : ICarterModule
             .Produces<ServiceResponse<List<ExamInRoomResponse>>>(StatusCodes.Status400BadRequest)
             .Produces<ServiceResponse<List<ExamInRoomResponse>>>(StatusCodes.Status403Forbidden)
             .Produces<ServiceResponse<List<ExamInRoomResponse>>>(StatusCodes.Status404NotFound);
+
+        // POST /api/exams/import - Import Exam + TestCases from Excel
+        group.MapPost("/import", ImportExam)
+            .WithName("ImportExam")
+            .WithOpenApi()
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
+            .DisableAntiforgery()
+            .Produces<ServiceResponse<ExamResponse>>()
+            .Produces<ServiceResponse<ExamResponse>>(StatusCodes.Status400BadRequest)
+            .Accepts<IFormFile>("multipart/form-data");
     }
 
     // POST /api/exams
@@ -158,6 +168,17 @@ public class ExamEndpoints : ICarterModule
     {
         var query = new VerifyRoomCodeAndGetExamsQuery(request.ExamRoomId, request.RoomCode);
         var result = await mediator.Send(query);
+        return result.ToActionResult(context);
+    }
+
+    // POST /api/exams/import
+    private static async Task<IResult> ImportExam(
+        IFormFile file,
+        IMediator mediator,
+        HttpContext context)
+    {
+        var command = new ImportExamCommand(file);
+        var result = await mediator.Send(command);
         return result.ToActionResult(context);
     }
 }
