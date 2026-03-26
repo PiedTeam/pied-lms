@@ -179,7 +179,10 @@ export default function AdminToolsPage() {
                 <Button
                   className="w-full"
                   size="lg"
-                  onClick={() => setShowExcelForm(true)}
+                  onClick={() => {
+                    setShowExcelForm(true);
+                    setShowManualForm(false);
+                  }}
                 >
                   <Upload className="mr-2 h-5 w-5" />
                   Import from Excel
@@ -189,7 +192,10 @@ export default function AdminToolsPage() {
                   className="w-full"
                   size="lg"
                   variant="outline"
-                  onClick={() => setShowManualForm(true)}
+                  onClick={() => {
+                    setShowManualForm(true);
+                    setShowExcelForm(false);
+                  }}
                 >
                   <Plus className="mr-2 h-5 w-5" />
                   Manual Import
@@ -212,32 +218,36 @@ export default function AdminToolsPage() {
                 )}
               </div>
 
-              <div className="space-y-3">
-                <Button
-                  variant="secondary"
-                  className="w-full"
-                  onClick={handleDownloadTemplate}
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  Download Sample Excel File
-                </Button>
+              {!showManualForm && (
+                <div className="space-y-3">
+                  <Button
+                    variant="secondary"
+                    className="w-full"
+                    onClick={handleDownloadTemplate}
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    Download Sample Excel File
+                  </Button>
 
-                <div className="bg-muted p-4 rounded-lg space-y-2">
-                  <h4 className="text-sm font-medium">Excel File Structure:</h4>
-                  <div className="bg-background p-3 rounded text-xs font-mono">
-                    <div className="grid grid-cols-3 gap-2 font-semibold border-b pb-2 mb-2">
-                      <div>Email</div>
-                      <div>FirstName</div>
-                      <div>LastName</div>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2 text-muted-foreground">
-                      <div>student@example.com</div>
-                      <div>Nguyen Van</div>
-                      <div>A</div>
+                  <div className="bg-muted p-4 rounded-lg space-y-2">
+                    <h4 className="text-sm font-medium">
+                      Excel File Structure:
+                    </h4>
+                    <div className="bg-background p-3 rounded text-xs font-mono">
+                      <div className="grid grid-cols-3 gap-2 font-semibold border-b pb-2 mb-2">
+                        <div>Email</div>
+                        <div>FirstName</div>
+                        <div>LastName</div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 text-muted-foreground">
+                        <div>student@example.com</div>
+                        <div>Nguyen Van</div>
+                        <div>A</div>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
