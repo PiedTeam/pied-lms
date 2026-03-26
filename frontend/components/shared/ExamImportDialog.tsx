@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   CheckCircle2,
   Download,
@@ -8,55 +9,53 @@ import {
   Loader2,
   TriangleAlert,
   Upload,
-  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { useToast } from "@/hooks/use-toast";
-import { useImportStudents } from "@/service";
-import { ADMIN_MESSAGES } from "@/constants/messages";
-import type { StudentImportValidationResult } from "@/interface/admin/admin.interface";
 import {
-  StudentImportError,
-  createStudentImportError,
-  downloadStudentImportTemplate,
-  formatFileSize,
-  isValidStudentImportFile,
-  parseStudentImportFile,
-} from "@/utils/student-import.utils";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
+import { useImportExamFromExcel } from "@/service";
+import type { ExamsListProps } from "@/interface/components/shared.types";
+import type { ExamImportValidationResult } from "@/interface/exam/exam.interface";
+import {
+  createExamImportError,
+  downloadExamImportTemplate,
+  ExamImportError,
+  formatImportFileSize,
+  isValidExamImportFile,
+  parseExamImportFile,
+} from "@/utils/exam-import.utils";
 
-interface ExcelImportInlineFormProps {
-  onClose: () => void;
-  onSuccess: () => void;
+interface ExamImportDialogProps {
+  basePath: ExamsListProps["basePath"];
 }
 
-export function ExcelImportInlineForm({
-  onClose,
-  onSuccess,
-}: ExcelImportInlineFormProps) {
+export function ExamImportDialog({ basePath }: ExamImportDialogProps) {
+  const router = useRouter();
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isOpen, setIsOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [progress, setProgress] = useState(0);
   const [statusMessage, setStatusMessage] = useState("");
   const [validationResult, setValidationResult] =
-    useState<StudentImportValidationResult | null>(null);
-  const [errorState, setErrorState] = useState<StudentImportError | null>(null);
+    useState<ExamImportValidationResult | null>(null);
+  const [errorState, setErrorState] = useState<ExamImportError | null>(null);
   const [isPreparing, setIsPreparing] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const { mutateAsync: importStudents, isPending: isImporting } =
-    useImportStudents();
+  const { mutateAsync: importExam, isPending: isImporting } =
+    useImportExamFromExcel();
 
   const isBusy = isPreparing || isImporting;
-
-  useEffect(() => {
-    if (fileInputRef.current) {
-      fileInputRef.current.focus();
-    }
-  }, []);
 
   const resetState = () => {
     setFile(null);
@@ -67,6 +66,13 @@ export function ExcelImportInlineForm({
 
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
+    }
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (!open) {
+      resetState();
     }
   };
 
@@ -83,8 +89,8 @@ export function ExcelImportInlineForm({
       return;
     }
 
-    if (!isValidStudentImportFile(selectedFile)) {
-      const error = new StudentImportError(
+    if (!isValidExamImportFile(selectedFile)) {
+      const error = new ExamImportError(
         "Only Excel files (.xlsx, .xls) are accepted.",
       );
 
@@ -104,11 +110,10 @@ export function ExcelImportInlineForm({
   };
 
   const handleDownloadTemplate = () => {
-    downloadStudentImportTemplate();
-
+    downloadExamImportTemplate();
     toast({
       title: "Template downloaded",
-      description: "The sample Excel template is ready to use.",
+      description: "The exam import template is ready to use.",
     });
   };
 
@@ -116,9 +121,8 @@ export function ExcelImportInlineForm({
     event.preventDefault();
 
     if (!file) {
-      const error = new StudentImportError("Please select an Excel file.");
+      const error = new ExamImportError("Please select an Excel file.");
       setErrorState(error);
-
       toast({
         title: "Missing file",
         description: error.message,
@@ -134,55 +138,52 @@ export function ExcelImportInlineForm({
     setStatusMessage("Reading file...");
 
     try {
-      const parsedResult = await parseStudentImportFile(file, setProgress);
+      const parsedResult = await parseExamImportFile(file, setProgress);
       setValidationResult(parsedResult);
 
       if (parsedResult.issues.length > 0) {
-        throw new StudentImportError(
+        throw new ExamImportError(
           "The file contains validation issues.",
           parsedResult.issues,
         );
       }
 
-      if (parsedResult.students.length === 0) {
-        throw new StudentImportError(
-          "The file does not contain any valid students to import.",
+      if (parsedResult.testCases.length === 0) {
+        throw new ExamImportError(
+          "The file does not contain any valid test cases to import.",
         );
       }
 
-      setStatusMessage("Uploading validated students...");
-      setProgress(90);
+      setStatusMessage("Importing exam and test cases...");
 
-      const response = await importStudents({
-        students: parsedResult.students,
+      const result = await importExam({
+        title: parsedResult.title,
+        description: parsedResult.description,
+        totalMarks: parsedResult.totalMarks,
+        passingMarks: parsedResult.passingMarks,
+        testCases: parsedResult.testCases,
+        onProgress: ({ percentage, message }) => {
+          setProgress(percentage);
+          setStatusMessage(message);
+        },
       });
-
-      setProgress(100);
-      setStatusMessage("Import completed.");
 
       toast({
-        title: "Import completed",
-        description:
-          response.message || ADMIN_MESSAGES.SUCCESS.STUDENTS_IMPORTED,
-      });
-      toast({
-        title: "Password setup emails sent",
-        description:
-          "Each imported student will receive an email to set their password.",
+        title: "Import Successful",
+        description: `${result.createdTestCases} test case(s) were imported successfully.`,
       });
 
-      resetState();
-      onSuccess();
+      handleOpenChange(false);
+      router.push(`${basePath}/exams/${result.exam.id}`);
     } catch (error) {
-      const normalizedError = createStudentImportError(error);
+      const normalizedError = createExamImportError(error);
       setErrorState(normalizedError);
       setProgress(0);
       setStatusMessage("");
 
       toast({
         title: "Import failed",
-        description:
-          normalizedError.message || ADMIN_MESSAGES.ERROR.IMPORT_STUDENTS_FAILED,
+        description: normalizedError.message,
         variant: "destructive",
       });
     } finally {
@@ -190,36 +191,27 @@ export function ExcelImportInlineForm({
     }
   };
 
-  const handleClose = () => {
-    resetState();
-    onClose();
-  };
-
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-        <div className="space-y-1">
-          <CardTitle>Import from Excel</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Upload an Excel file, validate it in the browser, then import the
-            student list.
-          </p>
-        </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleClose}
-          aria-label="Close form"
-          disabled={isBusy}
-        >
-          <X className="h-4 w-4" />
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild>
+        <Button variant="outline">
+          <Upload className="mr-2 h-4 w-4" />
+          Import from Excel
         </Button>
-      </CardHeader>
-      <CardContent>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[720px]">
+        <DialogHeader>
+          <DialogTitle>Import Exam from Excel</DialogTitle>
+          <DialogDescription>
+            Upload a template-based Excel file to create an exam and its test
+            cases in one flow.
+          </DialogDescription>
+        </DialogHeader>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid gap-2">
             <div className="flex items-center justify-between gap-2">
-              <Label htmlFor="student-import-file">
+              <Label htmlFor="exam-import-file">
                 Excel file <span className="text-red-500">*</span>
               </Label>
               <Button
@@ -235,7 +227,7 @@ export function ExcelImportInlineForm({
             </div>
             <Input
               ref={fileInputRef}
-              id="student-import-file"
+              id="exam-import-file"
               type="file"
               accept=".xlsx,.xls"
               onChange={handleFileChange}
@@ -243,9 +235,8 @@ export function ExcelImportInlineForm({
               disabled={isBusy}
             />
             <p className="text-xs text-muted-foreground">
-              Required headers: <span className="font-medium">Email</span>,{" "}
-              <span className="font-medium">FirstName</span>, and{" "}
-              <span className="font-medium">LastName</span>.
+              Required columns: Exam Title, Points, Test Case Input, Expected
+              Output. Maximum file size: 5 MB. Maximum rows: 200.
             </p>
           </div>
 
@@ -256,14 +247,13 @@ export function ExcelImportInlineForm({
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{file.name}</p>
                   <p className="text-xs text-muted-foreground">
-                    {formatFileSize(file.size)}
+                    {formatImportFileSize(file.size)}
                   </p>
                   {validationResult && (
                     <p className="mt-2 text-xs text-muted-foreground">
-                      Detected {validationResult.validRows} valid student
-                      {validationResult.validRows === 1 ? "" : "s"} from{" "}
-                      {validationResult.totalRows} data row
-                      {validationResult.totalRows === 1 ? "" : "s"}.
+                      Ready to create exam &quot;{validationResult.title}&quot; with{" "}
+                      {validationResult.validRows} valid test case
+                      {validationResult.validRows === 1 ? "" : "s"}.
                     </p>
                   )}
                 </div>
@@ -288,18 +278,13 @@ export function ExcelImportInlineForm({
               <AlertDescription>
                 {errorState.details.length > 0 ? (
                   <ul className="mt-2 list-disc space-y-1 pl-5">
-                    {errorState.details.slice(0, 8).map((issue) => (
+                    {errorState.details.slice(0, 10).map((issue) => (
                       <li key={issue}>{issue}</li>
                     ))}
                   </ul>
                 ) : (
                   <p className="mt-1">
-                    Review the file and try importing again.
-                  </p>
-                )}
-                {errorState.details.length > 8 && (
-                  <p className="mt-2 text-xs">
-                    Showing the first 8 issues. Please fix the file and retry.
+                    Review the file structure and try importing again.
                   </p>
                 )}
               </AlertDescription>
@@ -311,28 +296,53 @@ export function ExcelImportInlineForm({
               <CheckCircle2 className="h-4 w-4" />
               <AlertTitle>File is ready to import</AlertTitle>
               <AlertDescription>
-                {validationResult.validRows} student
-                {validationResult.validRows === 1 ? "" : "s"} passed validation
-                and will be sent to the backend.
+                {validationResult.title} will be created with{" "}
+                {validationResult.totalMarks} points, {validationResult.passingMarks}{" "}
+                passing marks, and {validationResult.validRows} test case
+                {validationResult.validRows === 1 ? "" : "s"}.
               </AlertDescription>
             </Alert>
           )}
 
-          <Button type="submit" disabled={isBusy || !file} className="w-full">
-            {isBusy ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Importing Students...
-              </>
-            ) : (
-              <>
-                <Upload className="mr-2 h-4 w-4" />
-                Import Students
-              </>
-            )}
-          </Button>
+          <div className="rounded-lg border bg-slate-50 p-4 text-sm text-slate-700">
+            <p className="font-medium">Template notes</p>
+            <ul className="mt-2 list-disc space-y-1 pl-5">
+              <li>Repeat exam-level data only on the first row if you want.</li>
+              <li>
+                Later rows can leave Exam Title, Description, and Points blank.
+              </li>
+              <li>
+                Use line breaks in Test Case Input and Expected Output if needed.
+              </li>
+              <li>Hidden accepts TRUE/FALSE, YES/NO, or 1/0.</li>
+            </ul>
+          </div>
+
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => handleOpenChange(false)}
+              disabled={isBusy}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isBusy || !file}>
+              {isBusy ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Importing...
+                </>
+              ) : (
+                <>
+                  <Upload className="mr-2 h-4 w-4" />
+                  Import Exam
+                </>
+              )}
+            </Button>
+          </div>
         </form>
-      </CardContent>
-    </Card>
+      </DialogContent>
+    </Dialog>
   );
 }

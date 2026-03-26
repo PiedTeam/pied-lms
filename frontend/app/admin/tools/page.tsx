@@ -43,9 +43,9 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useApproveMentor, useGetAllUsers } from "@/service";
 import { ADMIN_MESSAGES } from "@/constants/messages";
-import * as XLSX from "xlsx";
 import { ExcelImportInlineForm } from "@/components/admin/ExcelImportInlineForm";
 import { ManualImportInlineForm } from "@/components/admin/ManualImportInlineForm";
+import { downloadStudentImportTemplate } from "@/utils/student-import.utils";
 
 export default function AdminToolsPage() {
   const { toast } = useToast();
@@ -72,19 +72,12 @@ export default function AdminToolsPage() {
     ) || [];
 
   const handleDownloadTemplate = () => {
-    const sampleData = [
-      { Email: "student1@example.com", FirstName: "Nguyen Van", LastName: "A" },
-      { Email: "student2@example.com", FirstName: "Tran Thi", LastName: "B" },
-      { Email: "student3@example.com", FirstName: "Le Van", LastName: "C" },
-    ];
+    downloadStudentImportTemplate();
 
-    const ws = XLSX.utils.json_to_sheet(sampleData);
-    ws["!cols"] = [{ wch: 30 }, { wch: 20 }, { wch: 20 }];
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Students");
-    XLSX.writeFile(wb, "student_import_template.xlsx");
-
-    toast({ title: "Success", description: "Template file downloaded" });
+    toast({
+      title: "Template downloaded",
+      description: "The sample Excel template is ready to use.",
+    });
   };
 
   const handleCopyId = (id: string) => {
@@ -171,7 +164,8 @@ export default function AdminToolsPage() {
             <CardHeader>
               <CardTitle>Import Student List</CardTitle>
               <CardDescription>
-                Import students via Excel file or manually
+                Import students from Excel or add them manually in English-only
+                admin tooling.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -223,7 +217,7 @@ export default function AdminToolsPage() {
                 </Button>
 
                 <div className="bg-muted p-4 rounded-lg space-y-2">
-                  <h4 className="text-sm font-medium">Excel File Structure:</h4>
+                  <h4 className="text-sm font-medium">Excel file structure</h4>
                   <div className="bg-background p-3 rounded text-xs font-mono">
                     <div className="grid grid-cols-3 gap-2 font-semibold border-b pb-2 mb-2">
                       <div>Email</div>
@@ -409,7 +403,7 @@ export default function AdminToolsPage() {
               </Dialog>
 
               <div className="mt-4 bg-muted p-4 rounded-lg space-y-2">
-                <h4 className="text-sm font-medium">Instructions:</h4>
+                <h4 className="text-sm font-medium">Instructions</h4>
                 <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
                   <li>Select a user from the list</li>
                   <li>Or copy the User ID using the Copy icon</li>

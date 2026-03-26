@@ -13,8 +13,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
-import type { QuizletResponse } from "@/interface/quizlet/quizlet.interface";
 import type { QuizletViewDetailProps } from "@/interface/components/shared.types";
+import { getQuizAnswerExplanation } from "@/utils/quiz-answer.utils";
 
 export function QuizletViewDetail({ quizlet }: QuizletViewDetailProps) {
   const [currentPage, setCurrentPage] = useState(1);
@@ -89,31 +89,39 @@ export function QuizletViewDetail({ quizlet }: QuizletViewDetailProps) {
                   <div className="ml-10 space-y-2">
                     {question.answers && question.answers.length > 0 ? (
                       question.answers.map((answer, optIndex) => {
+                        const explanation = getQuizAnswerExplanation(answer);
                         const isCorrect =
-                          question.correctAnswers?.includes(answer);
+                          question.correctAnswers?.includes(answer.content);
                         return (
                           <div
                             key={optIndex}
-                            className={`flex items-center gap-2 p-2 rounded ${
+                            className={`rounded p-3 ${
                               isCorrect
                                 ? "bg-green-50 border border-green-200"
                                 : "bg-muted"
                             }`}
                           >
-                            <span className="font-mono text-sm">
-                              {String.fromCharCode(65 + optIndex)}.
-                            </span>
-                            <span
-                              className={
-                                isCorrect ? "font-medium text-green-700" : ""
-                              }
-                            >
-                              {answer}
-                            </span>
-                            {isCorrect && (
-                              <Badge variant="default" className="ml-auto">
-                                Correct Answer
-                              </Badge>
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono text-sm">
+                                {String.fromCharCode(65 + optIndex)}.
+                              </span>
+                              <span
+                                className={
+                                  isCorrect ? "font-medium text-green-700" : ""
+                                }
+                              >
+                                {answer.content}
+                              </span>
+                              {isCorrect && (
+                                <Badge variant="default" className="ml-auto">
+                                  Correct Answer
+                                </Badge>
+                              )}
+                            </div>
+                            {explanation && (
+                              <div className="mt-2 rounded-md border border-slate-200 bg-white/80 px-3 py-2 text-sm italic text-slate-700">
+                                {explanation}
+                              </div>
                             )}
                           </div>
                         );

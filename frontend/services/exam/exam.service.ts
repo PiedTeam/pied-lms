@@ -7,7 +7,17 @@ import type {
   UpdateExamRequest,
   GetExamsByMentorResponse,
   GetExamsRequest,
+  ImportExamPayload,
+  ImportExamResult,
 } from "@/interface/exam/exam.interface";
+import type {
+  CreateTestCaseRequest,
+  TestCaseResponse,
+} from "@/interface/testcase/testcase.interface";
+import {
+  createExamImportError,
+  ExamImportError,
+} from "@/utils/exam-import.utils";
 
 // Create Exam (Mentor only)
 export function useCreateExam() {
@@ -36,6 +46,103 @@ export function useCreateExam() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["exams"] });
+    },
+  });
+}
+
+// Import Exam From Excel (FE orchestration using existing APIs)
+export function useImportExamFromExcel() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (payload: ImportExamPayload): Promise<ImportExamResult> => {
+      let createdExamId: string | null = null;
+
+      try {
+        payload.onProgress?.({
+          percentage: 10,
+          message: "Creating exam...",
+        });
+
+        const examPayload = {
+          Title: payload.title,
+          Description: payload.description,
+          TotalMarks: payload.totalMarks,
+          PassingMarks: payload.passingMarks,
+        };
+
+        const examResponse = await axios.post<ApiResponse<ExamResponse>>(
+          "/exams",
+          examPayload,
+        );
+
+        if (!examResponse.data.success || !examResponse.data.data) {
+          throw new ExamImportError(
+            examResponse.data.message || "Failed to create exam.",
+          );
+        }
+
+        const exam = examResponse.data.data;
+        createdExamId = exam.id;
+
+        for (let index = 0; index < payload.testCases.length; index += 1) {
+          const testCase = payload.testCases[index];
+
+          payload.onProgress?.({
+            percentage:
+              20 + Math.round(((index + 1) / payload.testCases.length) * 75),
+            message: `Creating test case ${index + 1} of ${payload.testCases.length}...`,
+          });
+
+          const testCasePayload: CreateTestCaseRequest = {
+            examId: exam.id,
+            index: testCase.index,
+            input: testCase.input,
+            output: testCase.output,
+            isHidden: testCase.isHidden,
+          };
+
+          const testCaseResponse = await axios.post<ApiResponse<unknown>>(
+            "/testcases",
+            testCasePayload,
+          );
+
+          if (!testCaseResponse.data.success) {
+            throw new ExamImportError(
+              testCaseResponse.data.message ||
+                `Failed to create test case for row ${testCase.sourceRow}.`,
+              [
+                `Row ${testCase.sourceRow}: ${testCaseResponse.data.message || "Test case creation failed."}`,
+              ],
+            );
+          }
+        }
+
+        payload.onProgress?.({
+          percentage: 100,
+          message: "Import completed.",
+        });
+
+        return {
+          exam,
+          createdTestCases: payload.testCases.length,
+        };
+      } catch (error) {
+        if (createdExamId) {
+          try {
+            await axios.delete(`/exams/${createdExamId}`);
+          } catch {
+            // Best-effort cleanup only. The current backend does not expose a bulk transaction import endpoint.
+          }
+        }
+
+        throw createExamImportError(error);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["exams"] });
+      queryClient.invalidateQueries({ queryKey: ["exam"] });
+      queryClient.invalidateQueries({ queryKey: ["testcases"] });
     },
   });
 }
@@ -219,8 +326,8 @@ export function useDeleteExam() {
 export function useGetStudentTestCases(examId: string) {
   return useQuery({
     queryKey: ["student-testcases", examId],
-    queryFn: async (): Promise<any[]> => {
-      const { data } = await axios.get<ApiResponse<any[]>>(
+    queryFn: async (): Promise<TestCaseResponse[]> => {
+      const { data } = await axios.get<ApiResponse<TestCaseResponse[]>>(
         `/students/testcases/${examId}`,
       );
 

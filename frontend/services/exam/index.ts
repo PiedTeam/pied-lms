@@ -1,5 +1,6 @@
 export {
   useCreateExam,
+  useImportExamFromExcel,
   useGetExamsByMentor,
   useGetExamsByAdmin,
   useGetAllExams,

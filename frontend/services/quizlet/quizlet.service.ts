@@ -11,6 +11,7 @@ import type {
   StudentQuizletSummaryResponse,
 } from "@/interface/quizlet/quizlet.interface";
 import { QUIZLET_MESSAGES } from "@/constants/messages";
+import { normalizeQuizAnswerOptions } from "@/utils/quiz-answer.utils";
 
 // Get Student Quizlets Summary (GET /api/students/quizlets)
 export function useGetStudentQuizlets() {
@@ -44,7 +45,13 @@ export function useGetStudentQuizletById(id: number) {
         throw new Error(data.message || QUIZLET_MESSAGES.ERROR.NOT_FOUND);
       }
 
-      return data.data;
+      return {
+        ...data.data,
+        listQuestion: data.data.listQuestion.map((question) => ({
+          ...question,
+          answers: normalizeQuizAnswerOptions(question.answers),
+        })),
+      };
     },
     enabled: !!id,
   });
@@ -97,7 +104,13 @@ export function useGetQuizletById(id: number) {
         throw new Error(data.message || QUIZLET_MESSAGES.ERROR.NOT_FOUND);
       }
 
-      return data.data;
+      return {
+        ...data.data,
+        listQuestion: data.data.listQuestion.map((question) => ({
+          ...question,
+          answers: normalizeQuizAnswerOptions(question.answers),
+        })),
+      };
     },
     enabled: !!id,
   });
@@ -247,7 +260,7 @@ export function useTogglePublishQuizlet() {
             listQuestion: quizlet.listQuestion.map((q) => ({
               content: q.content,
               score: q.score,
-              answers: q.answers,
+              answers: q.answers.map((answer) => answer.content),
               correctAnswers: q.correctAnswers,
               questionType: q.type === 0 ? "SingleChoice" : "MultipleChoice",
               isHidden: q.isHidden,

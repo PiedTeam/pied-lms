@@ -62,7 +62,7 @@ export default function EditQuizletPage() {
       const initialQuestions = quizlet.listQuestion.map((q) => ({
         content: q.content,
         score: q.score,
-        answers: q.answers || [],
+        answers: (q.answers || []).map((answer) => answer.content),
         correctAnswers: q.correctAnswers || [],
         questionType:
           q.questionType === "MultipleChoice" || q.type === 1 ? 1 : 0,

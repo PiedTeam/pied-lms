@@ -47,6 +47,7 @@ import { Badge } from "@/components/ui/badge";
 import { useGetExamsByMentor, useCreateExam, useDeleteExam } from "@/service";
 import type { CreateExamRequest } from "@/interface/exam/exam.interface";
 import type { ExamsListProps } from "@/interface/components/shared.types";
+import { ExamImportDialog } from "@/components/shared/ExamImportDialog";
 
 export function ExamsList({ basePath }: ExamsListProps) {
   const router = useRouter();
@@ -171,103 +172,109 @@ export function ExamsList({ basePath }: ExamsListProps) {
           <h1 className="text-3xl font-bold tracking-tight">Exams</h1>
           <p className="text-muted-foreground">Manage exams</p>
         </div>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Create Exam
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[600px]">
-            <form onSubmit={handleCreateSubmit}>
-              <DialogHeader>
-                <DialogTitle>Create New Exam</DialogTitle>
-                <DialogDescription>Enter exam information</DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="title">
-                    Exam Title <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="title"
-                    placeholder="e.g. Midterm Exam"
-                    value={formData.title}
-                    onChange={(e) =>
-                      setFormData({ ...formData, title: e.target.value })
-                    }
-                    required
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    placeholder="Exam description"
-                    value={formData.description}
-                    onChange={(e) =>
-                      setFormData({ ...formData, description: e.target.value })
-                    }
-                    rows={3}
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
+        <div className="flex items-center gap-2">
+          <ExamImportDialog basePath={basePath} />
+          <Dialog
+            open={isCreateDialogOpen}
+            onOpenChange={setIsCreateDialogOpen}
+          >
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Create Exam
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[600px]">
+              <form onSubmit={handleCreateSubmit}>
+                <DialogHeader>
+                  <DialogTitle>Create New Exam</DialogTitle>
+                  <DialogDescription>Enter exam information</DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
                   <div className="grid gap-2">
-                    <Label htmlFor="totalMarks">
-                      Total Score <span className="text-red-500">*</span>
+                    <Label htmlFor="title">
+                      Exam Title <span className="text-red-500">*</span>
                     </Label>
                     <Input
-                      id="totalMarks"
-                      type="number"
-                      min="1"
-                      placeholder="100"
-                      value={formData.totalMarks}
+                      id="title"
+                      placeholder="e.g. Midterm Exam"
+                      value={formData.title}
                       onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          totalMarks: parseInt(e.target.value) || 0,
-                        })
+                        setFormData({ ...formData, title: e.target.value })
                       }
                       required
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="passingMarks">
-                      Passing Score <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      id="passingMarks"
-                      type="number"
-                      min="1"
-                      placeholder="50"
-                      value={formData.passingMarks}
+                    <Label htmlFor="description">Description</Label>
+                    <Textarea
+                      id="description"
+                      placeholder="Exam description"
+                      value={formData.description}
                       onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          passingMarks: parseInt(e.target.value) || 0,
-                        })
+                        setFormData({ ...formData, description: e.target.value })
                       }
-                      required
+                      rows={3}
                     />
                   </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="totalMarks">
+                        Total Score <span className="text-red-500">*</span>
+                      </Label>
+                      <Input
+                        id="totalMarks"
+                        type="number"
+                        min="1"
+                        placeholder="100"
+                        value={formData.totalMarks}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            totalMarks: parseInt(e.target.value) || 0,
+                          })
+                        }
+                        required
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="passingMarks">
+                        Passing Score <span className="text-red-500">*</span>
+                      </Label>
+                      <Input
+                        id="passingMarks"
+                        type="number"
+                        min="1"
+                        placeholder="50"
+                        value={formData.passingMarks}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            passingMarks: parseInt(e.target.value) || 0,
+                          })
+                        }
+                        required
+                      />
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsCreateDialogOpen(false)}
-                  disabled={isCreating}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={isCreating}>
-                  {isCreating ? "Creating..." : "Create Exam"}
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+                <DialogFooter>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsCreateDialogOpen(false)}
+                    disabled={isCreating}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={isCreating}>
+                    {isCreating ? "Creating..." : "Create Exam"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <Tabs
