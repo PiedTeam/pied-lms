@@ -49,7 +49,7 @@ import { ManualImportInlineForm } from "@/components/admin/ManualImportInlineFor
 
 export default function AdminToolsPage() {
   const { toast } = useToast();
-  const [showExcelForm, setShowExcelForm] = useState(false);
+  const [showExcelForm, setShowExcelForm] = useState(true);
   const [showManualForm, setShowManualForm] = useState(false);
   const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
   const [mentorUserId, setMentorUserId] = useState("");

@@ -263,10 +263,6 @@ export default function EditQuizletPage() {
                   <SelectItem value="3">Hard</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
-                Current selection: {getQuizletLevelLabel(level)} | Raw level:{" "}
-                {JSON.stringify(level)} | Type: {typeof level}
-              </p>
             </div>
 
             <div className="flex items-center space-x-2">

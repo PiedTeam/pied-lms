@@ -73,7 +73,7 @@ export function ExamManagementPage() {
         <CardHeader>
           <CardTitle>Your Exams</CardTitle>
           <CardDescription>
-            Total: {examsData?.pagination.total || 0} exams
+            Total: {examsData?.totalCount || 0} exams
           </CardDescription>
         </CardHeader>
         <CardContent>

@@ -967,8 +967,8 @@ int main() {
                       <div className="text-center">
                         <Play className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                         <p className="text-muted-foreground">
-                          Click &quot;Run Test Cases&quot; to execute the
-                          sample tests
+                          Click &quot;Run Test Cases&quot; to execute the sample
+                          tests
                         </p>
                       </div>
                     </div>
