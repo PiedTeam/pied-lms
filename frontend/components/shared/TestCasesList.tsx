@@ -104,13 +104,13 @@ export function TestCasesList({
     deleteTestCase(id, {
       onSuccess: (message) => {
         toast({
-          title: "Thành công",
+          title: "Success",
           description: message,
         });
       },
       onError: (error: Error) => {
         toast({
-          title: "Lỗi",
+          title: "Error",
           description: error.message,
           variant: "destructive",
         });
@@ -135,7 +135,7 @@ export function TestCasesList({
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Test Cases</h2>
           {examTitle && (
-            <p className="text-muted-foreground">Đề thi: {examTitle}</p> // Changed from "Câu hỏi"
+            <p className="text-muted-foreground">Exam: {examTitle}</p>
           )}
         </div>
 
@@ -143,14 +143,14 @@ export function TestCasesList({
           <DialogTrigger asChild>
             <Button>
               <Plus className="mr-2 h-4 w-4" />
-              Tạo Test Case
+              Create Test Case
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[600px] max-h-[85vh] flex flex-col">
             <DialogHeader className="shrink-0">
-              <DialogTitle>Tạo Test Case mới</DialogTitle>
+              <DialogTitle>Create New Test Case</DialogTitle>
               <DialogDescription>
-                Tạo test case để kiểm tra tính đúng đắn của code
+                Create test case to verify code correctness
               </DialogDescription>
             </DialogHeader>
             <div className="overflow-y-auto flex-1 pr-2">
@@ -160,8 +160,8 @@ export function TestCasesList({
                 onSuccess={() => {
                   setIsCreateDialogOpen(false);
                   toast({
-                    title: "Thành công",
-                    description: "Test case đã được tạo",
+                    title: "Success",
+                    description: "Test case created successfully",
                   });
                 }}
                 onCancel={() => setIsCreateDialogOpen(false)}
@@ -175,7 +175,7 @@ export function TestCasesList({
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Danh sách Test Cases</CardTitle>
+              <CardTitle>Test Cases List</CardTitle>
               <CardDescription>
                 {filteredTestCases.length} test case
                 {searchQuery && ` (filtered from ${testCases?.length || 0})`}
@@ -196,7 +196,7 @@ export function TestCasesList({
         <CardContent>
           {isLoading ? (
             <div className="text-center py-8 text-muted-foreground">
-              Đang tải...
+              Loading...
             </div>
           ) : paginatedTestCases.length > 0 ? (
             <>
@@ -206,8 +206,8 @@ export function TestCasesList({
                     <TableHead>Input (preview)</TableHead>
                     <TableHead>Expected Output (preview)</TableHead>
                     <TableHead>Index</TableHead>
-                    <TableHead>Trạng thái</TableHead>
-                    <TableHead className="text-right">Thao tác</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -246,12 +246,12 @@ export function TestCasesList({
                           {testCase.isHidden ? (
                             <>
                               <EyeOff className="h-3 w-3" />
-                              Ẩn
+                              Hidden
                             </>
                           ) : (
                             <>
                               <Eye className="h-3 w-3" />
-                              Công khai
+                              Public
                             </>
                           )}
                         </Badge>
@@ -285,22 +285,22 @@ export function TestCasesList({
                             <AlertDialogContent>
                               <AlertDialogHeader>
                                 <AlertDialogTitle>
-                                  Xác nhận xóa
+                                  Confirm Delete
                                 </AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  Bạn có chắc chắn muốn xóa test case này? Hành
-                                  động này không thể hoàn tác.
+                                  Are you sure you want to delete this test
+                                  case? This action cannot be undone.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
-                                <AlertDialogCancel>Hủy</AlertDialogCancel>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
                                 <AlertDialogAction
                                   onClick={() =>
                                     handleDelete(testCase.testCaseId)
                                   }
                                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                 >
-                                  Xóa
+                                  Delete
                                 </AlertDialogAction>
                               </AlertDialogFooter>
                             </AlertDialogContent>
@@ -346,27 +346,25 @@ export function TestCasesList({
             <div className="text-center py-12">
               <Search className="mx-auto h-12 w-12 text-muted-foreground" />
               <h3 className="mt-4 text-lg font-semibold">
-                Không tìm thấy test case
+                No test cases found
               </h3>
               <p className="text-sm text-muted-foreground mt-2">
-                Thử tìm kiếm với từ khóa khác
+                Try searching with different keywords
               </p>
             </div>
           ) : (
             <div className="text-center py-12">
               <Play className="mx-auto h-12 w-12 text-muted-foreground" />
-              <h3 className="mt-4 text-lg font-semibold">
-                Chưa có test case nào
-              </h3>
+              <h3 className="mt-4 text-lg font-semibold">No test cases yet</h3>
               <p className="text-sm text-muted-foreground mt-2">
-                Tạo test case đầu tiên để kiểm tra code
+                Create your first test case to verify code
               </p>
               <Button
                 className="mt-4"
                 onClick={() => setIsCreateDialogOpen(true)}
               >
                 <Plus className="mr-2 h-4 w-4" />
-                Tạo Test Case
+                Create Test Case
               </Button>
             </div>
           )}
@@ -381,9 +379,9 @@ export function TestCasesList({
         >
           <DialogContent className="sm:max-w-[600px] max-h-[85vh] flex flex-col">
             <DialogHeader className="shrink-0">
-              <DialogTitle>Chỉnh sửa Test Case</DialogTitle>
+              <DialogTitle>Edit Test Case</DialogTitle>
               <DialogDescription>
-                Cập nhật thông tin test case
+                Update test case information
               </DialogDescription>
             </DialogHeader>
             <div className="overflow-y-auto flex-1 pr-2">
@@ -394,8 +392,8 @@ export function TestCasesList({
                 onSuccess={() => {
                   setEditingTestCase(null);
                   toast({
-                    title: "Thành công",
-                    description: "Test case đã được cập nhật",
+                    title: "Success",
+                    description: "Test case updated successfully",
                   });
                 }}
                 onCancel={() => setEditingTestCase(null)}
@@ -413,9 +411,9 @@ export function TestCasesList({
         >
           <DialogContent className="sm:max-w-[800px] max-h-[90vh] flex flex-col">
             <DialogHeader className="shrink-0">
-              <DialogTitle>Chạy Test Case</DialogTitle>
+              <DialogTitle>Run Test Case</DialogTitle>
               <DialogDescription>
-                Nhập code để test với test case này
+                Enter code to test with this test case
               </DialogDescription>
             </DialogHeader>
             <div className="overflow-y-auto flex-1 pr-2">

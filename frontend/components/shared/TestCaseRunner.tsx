@@ -20,7 +20,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -36,8 +35,6 @@ import type {
 export function TestCaseRunner({ testCase, onClose }: TestCaseRunnerProps) {
   const { toast } = useToast();
   const [result, setResult] = useState<CompileCodeResponse | null>(null);
-  const [testInput, setTestInput] = useState("");
-  const [isComparingWithTestCase, setIsComparingWithTestCase] = useState(false);
 
   const { mutate: compileCode, isPending: isRunning } = useCompileCode();
 
@@ -54,88 +51,6 @@ int main() {
       language: "c",
     },
   });
-
-  const onSubmit = (data: RunTestCaseFormData) => {
-    // Basic validation
-    if (!data.code.trim()) {
-      toast({
-        title: "Lỗi",
-        description: COMPILER_MESSAGES.VALIDATION.CODE_REQUIRED,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (data.code.trim().length < 10) {
-      toast({
-        title: "Lỗi",
-        description: COMPILER_MESSAGES.VALIDATION.CODE_MIN_LENGTH,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Only support C language for now
-    if (data.language !== "c") {
-      toast({
-        title: "Lỗi",
-        description: "Hiện tại chỉ hỗ trợ ngôn ngữ C",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setResult(null);
-
-    toast({
-      title: COMPILER_MESSAGES.INFO.COMPILING,
-      description: COMPILER_MESSAGES.INFO.EXECUTING,
-    });
-
-    // Use compile API with user input
-    compileCode(
-      {
-        code: data.code,
-        input: testInput,
-        timeLimit: 2000,
-        memoryLimit: 128,
-        optimizationLevel: 2,
-      },
-      {
-        onSuccess: (response) => {
-          if (response.data) {
-            setResult(response.data);
-
-            if (response.data.success) {
-              toast({
-                title: COMPILER_MESSAGES.SUCCESS.EXECUTED,
-                description: `Execution time: ${response.data.executionTime}ms`,
-              });
-            } else {
-              toast({
-                title: "Compilation/Runtime Error",
-                description:
-                  response.message || "Check the error details below",
-              });
-            }
-          } else {
-            toast({
-              title: COMPILER_MESSAGES.ERROR.EXECUTION_FAILED,
-              description: response.message || "No response data",
-              variant: "destructive",
-            });
-          }
-        },
-        onError: (error: Error) => {
-          toast({
-            title: "Network Error",
-            description: error.message || "Could not connect to server",
-            variant: "destructive",
-          });
-        },
-      },
-    );
-  };
 
   const formatTime = (ms: number | null) => {
     if (!ms) return "N/A";
@@ -271,7 +186,10 @@ int main() {
 
       {/* Code Input Form */}
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form
+          onSubmit={form.handleSubmit(handleRunTestCase)}
+          className="space-y-4"
+        >
           <FormField
             control={form.control}
             name="language"
@@ -326,67 +244,29 @@ int main() {
             )}
           />
 
-          <div className="space-y-2">
-            <Label htmlFor="testInput">Test Input</Label>
-            <Textarea
-              id="testInput"
-              placeholder="Enter test input here..."
-              value={testInput}
-              onChange={(e) => setTestInput(e.target.value)}
-              className="min-h-[100px] font-mono text-sm"
-            />
-            <p className="text-sm text-muted-foreground">
-              Enter the input data for testing your code
-            </p>
-          </div>
-
           <div className="flex justify-between">
             <Button type="button" variant="outline" onClick={onClose}>
               Close
             </Button>
-            <div className="flex gap-2">
-              <Button
-                type="submit"
-                variant="outline"
-                disabled={isRunning}
-                onClick={() => {
-                  setIsComparingWithTestCase(false);
-                  form.handleSubmit(onSubmit)();
-                }}
-              >
-                {isRunning ? (
-                  <>
-                    <Play className="mr-2 h-4 w-4 animate-spin" />
-                    Running...
-                  </>
-                ) : (
-                  <>
-                    <Play className="mr-2 h-4 w-4" />
-                    Run Code
-                  </>
-                )}
-              </Button>
-              <Button
-                type="submit"
-                disabled={isRunning}
-                onClick={() => {
-                  setIsComparingWithTestCase(true);
-                  form.handleSubmit(handleRunTestCase)();
-                }}
-              >
-                {isRunning ? (
-                  <>
-                    <Play className="mr-2 h-4 w-4 animate-spin" />
-                    Running...
-                  </>
-                ) : (
-                  <>
-                    <Play className="mr-2 h-4 w-4" />
-                    Run Test Case
-                  </>
-                )}
-              </Button>
-            </div>
+            <Button
+              type="submit"
+              disabled={isRunning}
+              onClick={() => {
+                form.handleSubmit(handleRunTestCase)();
+              }}
+            >
+              {isRunning ? (
+                <>
+                  <Play className="mr-2 h-4 w-4 animate-spin" />
+                  Running...
+                </>
+              ) : (
+                <>
+                  <Play className="mr-2 h-4 w-4" />
+                  Run Test Case
+                </>
+              )}
+            </Button>
           </div>
         </form>
       </Form>
@@ -430,7 +310,7 @@ int main() {
             <Separator />
 
             {/* Test Case Comparison (when running test case) */}
-            {isComparingWithTestCase && result.success && (
+            {result.success && (
               <>
                 <div>
                   <h4 className="font-medium mb-2">Expected Output:</h4>
@@ -465,7 +345,7 @@ int main() {
             )}
 
             {/* Output */}
-            {result.output && !isComparingWithTestCase && (
+            {result.output && (
               <div>
                 <h4 className="font-medium mb-2 text-green-700">Output:</h4>
                 <pre className="bg-green-50 border border-green-200 p-3 rounded-md text-sm font-mono whitespace-pre-wrap max-h-40 overflow-auto">

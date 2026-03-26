@@ -16,14 +16,6 @@ import type {
 import type { CreateExamRoomRequest } from "@/interface/exam-room/exam-room.interface";
 
 /**
- * Props for the TestCasesPage component
- */
-export interface TestCasesPageProps {
-  role: "admin" | "teacher" | "mentor";
-  examTitle?: string;
-}
-
-/**
  * Props for the TestCasesList component
  */
 export interface TestCasesListProps {
