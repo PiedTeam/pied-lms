@@ -1,5 +1,6 @@
 import * as XLSX from "xlsx";
 import type { AxiosError } from "@/interface/axios.interface";
+import type { AxiosErrorResponse } from "@/interface/axios.interface";
 import type {
   ApiErrorResponse,
   ApiResponse,
@@ -258,7 +259,7 @@ export function createStudentImportError(error: unknown): StudentImportError {
   const axiosError = error as AxiosError & {
     response?: {
       status: number;
-      data?: AxiosError["response"]["data"] &
+      data?: AxiosErrorResponse &
         Partial<StudentImportProblemDetails> &
         Partial<ApiErrorResponse> &
         Partial<ApiResponse<string>>;

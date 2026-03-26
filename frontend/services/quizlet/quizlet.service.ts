@@ -188,6 +188,7 @@ export function useUpdateQuizlet() {
               Score: q.score,
               Answers: q.answers,
               CorrectAnswers: q.correctAnswers,
+              Explanation: q.explanation?.trim() || null,
               QuestionType:
                 q.questionType === 0 ? "SingleChoice" : "MultipleChoice",
               IsHidden: q.isHidden,

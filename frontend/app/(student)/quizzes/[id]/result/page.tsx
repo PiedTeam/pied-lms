@@ -28,7 +28,6 @@ import {
   QuizletLevel,
   type StudentQuestionDto,
 } from "@/interface/quizlet/quizlet.interface";
-import { getQuizAnswerExplanation } from "@/utils/quiz-answer.utils";
 
 interface QuizResult {
   quizletId: number;
@@ -255,7 +254,7 @@ export default function QuizResultPage() {
           <CardHeader className="border-b-2 bg-linear-to-r from-primary/5 to-purple-50">
             <CardTitle className="text-2xl">Review Answers</CardTitle>
             <CardDescription className="text-base">
-              Review your answers and the explanations behind each option
+              Review your answers and the explanation for each question
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-8 p-6">
@@ -348,7 +347,7 @@ export default function QuizResultPage() {
                               </p>
                               <p className="text-sm text-red-800">
                                 Review the highlighted options and the
-                                explanations below to understand the correct
+                                explanation below to understand the correct
                                 reasoning.
                               </p>
                             </div>
@@ -359,7 +358,6 @@ export default function QuizResultPage() {
                       <div className="space-y-3">
                         {question.answers.map((answer, answerIndex) => {
                           const answerContent = answer.content;
-                          const explanation = getQuizAnswerExplanation(answer);
                           const isUserAnswer = userAnswers.includes(answerContent);
                           const isCorrectAnswer =
                             correctAnswers.includes(answerContent);
@@ -397,18 +395,18 @@ export default function QuizResultPage() {
                                   >
                                     You selected
                                   </Badge>
-                                )}
+                                )} 
                               </div>
-
-                              {explanation && (
-                                <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm italic text-slate-700">
-                                  {explanation}
-                                </div>
-                              )}
                             </div>
                           );
                         })}
                       </div>
+
+                      {question.explanation && (
+                        <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm italic text-slate-700">
+                          {question.explanation}
+                        </div>
+                      )}
 
                       {isUnanswered && correctAnswerSummaries.length > 0 && (
                         <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50/80 p-4">

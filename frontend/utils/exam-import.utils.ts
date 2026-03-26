@@ -1,5 +1,6 @@
 import * as XLSX from "xlsx";
 import type { AxiosError } from "@/interface/axios.interface";
+import type { AxiosErrorResponse } from "@/interface/axios.interface";
 import type {
   ApiErrorResponse,
   ApiResponse,
@@ -352,14 +353,15 @@ export async function parseExamImportFile(
   }
 
   const finalizedTestCases = assignTestCaseIndexes(pendingTestCases, issues);
+  const resolvedMetadata = metadata as ParsedExamMetadata | null;
 
   onProgress?.(85);
 
   return {
-    title: metadata?.title ?? "",
-    description: metadata?.description ?? "",
-    totalMarks: metadata?.totalMarks ?? 0,
-    passingMarks: metadata?.passingMarks ?? 0,
+    title: resolvedMetadata?.title ?? "",
+    description: resolvedMetadata?.description ?? "",
+    totalMarks: resolvedMetadata?.totalMarks ?? 0,
+    passingMarks: resolvedMetadata?.passingMarks ?? 0,
     testCases: finalizedTestCases,
     issues,
     totalRows,
@@ -375,7 +377,7 @@ export function createExamImportError(error: unknown): ExamImportError {
   const axiosError = error as AxiosError & {
     response?: {
       status: number;
-      data?: AxiosError["response"]["data"] &
+      data?: AxiosErrorResponse &
         Partial<ExamImportProblemDetails> &
         Partial<ApiErrorResponse> &
         Partial<ApiResponse<string>>;

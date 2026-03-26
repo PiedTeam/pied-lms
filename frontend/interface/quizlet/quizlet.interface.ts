@@ -21,6 +21,7 @@ export interface QuestionResponse {
   score: number;
   answers: QuizAnswerOption[];
   correctAnswers: string[];
+  explanation?: string | null;
   type: number; // 0 = SingleChoice, 1 = MultipleChoice (from backend)
   questionType: string; // "SingleChoice" or "MultipleChoice" (for display)
   isHidden: boolean;
@@ -69,6 +70,7 @@ export interface UpdateQuestionDto {
   questionType: number; // 0 = SingleChoice, 1 = MultipleChoice
   answers: string[];
   correctAnswers: string[];
+  explanation?: string | null;
   isHidden: boolean;
   level: QuizletLevel;
 }
@@ -86,6 +88,7 @@ export interface StudentQuestionDto {
   score: number;
   answers: QuizAnswerOption[];
   correctAnswers: string[];
+  explanation?: string | null;
   questionType: string; // "SingleChoice" or "MultipleChoice"
   isHidden: boolean;
   level: QuizletLevel;

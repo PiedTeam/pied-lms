@@ -14,7 +14,6 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import type { QuizletViewDetailProps } from "@/interface/components/shared.types";
-import { getQuizAnswerExplanation } from "@/utils/quiz-answer.utils";
 
 export function QuizletViewDetail({ quizlet }: QuizletViewDetailProps) {
   const [currentPage, setCurrentPage] = useState(1);
@@ -89,7 +88,6 @@ export function QuizletViewDetail({ quizlet }: QuizletViewDetailProps) {
                   <div className="ml-10 space-y-2">
                     {question.answers && question.answers.length > 0 ? (
                       question.answers.map((answer, optIndex) => {
-                        const explanation = getQuizAnswerExplanation(answer);
                         const isCorrect =
                           question.correctAnswers?.includes(answer.content);
                         return (
@@ -118,11 +116,6 @@ export function QuizletViewDetail({ quizlet }: QuizletViewDetailProps) {
                                 </Badge>
                               )}
                             </div>
-                            {explanation && (
-                              <div className="mt-2 rounded-md border border-slate-200 bg-white/80 px-3 py-2 text-sm italic text-slate-700">
-                                {explanation}
-                              </div>
-                            )}
                           </div>
                         );
                       })
@@ -130,6 +123,12 @@ export function QuizletViewDetail({ quizlet }: QuizletViewDetailProps) {
                       <p className="text-sm text-muted-foreground">
                         No answers provided
                       </p>
+                    )}
+
+                    {question.explanation && (
+                      <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm italic text-slate-700">
+                        {question.explanation}
+                      </div>
                     )}
                   </div>
 
