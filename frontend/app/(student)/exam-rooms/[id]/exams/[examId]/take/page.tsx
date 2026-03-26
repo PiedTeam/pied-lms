@@ -35,8 +35,8 @@ import type {
   ExamScore,
   Exam,
   JudgeTestCaseResult,
-  TestCase,
 } from "@/interface/exam/exam-page.types";
+import type { TestCaseResponse } from "@/interface/testcase/testcase.interface";
 import { useAuthStore } from "@/store/auth.store";
 import { saveExamScore } from "@/utils/exam-score.utils";
 import { useExamScore } from "@/hooks/use-exam-scores";
@@ -854,9 +854,9 @@ int main() {
                     <div className="space-y-3">
                       {testCases
                         .slice(0, 3)
-                        .map((testCase: TestCase, index: number) => (
+                        .map((testCase: TestCaseResponse, index: number) => (
                           <div
-                            key={testCase.id || index}
+                            key={testCase.testCaseId || index}
                             className="bg-muted p-3 rounded-lg border text-sm"
                           >
                             <div className="font-medium mb-2">

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PIED_LMS.Persistence;
@@ -11,9 +12,11 @@ using PIED_LMS.Persistence;
 namespace PIED_LMS.Persistence.Migrations
 {
     [DbContext(typeof(PiedLmsDbContext))]
-    partial class PiedLmsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260324172521_AddExplanationToQuestionAnswer")]
+    partial class AddExplanationToQuestionAnswer
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -663,10 +666,6 @@ namespace PIED_LMS.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("content");
 
-                    b.Property<string>("Explanation")
-                        .HasColumnType("text")
-                        .HasColumnName("explanation");
-
                     b.Property<bool>("IsHidden")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
@@ -716,6 +715,10 @@ namespace PIED_LMS.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("content");
+
+                    b.Property<string>("Explanation")
+                        .HasColumnType("text")
+                        .HasColumnName("explanation");
 
                     b.Property<bool>("IsCorrect")
                         .HasColumnType("boolean")

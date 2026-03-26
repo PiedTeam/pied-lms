@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { axiosGeneral as axios } from "@/common/axios";
 import type { ApiResponse } from "@/interface";
 import type {
@@ -6,30 +6,53 @@ import type {
   ImportStudentsResponse,
   ApproveMentorResponse,
 } from "@/interface/admin/admin.interface";
+import {
+  StudentImportError,
+  createStudentImportError,
+} from "@/utils/student-import.utils";
 
 // Import Students
 export function useImportStudents() {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (
       payload: ImportStudentsRequest,
     ): Promise<ImportStudentsResponse> => {
-      const { data } = await axios.post<ApiResponse<string>>(
-        "/admin/students/import",
-        payload,
-        {
-          timeout: 120000, // 2 minutes timeout for bulk import
-        },
-      );
+      try {
+        const { data } = await axios.post<ApiResponse<string>>(
+          "/admin/students/import",
+          payload,
+          {
+            timeout: 120000,
+          },
+        );
 
-      if (!data.success) {
-        throw new Error(data.message || "Failed to import students");
+        if (!data.success) {
+          throw new StudentImportError(
+            data.message || "Failed to import students.",
+            Object.entries(data.errors ?? {}).flatMap(([field, messages]) =>
+              messages.map((message) =>
+                field ? `${field}: ${message}` : message,
+              ),
+            ),
+          );
+        }
+
+        return {
+          success: true,
+          message: data.message || "Students imported successfully.",
+          data: data.data || "",
+        };
+      } catch (error) {
+        throw createStudentImportError(error);
       }
-
-      return {
-        success: true,
-        message: data.message || "Nhập danh sách sinh viên thành công",
-        data: data.data || "",
-      };
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["users"] }),
+        queryClient.invalidateQueries({ queryKey: ["students"] }),
+      ]);
     },
   });
 }
@@ -51,7 +74,7 @@ export function useApproveMentor() {
 
       return {
         success: true,
-        message: data.message || "Phê duyệt mentor thành công",
+        message: data.message || "Mentor approved successfully.",
         data: data.data || "",
       };
     },

@@ -1,188 +1,20 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
-import { ArrowLeft, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
-import { useGetQuizletById, useUpdateQuizlet } from "@/service";
-import { QuizletEditForm } from "@/components/shared/QuizletEditForm";
-import {
-  QuizletLevel,
-  type UpdateQuestionDto,
-} from "@/interface/quizlet/quizlet.interface";
-import {
-  getQuizletLevelLabel,
-  normalizeQuizletLevel,
-} from "@/utils/quizlet-level.utils";
+import { useGetQuizletById } from "@/service";
+import { QuizletEditPageContent } from "@/components/shared/QuizletEditPageContent";
 
 export default function EditQuizletPage() {
   const params = useParams();
   const router = useRouter();
-  const { toast } = useToast();
-  const id = parseInt(params.id as string);
-
-  // Always fetch from API
+  const id = parseInt(params.id as string, 10);
   const { data: quizlet, isLoading } = useGetQuizletById(id);
-
-  const { mutate: updateQuizlet, isPending } = useUpdateQuizlet();
-
-  const [formData, setFormData] = useState({
-    title: "",
-    isPublished: false,
-    isHidden: false,
-    level: QuizletLevel.Medium as QuizletLevel, // Start with a valid default instead of null
-    questions: [] as UpdateQuestionDto[],
-  });
-
-  useEffect(() => {
-    if (quizlet) {
-      console.log("Original quizlet level:", quizlet.level);
-
-      const initialQuestions = quizlet.listQuestion.map((q) => ({
-        content: q.content,
-        score: q.score,
-        answers: q.answers || [],
-        correctAnswers: q.correctAnswers || [],
-        questionType:
-          q.questionType === "MultipleChoice" || q.type === 1 ? 1 : 0,
-        isHidden: q.isHidden,
-        level: normalizeQuizletLevel(q.level) ?? QuizletLevel.Easy,
-      }));
-
-      const levelToSet =
-        normalizeQuizletLevel(quizlet.level) ??
-        (initialQuestions.length > 0
-          ? initialQuestions[0].level
-          : QuizletLevel.Easy);
-
-      console.log("Normalized level:", levelToSet);
-
-      setFormData({
-        title: quizlet.title,
-        isPublished: quizlet.isPublished,
-        isHidden: quizlet.isHidden,
-        level: levelToSet,
-        questions: initialQuestions,
-      });
-    }
-  }, [quizlet]);
-
-  const { title, isPublished, isHidden, level, questions } = formData;
-  const setTitle = (value: string) =>
-    setFormData((prev) => ({ ...prev, title: value }));
-  const setIsPublished = (value: boolean) =>
-    setFormData((prev) => ({ ...prev, isPublished: value }));
-  const setIsHidden = (value: boolean) =>
-    setFormData((prev) => ({ ...prev, isHidden: value }));
-  const setLevel = (value: QuizletLevel) =>
-    setFormData((prev) => ({ ...prev, level: value }));
-  const setQuestions = (value: UpdateQuestionDto[]) =>
-    setFormData((prev) => ({ ...prev, questions: value }));
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!title.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter a title",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!level || !Object.values(QuizletLevel).includes(level)) {
-      toast({
-        title: "Error",
-        description: "Please select a difficulty level",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (questions.length === 0) {
-      toast({
-        title: "Error",
-        description: "At least one question is required",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    for (let i = 0; i < questions.length; i++) {
-      const q = questions[i];
-      if (!q.content.trim()) {
-        toast({
-          title: "Error",
-          description: `Question ${i + 1}: Content cannot be empty`,
-          variant: "destructive",
-        });
-        return;
-      }
-      if (q.answers.length < 2) {
-        toast({
-          title: "Error",
-          description: `Question ${i + 1}: At least 2 answers are required`,
-          variant: "destructive",
-        });
-        return;
-      }
-      if (q.correctAnswers.length === 0) {
-        toast({
-          title: "Error",
-          description: `Question ${i + 1}: At least one correct answer must be selected`,
-          variant: "destructive",
-        });
-        return;
-      }
-    }
-
-    updateQuizlet(
-      {
-        id,
-        payload: {
-          title,
-          isPublished,
-          isHidden,
-          level,
-          listQuestion: questions,
-        },
-      },
-      {
-        onSuccess: (message) => {
-          toast({
-            title: "Success",
-            description: message,
-          });
-          router.push(`/teacher/quizlets`);
-        },
-        onError: (error: Error) => {
-          toast({
-            title: "Error",
-            description: error.message,
-            variant: "destructive",
-          });
-        },
-      },
-    );
-  };
 
   if (isLoading) {
     return (
       <div className="container mx-auto p-6">
-        <div className="text-center py-12">Loading...</div>
+        <div className="py-12 text-center">Loading...</div>
       </div>
     );
   }
@@ -190,7 +22,7 @@ export default function EditQuizletPage() {
   if (!quizlet) {
     return (
       <div className="container mx-auto p-6">
-        <div className="text-center py-12">
+        <div className="py-12 text-center">
           <p className="text-destructive">Quizlet not found</p>
           <Button className="mt-4" onClick={() => router.back()}>
             Back

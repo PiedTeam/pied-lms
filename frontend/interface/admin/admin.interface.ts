@@ -6,6 +6,13 @@ export interface StudentImportDto {
   lastName: string;
 }
 
+export interface StudentImportValidationResult {
+  students: StudentImportDto[];
+  issues: string[];
+  totalRows: number;
+  validRows: number;
+}
+
 export interface ImportStudentsRequest {
   students: StudentImportDto[];
 }

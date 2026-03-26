@@ -13,7 +13,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
-import type { QuizletResponse } from "@/interface/quizlet/quizlet.interface";
 import type { QuizletViewDetailProps } from "@/interface/components/shared.types";
 
 export function QuizletViewDetail({ quizlet }: QuizletViewDetailProps) {
@@ -90,31 +89,33 @@ export function QuizletViewDetail({ quizlet }: QuizletViewDetailProps) {
                     {question.answers && question.answers.length > 0 ? (
                       question.answers.map((answer, optIndex) => {
                         const isCorrect =
-                          question.correctAnswers?.includes(answer);
+                          question.correctAnswers?.includes(answer.content);
                         return (
                           <div
                             key={optIndex}
-                            className={`flex items-center gap-2 p-2 rounded ${
+                            className={`rounded p-3 ${
                               isCorrect
                                 ? "bg-green-50 border border-green-200"
                                 : "bg-muted"
                             }`}
                           >
-                            <span className="font-mono text-sm">
-                              {String.fromCharCode(65 + optIndex)}.
-                            </span>
-                            <span
-                              className={
-                                isCorrect ? "font-medium text-green-700" : ""
-                              }
-                            >
-                              {answer}
-                            </span>
-                            {isCorrect && (
-                              <Badge variant="default" className="ml-auto">
-                                Correct Answer
-                              </Badge>
-                            )}
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono text-sm">
+                                {String.fromCharCode(65 + optIndex)}.
+                              </span>
+                              <span
+                                className={
+                                  isCorrect ? "font-medium text-green-700" : ""
+                                }
+                              >
+                                {answer.content}
+                              </span>
+                              {isCorrect && (
+                                <Badge variant="default" className="ml-auto">
+                                  Correct Answer
+                                </Badge>
+                              )}
+                            </div>
                           </div>
                         );
                       })
@@ -122,6 +123,12 @@ export function QuizletViewDetail({ quizlet }: QuizletViewDetailProps) {
                       <p className="text-sm text-muted-foreground">
                         No answers provided
                       </p>
+                    )}
+
+                    {question.explanation && (
+                      <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm italic text-slate-700">
+                        {question.explanation}
+                      </div>
                     )}
                   </div>
 

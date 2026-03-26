@@ -10,6 +10,7 @@ export interface QuizListItem {
 
 export interface Answer {
 	content: string
+	explanation?: string | null
 	isCorrect: boolean
 }
 
@@ -52,6 +53,7 @@ export interface QuestionWithUuid {
 export interface AnswerWithUuid {
 	uuid: string
 	content: string
+	explanation?: string | null
 	isCorrect?: number | boolean // Admin API returns this
 }
 

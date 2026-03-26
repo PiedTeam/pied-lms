@@ -48,6 +48,7 @@ import { Badge } from "@/components/ui/badge";
 import { useGetExamsByMentor, useCreateExam, useDeleteExam } from "@/service";
 import type { CreateExamRequest } from "@/interface/exam/exam.interface";
 import type { ExamsListProps } from "@/interface/components/shared.types";
+import { ExamImportDialog } from "@/components/shared/ExamImportDialog";
 
 export function ExamsList({ basePath }: ExamsListProps) {
   const router = useRouter();
