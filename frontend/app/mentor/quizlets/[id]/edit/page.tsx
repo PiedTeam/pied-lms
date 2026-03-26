@@ -42,12 +42,14 @@ export default function EditQuizletPage() {
     title: "",
     isPublished: false,
     isHidden: false,
-    level: null as QuizletLevel | null,
+    level: QuizletLevel.Medium as QuizletLevel, // Start with a valid default instead of null
     questions: [] as UpdateQuestionDto[],
   });
 
   useEffect(() => {
     if (quizlet) {
+      console.log("Original quizlet level:", quizlet.level);
+
       const initialQuestions = quizlet.listQuestion.map((q) => ({
         content: q.content,
         score: q.score,
@@ -61,7 +63,11 @@ export default function EditQuizletPage() {
 
       const levelToSet =
         normalizeQuizletLevel(quizlet.level) ??
-        (initialQuestions.length > 0 ? initialQuestions[0].level : null);
+        (initialQuestions.length > 0
+          ? initialQuestions[0].level
+          : QuizletLevel.Easy);
+
+      console.log("Normalized level:", levelToSet);
 
       setFormData({
         title: quizlet.title,
@@ -80,7 +86,7 @@ export default function EditQuizletPage() {
     setFormData((prev) => ({ ...prev, isPublished: value }));
   const setIsHidden = (value: boolean) =>
     setFormData((prev) => ({ ...prev, isHidden: value }));
-  const setLevel = (value: QuizletLevel | null) =>
+  const setLevel = (value: QuizletLevel) =>
     setFormData((prev) => ({ ...prev, level: value }));
   const setQuestions = (value: UpdateQuestionDto[]) =>
     setFormData((prev) => ({ ...prev, questions: value }));
@@ -97,7 +103,7 @@ export default function EditQuizletPage() {
       return;
     }
 
-    if (!level) {
+    if (!level || !Object.values(QuizletLevel).includes(level)) {
       toast({
         title: "Error",
         description: "Please select a difficulty level",
@@ -230,10 +236,13 @@ export default function EditQuizletPage() {
                 Difficulty <span className="text-red-500">*</span>
               </Label>
               <Select
-                value={level?.toString()}
-                onValueChange={(value) =>
-                  setLevel(parseInt(value, 10) as QuizletLevel)
-                }
+                value={level.toString()}
+                onValueChange={(value) => {
+                  const parsedLevel = parseInt(value, 10) as QuizletLevel;
+                  if (Object.values(QuizletLevel).includes(parsedLevel)) {
+                    setLevel(parsedLevel);
+                  }
+                }}
               >
                 <SelectTrigger id="level" className="w-full">
                   <SelectValue placeholder="Select difficulty" />
@@ -245,7 +254,8 @@ export default function EditQuizletPage() {
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                Current selection: {getQuizletLevelLabel(level)}
+                Current selection: {getQuizletLevelLabel(level)} | Raw level:{" "}
+                {JSON.stringify(level)} | Type: {typeof level}
               </p>
             </div>
 
