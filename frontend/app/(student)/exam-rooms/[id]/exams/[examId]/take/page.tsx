@@ -464,7 +464,7 @@ int main() {
         code,
         examId: examId,
         language: "c",
-        optimizationLevel: 2,
+        optimizationLevel: "2",
       },
       {
         onSuccess: (judgeResult) => {
@@ -615,7 +615,7 @@ int main() {
             input: testCase.inputPath || "",
             timeLimit: 2000,
             memoryLimit: 128,
-            optimizationLevel: 2,
+            optimizationLevel: "2",
           })
             .then(resolve)
             .catch(reject);
@@ -993,13 +993,19 @@ int main() {
                           key={index}
                           className={
                             result.passed
-                              ? "border-green-500"
-                              : "border-red-500"
+                              ? "border-green-500 border-2"
+                              : "border-red-500 border-2"
                           }
                         >
-                          <CardHeader>
+                          <CardHeader
+                            className={
+                              result.passed ? "bg-green-50" : "bg-red-50"
+                            }
+                          >
                             <div className="flex items-center justify-between">
-                              <CardTitle className="text-base">
+                              <CardTitle
+                                className={`text-base ${result.passed ? "text-green-900" : "text-red-900"}`}
+                              >
                                 Test Case {result.testCase}
                               </CardTitle>
                               <div className="flex items-center gap-2">
@@ -1018,50 +1024,68 @@ int main() {
                                       : "bg-red-600"
                                   }
                                 >
-                                  {result.passed ? "Passed" : "Failed"}
+                                  {result.passed ? "✓ Passed" : "✗ Failed"}
                                 </Badge>
                               </div>
                             </div>
                           </CardHeader>
-                          <CardContent className="space-y-2">
+                          <CardContent className="space-y-3 pt-4">
                             {result.error && (
-                              <div>
-                                <p className="text-sm font-medium text-red-600">
-                                  Error:
+                              <div className="bg-red-100 border border-red-300 rounded-lg p-3">
+                                <p className="text-sm font-bold text-red-700 mb-2">
+                                  ⚠️ Runtime Error:
                                 </p>
-                                <pre className="bg-red-50 text-red-900 p-2 rounded text-sm mt-1 whitespace-pre-wrap">
+                                <pre className="bg-red-50 text-red-900 p-2 rounded text-xs mt-1 whitespace-pre-wrap font-mono">
                                   {result.error}
                                 </pre>
                               </div>
                             )}
                             <div>
-                              <p className="text-sm font-medium">Input:</p>
-                              <pre className="bg-muted p-2 rounded text-sm mt-1">
+                              <p className="text-sm font-semibold text-gray-700 mb-1">
+                                📥 Input:
+                              </p>
+                              <pre className="bg-gray-100 p-3 rounded text-sm border border-gray-300 whitespace-pre-wrap font-mono">
                                 {result.input}
                               </pre>
                             </div>
                             <div>
-                              <p className="text-sm font-medium">
-                                Expected Output:
+                              <p className="text-sm font-semibold text-gray-700 mb-1">
+                                📤 Expected Output:
                               </p>
-                              <pre className="bg-muted p-2 rounded text-sm mt-1">
+                              <pre className="bg-blue-50 p-3 rounded text-sm border border-blue-300 whitespace-pre-wrap font-mono text-blue-900">
                                 {result.expectedOutput}
                               </pre>
                             </div>
                             {result.actualOutput && (
                               <div>
-                                <p className="text-sm font-medium">
-                                  Your Output:
+                                <p
+                                  className={`text-sm font-semibold mb-1 ${
+                                    result.passed
+                                      ? "text-green-700"
+                                      : "text-red-700"
+                                  }`}
+                                >
+                                  {result.passed
+                                    ? "✓ Your Output (Correct):"
+                                    : "✗ Your Output (Incorrect):"}
                                 </p>
                                 <pre
-                                  className={`p-2 rounded text-sm mt-1 ${
+                                  className={`p-3 rounded text-sm border whitespace-pre-wrap font-mono ${
                                     result.passed
-                                      ? "bg-green-50 text-green-900"
-                                      : "bg-red-50 text-red-900"
+                                      ? "bg-green-50 text-green-900 border-green-300"
+                                      : "bg-red-50 text-red-900 border-red-300"
                                   }`}
                                 >
                                   {result.actualOutput}
                                 </pre>
+                              </div>
+                            )}
+                            {!result.actualOutput && !result.error && (
+                              <div className="bg-yellow-50 border border-yellow-300 rounded-lg p-3">
+                                <p className="text-sm text-yellow-800">
+                                  ⚠️ No output generated. Check your code for
+                                  issues.
+                                </p>
                               </div>
                             )}
                           </CardContent>
@@ -1155,7 +1179,7 @@ int main() {
                     input: testInput,
                     timeLimit: 2000,
                     memoryLimit: 128,
-                    optimizationLevel: 2,
+                    optimizationLevel: "2",
                   });
 
                   if (response.data) {

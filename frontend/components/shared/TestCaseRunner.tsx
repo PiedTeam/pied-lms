@@ -106,7 +106,7 @@ int main() {
       input: testCase.inputPath || "",
       timeLimit: 2000,
       memoryLimit: 128,
-      optimizationLevel: 2,
+      optimizationLevel: "2",
     })
       .then((response: CompilerApiResponse<CompileCodeResponse>) => {
         if (response.data && response.data.success) {

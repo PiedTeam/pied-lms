@@ -42,9 +42,7 @@ interface QuizletEditFormState {
   questions: UpdateQuestionDto[];
 }
 
-function buildInitialFormState(
-  quizlet: QuizletResponse,
-): QuizletEditFormState {
+function buildInitialFormState(quizlet: QuizletResponse): QuizletEditFormState {
   const questions = quizlet.listQuestion.map((question) => ({
     content: question.content,
     score: question.score,
@@ -237,10 +235,6 @@ export function QuizletEditPageContent({
                   <SelectItem value="3">Hard</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
-                Current selection: {getQuizletLevelLabel(level)} | Raw level:{" "}
-                {JSON.stringify(level)} | Type: {typeof level}
-              </p>
             </div>
 
             <div className="flex items-center space-x-2">

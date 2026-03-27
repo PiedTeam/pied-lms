@@ -355,89 +355,117 @@ export default function QuizResultPage() {
                         </div>
                       )}
 
-                      <div className="space-y-3">
-                        {question.answers.map((answer, answerIndex) => {
-                          const answerContent = answer.content;
-                          const isUserAnswer = userAnswers.includes(answerContent);
-                          const isCorrectAnswer =
-                            correctAnswers.includes(answerContent);
+                      {isCorrect && (
+                        <>
+                          <div className="space-y-3">
+                            {question.answers.map((answer, answerIndex) => {
+                              const answerContent = answer.content;
+                              const isUserAnswer =
+                                userAnswers.includes(answerContent);
+                              const isCorrectAnswer =
+                                correctAnswers.includes(answerContent);
 
-                          return (
-                            <div
-                              key={`${questionIndex}-${answerIndex}-${answerContent}`}
-                              className={`rounded-xl border-2 p-4 transition-all ${
-                                isCorrectAnswer
-                                  ? "border-green-500 bg-green-50 shadow-md"
-                                  : isUserAnswer
-                                    ? "border-red-300 bg-red-50/70"
-                                    : "border-gray-200 bg-white"
-                              }`}
-                            >
-                              <div className="flex flex-wrap items-center gap-3">
-                                <span className="rounded bg-primary/10 px-3 py-1 font-mono text-base font-bold">
-                                  {String.fromCharCode(65 + answerIndex)}.
-                                </span>
-                                <span className="flex-1 text-base">
-                                  {answerContent}
-                                </span>
-                                {isCorrectAnswer && (
-                                  <Badge className="bg-green-600 text-white">
-                                    Correct Answer
-                                  </Badge>
-                                )}
-                                {isUserAnswer && (
-                                  <Badge
-                                    className={
-                                      isCorrectAnswer
-                                        ? "bg-green-600 text-white"
-                                        : "bg-red-600 text-white"
-                                    }
-                                  >
-                                    You selected
-                                  </Badge>
-                                )} 
+                              return (
+                                <div
+                                  key={`${questionIndex}-${answerIndex}-${answerContent}`}
+                                  className={`rounded-xl border-2 p-4 transition-all ${
+                                    isCorrectAnswer
+                                      ? "border-green-500 bg-green-50 shadow-md"
+                                      : isUserAnswer
+                                        ? "border-red-300 bg-red-50/70"
+                                        : "border-gray-200 bg-white"
+                                  }`}
+                                >
+                                  <div className="flex flex-wrap items-center gap-3">
+                                    <span className="rounded bg-primary/10 px-3 py-1 font-mono text-base font-bold">
+                                      {String.fromCharCode(65 + answerIndex)}.
+                                    </span>
+                                    <span className="flex-1 text-base">
+                                      {answerContent}
+                                    </span>
+                                    {isCorrectAnswer && (
+                                      <Badge className="bg-green-600 text-white">
+                                        Correct Answer
+                                      </Badge>
+                                    )}
+                                    {isUserAnswer && (
+                                      <Badge className="bg-green-600 text-white">
+                                        You selected
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          {question.explanation && (
+                            <div className="mt-4 rounded-lg border-2 border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+                              <div className="mb-2 flex items-center gap-2 font-semibold">
+                                <CheckCircle2 className="h-4 w-4 text-blue-600" />
+                                Explanation
                               </div>
+                              <p className="text-blue-800">
+                                {question.explanation}
+                              </p>
                             </div>
-                          );
-                        })}
-                      </div>
-
-                      {question.explanation && (
-                        <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm italic text-slate-700">
-                          {question.explanation}
-                        </div>
+                          )}
+                        </>
                       )}
 
-                      {isUnanswered && correctAnswerSummaries.length > 0 && (
-                        <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50/80 p-4">
-                          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                      {!isCorrect && (
+                        <>
+                          <div className="space-y-3">
+                            {question.answers.map((answer, answerIndex) => {
+                              const answerContent = answer.content;
+                              const isUserAnswer =
+                                userAnswers.includes(answerContent);
+
+                              return (
+                                <div
+                                  key={`${questionIndex}-${answerIndex}-${answerContent}`}
+                                  className={`rounded-xl border-2 p-4 transition-all ${
+                                    isUserAnswer
+                                      ? "border-red-300 bg-red-50/70"
+                                      : "border-gray-200 bg-white"
+                                  }`}
+                                >
+                                  <div className="flex flex-wrap items-center gap-3">
+                                    <span className="rounded bg-primary/10 px-3 py-1 font-mono text-base font-bold">
+                                      {String.fromCharCode(65 + answerIndex)}.
+                                    </span>
+                                    <span className="flex-1 text-base">
+                                      {answerContent}
+                                    </span>
+                                    {isUserAnswer && (
+                                      <Badge className="bg-red-600 text-white">
+                                        You selected
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
                             <div className="flex items-start gap-3">
-                              <div className="rounded-full bg-amber-100 p-2 text-amber-700">
+                              <div className="rounded-full bg-slate-200 p-2 text-slate-600">
                                 <AlertCircle className="h-4 w-4" />
                               </div>
                               <div>
-                                <p className="text-sm font-semibold text-amber-900">
-                                  Correct answers for this question
+                                <p className="text-sm font-semibold text-slate-900">
+                                  Review this question
                                 </p>
-                                <p className="text-sm text-amber-800">
-                                  The correct options are highlighted above and
-                                  listed here for quick review.
+                                <p className="mt-1 text-sm text-slate-700">
+                                  {isUnanswered
+                                    ? "You didn't answer this question. Take time to review the topic and try again."
+                                    : "Your answer was incorrect. Review the topic carefully and try again to improve your understanding."}
                                 </p>
                               </div>
                             </div>
-
-                            <div className="flex flex-wrap gap-2">
-                              {correctAnswerSummaries.map(({ answer, label }) => (
-                                <div
-                                  key={`${label}-${answer}`}
-                                  className="rounded-full border border-green-200 bg-white px-3 py-1 text-sm font-medium text-green-700 shadow-sm"
-                                >
-                                  {label}. {answer}
-                                </div>
-                              ))}
-                            </div>
                           </div>
-                        </div>
+                        </>
                       )}
                     </div>
                   </div>
