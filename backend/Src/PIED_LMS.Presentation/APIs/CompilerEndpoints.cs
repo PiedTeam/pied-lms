@@ -1,5 +1,6 @@
 using PIED_LMS.Contract.Services.Compiler;
 using PIED_LMS.Contract.Services.Identity;
+using PIED_LMS.Presentation.Extensions;
 
 namespace PIED_LMS.Presentation.APIs;
 
@@ -30,30 +31,33 @@ public sealed class CompilerEndpoints : ICarterModule
     private static async Task<IResult> Compile(
         CompileCommand request,
         IMediator mediator,
+        HttpContext context,
         CancellationToken cancellationToken)
     {
         var response = await mediator.Send(request, cancellationToken);
-        return ToResponse(response);
+        return response.ToActionResult(context);
     }
 
     private static async Task<IResult> Judge(
         JudgeCommand request,
         IMediator mediator,
+        HttpContext context,
         CancellationToken cancellationToken)
     {
         var response = await mediator.Send(request, cancellationToken);
-        return ToResponse(response);
+        return response.ToActionResult(context);
     }
 
     private static async Task<IResult> JudgeFromFile
     (
         JudgeFromFileCommand request,
         IMediator mediator,
+        HttpContext context,
         CancellationToken cancellationToken
     )
     {
         var response = await mediator.Send(request, cancellationToken);
-        return ToResponse(response);
+        return response.ToActionResult(context);
     }
 
     private static IResult ToResponse<T>(ServiceResponse<T> response)

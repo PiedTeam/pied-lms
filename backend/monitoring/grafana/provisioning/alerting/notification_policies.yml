@@ -1,0 +1,19 @@
+apiVersion: 1
+
+policies:
+  - orgId: 1
+    receiver: "Discord_Webhook"
+    group_by: ['alertname', 'severity']
+    group_wait: 30s
+    group_interval: 10m
+    repeat_interval: 1h
+    routes:
+      # Route critical alerts to both Email and Discord
+      - receiver: "Admin_Email"
+        matchers:
+          - severity = critical
+        continue: true # Continue to the next sibling route
+      
+      - receiver: "Discord_Webhook"
+        matchers:
+          - severity = critical

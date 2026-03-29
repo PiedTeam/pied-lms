@@ -9,17 +9,20 @@ public class ExcelService : IExcelService
     public async Task<List<T>> ReadExcelAsync<T>(IFormFile file, CancellationToken cancellationToken = default) where T : class, new()
     {
         if (file == null || file.Length == 0)
-        {
             return [];
-        }
 
-        var result = new List<T>();
-        using (var stream = file.OpenReadStream())
-        {
-            var rows = await stream.QueryAsync<T>(cancellationToken: cancellationToken);
-            result.AddRange(rows);
-        }
+        using var stream = file.OpenReadStream();
+        var rows = await stream.QueryAsync<T>(cancellationToken: cancellationToken);
+        return rows.ToList();
+    }
 
-        return result;
+    public async Task<List<T>> ReadExcelAsync<T>(IFormFile file, string sheetName, CancellationToken cancellationToken = default) where T : class, new()
+    {
+        if (file == null || file.Length == 0)
+            return [];
+
+        using var stream = file.OpenReadStream();
+        var rows = await stream.QueryAsync<T>(sheetName: sheetName, cancellationToken: cancellationToken);
+        return rows.ToList();
     }
 }

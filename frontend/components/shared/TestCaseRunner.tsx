@@ -24,9 +24,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { useCompileCode } from "@/service";
+import { compileCode as compileCodeService } from "@/services/compiler/compiler.service";
 import { COMPILER_MESSAGES } from "@/constants/messages";
-import type { CompileCodeResponse } from "@/interface/compiler/compiler.interface";
+import type {
+  CompileCodeResponse,
+  CompilerApiResponse,
+} from "@/interface/compiler/compiler.interface";
 import type {
   RunTestCaseFormData,
   TestCaseRunnerProps,
@@ -35,8 +38,7 @@ import type {
 export function TestCaseRunner({ testCase, onClose }: TestCaseRunnerProps) {
   const { toast } = useToast();
   const [result, setResult] = useState<CompileCodeResponse | null>(null);
-
-  const { mutate: compileCode, isPending: isRunning } = useCompileCode();
+  const [isRunning, setIsRunning] = useState(false);
 
   const form = useForm<RunTestCaseFormData>({
     defaultValues: {
@@ -91,62 +93,54 @@ int main() {
     }
 
     setResult(null);
+    setIsRunning(true);
 
     toast({
       title: COMPILER_MESSAGES.INFO.COMPILING,
       description: COMPILER_MESSAGES.INFO.EXECUTING,
     });
 
-    // Use compile API with test case input
-    compileCode(
-      {
-        code: data.code,
-        input: testCase.inputPath || "",
-        timeLimit: 2000,
-        memoryLimit: 128,
-        optimizationLevel: 2,
-      },
-      {
-        onSuccess: (response) => {
-          if (response.data) {
-            setResult(response.data);
+    // Use same approach as student page - call compileCode directly
+    compileCodeService({
+      code: data.code,
+      input: testCase.inputPath || "",
+      timeLimit: 2000,
+      memoryLimit: 128,
+      optimizationLevel: "2",
+    })
+      .then((response: CompilerApiResponse<CompileCodeResponse>) => {
+        if (response.data && response.data.success) {
+          setResult(response.data);
 
-            if (response.data.success) {
-              const actualOutput = (response.data.output || "").trim();
-              const expectedOutput = (testCase.outputPath || "").trim();
-              const passed = actualOutput === expectedOutput;
+          const actualOutput = (response.data.output || "").trim();
+          const expectedOutput = (testCase.outputPath || "").trim();
+          const passed = actualOutput === expectedOutput;
 
-              toast({
-                title: passed ? "Test Case Passed ✓" : "Test Case Failed ✗",
-                description: passed
-                  ? `Output matches expected result`
-                  : `Output does not match expected result`,
-                variant: passed ? "default" : "destructive",
-              });
-            } else {
-              toast({
-                title: "Compilation/Runtime Error",
-                description:
-                  response.message || "Check the error details below",
-              });
-            }
-          } else {
-            toast({
-              title: COMPILER_MESSAGES.ERROR.EXECUTION_FAILED,
-              description: response.message || "No response data",
-              variant: "destructive",
-            });
-          }
-        },
-        onError: (error: Error) => {
           toast({
-            title: "Network Error",
-            description: error.message || "Could not connect to server",
-            variant: "destructive",
+            title: passed ? "Test Case Passed ✓" : "Test Case Failed ✗",
+            description: passed
+              ? `Output matches expected result`
+              : `Output does not match expected result`,
+            variant: passed ? "default" : "destructive",
           });
-        },
-      },
-    );
+        } else {
+          setResult(response.data || null);
+          toast({
+            title: "Compilation/Runtime Error",
+            description: response.message || "Check the error details below",
+          });
+        }
+      })
+      .catch((error: Error) => {
+        toast({
+          title: "Network Error",
+          description: error.message || "Could not connect to server",
+          variant: "destructive",
+        });
+      })
+      .finally(() => {
+        setIsRunning(false);
+      });
   };
 
   return (

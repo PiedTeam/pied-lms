@@ -66,13 +66,15 @@ public class UpdateQuestionQuizHandler(
                 QuestionType = ParseQuestionType(qDto.QuestionType),
                 IsHidden = qDto.IsHidden,
                 Level = (int)qDto.Level,
+                Explanation = qDto.Explanation,
                 Answers = []
             };
 
             if (qDto.Answers != null)
             {
-                foreach(var ansText in qDto.Answers)
+                for (int i = 0; i < qDto.Answers.Count; i++)
                 {
+                    var ansText = qDto.Answers[i];
                     bool isCorrect = qDto.CorrectAnswers != null && 
                                      qDto.CorrectAnswers.Any(ca => ca.Trim().Equals(ansText.Trim(), StringComparison.OrdinalIgnoreCase));
                     

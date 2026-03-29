@@ -4,6 +4,7 @@ using PIED_LMS.Application.Abstractions;
 using PIED_LMS.Application.Options;
 using PIED_LMS.Contract.Services.Compiler.Validators;
 using PIED_LMS.Infrastructure.Compiler;
+using Prometheus;
 
 
 
@@ -109,9 +110,25 @@ public static class InfrastructureExtensions
     public static WebApplication UseInfrastructure(this WebApplication app)
     {
         app.UseExceptionHandler();
-        app.UseSerilogRequestLogging();
+        app.UseSerilogRequestLogging(options =>
+        {
+            options.MessageTemplate = "[Status: {StatusCode}] - HTTP {Method} {Path} responded {StatusCode} in {Elapsed:0.0000} ms{ErrorSummary}";
+            options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
+            {
+                if (httpContext.Items.TryGetValue("ErrorMessage", out var errorMessage))
+                {
+                    diagnosticContext.Set("ErrorMessage", errorMessage);
+                    diagnosticContext.Set("ErrorSummary", $". Error: {errorMessage}");
+                }
+                else
+                {
+                    diagnosticContext.Set("ErrorSummary", string.Empty);
+                }
+            };
+        });
+        app.UseRouting();
+        app.UseHttpMetrics();
 
-        // Enable CORS - must be before UseAuthentication and UseAuthorization
         app.UseCors("AllowFrontend");
 
         app.UseRateLimiter();
@@ -128,6 +145,7 @@ public static class InfrastructureExtensions
         }
 
         app.MapCarter();
+        app.MapMetrics();
 
         return app;
     }

@@ -6,6 +6,7 @@ using PIED_LMS.Contract.Services.Identity;
 using Carter;
 using Microsoft.AspNetCore.Authorization;
 using PIED_LMS.Domain.Constants;
+using PIED_LMS.Presentation.Extensions;
 
 namespace PIED_LMS.Presentation.APIs;
 
@@ -42,23 +43,22 @@ public class AdminEndpoints : ICarterModule
     private static async Task<IResult> ImportStudents(
         ImportStudentsCommand request,
         IMediator mediator,
+        HttpContext context,
         CancellationToken cancellationToken)
     {
         var result = await mediator.Send(request, cancellationToken);
-        return result.Success ? Results.Ok(result) : Results.BadRequest(result);
+        return result.ToActionResult(context);
     }
 
     private static async Task<IResult> ApproveMentor(
         Guid userId,
         IMediator mediator,
+        HttpContext context,
         CancellationToken cancellationToken)
     {
         var command = new ApproveMentorCommand(userId);
         var result = await mediator.Send(command, cancellationToken);
         
-        if (result.IsNotFound)
-            return Results.NotFound(result);
-            
-        return result.Success ? Results.Ok(result) : Results.BadRequest(result);
+        return result.ToActionResult(context);
     }
 }

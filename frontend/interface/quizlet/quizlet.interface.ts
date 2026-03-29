@@ -11,11 +11,17 @@ export enum QuizletLevel {
   Hard = 3,
 }
 
+export interface QuizAnswerOption {
+  content: string;
+  explanation?: string | null;
+}
+
 export interface QuestionResponse {
   content: string;
   score: number;
-  answers: string[];
+  answers: QuizAnswerOption[];
   correctAnswers: string[];
+  explanation?: string | null;
   type: number; // 0 = SingleChoice, 1 = MultipleChoice (from backend)
   questionType: string; // "SingleChoice" or "MultipleChoice" (for display)
   isHidden: boolean;
@@ -64,6 +70,7 @@ export interface UpdateQuestionDto {
   questionType: number; // 0 = SingleChoice, 1 = MultipleChoice
   answers: string[];
   correctAnswers: string[];
+  explanation?: string | null;
   isHidden: boolean;
   level: QuizletLevel;
 }
@@ -79,8 +86,9 @@ export interface UpdateQuizletRequest {
 export interface StudentQuestionDto {
   content: string;
   score: number;
-  answers: string[];
+  answers: QuizAnswerOption[];
   correctAnswers: string[];
+  explanation?: string | null;
   questionType: string; // "SingleChoice" or "MultipleChoice"
   isHidden: boolean;
   level: QuizletLevel;

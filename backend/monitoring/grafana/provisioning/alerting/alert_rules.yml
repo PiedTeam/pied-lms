@@ -1,0 +1,96 @@
+apiVersion: 1
+groups:
+  - orgId: 1
+    name: "System Monitoring"
+    folder: "Backend Alerts"
+    interval: 1m
+    rules:
+      - uid: "api-down"
+        title: "PIED LMS API is Down"
+        condition: "B"
+        data:
+          - refId: "A"
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: "prometheus-ds"
+            model:
+              expr: "up{job='pied-lms-api'} == 0"
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: "A"
+          - refId: "B"
+            datasourceUid: "__expr__"
+            model:
+              conditions:
+                - evaluator:
+                    params:
+                      - 0
+                    type: "gt"
+                  operator:
+                    type: "and"
+                  query:
+                    params:
+                      - "A"
+                  reducer:
+                    params: []
+                    type: "last"
+                  type: "query"
+              datasource:
+                type: "__expr__"
+                uid: "__expr__"
+              expression: "A"
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: "B"
+              type: "classic_conditions"
+        for: 1m
+        annotations:
+          summary: "API Server is Unreachable"
+          description: "Prometheus cannot scrape metrics from the API pod."
+        labels:
+          severity: "critical"
+
+      - uid: "loki-bug"
+        title: "Immediate Bug/Error Detected"
+        condition: "B"
+        data:
+          - refId: "A"
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: "loki-ds"
+            model:
+              expr: 'count_over_time({app="pied-lms-backend"} |~ "Error|Exception" [1m])'
+              refId: "A"
+          - refId: "B"
+            datasourceUid: "__expr__"
+            model:
+              conditions:
+                - evaluator:
+                    params:
+                      - 0
+                    type: "gt"
+                  operator:
+                    type: "and"
+                  query:
+                    params:
+                      - "A"
+                  reducer:
+                    params: []
+                    type: "sum"
+                  type: "query"
+              datasource:
+                type: "__expr__"
+                uid: "__expr__"
+              expression: "A"
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: "B"
+              type: "classic_conditions"
+        for: 0m # Trigger immediately
+        annotations:
+          summary: "Bug/Error logged in application"
+          description: "GlobalExceptionHandler caught an Error or Exception."
+        labels:
+          severity: "critical"

@@ -3,6 +3,7 @@ using Carter;
 using MediatR;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Constants;
+using PIED_LMS.Presentation.Extensions;
 
 namespace PIED_LMS.Presentation.APIs;
 
@@ -29,13 +30,10 @@ public class TestRoomEndpoints : ICarterModule
     private static async Task<IResult> CreateTestRoom(
         CreateRoomCommand request,
         IMediator mediator,
+        HttpContext context,
         CancellationToken cancellationToken)
     {
         var result = await mediator.Send(request, cancellationToken);
-        if (result.Success && result.Data != Guid.Empty)
-        {
-            return Results.Created($"/api/test-rooms/{result.Data}", result);
-        }
-        return result.Success ? Results.Ok(result) : Results.BadRequest(result);
+        return result.ToActionResult(context);
     }
 }
