@@ -7,7 +7,7 @@ groups:
     rules:
       - uid: "api-down"
         title: "PIED LMS API is Down"
-        condition: "A"
+        condition: "B"
         data:
           - refId: "A"
             relativeTimeRange:
@@ -33,6 +33,7 @@ groups:
                     params:
                       - "A"
                   reducer:
+                    params: []
                     type: "last"
                   type: "query"
               datasource:
@@ -42,31 +43,7 @@ groups:
               intervalMs: 1000
               maxDataPoints: 43200
               refId: "B"
-              type: "reduce"
-          - refId: "C"
-            datasourceUid: "__expr__"
-            model:
-              conditions:
-                - evaluator:
-                    params:
-                      - 0
-                    type: "gt"
-                  operator:
-                    type: "and"
-                  query:
-                    params:
-                      - "B"
-                  reducer:
-                    type: "last"
-                  type: "query"
-              datasource:
-                type: "__expr__"
-                uid: "__expr__"
-              expression: "B"
-              intervalMs: 1000
-              maxDataPoints: 43200
-              refId: "C"
-              type: "math"
+              type: "classic_conditions"
         for: 1m
         annotations:
           summary: "API Server is Unreachable"
@@ -76,7 +53,7 @@ groups:
 
       - uid: "loki-bug"
         title: "Immediate Bug/Error Detected"
-        condition: "A"
+        condition: "B"
         data:
           - refId: "A"
             relativeTimeRange:
@@ -84,7 +61,7 @@ groups:
               to: 0
             datasourceUid: "loki-ds"
             model:
-              expr: 'sum(rate({app="pied-lms-backend"} |~ "Error|Exception" [1m]))'
+              expr: 'count_over_time({app="pied-lms-backend"} |~ "Error|Exception" [1m])'
               refId: "A"
           - refId: "B"
             datasourceUid: "__expr__"
@@ -100,7 +77,8 @@ groups:
                     params:
                       - "A"
                   reducer:
-                    type: "last"
+                    params: []
+                    type: "sum"
                   type: "query"
               datasource:
                 type: "__expr__"
@@ -109,31 +87,7 @@ groups:
               intervalMs: 1000
               maxDataPoints: 43200
               refId: "B"
-              type: "reduce"
-          - refId: "C"
-            datasourceUid: "__expr__"
-            model:
-              conditions:
-                - evaluator:
-                    params:
-                      - 0
-                    type: "gt"
-                  operator:
-                    type: "and"
-                  query:
-                    params:
-                      - "B"
-                  reducer:
-                    type: "last"
-                  type: "query"
-              datasource:
-                type: "__expr__"
-                uid: "__expr__"
-              expression: "B"
-              intervalMs: 1000
-              maxDataPoints: 43200
-              refId: "C"
-              type: "math"
+              type: "classic_conditions"
         for: 0m # Trigger immediately
         annotations:
           summary: "Bug/Error logged in application"

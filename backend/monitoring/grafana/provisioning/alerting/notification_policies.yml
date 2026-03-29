@@ -12,4 +12,8 @@ policies:
       - receiver: "Admin_Email"
         matchers:
           - severity = critical
-        continue: true # Also send to the default receiver (Discord)
+        continue: true # Continue to the next sibling route
+      
+      - receiver: "Discord_Webhook"
+        matchers:
+          - severity = critical
