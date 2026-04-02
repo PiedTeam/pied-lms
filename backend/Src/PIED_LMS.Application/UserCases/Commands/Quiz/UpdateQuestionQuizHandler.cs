@@ -9,7 +9,7 @@ using PIED_LMS.Domain.Entities;
 using PIED_LMS.Contract.Services.Identity;
 using System.Security.Claims;
 
-namespace PIED_LMS.Application.UserCases.Commands.Auth;
+namespace PIED_LMS.Application.UserCases.Commands.Quiz;
 
 public class UpdateQuestionQuizHandler(
     IHttpContextAccessor httpContextAccessor, 
