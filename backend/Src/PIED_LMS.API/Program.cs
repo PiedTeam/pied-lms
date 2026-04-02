@@ -6,7 +6,7 @@ using PIED_LMS.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Host.UseSerilog((context, loggerConfig) => loggerConfig.WriteTo.Console());
+builder.Host.UseSerilog((context, loggerConfig) => loggerConfig.ReadFrom.Configuration(context.Configuration));
 
 builder.Services.AddPersistenceServices(builder.Configuration);
 builder.Services.AddApplicationServices();
@@ -24,7 +24,7 @@ using (var scope = app.Services.CreateScope())
         var dbContext = services.GetRequiredService<PiedLmsDbContext>();
         await dbContext.Database.MigrateAsync();
 
-        await PIED_LMS.Infrastructure.DbInitializer.SeedAsync(services);
+        await DbInitializer.SeedAsync(services);
     }
     catch (Exception ex)
     {

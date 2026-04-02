@@ -100,29 +100,22 @@ export default function ExamDetailPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <p className="text-sm font-medium text-muted-foreground">
-              Exam Title
-            </p>
+            <p className="text-base font-bold text-foreground">Exam Title</p>
             <p className="text-base">{exam.title}</p>
           </div>
           <div>
-            <p className="text-sm font-medium text-muted-foreground">
-              {" "}
-              Description
-            </p>
+            <p className="text-base font-bold text-foreground"> Description</p>
             <p className="text-base whitespace-pre-line">
               {exam.description || "No description"}
             </p>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Max Score
-              </p>
+              <p className="text-base font-bold text-foreground">Max Score</p>
               <p className="text-base">{exam.totalMarks} points</p>
             </div>
             <div>
-              <p className="text-sm font-medium text-muted-foreground">
+              <p className="text-base font-bold text-foreground">
                 Passing Score
               </p>
               <p className="text-base">{exam.passingMarks} points</p>

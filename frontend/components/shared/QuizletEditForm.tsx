@@ -40,7 +40,7 @@ export function QuizletEditForm({
   const handleQuestionChange = (
     originalIndex: number,
     field: keyof UpdateQuestionDto,
-    value: string | number | boolean | string[],
+    value: string | number | boolean | string[] | null,
   ) => {
     const newQuestions = [...questions];
     newQuestions[originalIndex] = {
@@ -148,6 +148,25 @@ export function QuizletEditForm({
                           }
                           placeholder="Enter question content"
                           rows={2}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor={`explanation-${originalIndex}`}>
+                          Explanation
+                        </Label>
+                        <Textarea
+                          id={`explanation-${originalIndex}`}
+                          value={question.explanation ?? ""}
+                          onChange={(e) =>
+                            handleQuestionChange(
+                              originalIndex,
+                              "explanation",
+                              e.target.value,
+                            )
+                          }
+                          placeholder="Enter the explanation shown after the learner checks the result"
+                          rows={3}
                         />
                       </div>
 

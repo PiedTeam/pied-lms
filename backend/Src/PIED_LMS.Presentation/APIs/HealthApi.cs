@@ -34,5 +34,13 @@ public class HealthApi : ICarterModule
                 NoStore = false
             })
             .RequireRateLimiting("health-policy");
+
+        // Added for testing alerts
+        app.MapGet("/health/error-test", () =>
+        {
+            throw new Exception("This is a test exception to trigger the Grafana loki-bug alert!");
+        })
+        .WithTags("Health")
+        .AllowAnonymous();
     }
 }

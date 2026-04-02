@@ -1,0 +1,22 @@
+apiVersion: 1
+
+contactPoints:
+  - orgId: 1
+    name: "Discord_Webhook"
+    receivers:
+      - uid: "discord-webhook-1"
+        type: discord
+        settings:
+          url: "https://discordapp.com/api/webhooks/1486183116350554212/AeavEh5BTE0N2ncOPsoMpy8MrfZwLzEIJgwLJi2e7KPi0jEBPE_0AivVk6PeZWB9PMGt"
+          avatar_url: "https://grafana.com/favicon.ico"
+        disableResolveMessage: false
+
+  - orgId: 1
+    name: "Admin_Email"
+    receivers:
+      - uid: "admin-email-1"
+        type: email
+        settings:
+          addresses: "nemnguyenhoang2907@gmail.com"
+          singleEmail: true
+        disableResolveMessage: false

@@ -299,7 +299,8 @@ export default function TakeQuizPage() {
                 className="space-y-4"
               >
                 {question.answers.map((answer, index) => {
-                  const isSelected = selectedAnswers.includes(answer);
+                  const answerContent = answer.content;
+                  const isSelected = selectedAnswers.includes(answerContent);
                   const optionId = `question-${currentQuestion}-option-${index}`;
 
                   return (
@@ -315,13 +316,13 @@ export default function TakeQuizPage() {
                     >
                       <RadioGroupItem
                         id={optionId}
-                        value={answer}
+                        value={answerContent}
                         className="size-5 border-2"
                       />
                       <span className="mr-2 rounded bg-primary/10 px-3 py-1 font-mono text-base font-bold text-primary">
                         {String.fromCharCode(65 + index)}.
                       </span>
-                      <span className="flex-1 text-base">{answer}</span>
+                      <span className="flex-1 text-base">{answerContent}</span>
                     </label>
                   );
                 })}
@@ -329,7 +330,8 @@ export default function TakeQuizPage() {
             ) : (
               <div className="space-y-4">
                 {question.answers.map((answer, index) => {
-                  const isSelected = selectedAnswers.includes(answer);
+                  const answerContent = answer.content;
+                  const isSelected = selectedAnswers.includes(answerContent);
                   const optionId = `question-${currentQuestion}-option-${index}`;
 
                   return (
@@ -346,7 +348,7 @@ export default function TakeQuizPage() {
                       <Checkbox
                         id={optionId}
                         checked={isSelected}
-                        onCheckedChange={() => handleAnswerToggle(answer)}
+                        onCheckedChange={() => handleAnswerToggle(answerContent)}
                         className="size-5"
                         aria-label={`Select answer ${String.fromCharCode(
                           65 + index,
@@ -355,7 +357,7 @@ export default function TakeQuizPage() {
                       <span className="mr-2 rounded bg-primary/10 px-3 py-1 font-mono text-base font-bold text-primary">
                         {String.fromCharCode(65 + index)}.
                       </span>
-                      <span className="flex-1 text-base">{answer}</span>
+                      <span className="flex-1 text-base">{answerContent}</span>
                       {isSelected && (
                         <CheckCircle2 className="h-5 w-5 text-primary" />
                       )}

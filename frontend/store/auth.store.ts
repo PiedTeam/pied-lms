@@ -102,10 +102,10 @@ function getDashboardRoute(role?: string): string {
     case "mentor":
       return "/mentor/dashboard";
     case "admin":
-      return "/admin/dashboard";
+      return "/admin";
     case "student":
     default:
-      return "/student/dashboard";
+      return "/dashboard";
   }
 }
 
@@ -160,7 +160,11 @@ function handleCrossTabAuthChange(newState: {
       currentState.isAuthenticated
     ) {
       // Check if current path is a role-specific route
-      const isStudentRoute = currentPath.startsWith("/student");
+      const isStudentRoute =
+        currentPath.startsWith("/dashboard") ||
+        currentPath.startsWith("/exam-rooms") ||
+        currentPath.startsWith("/quizzes") ||
+        currentPath.startsWith("/profile");
       const isTeacherRoute = currentPath.startsWith("/teacher");
       const isMentorRoute = currentPath.startsWith("/mentor");
       const isAdminRoute = currentPath.startsWith("/admin");
