@@ -18,6 +18,44 @@ export interface CreateExamRequest {
   passingMarks: number;
 }
 
+export interface ImportedExamTestCase {
+  index: number;
+  input: string;
+  output: string;
+  isHidden: boolean;
+  sourceRow: number;
+}
+
+export interface ExamImportProgress {
+  percentage: number;
+  message: string;
+}
+
+export interface ImportExamPayload {
+  title: string;
+  description: string;
+  totalMarks: number;
+  passingMarks: number;
+  testCases: ImportedExamTestCase[];
+  onProgress?: (progress: ExamImportProgress) => void;
+}
+
+export interface ImportExamResult {
+  exam: ExamResponse;
+  createdTestCases: number;
+}
+
+export interface ExamImportValidationResult {
+  title: string;
+  description: string;
+  totalMarks: number;
+  passingMarks: number;
+  testCases: ImportedExamTestCase[];
+  issues: string[];
+  totalRows: number;
+  validRows: number;
+}
+
 export interface UpdateExamRequest {
   title: string;
   description: string;

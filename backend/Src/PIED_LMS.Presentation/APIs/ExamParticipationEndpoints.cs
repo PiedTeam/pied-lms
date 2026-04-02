@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using PIED_LMS.Contract.Services.ExamParticipation;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Constants;
+using PIED_LMS.Presentation.Extensions;
 
 namespace PIED_LMS.Presentation.APIs;
 
@@ -50,55 +51,43 @@ public class ExamParticipationEndpoints : ICarterModule
     // POST /api/participations/start
     private static async Task<IResult> StartExam(
         StartExamCommand request,
-        IMediator mediator)
+        IMediator mediator,
+        HttpContext context)
     {
         var result = await mediator.Send(request);
-        
-        if (!result.Success)
-        {
-            return result.Message.Contains("authorized") || result.Message.Contains("permission") || result.Message.Contains("access")
-                ? Results.Json(result, statusCode: StatusCodes.Status403Forbidden)
-                : Results.BadRequest(result);
-        }
-        
-        return Results.Ok(result);
+        return result.ToActionResult(context);
     }
 
     // POST /api/participations/submit
     private static async Task<IResult> SubmitExam(
         SubmitExamCommand request,
-        IMediator mediator)
+        IMediator mediator,
+        HttpContext context)
     {
         var result = await mediator.Send(request);
-        
-        if (!result.Success)
-        {
-            return result.Message.Contains("authorized") || result.Message.Contains("permission")
-                ? Results.Json(result, statusCode: StatusCodes.Status403Forbidden)
-                : Results.BadRequest(result);
-        }
-        
-        return Results.Ok(result);
+        return result.ToActionResult(context);
     }
 
     // GET /api/participations
     private static async Task<IResult> GetStudentParticipations(
         [AsParameters] GetStudentParticipationsRequest request,
-        IMediator mediator)
+        IMediator mediator,
+        HttpContext context)
     {
         var query = new GetStudentParticipationsQuery(
             request.PageNumber,
             request.PageSize
         );
         var result = await mediator.Send(query);
-        return Results.Ok(result);
+        return result.ToActionResult(context);
     }
 
     // GET /api/participations/room/{examRoomId}
     private static async Task<IResult> GetExamRoomEnrollments(
         Guid examRoomId,
         [AsParameters] GetExamRoomEnrollmentsRequest request,
-        IMediator mediator)
+        IMediator mediator,
+        HttpContext context)
     {
         var query = new GetExamRoomEnrollmentsQuery(
             examRoomId,
@@ -106,13 +95,7 @@ public class ExamParticipationEndpoints : ICarterModule
             request.PageSize
         );
         var result = await mediator.Send(query);
-        
-        if (result.IsNotFound)
-        {
-            return Results.NotFound(result);
-        }
-        
-        return Results.Ok(result);
+        return result.ToActionResult(context);
     }
 }
 

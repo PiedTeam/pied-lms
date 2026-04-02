@@ -13,7 +13,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
-import type { QuizletResponse } from "@/interface/quizlet/quizlet.interface";
 import type { QuizletViewDetailProps } from "@/interface/components/shared.types";
 
 export function QuizletViewDetail({ quizlet }: QuizletViewDetailProps) {
@@ -89,32 +88,35 @@ export function QuizletViewDetail({ quizlet }: QuizletViewDetailProps) {
                   <div className="ml-10 space-y-2">
                     {question.answers && question.answers.length > 0 ? (
                       question.answers.map((answer, optIndex) => {
-                        const isCorrect =
-                          question.correctAnswers?.includes(answer);
+                        const isCorrect = question.correctAnswers?.includes(
+                          answer.content,
+                        );
                         return (
                           <div
                             key={optIndex}
-                            className={`flex items-center gap-2 p-2 rounded ${
+                            className={`rounded p-3 ${
                               isCorrect
                                 ? "bg-green-50 border border-green-200"
                                 : "bg-muted"
                             }`}
                           >
-                            <span className="font-mono text-sm">
-                              {String.fromCharCode(65 + optIndex)}.
-                            </span>
-                            <span
-                              className={
-                                isCorrect ? "font-medium text-green-700" : ""
-                              }
-                            >
-                              {answer}
-                            </span>
-                            {isCorrect && (
-                              <Badge variant="default" className="ml-auto">
-                                Correct Answer
-                              </Badge>
-                            )}
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono text-sm">
+                                {String.fromCharCode(65 + optIndex)}.
+                              </span>
+                              <span
+                                className={
+                                  isCorrect ? "font-medium text-green-700" : ""
+                                }
+                              >
+                                {answer.content}
+                              </span>
+                              {isCorrect && (
+                                <Badge variant="default" className="ml-auto">
+                                  Correct Answer
+                                </Badge>
+                              )}
+                            </div>
                           </div>
                         );
                       })
@@ -122,6 +124,24 @@ export function QuizletViewDetail({ quizlet }: QuizletViewDetailProps) {
                       <p className="text-sm text-muted-foreground">
                         No answers provided
                       </p>
+                    )}
+
+                    {question.explanation && (
+                      <div className="rounded-lg border-2 border-blue-300 bg-gradient-to-r from-blue-50 to-blue-100 px-4 py-3 text-sm text-blue-900 shadow-sm">
+                        <div className="flex items-start gap-2">
+                          <span className="font-bold text-blue-600 mt-0.5">
+                            💡
+                          </span>
+                          <div className="flex-1">
+                            <p className="font-semibold text-blue-900 mb-1">
+                              Explanation:
+                            </p>
+                            <p className="text-blue-800 leading-relaxed">
+                              {question.explanation}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
                     )}
                   </div>
 

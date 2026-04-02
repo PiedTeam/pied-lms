@@ -46,6 +46,7 @@ export {
 // Exam Services (Mentor - CRUD exam questions)
 export {
   useCreateExam,
+  useImportExamFromExcel,
   useGetExamsByMentor,
   useGetExamsByAdmin,
   useGetAllExams,

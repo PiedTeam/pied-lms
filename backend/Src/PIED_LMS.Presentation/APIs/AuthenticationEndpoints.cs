@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity.Data;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Constants;
+using PIED_LMS.Presentation.Extensions;
 
 namespace PIED_LMS.Presentation.APIs;
 
@@ -102,10 +103,11 @@ public class AuthenticationEndpoints : ICarterModule
     private static async Task<IResult> Register(
         RegisterCommand request,
         IMediator mediator,
+        HttpContext context,
         CancellationToken cancellationToken)
     {
         var result = await mediator.Send(request, cancellationToken);
-        return result.Success ? Results.Ok(result) : Results.BadRequest(result);
+        return result.ToActionResult(context);
     }
 
     private static async Task<IResult> Login(
@@ -119,7 +121,9 @@ public class AuthenticationEndpoints : ICarterModule
         var result = await mediator.Send(request, cancellationToken);
 
         if (!result.Success || result.Data == null)
-            return Results.BadRequest(result);
+        {
+            return result.ToActionResult(context);
+        }
 
         // Extract login result (contains response and refresh token)
         var loginResult = result.Data;

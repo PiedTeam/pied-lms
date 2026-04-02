@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import {
   AlertCircle,
   ArrowLeft,
@@ -24,7 +24,10 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
-import { QuizletLevel } from "@/interface/quizlet/quizlet.interface";
+import {
+  QuizletLevel,
+  type StudentQuestionDto,
+} from "@/interface/quizlet/quizlet.interface";
 
 interface QuizResult {
   quizletId: number;
@@ -38,15 +41,7 @@ interface QuizResult {
     questionIndex: number;
     selectedAnswers: string[];
   }>;
-  questions: Array<{
-    content: string;
-    score: number;
-    answers: string[];
-    correctAnswers: string[];
-    questionType: string;
-    isHidden: boolean;
-    level: QuizletLevel;
-  }>;
+  questions: StudentQuestionDto[];
 }
 
 export default function QuizResultPage() {
@@ -54,13 +49,13 @@ export default function QuizResultPage() {
   const router = useRouter();
   const id = params.id as string;
 
-  const [result, setResult] = useState<QuizResult | null>(null);
-
-  useEffect(() => {
-    const data = sessionStorage.getItem(`quiz-result-${id}`);
-    if (data) {
-      setResult(JSON.parse(data));
+  const result = useMemo<QuizResult | null>(() => {
+    if (typeof window === "undefined") {
+      return null;
     }
+
+    const data = sessionStorage.getItem(`quiz-result-${id}`);
+    return data ? (JSON.parse(data) as QuizResult) : null;
   }, [id]);
 
   const getLevelBadge = (level: QuizletLevel, isHidden: boolean) => {
@@ -259,7 +254,7 @@ export default function QuizResultPage() {
           <CardHeader className="border-b-2 bg-linear-to-r from-primary/5 to-purple-50">
             <CardTitle className="text-2xl">Review Answers</CardTitle>
             <CardDescription className="text-base">
-              Review your answers and the correct solutions
+              Review your answers and the explanation for each question
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-8 p-6">
@@ -273,6 +268,12 @@ export default function QuizResultPage() {
               const isCorrect =
                 JSON.stringify([...userAnswers].sort()) ===
                 JSON.stringify([...correctAnswers].sort());
+              const correctAnswerSummaries = question.answers
+                .map((answer, answerIndex) => ({
+                  answer: answer.content,
+                  label: String.fromCharCode(65 + answerIndex),
+                }))
+                .filter(({ answer }) => correctAnswers.includes(answer));
 
               return (
                 <div key={questionIndex} className="space-y-4">
@@ -332,66 +333,140 @@ export default function QuizResultPage() {
                         </div>
                       </div>
 
-                      <div className="space-y-3">
-                        {/* Only show answer options if the student got it correct */}
-                        {isCorrect ? (
-                          question.answers.map((answer, answerIndex) => {
-                            const isUserAnswer = userAnswers.includes(answer);
-                            const isCorrectAnswer =
-                              correctAnswers.includes(answer);
+                      {!isCorrect && (
+                        <div className="mb-4 rounded-xl border border-red-200 bg-red-50/80 p-4">
+                          <div className="flex items-start gap-3">
+                            <div className="rounded-full bg-red-100 p-2 text-red-700">
+                              <XCircle className="h-4 w-4" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-red-900">
+                                {isUnanswered
+                                  ? "You did not answer this question."
+                                  : "Your selected answer was incorrect."}
+                              </p>
+                              <p className="text-sm text-red-800">
+                                Review the highlighted options and the
+                                explanation below to understand the correct
+                                reasoning.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
-                            return (
-                              <div
-                                key={answerIndex}
-                                className={`rounded-xl border-2 p-4 transition-all ${
-                                  isCorrectAnswer
-                                    ? "border-green-500 bg-green-50 shadow-md"
-                                    : "border-gray-200 bg-white"
-                                }`}
-                              >
-                                <div className="flex items-center gap-3">
-                                  <span className="rounded bg-primary/10 px-3 py-1 font-mono text-base font-bold">
-                                    {String.fromCharCode(65 + answerIndex)}.
-                                  </span>
-                                  <span className="flex-1 text-base">
-                                    {answer}
-                                  </span>
-                                  {isCorrectAnswer && (
-                                    <Badge className="bg-green-600 text-white">
-                                      Correct Answer
-                                    </Badge>
-                                  )}
-                                  {isUserAnswer && (
-                                    <Badge className="bg-green-600 text-white">
-                                      You selected
-                                    </Badge>
-                                  )}
+                      {isCorrect && (
+                        <>
+                          <div className="space-y-3">
+                            {question.answers.map((answer, answerIndex) => {
+                              const answerContent = answer.content;
+                              const isUserAnswer =
+                                userAnswers.includes(answerContent);
+                              const isCorrectAnswer =
+                                correctAnswers.includes(answerContent);
+
+                              return (
+                                <div
+                                  key={`${questionIndex}-${answerIndex}-${answerContent}`}
+                                  className={`rounded-xl border-2 p-4 transition-all ${
+                                    isCorrectAnswer
+                                      ? "border-green-500 bg-green-50 shadow-md"
+                                      : isUserAnswer
+                                        ? "border-red-300 bg-red-50/70"
+                                        : "border-gray-200 bg-white"
+                                  }`}
+                                >
+                                  <div className="flex flex-wrap items-center gap-3">
+                                    <span className="rounded bg-primary/10 px-3 py-1 font-mono text-base font-bold">
+                                      {String.fromCharCode(65 + answerIndex)}.
+                                    </span>
+                                    <span className="flex-1 text-base">
+                                      {answerContent}
+                                    </span>
+                                    {isCorrectAnswer && (
+                                      <Badge className="bg-green-600 text-white">
+                                        Correct Answer
+                                      </Badge>
+                                    )}
+                                    {isUserAnswer && (
+                                      <Badge className="bg-green-600 text-white">
+                                        You selected
+                                      </Badge>
+                                    )}
+                                  </div>
                                 </div>
+                              );
+                            })}
+                          </div>
+
+                          {question.explanation && (
+                            <div className="mt-4 rounded-lg border-2 border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+                              <div className="mb-2 flex items-center gap-2 font-semibold">
+                                <CheckCircle2 className="h-4 w-4 text-blue-600" />
+                                Explanation
                               </div>
-                            );
-                          })
-                        ) : (
-                          /* Show message for incorrect or unanswered questions */
-                          <div className="rounded-xl border border-red-200 bg-red-50/80 p-4">
+                              <p className="text-blue-800">
+                                {question.explanation}
+                              </p>
+                            </div>
+                          )}
+                        </>
+                      )}
+
+                      {!isCorrect && (
+                        <>
+                          <div className="space-y-3">
+                            {question.answers.map((answer, answerIndex) => {
+                              const answerContent = answer.content;
+                              const isUserAnswer =
+                                userAnswers.includes(answerContent);
+
+                              return (
+                                <div
+                                  key={`${questionIndex}-${answerIndex}-${answerContent}`}
+                                  className={`rounded-xl border-2 p-4 transition-all ${
+                                    isUserAnswer
+                                      ? "border-red-300 bg-red-50/70"
+                                      : "border-gray-200 bg-white"
+                                  }`}
+                                >
+                                  <div className="flex flex-wrap items-center gap-3">
+                                    <span className="rounded bg-primary/10 px-3 py-1 font-mono text-base font-bold">
+                                      {String.fromCharCode(65 + answerIndex)}.
+                                    </span>
+                                    <span className="flex-1 text-base">
+                                      {answerContent}
+                                    </span>
+                                    {isUserAnswer && (
+                                      <Badge className="bg-red-600 text-white">
+                                        You selected
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
                             <div className="flex items-start gap-3">
-                              <div className="rounded-full bg-red-100 p-2 text-red-700">
-                                <XCircle className="h-4 w-4" />
+                              <div className="rounded-full bg-slate-200 p-2 text-slate-600">
+                                <AlertCircle className="h-4 w-4" />
                               </div>
                               <div>
-                                <p className="text-sm font-semibold text-red-900">
-                                  {isUnanswered
-                                    ? "You did not answer this question."
-                                    : "Bạn đã chọn sai."}
+                                <p className="text-sm font-semibold text-slate-900">
+                                  Review this question
                                 </p>
-                                <p className="text-sm text-red-800">
-                                  The correct answer is not shown. Please review
-                                  the material and try again.
+                                <p className="mt-1 text-sm text-slate-700">
+                                  {isUnanswered
+                                    ? "You didn't answer this question. Take time to review the topic and try again."
+                                    : "Your answer was incorrect. Review the topic carefully and try again to improve your understanding."}
                                 </p>
                               </div>
                             </div>
                           </div>
-                        )}
-                      </div>
+                        </>
+                      )}
                     </div>
                   </div>
 

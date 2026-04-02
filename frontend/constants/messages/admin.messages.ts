@@ -2,12 +2,12 @@
 
 export const ADMIN_MESSAGES = {
   SUCCESS: {
-    STUDENTS_IMPORTED: "Nhập danh sách sinh viên thành công",
-    MENTOR_APPROVED: "Phê duyệt mentor thành công",
+    STUDENTS_IMPORTED: "Students imported successfully.",
+    MENTOR_APPROVED: "Mentor approved successfully.",
   },
   ERROR: {
-    IMPORT_STUDENTS_FAILED: "Nhập danh sách sinh viên thất bại",
-    APPROVE_MENTOR_FAILED: "Phê duyệt mentor thất bại",
-    INVALID_FILE: "File không hợp lệ",
+    IMPORT_STUDENTS_FAILED: "Failed to import students.",
+    APPROVE_MENTOR_FAILED: "Failed to approve mentor.",
+    INVALID_FILE: "Invalid file.",
   },
 } as const;

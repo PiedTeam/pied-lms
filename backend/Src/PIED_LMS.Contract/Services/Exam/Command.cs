@@ -1,4 +1,5 @@
 using PIED_LMS.Contract.Services.Identity;
+using Microsoft.AspNetCore.Http;
 
 namespace PIED_LMS.Contract.Services.Exam;
 
@@ -23,3 +24,8 @@ public record UpdateExamCommand(
 public record DeleteExamCommand(
     Guid Id
 ) : IRequest<ServiceResponse<string>>;
+
+// Import Exam + TestCase from Excel
+public record ImportExamCommand(
+    IFormFile File
+) : IRequest<ServiceResponse<ExamResponse>>;

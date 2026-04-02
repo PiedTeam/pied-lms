@@ -17,6 +17,7 @@ public record UpdateQuestionDto(
     double Score,
     List<string> Answers,
     List<string> CorrectAnswers,
+    string? Explanation,
     string QuestionType,
     bool IsHidden,
     QuizletLevel Level

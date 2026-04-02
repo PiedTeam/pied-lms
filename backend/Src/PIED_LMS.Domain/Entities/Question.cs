@@ -13,6 +13,7 @@ public class Question
     public QuestionType QuestionType { get; set; }
     public bool IsHidden { get; set; }
     public int Level { get; set; }
+    public string? Explanation { get; set; }
     public virtual ICollection<QuestionAnswer> Answers { get; set; }
     public int QuizId { get; set; }
     public virtual QuestionQuiz Quizlet { get; set; } = null!;   

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Mvc;
 using PIED_LMS.Contract.Abstractions.Shared;
+using PIED_LMS.Presentation.Extensions;
 
 namespace PIED_LMS.Presentation.APIs;
 
@@ -55,53 +56,31 @@ public class QuizletEndpoints : ICarterModule
     }
 
     // GET /api/quizlets
-    public static async Task<IResult> GetAllQuizlets(ISender sender)
+    public static async Task<IResult> GetAllQuizlets(ISender sender, HttpContext context)
     {
         var result = await sender.Send(new GetQuizletSummariesQuery());
-        return Results.Ok(result);
+        return result.ToActionResult(context);
     }
 
     // GET /api/quizlets/{id}
-    public static async Task<IResult> GetQuizletById(int id, ISender sender)
+    public static async Task<IResult> GetQuizletById(int id, ISender sender, HttpContext context)
     {
         var result = await sender.Send(new GetQuizletByIdQuery(id));
-        if (!result.Success)
-        {
-            if (result.ErrorCode == "UNAUTHORIZED")
-                return Results.Json(result, statusCode: StatusCodes.Status401Unauthorized);
-            if (result.ErrorCode == "NOT_FOUND")
-                return Results.NotFound(result);
-            return Results.BadRequest(result);
-        }
-        return Results.Ok(result);
+        return result.ToActionResult(context);
     }
 
     // GET /api/students/quizlets
-    public static async Task<IResult> GetStudentQuizlets(ISender sender)
+    public static async Task<IResult> GetStudentQuizlets(ISender sender, HttpContext context)
     {
         var result = await sender.Send(new GetStudentQuizletsQuery());
-        if (!result.Success)
-        {
-            if (result.ErrorCode == "UNAUTHORIZED")
-                return Results.Json(result, statusCode: StatusCodes.Status401Unauthorized);
-            return Results.BadRequest(result);
-        }
-        return Results.Ok(result);
+        return result.ToActionResult(context);
     }
 
     // GET /api/students/quizlets/{id}
-    public static async Task<IResult> GetStudentQuizletById(int id, ISender sender)
+    public static async Task<IResult> GetStudentQuizletById(int id, ISender sender, HttpContext context)
     {
         var result = await sender.Send(new GetStudentQuizletByIdQuery(id));
-        if (!result.Success)
-        {
-            if (result.ErrorCode == "UNAUTHORIZED")
-                return Results.Json(result, statusCode: StatusCodes.Status401Unauthorized);
-            if (result.ErrorCode == "NOT_FOUND")
-                return Results.NotFound(result);
-            return Results.BadRequest(result);
-        }
-        return Results.Ok(result);
+        return result.ToActionResult(context);
     }
 
     // POST /api/quizlets
@@ -112,7 +91,8 @@ public class QuizletEndpoints : ICarterModule
         [FromForm] bool isHidden,
         [FromForm] QuizletLevel? level,
         IFormFile listQuestion,
-        ISender sender)
+        ISender sender,
+        HttpContext context)
     {
         var finalLevel = level.HasValue && Enum.IsDefined(typeof(QuizletLevel), level.Value) 
             ? level.Value 
@@ -120,31 +100,26 @@ public class QuizletEndpoints : ICarterModule
 
         var command = new CreateQuestionQuizCommand(title, description ?? string.Empty, isPublished, isHidden, finalLevel, listQuestion);
         var result = await sender.Send(command);
-        if (result.Success)
-            return Results.Ok(result);
-        return Results.BadRequest(result);
+        return result.ToActionResult(context);
     }
 
     // DELETE /api/quizlets/{id}
-    public static async Task<IResult> DeleteQuizlet(int id, ISender sender)
+    public static async Task<IResult> DeleteQuizlet(int id, ISender sender, HttpContext context)
     {
         var result = await sender.Send(new DeleteQuestionQuizCommand(id));
-        if (result.Success)
-            return Results.Ok(result);
-        return Results.BadRequest(result);
+        return result.ToActionResult(context);
     }
 
     // PUT /api/quizlets/{id}
     public static async Task<IResult> UpdateQuizlet(
         int id,
         [FromBody] UpdateQuestionQuizRequest request,
-        ISender sender)
+        ISender sender,
+        HttpContext context)
     {
         var command = new UpdateQuestionQuizCommand(id, request.Title, request.IsPublished, request.IsHidden, request.Level, request.ListQuestion);
         var result = await sender.Send(command);
-        if (result.Success)
-            return Results.Ok(result);
-        return Results.BadRequest(result);
+        return result.ToActionResult(context);
     }
 }
 

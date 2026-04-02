@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using PIED_LMS.Contract.Services.Exam;
 using PIED_LMS.Contract.Services.Identity;
+using PIED_LMS.Presentation.Extensions;
 
 namespace PIED_LMS.Presentation.APIs;
 
@@ -71,21 +72,33 @@ public class ExamEndpoints : ICarterModule
             .Produces<ServiceResponse<List<ExamInRoomResponse>>>(StatusCodes.Status400BadRequest)
             .Produces<ServiceResponse<List<ExamInRoomResponse>>>(StatusCodes.Status403Forbidden)
             .Produces<ServiceResponse<List<ExamInRoomResponse>>>(StatusCodes.Status404NotFound);
+
+        // POST /api/exams/import - Import Exam + TestCases from Excel
+        group.MapPost("/import", ImportExam)
+            .WithName("ImportExam")
+            .WithOpenApi()
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
+            .DisableAntiforgery()
+            .Produces<ServiceResponse<ExamResponse>>()
+            .Produces<ServiceResponse<ExamResponse>>(StatusCodes.Status400BadRequest)
+            .Accepts<IFormFile>("multipart/form-data");
     }
 
     // POST /api/exams
     private static async Task<IResult> CreateExam(
         CreateExamCommand request,
-        IMediator mediator)
+        IMediator mediator,
+        HttpContext context)
     {
         var result = await mediator.Send(request);
-        return result.Success ? Results.Ok(result) : Results.BadRequest(result);
+        return result.ToActionResult(context);
     }
 
     // GET /api/exams
     private static async Task<IResult> GetExamsByMentor(
         [AsParameters] GetExamsByMentorRequest request,
-        IMediator mediator)
+        IMediator mediator,
+        HttpContext context)
     {
         var query = new GetAllExamsQuery(
             request.PageNumber,
@@ -93,24 +106,26 @@ public class ExamEndpoints : ICarterModule
             request.IncludeDeleted ?? true
         );
         var result = await mediator.Send(query);
-        return Results.Ok(result);
+        return result.ToActionResult(context);
     }
 
     // GET /api/exams/{id}
     private static async Task<IResult> GetExamById(
         Guid id,
-        IMediator mediator)
+        IMediator mediator,
+        HttpContext context)
     {
         var query = new GetExamByIdQuery(id);
         var result = await mediator.Send(query);
-        return result.Success ? Results.Ok(result) : Results.NotFound(result);
+        return result.ToActionResult(context);
     }
 
     // PUT /api/exams/{id}
     private static async Task<IResult> UpdateExam(
         Guid id,
         UpdateExamRequest request,
-        IMediator mediator)
+        IMediator mediator,
+        HttpContext context)
     {
         var command = new UpdateExamCommand(
             id,
@@ -120,73 +135,51 @@ public class ExamEndpoints : ICarterModule
             request.PassingMarks
         );
         var result = await mediator.Send(command);
-        
-        if (!result.Success)
-        {
-            return result.Message.Contains("authorized") || result.Message.Contains("permission")
-                ? Results.Json(result, statusCode: StatusCodes.Status403Forbidden)
-                : Results.BadRequest(result);
-        }
-        
-        return Results.Ok(result);
+        return result.ToActionResult(context);
     }
 
     // DELETE /api/exams/{id}
     private static async Task<IResult> DeleteExam(
         Guid id,
-        IMediator mediator)
+        IMediator mediator,
+        HttpContext context)
     {
         var command = new DeleteExamCommand(id);
         var result = await mediator.Send(command);
-        
-        if (!result.Success)
-        {
-            return result.Message.Contains("authorized") || result.Message.Contains("permission")
-                ? Results.Json(result, statusCode: StatusCodes.Status403Forbidden)
-                : Results.BadRequest(result);
-        }
-        
-        return Results.Ok(result);
+        return result.ToActionResult(context);
     }
 
     // GET /api/exams/by-room-code/{roomCode}
     private static async Task<IResult> GetExamsByRoomCode(
         string roomCode,
-        IMediator mediator)
+        IMediator mediator,
+        HttpContext context)
     {
         var query = new GetExamsByRoomCodeQuery(roomCode);
         var result = await mediator.Send(query);
-        
-        if (!result.Success)
-        {
-            return result.ErrorCode == "NOT_FOUND"
-                ? Results.NotFound(result)
-                : result.ErrorCode == "FORBIDDEN" || result.ErrorCode == "ACCESS_DENIED"
-                    ? Results.Json(result, statusCode: StatusCodes.Status403Forbidden)
-                    : Results.BadRequest(result);
-        }
-        
-        return Results.Ok(result);
+        return result.ToActionResult(context);
     }
 
     // POST /api/exams/verify-room
     private static async Task<IResult> VerifyRoomCodeAndGetExams(
         VerifyRoomCodeRequest request,
-        IMediator mediator)
+        IMediator mediator,
+        HttpContext context)
     {
         var query = new VerifyRoomCodeAndGetExamsQuery(request.ExamRoomId, request.RoomCode);
         var result = await mediator.Send(query);
-        
-        if (!result.Success)
-        {
-            return result.ErrorCode == "NOT_FOUND"
-                ? Results.NotFound(result)
-                : result.ErrorCode == "FORBIDDEN" || result.ErrorCode == "ACCESS_DENIED"
-                    ? Results.Json(result, statusCode: StatusCodes.Status403Forbidden)
-                    : Results.BadRequest(result);
-        }
-        
-        return Results.Ok(result);
+        return result.ToActionResult(context);
+    }
+
+    // POST /api/exams/import
+    private static async Task<IResult> ImportExam(
+        IFormFile file,
+        IMediator mediator,
+        HttpContext context)
+    {
+        var command = new ImportExamCommand(file);
+        var result = await mediator.Send(command);
+        return result.ToActionResult(context);
     }
 }
 
