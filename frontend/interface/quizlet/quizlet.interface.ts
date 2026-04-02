@@ -66,6 +66,7 @@ export interface UpdateQuestionDto {
   correctAnswers: string[];
   isHidden: boolean;
   level: QuizletLevel;
+  explanation?: string;
 }
 
 export interface UpdateQuizletRequest {
@@ -84,6 +85,7 @@ export interface StudentQuestionDto {
   questionType: string; // "SingleChoice" or "MultipleChoice"
   isHidden: boolean;
   level: QuizletLevel;
+  explanation?: string;
 }
 
 // Student summary response (GET /api/students/quizlets)
