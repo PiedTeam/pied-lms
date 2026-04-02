@@ -99,22 +99,26 @@ export default function TakeQuizPage() {
     if (!quizlet) return;
 
     const quizQuestion = quizlet.listQuestion[questionIndex];
-    const correctAnswers = [...quizQuestion.correctAnswers].sort();
-    const userAnswers = [...selectedAnswers].sort();
+    const correctAnswers = quizQuestion.correctAnswers;
 
+    // Element-by-element comparison instead of JSON.stringify
     const isCorrect =
-      JSON.stringify(correctAnswers) === JSON.stringify(userAnswers);
+      correctAnswers.length === selectedAnswers.length &&
+      correctAnswers.every((answer) => selectedAnswers.includes(answer));
+
     const earnedScore = isCorrect ? quizQuestion.score : 0;
 
-    const newScores = questionScores.filter(
-      (score) => score.questionIndex !== questionIndex,
-    );
-    newScores.push({
-      questionIndex,
-      isCorrect,
-      earnedScore,
+    setQuestionScores((prevScores) => {
+      const newScores = prevScores.filter(
+        (score) => score.questionIndex !== questionIndex,
+      );
+      newScores.push({
+        questionIndex,
+        isCorrect,
+        earnedScore,
+      });
+      return newScores;
     });
-    setQuestionScores(newScores);
   };
 
   if (isLoading) {
@@ -202,8 +206,8 @@ export default function TakeQuizPage() {
     let totalScore = 0;
     let earnedScore = 0;
 
-    quizlet.listQuestion.forEach((_, index) => {
-      totalScore += quizlet.listQuestion[index].score;
+    quizlet.listQuestion.forEach((q, index) => {
+      totalScore += q.score;
 
       const questionScore = questionScores.find(
         (score) => score.questionIndex === index,
@@ -331,26 +335,27 @@ export default function TakeQuizPage() {
                 >
                   {question.score} points
                 </Badge>
-                {selectedAnswers.length > 0 && (
-                  <div className="text-center">
-                    {(() => {
-                      const score = questionScores.find(
-                        (s) => s.questionIndex === currentQuestion,
-                      );
-                      return (
+                {selectedAnswers.length > 0 &&
+                  (() => {
+                    const currentScore = questionScores.find(
+                      (s) => s.questionIndex === currentQuestion,
+                    );
+                    return (
+                      <div className="text-center">
                         <Badge
                           className={`px-4 py-2 text-lg ${
-                            score?.isCorrect
+                            currentScore?.isCorrect
                               ? "bg-green-600 hover:bg-green-700"
                               : "bg-red-600 hover:bg-red-700"
                           }`}
                         >
-                          {score?.isCorrect ? "✓ Correct" : "✗ Incorrect"}
+                          {currentScore?.isCorrect
+                            ? "✓ Correct"
+                            : "✗ Incorrect"}
                         </Badge>
-                      );
-                    })()}
-                  </div>
-                )}
+                      </div>
+                    );
+                  })()}
               </div>
             </div>
           </CardHeader>
@@ -412,7 +417,9 @@ export default function TakeQuizPage() {
                       <Checkbox
                         id={optionId}
                         checked={isSelected}
-                        onCheckedChange={() => handleAnswerToggle(answerContent)}
+                        onCheckedChange={() =>
+                          handleAnswerToggle(answerContent)
+                        }
                         className="size-5"
                         aria-label={`Select answer ${String.fromCharCode(
                           65 + index,

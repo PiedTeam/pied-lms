@@ -129,7 +129,10 @@ export function QuizletViewDetail({ quizlet }: QuizletViewDetailProps) {
                     {question.explanation && (
                       <div className="rounded-lg border-2 border-blue-300 bg-gradient-to-r from-blue-50 to-blue-100 px-4 py-3 text-sm text-blue-900 shadow-sm">
                         <div className="flex items-start gap-2">
-                          <span className="font-bold text-blue-600 mt-0.5">
+                          <span
+                            className="font-bold text-blue-600 mt-0.5"
+                            aria-hidden="true"
+                          >
                             💡
                           </span>
                           <div className="flex-1">
