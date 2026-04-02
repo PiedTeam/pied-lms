@@ -70,10 +70,9 @@ export interface UpdateQuestionDto {
   questionType: number; // 0 = SingleChoice, 1 = MultipleChoice
   answers: string[];
   correctAnswers: string[];
-  explanation?: string | null;
+  explanation?: string;
   isHidden: boolean;
   level: QuizletLevel;
-  explanation?: string;
 }
 
 export interface UpdateQuizletRequest {
@@ -89,11 +88,10 @@ export interface StudentQuestionDto {
   score: number;
   answers: QuizAnswerOption[];
   correctAnswers: string[];
-  explanation?: string | null;
+  explanation?: string;
   questionType: string; // "SingleChoice" or "MultipleChoice"
   isHidden: boolean;
   level: QuizletLevel;
-  explanation?: string;
 }
 
 // Student summary response (GET /api/students/quizlets)
