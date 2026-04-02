@@ -209,12 +209,22 @@ export default function TakeQuizPage() {
     quizlet.listQuestion.forEach((q, index) => {
       totalScore += q.score;
 
-      const questionScore = questionScores.find(
-        (score) => score.questionIndex === index,
+      const userAnswer = answers.find(
+        (answer) => answer.questionIndex === index,
       );
-      if (questionScore?.isCorrect) {
+      if (!userAnswer) return;
+
+      // Compute correctness directly from answers to avoid stale state
+      const correctAnswers = q.correctAnswers;
+      const isCorrect =
+        correctAnswers.length === userAnswer.selectedAnswers.length &&
+        correctAnswers.every((answer) =>
+          userAnswer.selectedAnswers.includes(answer),
+        );
+
+      if (isCorrect) {
         correctCount++;
-        earnedScore += questionScore.earnedScore;
+        earnedScore += q.score;
       }
     });
 
