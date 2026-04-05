@@ -35,6 +35,12 @@ interface Answer {
   selectedAnswers: string[];
 }
 
+interface QuestionScore {
+  questionIndex: number;
+  isCorrect: boolean;
+  earnedScore: number;
+}
+
 export default function TakeQuizPage() {
   const params = useParams();
   const router = useRouter();
@@ -44,6 +50,7 @@ export default function TakeQuizPage() {
 
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Answer[]>([]);
+  const [questionScores, setQuestionScores] = useState<QuestionScore[]>([]);
   const [timeElapsed, setTimeElapsed] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -83,6 +90,35 @@ export default function TakeQuizPage() {
       default:
         return null;
     }
+  };
+
+  const calculateQuestionScore = (
+    questionIndex: number,
+    selectedAnswers: string[],
+  ) => {
+    if (!quizlet) return;
+
+    const quizQuestion = quizlet.listQuestion[questionIndex];
+    const correctAnswers = quizQuestion.correctAnswers;
+
+    // Element-by-element comparison instead of JSON.stringify
+    const isCorrect =
+      correctAnswers.length === selectedAnswers.length &&
+      correctAnswers.every((answer) => selectedAnswers.includes(answer));
+
+    const earnedScore = isCorrect ? quizQuestion.score : 0;
+
+    setQuestionScores((prevScores) => {
+      const newScores = prevScores.filter(
+        (score) => score.questionIndex !== questionIndex,
+      );
+      newScores.push({
+        questionIndex,
+        isCorrect,
+        earnedScore,
+      });
+      return newScores;
+    });
   };
 
   if (isLoading) {
@@ -143,6 +179,9 @@ export default function TakeQuizPage() {
       selectedAnswers: newSelectedAnswers,
     });
     setAnswers(newAnswers);
+
+    // Calculate score immediately when answer is selected
+    calculateQuestionScore(currentQuestion, newSelectedAnswers);
   };
 
   const handleNext = () => {
@@ -167,18 +206,25 @@ export default function TakeQuizPage() {
     let totalScore = 0;
     let earnedScore = 0;
 
-    quizlet.listQuestion.forEach((quizQuestion, index) => {
-      totalScore += quizQuestion.score;
+    quizlet.listQuestion.forEach((q, index) => {
+      totalScore += q.score;
 
-      const userAnswer = answers.find((answer) => answer.questionIndex === index);
+      const userAnswer = answers.find(
+        (answer) => answer.questionIndex === index,
+      );
       if (!userAnswer) return;
 
-      const correctAnswers = [...quizQuestion.correctAnswers].sort();
-      const userAnswers = [...userAnswer.selectedAnswers].sort();
+      // Compute correctness directly from answers to avoid stale state
+      const correctAnswers = q.correctAnswers;
+      const isCorrect =
+        correctAnswers.length === userAnswer.selectedAnswers.length &&
+        correctAnswers.every((answer) =>
+          userAnswer.selectedAnswers.includes(answer),
+        );
 
-      if (JSON.stringify(correctAnswers) === JSON.stringify(userAnswers)) {
+      if (isCorrect) {
         correctCount++;
-        earnedScore += quizQuestion.score;
+        earnedScore += q.score;
       }
     });
 
@@ -246,6 +292,16 @@ export default function TakeQuizPage() {
                     {unansweredCount} remaining
                   </p>
                 </div>
+                <div className="hidden rounded-lg border bg-background px-4 py-2 text-sm shadow-sm sm:block">
+                  <p className="font-medium text-foreground">
+                    Score:{" "}
+                    {questionScores.reduce((sum, s) => sum + s.earnedScore, 0)}/
+                    {quizlet.listQuestion.reduce((sum, q) => sum + q.score, 0)}
+                  </p>
+                  <p className="text-muted-foreground">
+                    {questionScores.filter((s) => s.isCorrect).length} correct
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -282,12 +338,35 @@ export default function TakeQuizPage() {
                   </span>
                 </CardDescription>
               </div>
-              <Badge
-                variant="secondary"
-                className="bg-blue-100 px-4 py-2 text-lg text-blue-700"
-              >
-                {question.score} points
-              </Badge>
+              <div className="flex flex-col gap-2">
+                <Badge
+                  variant="secondary"
+                  className="bg-blue-100 px-4 py-2 text-lg text-blue-700"
+                >
+                  {question.score} points
+                </Badge>
+                {selectedAnswers.length > 0 &&
+                  (() => {
+                    const currentScore = questionScores.find(
+                      (s) => s.questionIndex === currentQuestion,
+                    );
+                    return (
+                      <div className="text-center">
+                        <Badge
+                          className={`px-4 py-2 text-lg ${
+                            currentScore?.isCorrect
+                              ? "bg-green-600 hover:bg-green-700"
+                              : "bg-red-600 hover:bg-red-700"
+                          }`}
+                        >
+                          {currentScore?.isCorrect
+                            ? "✓ Correct"
+                            : "✗ Incorrect"}
+                        </Badge>
+                      </div>
+                    );
+                  })()}
+              </div>
             </div>
           </CardHeader>
 
@@ -348,7 +427,9 @@ export default function TakeQuizPage() {
                       <Checkbox
                         id={optionId}
                         checked={isSelected}
-                        onCheckedChange={() => handleAnswerToggle(answerContent)}
+                        onCheckedChange={() =>
+                          handleAnswerToggle(answerContent)
+                        }
                         className="size-5"
                         aria-label={`Select answer ${String.fromCharCode(
                           65 + index,
@@ -368,6 +449,50 @@ export default function TakeQuizPage() {
             )}
           </CardContent>
         </Card>
+
+        {selectedAnswers.length > 0 &&
+          (() => {
+            const score = questionScores.find(
+              (s) => s.questionIndex === currentQuestion,
+            );
+            return (
+              <Card
+                className={`border-2 shadow-lg ${score?.isCorrect ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"}`}
+              >
+                <CardContent className="p-6">
+                  {score?.isCorrect ? (
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="h-6 w-6 text-green-600" />
+                        <h3 className="text-lg font-bold text-green-600">
+                          Correct!
+                        </h3>
+                      </div>
+                      {question.explanation && (
+                        <div className="rounded-lg bg-white p-4">
+                          <p className="text-sm font-semibold text-gray-700 mb-2">
+                            Explanation:
+                          </p>
+                          <p className="text-base text-gray-600">
+                            {question.explanation}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <div className="h-6 w-6 rounded-full bg-red-600 flex items-center justify-center text-white font-bold">
+                        ✕
+                      </div>
+                      <h3 className="text-lg font-bold text-red-600">
+                        Incorrect
+                      </h3>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })()}
 
         <Card className="border-2 shadow-lg">
           <CardContent className="p-6">

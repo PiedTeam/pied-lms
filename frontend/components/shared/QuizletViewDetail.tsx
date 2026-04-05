@@ -88,8 +88,9 @@ export function QuizletViewDetail({ quizlet }: QuizletViewDetailProps) {
                   <div className="ml-10 space-y-2">
                     {question.answers && question.answers.length > 0 ? (
                       question.answers.map((answer, optIndex) => {
-                        const isCorrect =
-                          question.correctAnswers?.includes(answer.content);
+                        const isCorrect = question.correctAnswers?.includes(
+                          answer.content,
+                        );
                         return (
                           <div
                             key={optIndex}
@@ -126,8 +127,23 @@ export function QuizletViewDetail({ quizlet }: QuizletViewDetailProps) {
                     )}
 
                     {question.explanation && (
-                      <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm italic text-slate-700">
-                        {question.explanation}
+                      <div className="rounded-lg border-2 border-blue-300 bg-gradient-to-r from-blue-50 to-blue-100 px-4 py-3 text-sm text-blue-900 shadow-sm">
+                        <div className="flex items-start gap-2">
+                          <span
+                            className="font-bold text-blue-600 mt-0.5"
+                            aria-hidden="true"
+                          >
+                            💡
+                          </span>
+                          <div className="flex-1">
+                            <p className="font-semibold text-blue-900 mb-1">
+                              Explanation:
+                            </p>
+                            <p className="text-blue-800 leading-relaxed">
+                              {question.explanation}
+                            </p>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>
