@@ -1,5 +1,3 @@
-// Axios error types
-
 export interface AxiosErrorResponse {
   message?: string;
   error?: string;
