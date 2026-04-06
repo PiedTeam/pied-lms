@@ -63,6 +63,8 @@ public static class InfrastructureExtensions
         services.AddSwaggerGen(c =>
         {
             c.SwaggerDoc("v1", new OpenApiInfo { Title = "PIED LMS API", Version = "v1" });
+            c.SupportNonNullableReferenceTypes();
+            c.NonNullableReferenceTypesAsRequired();
 
             // Define Bearer security scheme (Http type)
             c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -83,6 +85,7 @@ public static class InfrastructureExtensions
 
             // Remove security requirement for public endpoints (login, register)
             c.OperationFilter<SecurityRequirementsOperationFilter>();
+            c.OperationFilter<EndpointResponseSchemaNamingOperationFilter>();
         });
 
         // 2. Exception Handling & Common Services

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Mvc;
 using PIED_LMS.Contract.Abstractions.Shared;
+using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Presentation.Extensions;
 
 namespace PIED_LMS.Presentation.APIs;
@@ -26,10 +27,19 @@ public class QuizletEndpoints : ICarterModule
         // GET /api/quizlets  (Admin, Mentor, Teacher — all quizlets summary)
         group.MapGet("", GetAllQuizlets)
             .WithName("GetAllQuizlets")
+            .WithOpenApi()
+            .Produces<ServiceResponse<List<QuizletSummaryResponse>>>()
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden)
             .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"));
 
         group.MapGet("/{id:int}", GetQuizletById)
             .WithName("GetQuizletById")
+            .WithOpenApi()
+            .Produces<ServiceResponse<QuizletDetailResponse>>()
+            .Produces<ServiceResponse<QuizletDetailResponse>>(StatusCodes.Status404NotFound)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden)
             .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"));
 
         // DELETE /api/quizlets/{id}
@@ -46,12 +56,21 @@ public class QuizletEndpoints : ICarterModule
         app.MapGet("/api/students/quizlets", GetStudentQuizlets)
             .WithName("GetStudentQuizlets")
             .WithTags("StudentQuizlets")
+            .WithOpenApi()
+            .Produces<ServiceResponse<List<QuizletSummaryResponse>>>()
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden)
             .RequireAuthorization(policy => policy.RequireRole("Student"));
 
         // GET /api/students/quizlets/{id}  (Student — published only, full detail)
         app.MapGet("/api/students/quizlets/{id:int}", GetStudentQuizletById)
             .WithName("GetStudentQuizletById")
             .WithTags("StudentQuizlets")
+            .WithOpenApi()
+            .Produces<ServiceResponse<QuizletDetailResponse>>()
+            .Produces<ServiceResponse<QuizletDetailResponse>>(StatusCodes.Status404NotFound)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden)
             .RequireAuthorization(policy => policy.RequireRole("Student"));
     }
 
