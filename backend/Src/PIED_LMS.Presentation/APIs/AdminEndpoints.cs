@@ -18,9 +18,7 @@ public class AdminEndpoints : ICarterModule
             .WithName("Admin")
             .WithOpenApi()
             .WithTags("Admin")
-            .RequireAuthorization(new AuthorizeAttribute { Roles = RoleConstants.Administrator })
-            .ProducesProblem(StatusCodes.Status401Unauthorized, "application/problem+json")
-            .ProducesProblem(StatusCodes.Status403Forbidden, "application/problem+json");
+            .RequireAuthorization(new AuthorizeAttribute { Roles = RoleConstants.Administrator });
 
         group.MapPost("/students/import", ImportStudents)
             .WithName("ImportStudents")

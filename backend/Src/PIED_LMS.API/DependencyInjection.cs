@@ -77,14 +77,10 @@ public static class InfrastructureExtensions
                 BearerFormat = "JWT"
             });
 
-            // Apply Bearer globally to all operations
-            c.AddSecurityRequirement(doc => new OpenApiSecurityRequirement
-            {
-                { new OpenApiSecuritySchemeReference("Bearer", doc), new List<string>() }
-            });
-
             // Remove security requirement for public endpoints (login, register)
             c.OperationFilter<SecurityRequirementsOperationFilter>();
+            c.OperationFilter<AuthResponseContractOperationFilter>();
+            c.OperationFilter<EndpointNameAsSummaryOperationFilter>();
             c.OperationFilter<EndpointResponseSchemaNamingOperationFilter>();
         });
 
@@ -145,7 +141,10 @@ public static class InfrastructureExtensions
         if (app.Environment.IsDevelopment())
         {
             app.UseSwagger();
-            app.UseSwaggerUI();
+            app.UseSwaggerUI(c =>
+            {
+                c.DisplayOperationId();
+            });
             app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
         }
 

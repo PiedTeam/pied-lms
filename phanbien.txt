@@ -1,0 +1,35 @@
+Verify each finding against the current code and only fix it if needed.
+
+In
+`@backend/Src/PIED_LMS.API/Filters/EndpointResponseSchemaNamingOperationFilter.cs`
+around lines 16 - 48, The current filter builds a single alias aliasSchemaId =
+$"{operation.OperationId}Response" and applies it across all response status
+codes which can hide differences; change the alias to be status-specific (e.g.,
+include the response.StatusCode or responseKey like
+$"{operation.OperationId}Response{statusCode}") when creating/assigning
+aliasSchemaId for each response, and update references where mediaType.Schema
+and context.SchemaRepository.Schemas are set so each response gets its own
+unique alias; optionally, add a diagnostic log via your logger when a schema
+alias is skipped due to a conflict (the existing conflict branch checking
+context.SchemaRepository.Schemas.TryGetValue(aliasSchemaId, out var
+existingAliasSchema) && !ReferenceEquals(...)) so maintainers can see when
+aliasing was not applied.
+
+
+Verify each finding against the current code and only fix it if needed.
+
+In `@backend/Src/PIED_LMS.API/Filters/SecurityRequirementsOperationFilter.cs`
+around lines 21 - 23, The code reads context.ApiDescription.RelativePath
+directly which can throw if context or ApiDescription is null; update the
+assignment in the SecurityRequirementsOperationFilter (the method using the
+context variable) to use null-conditional access
+(context?.ApiDescription?.RelativePath) and then keep the existing
+string.IsNullOrWhiteSpace(relativePath) guard so the method safely returns when
+
+
+Thanks for the review. I verified both findings against the current code.
+
+1) `EndpointResponseSchemaNamingOperationFilter`: agreed and fixed. Alias naming is now response-key-specific (`{OperationId}Response{responseKey}`) instead of a single operation-level alias.
+2) `SecurityRequirementsOperationFilter`: not applying this change. `OperationFilterContext` is framework-supplied in this pipeline, and we already guard null/empty `RelativePath`; changing to `context?.ApiDescription?.RelativePath` would be defensive-only and could hide unexpected contract violations.
+
+Validation: `dotnet build backend/Src/PIED_LMS.API/PIED_LMS.API.csproj` passes.

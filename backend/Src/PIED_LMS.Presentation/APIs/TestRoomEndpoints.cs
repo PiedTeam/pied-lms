@@ -15,9 +15,7 @@ public class TestRoomEndpoints : ICarterModule
             .WithName("TestRooms")
             .WithOpenApi()
             .WithTags("Test Rooms")
-            .RequireAuthorization(new AuthorizeAttribute { Roles = RoleConstants.Teacher })
-            .ProducesProblem(StatusCodes.Status401Unauthorized, "application/problem+json")
-            .ProducesProblem(StatusCodes.Status403Forbidden, "application/problem+json");
+            .RequireAuthorization(new AuthorizeAttribute { Roles = RoleConstants.Teacher });
             
         group.MapPost("/", CreateTestRoom)
             .WithName("CreateTestRoom")

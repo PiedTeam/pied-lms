@@ -24,27 +24,28 @@ public class AuthenticationEndpoints : ICarterModule
             .WithName("Login")
             .WithOpenApi()
             .Produces<ServiceResponse<LoginResponse>>()
-            .Produces<ServiceResponse<LoginResponse>>(StatusCodes.Status401Unauthorized);
+            .Produces<ServiceResponse<LoginResponse>>(StatusCodes.Status400BadRequest);
 
         group.MapPost("/refresh", RefreshToken)
             .WithName("RefreshToken")
             .WithOpenApi()
             .Produces<ServiceResponse<RefreshTokenResponse>>()
-            .Produces<ServiceResponse<RefreshTokenResponse>>(StatusCodes.Status401Unauthorized);
+            .Produces<UnauthorizedErrorResponse>(StatusCodes.Status401Unauthorized);
 
         group.MapPost("/logout", Logout)
             .WithName("Logout")
             .WithOpenApi()
             .RequireAuthorization()
             .Produces<ServiceResponse<string>>()
-            .Produces<ServiceResponse<string>>(StatusCodes.Status401Unauthorized);
+            .Produces(StatusCodes.Status401Unauthorized);
 
         group.MapPost("/change-password", ChangePassword)
             .WithName("ChangePassword")
             .WithOpenApi()
             .RequireAuthorization()
             .Produces<ServiceResponse<string>>()
-            .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest);
+            .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status401Unauthorized);
 
         group.MapPost("/reset-password", ResetPassword)
            .WithName("ResetPassword")
@@ -166,7 +167,7 @@ public class AuthenticationEndpoints : ICarterModule
         {
             logger.LogWarning("Refresh token missing in cookie. HasRefreshTokenCookie: {HasCookie}",
                 context.Request.Cookies.ContainsKey("refreshToken"));
-            return Results.Json(new { error = "Invalid refresh token" }, statusCode: 401);
+            return Results.Json(new UnauthorizedErrorResponse("Invalid refresh token"), statusCode: 401);
         }
 
         var command = new RefreshTokenCommand(refreshToken);
@@ -175,7 +176,7 @@ public class AuthenticationEndpoints : ICarterModule
         if (!result.Success || result.Data == null)
         {
             logger.LogWarning("Refresh token request failed: {Message}", result.Message);
-            return Results.Json(new { error = "Invalid refresh token" }, statusCode: 401);
+            return Results.Json(new UnauthorizedErrorResponse("Invalid refresh token"), statusCode: 401);
         }
 
         // Update refresh token cookie
@@ -332,4 +333,8 @@ public sealed record GetAllUsersRequest(
 public sealed record GetAllStudentsRequest(
     int PageNumber = 1,
     int PageSize = 10
+);
+
+public sealed record UnauthorizedErrorResponse(
+    string Error
 );
