@@ -64,7 +64,7 @@ public class ExamRoomEndpoints : ICarterModule
         group.MapGet("/{roomId}/exams/student", GetExamsInRoomForStudent)
             .WithName("GetExamsInRoomForStudent")
             .RequireAuthorization(new AuthorizeAttribute { Roles = "Student" })
-            .WithServiceResponseOpenApi<List<Contract.Services.Exam.ExamInRoomResponse>>(ServiceResponseStatusProfile.OkOrForbidden);
+            .WithServiceResponseOpenApi<List<Contract.Services.Exam.ExamInRoomResponse>>(ServiceResponseStatusProfile.OkOrBadRequestOrForbidden);
 
         group.MapGet("/available", GetAvailableExamRoomsForStudent)
             .WithName("GetAvailableExamRoomsForStudent")

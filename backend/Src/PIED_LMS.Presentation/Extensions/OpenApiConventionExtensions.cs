@@ -97,11 +97,6 @@ public static class OpenApiConventionExtensions
             }
         }
 
-        if (result.Count == 0)
-        {
-            result.Add(StatusCodes.Status200OK);
-        }
-
         return result.ToArray();
     }
 }

@@ -59,7 +59,7 @@ public class AuthenticationEndpoints : ICarterModule
         group.MapGet("/users/{id}", GetUserById)
             .WithName("GetUserById")
             .RequireAuthorization(new AuthorizeAttribute { Roles = RoleConstants.Administrator })
-            .WithServiceResponseOpenApi<UserResponse>(ServiceResponseStatusProfile.OkOrNotFound);
+            .WithServiceResponseOpenApi<UserResponse>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound);
 
         group.MapGet("/users", GetAllUsers)
             .WithName("GetAllUsers")
