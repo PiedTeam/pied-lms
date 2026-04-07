@@ -16,61 +16,53 @@ public class QuizletEndpoints : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/quizlets");
+        var group = app.MapGroup("/api/quizlets")
+            .WithName("Quizlets")
+            .WithOpenApi()
+            .WithTags("Quizlets");
 
         // POST /api/quizlets
         group.MapPost("", CreateQuizlet)
             .WithName("CreateQuizlet")
             .DisableAntiforgery()
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher")); 
+            .WithServiceResponseOpenApi<string>(ServiceResponseStatusProfile.OkOrBadRequest)
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"));
 
         // GET /api/quizlets  (Admin, Mentor, Teacher — all quizlets summary)
         group.MapGet("", GetAllQuizlets)
             .WithName("GetAllQuizlets")
-            .WithOpenApi()
-            .Produces<ServiceResponse<List<QuizletSummaryResponse>>>()
-            .Produces(StatusCodes.Status401Unauthorized)
-            .Produces(StatusCodes.Status403Forbidden)
+            .WithServiceResponseOpenApi<List<QuizletSummaryResponse>>(ServiceResponseStatusProfile.OkOrBadRequest)
             .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"));
 
         group.MapGet("/{id:int}", GetQuizletById)
             .WithName("GetQuizletById")
-            .WithOpenApi()
-            .Produces<ServiceResponse<QuizletDetailResponse>>()
-            .Produces<ServiceResponse<QuizletDetailResponse>>(StatusCodes.Status404NotFound)
-            .Produces(StatusCodes.Status401Unauthorized)
-            .Produces(StatusCodes.Status403Forbidden)
+            .WithServiceResponseOpenApi<QuizletDetailResponse>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound)
             .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"));
 
         // DELETE /api/quizlets/{id}
         group.MapDelete("/{id}", DeleteQuizlet)
             .WithName("DeleteQuizlet")
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher")); ;
+            .WithServiceResponseOpenApi<string>(ServiceResponseStatusProfile.OkOrBadRequest)
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"));
 
         // PUT /api/quizlets/{id}
         group.MapPut("/{id}", UpdateQuizlet)
             .WithName("UpdateQuizlet")
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher")); ;
+            .WithServiceResponseOpenApi<string>(ServiceResponseStatusProfile.OkOrBadRequest)
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"));
 
         // GET /api/students/quizlets  (Student — published only, summary)
         app.MapGet("/api/students/quizlets", GetStudentQuizlets)
             .WithName("GetStudentQuizlets")
             .WithTags("StudentQuizlets")
-            .WithOpenApi()
-            .Produces<ServiceResponse<List<QuizletSummaryResponse>>>()
-            .Produces(StatusCodes.Status401Unauthorized)
-            .Produces(StatusCodes.Status403Forbidden)
+            .WithServiceResponseOpenApi<List<QuizletSummaryResponse>>(ServiceResponseStatusProfile.OkOrBadRequest)
             .RequireAuthorization(policy => policy.RequireRole("Student"));
 
         // GET /api/students/quizlets/{id}  (Student — published only, full detail)
         app.MapGet("/api/students/quizlets/{id:int}", GetStudentQuizletById)
             .WithName("GetStudentQuizletById")
             .WithTags("StudentQuizlets")
-            .WithOpenApi()
-            .Produces<ServiceResponse<QuizletDetailResponse>>()
-            .Produces<ServiceResponse<QuizletDetailResponse>>(StatusCodes.Status404NotFound)
-            .Produces(StatusCodes.Status401Unauthorized)
-            .Produces(StatusCodes.Status403Forbidden)
+            .WithServiceResponseOpenApi<QuizletDetailResponse>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound)
             .RequireAuthorization(policy => policy.RequireRole("Student"));
     }
 
@@ -113,8 +105,8 @@ public class QuizletEndpoints : ICarterModule
         ISender sender,
         HttpContext context)
     {
-        var finalLevel = level.HasValue && Enum.IsDefined(typeof(QuizletLevel), level.Value) 
-            ? level.Value 
+        var finalLevel = level.HasValue && Enum.IsDefined(typeof(QuizletLevel), level.Value)
+            ? level.Value
             : QuizletLevel.Easy;
 
         var command = new CreateQuestionQuizCommand(title, description ?? string.Empty, isPublished, isHidden, finalLevel, listQuestion);

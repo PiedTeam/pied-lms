@@ -73,3 +73,27 @@ Frontend sẽ khởi chạy tại: `http://localhost:3000`
     _(Cần cài đặt `dotnet-ef` tool: `dotnet tool install --global dotnet-ef`)_
 
 Chúc bạn và bạn của bạn code vui vẻ! 🚀
+
+---
+
+## 5. Quy ước OpenAPI cho backend (mới)
+
+Để tránh mapping OpenAPI thủ công lặp lại ở tầng Presentation, endpoint `ServiceResponse<T>` nên dùng helper:
+
+- `WithServiceResponseOpenApi<T>(ServiceResponseStatusProfile profile)`
+- `WithServiceResponseOpenApi<T>(params int[] statusCodes)`
+
+Ví dụ:
+
+```csharp
+group.MapGet("/{id}", GetById)
+    .WithName("GetById")
+    .RequireAuthorization()
+    .WithServiceResponseOpenApi<MyResponse>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound);
+```
+
+Quy tắc áp dụng:
+
+1. Không viết chuỗi `.WithOpenApi().Produces<ServiceResponse<...>>()` lặp lại cho endpoint mới nếu có thể dùng helper.
+2. Chỉ dùng custom `statusCodes` khi profile chuẩn chưa đủ.
+3. Security trong Swagger sẽ tự suy luận theo metadata `RequireAuthorization` / `AllowAnonymous`, không cần hardcode public endpoint list.

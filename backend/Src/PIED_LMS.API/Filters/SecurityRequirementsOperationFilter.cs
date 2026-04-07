@@ -1,29 +1,12 @@
+using Microsoft.AspNetCore.Authorization;
+
 namespace PIED_LMS.API.Filters;
 
 public sealed class SecurityRequirementsOperationFilter : IOperationFilter
 {
-    private static readonly HashSet<string> PublicEndpoints = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "api/auth/login",
-        "api/auth/register",
-        "api/auth/refresh",
-        "api/auth/reset-password",
-        "api/mentors/request",
-        "api/compiler/compile",
-        "api/compiler/judge",
-        "api/compiler/judge-from-file",
-        "health",
-        "health/error-test"
-    };
-
     public void Apply(OpenApiOperation operation, OperationFilterContext context)
     {
-        var relativePath = context.ApiDescription.RelativePath;
-        if (string.IsNullOrWhiteSpace(relativePath))
-            return;
-
-        var normalizedPath = relativePath.Split('?', '#')[0].TrimStart('/');
-        if (PublicEndpoints.Contains(normalizedPath))
+        if (AllowsAnonymous(context) || !RequiresAuthorization(context))
         {
             operation.Security = new List<OpenApiSecurityRequirement>();
             return;
@@ -36,5 +19,23 @@ public sealed class SecurityRequirementsOperationFilter : IOperationFilter
                 { new OpenApiSecuritySchemeReference("Bearer", context.Document), new List<string>() }
             }
         };
+    }
+
+    private static bool AllowsAnonymous(OperationFilterContext context)
+    {
+        var endpointMetadata = context.ApiDescription.ActionDescriptor.EndpointMetadata;
+        if (endpointMetadata is null || endpointMetadata.Count == 0)
+            return false;
+
+        return endpointMetadata.OfType<IAllowAnonymous>().Any();
+    }
+
+    private static bool RequiresAuthorization(OperationFilterContext context)
+    {
+        var endpointMetadata = context.ApiDescription.ActionDescriptor.EndpointMetadata;
+        if (endpointMetadata is null || endpointMetadata.Count == 0)
+            return false;
+
+        return endpointMetadata.OfType<IAuthorizeData>().Any();
     }
 }

@@ -16,12 +16,8 @@ public class StudentTestCaseEndpoints : ICarterModule
         // GET /api/students/testcases/{examId}
         group.MapGet("/{examId:guid}", GetVisibleTestCasesByExam)
             .WithName("GetVisibleTestCasesByExam")
-            .WithOpenApi()
             .RequireAuthorization(policy => policy.RequireRole("Student"))
-            .Produces<ServiceResponse<List<TestCaseResponse>>>()
-            .Produces<ServiceResponse<List<TestCaseResponse>>>(StatusCodes.Status404NotFound)
-            .Produces<ServiceResponse<List<TestCaseResponse>>>(StatusCodes.Status401Unauthorized)
-            .Produces<ServiceResponse<List<TestCaseResponse>>>(StatusCodes.Status403Forbidden);
+            .WithServiceResponseOpenApi<List<TestCaseResponse>>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound);
     }
 
     // GET /api/students/testcases/{examId}

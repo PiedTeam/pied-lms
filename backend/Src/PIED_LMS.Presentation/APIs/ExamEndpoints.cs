@@ -16,71 +16,51 @@ public class ExamEndpoints : ICarterModule
         // POST /api/exams
         group.MapPost("", CreateExam)
             .WithName("CreateExam")
-            .WithOpenApi()
             .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
-            .Produces<ServiceResponse<ExamResponse>>()
-            .Produces<ServiceResponse<ExamResponse>>(StatusCodes.Status400BadRequest);
+            .WithServiceResponseOpenApi<ExamResponse>(ServiceResponseStatusProfile.OkOrBadRequest);
 
         // GET /api/exams
         group.MapGet("", GetExamsByMentor)
             .WithName("GetExamsByMentor")
-            .WithOpenApi()
             .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
-            .Produces<ServiceResponse<PaginatedResponse<ExamResponse>>>();
+            .WithServiceResponseOpenApi<PaginatedResponse<ExamResponse>>(ServiceResponseStatusProfile.OkOrBadRequest);
 
         // GET /api/exams/{id}
         group.MapGet("/{id}", GetExamById)
             .WithName("GetExamById")
-            .WithOpenApi()
             .RequireAuthorization()
-            .Produces<ServiceResponse<ExamResponse>>()
-            .Produces<ServiceResponse<ExamResponse>>(StatusCodes.Status404NotFound);
+            .WithServiceResponseOpenApi<ExamResponse>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound);
 
         // PUT /api/exams/{id}
         group.MapPut("/{id}", UpdateExam)
             .WithName("UpdateExam")
-            .WithOpenApi()
             .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
-            .Produces<ServiceResponse<ExamResponse>>()
-            .Produces<ServiceResponse<ExamResponse>>(StatusCodes.Status400BadRequest)
-            .Produces<ServiceResponse<ExamResponse>>(StatusCodes.Status403Forbidden);
+            .WithServiceResponseOpenApi<ExamResponse>(ServiceResponseStatusProfile.OkOrBadRequestOrForbidden);
 
         // DELETE /api/exams/{id}
         group.MapDelete("/{id}", DeleteExam)
             .WithName("DeleteExam")
-            .WithOpenApi()
             .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
-            .Produces<ServiceResponse<string>>()
-            .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest)
-            .Produces<ServiceResponse<string>>(StatusCodes.Status403Forbidden);
+            .WithServiceResponseOpenApi<string>(ServiceResponseStatusProfile.OkOrBadRequestOrForbidden);
 
         // GET /api/exams/by-room-code/{roomCode} - Student gets exams by room code
         group.MapGet("/by-room-code/{roomCode}", GetExamsByRoomCode)
             .WithName("GetExamsByRoomCode")
-            .WithOpenApi()
             .RequireAuthorization(new AuthorizeAttribute { Roles = "Student" })
-            .Produces<ServiceResponse<List<ExamInRoomResponse>>>()
-            .Produces<ServiceResponse<List<ExamInRoomResponse>>>(StatusCodes.Status403Forbidden)
-            .Produces<ServiceResponse<List<ExamInRoomResponse>>>(StatusCodes.Status404NotFound);
+            .WithServiceResponseOpenApi<List<ExamInRoomResponse>>(ServiceResponseStatusProfile.OkOrForbiddenOrNotFound);
 
         // POST /api/exams/verify-room - Student verifies room code and gets exams
         group.MapPost("/verify-room", VerifyRoomCodeAndGetExams)
             .WithName("VerifyRoomCodeAndGetExams")
-            .WithOpenApi()
             .RequireAuthorization(new AuthorizeAttribute { Roles = "Student" })
-            .Produces<ServiceResponse<List<ExamInRoomResponse>>>()
-            .Produces<ServiceResponse<List<ExamInRoomResponse>>>(StatusCodes.Status400BadRequest)
-            .Produces<ServiceResponse<List<ExamInRoomResponse>>>(StatusCodes.Status403Forbidden)
-            .Produces<ServiceResponse<List<ExamInRoomResponse>>>(StatusCodes.Status404NotFound);
+            .WithServiceResponseOpenApi<List<ExamInRoomResponse>>(ServiceResponseStatusProfile.OkOrBadRequestOrForbiddenOrNotFound);
 
         // POST /api/exams/import - Import Exam + TestCases from Excel
         group.MapPost("/import", ImportExam)
             .WithName("ImportExam")
-            .WithOpenApi()
             .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
             .DisableAntiforgery()
-            .Produces<ServiceResponse<ExamResponse>>()
-            .Produces<ServiceResponse<ExamResponse>>(StatusCodes.Status400BadRequest)
+            .WithServiceResponseOpenApi<ExamResponse>(ServiceResponseStatusProfile.OkOrBadRequest)
             .Accepts<IFormFile>("multipart/form-data");
     }
 

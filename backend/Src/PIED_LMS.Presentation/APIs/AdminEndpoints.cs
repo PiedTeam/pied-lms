@@ -22,20 +22,15 @@ public class AdminEndpoints : ICarterModule
 
         group.MapPost("/students/import", ImportStudents)
             .WithName("ImportStudents")
-            .WithOpenApi()
             .WithSummary("Import students from CSV/Excel file")
             .WithDescription("Bulk import students. Only administrators can perform this operation.")
-            .Produces<ServiceResponse<string>>(StatusCodes.Status200OK, "application/json")
-            .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest, "application/json");
-            
+            .WithServiceResponseOpenApi<string>(ServiceResponseStatusProfile.OkOrBadRequest);
+
         group.MapPost("/mentors/{userId}/approve", ApproveMentor)
             .WithName("ApproveMentor")
-            .WithOpenApi()
             .WithSummary("Approve a mentor application")
             .WithDescription("Approve a user's application to become a mentor. Only administrators can perform this operation.")
-            .Produces<ServiceResponse<string>>(StatusCodes.Status200OK, "application/json")
-            .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest, "application/json")
-            .Produces<ServiceResponse<string>>(StatusCodes.Status404NotFound, "application/json");
+            .WithServiceResponseOpenApi<string>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound);
     }
 
     private static async Task<IResult> ImportStudents(
@@ -56,7 +51,7 @@ public class AdminEndpoints : ICarterModule
     {
         var command = new ApproveMentorCommand(userId);
         var result = await mediator.Send(command, cancellationToken);
-        
+
         return result.ToActionResult(context);
     }
 }

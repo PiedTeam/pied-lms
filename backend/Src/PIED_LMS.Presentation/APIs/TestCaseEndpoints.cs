@@ -16,39 +16,25 @@ public class TestCaseEndpoints : ICarterModule
         // POST /api/testcases
         group.MapPost("", CreateTestCase)
             .WithName("CreateTestCase")
-            .WithOpenApi()
             .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
-            .Produces<ServiceResponse<TestCaseResponse>>(StatusCodes.Status201Created)
-            .Produces<ServiceResponse<TestCaseResponse>>(StatusCodes.Status400BadRequest)
-            .Produces<ServiceResponse<TestCaseResponse>>(StatusCodes.Status401Unauthorized)
-            .Produces<ServiceResponse<TestCaseResponse>>(StatusCodes.Status403Forbidden);
+            .WithServiceResponseOpenApi<TestCaseResponse>(ServiceResponseStatusProfile.OkOrBadRequestOrForbidden);
         // GET /api/testcases/{examId}
         group.MapGet("/{examId:guid}", GetTestCasesByExam)
             .WithName("GetTestCasesByExam")
-            .WithOpenApi()
             .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
-            .Produces<ServiceResponse<List<TestCaseResponse>>>()
-            .Produces<ServiceResponse<List<TestCaseResponse>>>(StatusCodes.Status404NotFound)
-            .Produces<ServiceResponse<List<TestCaseResponse>>>(StatusCodes.Status401Unauthorized);
+            .WithServiceResponseOpenApi<List<TestCaseResponse>>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound);
 
         // PUT /api/testcases/{testcaseId}
         group.MapPut("/{testcaseId:guid}", UpdateTestCase)
             .WithName("UpdateTestCase")
-            .WithOpenApi()
             .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
-            .Produces<ServiceResponse<TestCaseResponse>>()
-            .Produces<ServiceResponse<TestCaseResponse>>(StatusCodes.Status404NotFound)
-            .Produces<ServiceResponse<TestCaseResponse>>(StatusCodes.Status400BadRequest)
-            .Produces<ServiceResponse<TestCaseResponse>>(StatusCodes.Status401Unauthorized);
+            .WithServiceResponseOpenApi<TestCaseResponse>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound);
 
         // DELETE /api/testcases/{testcaseId}
         group.MapDelete("/{testcaseId:guid}", DeleteTestCase)
             .WithName("DeleteTestCase")
-            .WithOpenApi()
             .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
-            .Produces<ServiceResponse<string>>()
-            .Produces<ServiceResponse<string>>(StatusCodes.Status404NotFound)
-            .Produces<ServiceResponse<string>>(StatusCodes.Status401Unauthorized);
+            .WithServiceResponseOpenApi<string>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound);
     }
 
     // POST /api/testcases

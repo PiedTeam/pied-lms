@@ -16,14 +16,12 @@ public class TestRoomEndpoints : ICarterModule
             .WithOpenApi()
             .WithTags("Test Rooms")
             .RequireAuthorization(new AuthorizeAttribute { Roles = RoleConstants.Teacher });
-            
+
         group.MapPost("/", CreateTestRoom)
             .WithName("CreateTestRoom")
-            .WithOpenApi()
             .WithSummary("Create a new test room")
             .WithDescription("Creates a new test room. Only teachers can create test rooms.")
-            .Produces<ServiceResponse<Guid>>(StatusCodes.Status201Created, "application/json")
-            .Produces<ServiceResponse<Guid>>(StatusCodes.Status400BadRequest, "application/json");
+            .WithServiceResponseOpenApi<Guid>(ServiceResponseStatusProfile.OkOrBadRequest);
     }
     private static async Task<IResult> CreateTestRoom(
         CreateRoomCommand request,
