@@ -13,6 +13,7 @@
         <PackageReference Include="prometheus-net.AspNetCore" />
         <PackageReference Include="Serilog.AspNetCore" />
         <PackageReference Include="Serilog.Sinks.Console" />
+        <PackageReference Include="Serilog.Sinks.Debug" />
         <PackageReference Include="Serilog.Sinks.Grafana.Loki" />
         <PackageReference Include="Swashbuckle.AspNetCore" />
         <PackageReference Include="System.IdentityModel.Tokens.Jwt" />
