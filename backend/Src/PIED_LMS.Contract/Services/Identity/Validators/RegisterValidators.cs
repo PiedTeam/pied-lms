@@ -2,6 +2,8 @@ using FluentValidation;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Contract.Extensions;
 
+namespace PIED_LMS.Contract.Services.Identity.Validators;
+
 public class RegisterValidator : AbstractValidator<RegisterCommand>
 {
     public RegisterValidator()
