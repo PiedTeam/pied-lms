@@ -1,14 +1,18 @@
 using System.Text;
+using Amazon.Runtime;
+using Amazon.S3;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using PIED_LMS.Application.Abstractions;
 using PIED_LMS.Application.Options;
 using PIED_LMS.Contract.Abstractions.Email;
 using PIED_LMS.Contract.Abstractions.Services;
+using PIED_LMS.Contract.Abstractions.Storage;
 using PIED_LMS.Domain.Abstractions;
 using PIED_LMS.Domain.Entities;
 using PIED_LMS.Infrastructure.Authentication;
 using PIED_LMS.Infrastructure.Email;
+using PIED_LMS.Infrastructure.Storage;
 using PIED_LMS.Persistence;
 
 namespace PIED_LMS.Infrastructure;
@@ -75,6 +79,37 @@ public static class PersistenceExtensions
             .ValidateDataAnnotations()
             .ValidateOnStart();
 
+        services.AddOptions<S3Settings>()
+            .Bind(configuration.GetSection(S3Settings.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        // Configure AWS S3 with credentials from appsettings
+        var awsAccessKey = configuration["AWS:Credentials:AccessKey"];
+        var awsSecretKey = configuration["AWS:Credentials:SecretKey"];
+        var awsRegion = configuration["AWS:Region"];
+
+        if (!string.IsNullOrWhiteSpace(awsAccessKey) && !string.IsNullOrWhiteSpace(awsSecretKey))
+        {
+            // Use explicit credentials from configuration
+            services.AddSingleton<IAmazonS3>(sp =>
+            {
+                var credentials = new Amazon.Runtime.BasicAWSCredentials(awsAccessKey, awsSecretKey);
+                var config = new AmazonS3Config
+                {
+                    RegionEndpoint = Amazon.RegionEndpoint.GetBySystemName(awsRegion ?? "us-east-2")
+                };
+                return new AmazonS3Client(credentials, config);
+            });
+        }
+        else
+        {
+            // Fallback to default AWS credentials chain (profile, environment variables, IAM role)
+            var awsOptions = configuration.GetAWSOptions();
+            services.AddDefaultAWSOptions(awsOptions);
+            services.AddAWSService<IAmazonS3>();
+        }
+
         services.AddScoped<IUnitOfWork, EFUnitOfWork>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
 
@@ -85,6 +120,7 @@ public static class PersistenceExtensions
         services.AddScoped<Contract.Abstractions.Excel.IExcelService, Services.ExcelService>();
         services.AddScoped<IQuestionQuizService, Services.QuestionQuizService>();
         services.AddScoped<ITestCaseStorageService, Services.TestCaseStorageService>();
+        services.AddScoped<IFileStorageService, S3FileStorageService>();
 
         services.AddAuthentication(options =>
         {

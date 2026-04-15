@@ -14,6 +14,7 @@ public class PiedLmsDbContext(DbContextOptions<PiedLmsDbContext> options) : Iden
 {
     public DbSet<ExamRoomEnrollment> ExamRoomEnrollments { get; set; }
     public DbSet<CodeSubmission> CodeSubmissions { get; set; }
+    public DbSet<Course> Courses { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
