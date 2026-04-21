@@ -97,7 +97,14 @@ public class GetTeachersHandler : IRequestHandler<GetTeachersQuery, ServiceRespo
                 pagedResult
             );
         }
-        catch (Exception ex)
+        catch (DbUpdateException ex)
+        {
+            return new ServiceResponse<PagedResult<TeacherDto>>(
+                false,
+                $"Error retrieving teachers: {ex.Message}"
+            );
+        }
+        catch (InvalidOperationException ex)
         {
             return new ServiceResponse<PagedResult<TeacherDto>>(
                 false,
