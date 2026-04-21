@@ -91,10 +91,20 @@ public class CreateCourseHandler(
 
             return new ServiceResponse<int>(true, "Course created successfully", course.Id);
         }
-        catch (Exception ex)
+        catch (DbUpdateException ex)
         {
-            logger.LogError(ex, "Unexpected error occurred while creating course with title '{Title}'", request.Title);
-            return new ServiceResponse<int>(false, "An unexpected error occurred while creating the course.");
+            logger.LogError(ex, "Database error occurred while creating course with title '{Title}'", request.Title);
+            return new ServiceResponse<int>(false, "A database error occurred while creating the course.");
+        }
+        catch (IOException ex)
+        {
+            logger.LogError(ex, "File storage error occurred while creating course with title '{Title}'", request.Title);
+            return new ServiceResponse<int>(false, "A file storage error occurred while creating the course.");
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            logger.LogError(ex, "Access error occurred while creating course with title '{Title}'", request.Title);
+            return new ServiceResponse<int>(false, "An access error occurred while creating the course.");
         }
     }
 
