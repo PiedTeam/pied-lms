@@ -46,10 +46,32 @@ public class GetCourseByIdHandler(
                 courseDto
             );
         }
-        catch (Exception ex)
+        catch (OperationCanceledException)
         {
-            logger.LogError(ex, "Error retrieving course with Id {CourseId}", request.Id);
-            
+            throw;
+        }
+        catch (DbUpdateException ex)
+        {
+            logger.LogError(ex, "Database error retrieving course with Id {CourseId}", request.Id);
+
+            return new ServiceResponse<CourseDto>(
+                false,
+                "An error occurred while retrieving the course"
+            );
+        }
+        catch (InvalidOperationException ex)
+        {
+            logger.LogError(ex, "Invalid operation retrieving course with Id {CourseId}", request.Id);
+
+            return new ServiceResponse<CourseDto>(
+                false,
+                "An error occurred while retrieving the course"
+            );
+        }
+        catch (System.IO.IOException ex)
+        {
+            logger.LogError(ex, "File storage error retrieving course with Id {CourseId}", request.Id);
+
             return new ServiceResponse<CourseDto>(
                 false,
                 "An error occurred while retrieving the course"
