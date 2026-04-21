@@ -97,7 +97,7 @@ public class GetCourseByIdHandler(
                 // Try parsing as JSON array first
                 tags = System.Text.Json.JsonSerializer.Deserialize<List<string>>(course.Tags);
             }
-            catch
+            catch (System.Text.Json.JsonException)
             {
                 // Fallback to comma-separated
                 tags = course.Tags.Split(',', StringSplitOptions.RemoveEmptyEntries)
