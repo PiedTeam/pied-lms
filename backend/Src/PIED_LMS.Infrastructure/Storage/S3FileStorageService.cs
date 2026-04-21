@@ -135,10 +135,18 @@ public class S3FileStorageService : IFileStorageService
                 fileKey);
             return false;
         }
-        catch (Exception ex)
+        catch (OperationCanceledException ex)
+        {
+            _logger.LogWarning(ex,
+                "Delete file operation was canceled. Bucket: {BucketName}, Key: {FileKey}",
+                _s3Settings.BucketName,
+                fileKey);
+            return false;
+        }
+        catch (InvalidOperationException ex)
         {
             _logger.LogError(ex,
-                "Unexpected error occurred while deleting file from S3. Bucket: {BucketName}, Key: {FileKey}",
+                "Invalid operation occurred while deleting file from S3. Bucket: {BucketName}, Key: {FileKey}",
                 _s3Settings.BucketName,
                 fileKey);
             return false;
