@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PIED_LMS.Contract.Services.Course;
@@ -159,6 +160,32 @@ public class CourseEndpoints : ICarterModule
         IMediator mediator,
         HttpContext context)
     {
+        // Guard validation for empty TeacherIds list
+        if (request.TeacherIds == null || request.TeacherIds.Count == 0)
+        {
+            var errorResponse = new ServiceResponse<string>(
+                false,
+                "At least one teacher ID must be provided in TeacherIds. To unassign all teachers, use the unassign endpoint instead."
+            );
+            return Results.BadRequest(errorResponse);
+        }
+
+        // Additional validation for duplicate teacher IDs
+        var duplicateIds = request.TeacherIds
+            .GroupBy(id => id)
+            .Where(g => g.Count() > 1)
+            .Select(g => g.Key)
+            .ToList();
+
+        if (duplicateIds.Any())
+        {
+            var errorResponse = new ServiceResponse<string>(
+                false,
+                $"Duplicate teacher IDs found in TeacherIds: {string.Join(", ", duplicateIds)}"
+            );
+            return Results.BadRequest(errorResponse);
+        }
+
         var command = new AssignTeachersCommand(id, request.TeacherIds);
         var result = await mediator.Send(command);
         return result.ToActionResult(context);
@@ -196,13 +223,37 @@ public class CourseEndpoints : ICarterModule
 
 // Request DTOs
 public sealed record AssignTeachersRequest(
+    [Required(ErrorMessage = "Teacher IDs are required")]
+    [MinLength(1, ErrorMessage = "At least one teacher ID must be provided. To unassign all teachers, use the unassign endpoint instead.")]
     List<Guid> TeacherIds
 );
 
-public sealed record GetCoursesRequest(
-    int PageNumber = 1,
-    int PageSize = 10,
-    CourseStatus? Status = null,
-    string? SearchTerm = null,
-    string? Tag = null
-);
+public sealed record GetCoursesRequest
+{
+    private int _pageNumber = 1;
+    private int _pageSize = 10;
+
+    [Range(1, int.MaxValue, ErrorMessage = "Page number must be greater than 0")]
+    public int PageNumber 
+    { 
+        get => _pageNumber;
+        init => _pageNumber = value < 1 
+            ? throw new ArgumentOutOfRangeException(nameof(PageNumber), value, "Page number must be greater than 0")
+            : value;
+    }
+
+    [Range(1, 100, ErrorMessage = "Page size must be between 1 and 100")]
+    public int PageSize 
+    { 
+        get => _pageSize;
+        init => _pageSize = value < 1 
+            ? throw new ArgumentOutOfRangeException(nameof(PageSize), value, "Page size must be greater than 0")
+            : value > 100 
+                ? throw new ArgumentOutOfRangeException(nameof(PageSize), value, "Page size cannot exceed 100")
+                : value;
+    }
+
+    public CourseStatus? Status { get; init; }
+    public string? SearchTerm { get; init; }
+    public string? Tag { get; init; }
+};

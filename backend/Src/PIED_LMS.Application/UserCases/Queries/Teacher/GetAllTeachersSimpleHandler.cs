@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using PIED_LMS.Contract.Abstractions.Shared;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Contract.Services.Teacher;
@@ -11,10 +12,14 @@ namespace PIED_LMS.Application.UserCases.Queries.Teacher;
 public class GetAllTeachersSimpleHandler : IRequestHandler<GetAllTeachersSimpleQuery, ServiceResponse<List<TeacherSimpleDto>>>
 {
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly ILogger<GetAllTeachersSimpleHandler> _logger;
 
-    public GetAllTeachersSimpleHandler(UserManager<ApplicationUser> userManager)
+    public GetAllTeachersSimpleHandler(
+        UserManager<ApplicationUser> userManager,
+        ILogger<GetAllTeachersSimpleHandler> logger)
     {
         _userManager = userManager;
+        _logger = logger;
     }
 
     public async Task<ServiceResponse<List<TeacherSimpleDto>>> Handle(
@@ -45,25 +50,20 @@ public class GetAllTeachersSimpleHandler : IRequestHandler<GetAllTeachersSimpleQ
                 teacherDtos
             );
         }
-        catch (IdentityException ex)
-        {
-            return new ServiceResponse<List<TeacherSimpleDto>>(
-                false,
-                $"Error retrieving teachers: {ex.Message}"
-            );
-        }
-        catch (DbUpdateException ex)
-        {
-            return new ServiceResponse<List<TeacherSimpleDto>>(
-                false,
-                $"Error retrieving teachers: {ex.Message}"
-            );
-        }
         catch (InvalidOperationException ex)
         {
+            _logger.LogError(ex, "Invalid operation while retrieving teachers");
             return new ServiceResponse<List<TeacherSimpleDto>>(
                 false,
-                $"Error retrieving teachers: {ex.Message}"
+                "An error occurred while retrieving teachers"
+            );
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error while retrieving teachers");
+            return new ServiceResponse<List<TeacherSimpleDto>>(
+                false,
+                "An unexpected error occurred while retrieving teachers"
             );
         }
     }

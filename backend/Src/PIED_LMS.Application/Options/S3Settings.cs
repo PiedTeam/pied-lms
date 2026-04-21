@@ -13,4 +13,10 @@ public class S3Settings
     public string Region { get; set; } = string.Empty;
 
     public string? CloudFrontUrl { get; set; }
+
+    [Range(5000, 300000, ErrorMessage = "Upload timeout must be between 5 and 300 seconds")]
+    public int UploadTimeoutMs { get; set; } = 30000; // 30 seconds default
+
+    [Range(5000, 300000, ErrorMessage = "Request timeout must be between 5 and 300 seconds")]
+    public int RequestTimeoutMs { get; set; } = 60000; // 60 seconds default
 }

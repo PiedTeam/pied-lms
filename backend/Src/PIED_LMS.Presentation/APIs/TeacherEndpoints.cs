@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authorization;
 using PIED_LMS.Contract.Abstractions.Shared;
 using PIED_LMS.Contract.Services.Teacher;
@@ -77,9 +78,31 @@ public class TeacherEndpoints : ICarterModule
 }
 
 // Request DTOs
-public sealed record GetTeachersRequest(
-    int PageNumber = 1,
-    int PageSize = 10,
-    string? SearchTerm = null,
-    bool? IsActive = null
-);
+public sealed record GetTeachersRequest
+{
+    private int _pageNumber = 1;
+    private int _pageSize = 10;
+
+    [Range(1, int.MaxValue, ErrorMessage = "Page number must be greater than 0")]
+    public int PageNumber 
+    { 
+        get => _pageNumber;
+        init => _pageNumber = value < 1 
+            ? throw new ArgumentOutOfRangeException(nameof(PageNumber), value, "Page number must be greater than 0")
+            : value;
+    }
+
+    [Range(1, 100, ErrorMessage = "Page size must be between 1 and 100")]
+    public int PageSize 
+    { 
+        get => _pageSize;
+        init => _pageSize = value < 1 
+            ? throw new ArgumentOutOfRangeException(nameof(PageSize), value, "Page size must be greater than 0")
+            : value > 100 
+                ? throw new ArgumentOutOfRangeException(nameof(PageSize), value, "Page size cannot exceed 100")
+                : value;
+    }
+
+    public string? SearchTerm { get; init; }
+    public bool? IsActive { get; init; }
+};

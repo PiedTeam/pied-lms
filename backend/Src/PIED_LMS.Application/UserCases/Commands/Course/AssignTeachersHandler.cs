@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using PIED_LMS.Application.Options;
 using PIED_LMS.Contract.Abstractions.Email;
 using PIED_LMS.Contract.Abstractions.Shared;
 using PIED_LMS.Contract.Services.Course;
@@ -14,8 +16,11 @@ namespace PIED_LMS.Application.UserCases.Commands.Course;
 public class AssignTeachersHandler(
     IUnitOfWork unitOfWork,
     IEmailService emailService,
+    IOptions<CourseManagementSettings> courseManagementOptions,
     ILogger<AssignTeachersHandler> logger) : IRequestHandler<AssignTeachersCommand, ServiceResponse<string>>
 {
+    private readonly CourseManagementSettings _courseManagementSettings = courseManagementOptions.Value;
+
     public async Task<ServiceResponse<string>> Handle(AssignTeachersCommand request, CancellationToken cancellationToken)
     {
         try
@@ -85,26 +90,66 @@ public class AssignTeachersHandler(
             {
                 foreach (var teacher in teachers)
                 {
-                    try
+                    // Validate teacher email before sending
+                    if (string.IsNullOrWhiteSpace(teacher.Email))
                     {
-                        // Call IEmailService.SendCourseAssignmentAsync for each teacher
-                        var courseManagementUrl = $"/courses/{course.Id}"; // Placeholder URL
-                        await emailService.SendCourseAssignmentAsync(
-                            teacher.Email!,
-                            $"{teacher.FirstName} {teacher.LastName}",
-                            course.Title,
-                            course.StartDate,
-                            course.EndDate,
-                            courseManagementUrl,
-                            CancellationToken.None);
+                        logger.LogWarning(
+                            "Skipping email notification for teacher {TeacherId} - email is null or empty",
+                            teacher.Id);
+                        continue;
                     }
-                    catch (Exception ex)
+
+                    // Get configurable course URL
+                    var courseManagementUrl = _courseManagementSettings.GetCourseUrl(course.Id);
+
+                    // Retry logic for email sending
+                    var retryAttempts = _courseManagementSettings.EmailRetryAttempts;
+                    var retryDelay = _courseManagementSettings.EmailRetryDelayMs;
+                    var attempt = 0;
+                    var emailSent = false;
+
+                    while (attempt < retryAttempts && !emailSent)
                     {
-                        // Subtask 8.4: Log email sending failures
-                        // Log email sending failures without affecting assignment operation
-                        logger.LogError(ex, 
-                            "Failed to send course assignment email to teacher {TeacherId} ({Email}) for course {CourseId}",
-                            teacher.Id, teacher.Email, course.Id);
+                        attempt++;
+                        try
+                        {
+                            await emailService.SendCourseAssignmentAsync(
+                                teacher.Email,
+                                $"{teacher.FirstName} {teacher.LastName}",
+                                course.Title,
+                                course.StartDate,
+                                course.EndDate,
+                                courseManagementUrl,
+                                CancellationToken.None);
+
+                            emailSent = true;
+                            
+                            if (attempt > 1)
+                            {
+                                logger.LogInformation(
+                                    "Successfully sent course assignment email to teacher {TeacherId} ({Email}) for course {CourseId} on attempt {Attempt}",
+                                    teacher.Id, teacher.Email, course.Id, attempt);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            if (attempt == retryAttempts)
+                            {
+                                // Final failure - log error
+                                logger.LogError(ex, 
+                                    "Failed to send course assignment email to teacher {TeacherId} ({Email}) for course {CourseId} after {Attempts} attempts",
+                                    teacher.Id, teacher.Email, course.Id, retryAttempts);
+                            }
+                            else
+                            {
+                                // Retry attempt - log warning and wait
+                                logger.LogWarning(ex,
+                                    "Failed to send course assignment email to teacher {TeacherId} ({Email}) for course {CourseId} on attempt {Attempt}. Retrying in {DelayMs}ms",
+                                    teacher.Id, teacher.Email, course.Id, attempt, retryDelay);
+
+                                await Task.Delay(retryDelay, CancellationToken.None);
+                            }
+                        }
                     }
                 }
             }, CancellationToken.None);
@@ -137,7 +182,6 @@ public class AssignTeachersHandler(
         List<ApplicationUser> users,
         CancellationToken cancellationToken)
     {
-        var invalidTeachers = new List<ApplicationUser>();
         var userRoleRepository = unitOfWork.Repository<IdentityUserRole<Guid>>();
         var roleRepository = unitOfWork.Repository<ApplicationRole>();
 
@@ -153,17 +197,22 @@ public class AssignTeachersHandler(
             return users;
         }
 
-        // Check each user for Teacher role
-        foreach (var user in users)
-        {
-            var hasTeacherRole = await userRoleRepository
-                .AnyAsync(ur => ur.UserId == user.Id && ur.RoleId == teacherRole.Id, cancellationToken);
+        // Get all user IDs to check
+        var userIds = users.Select(u => u.Id).ToList();
 
-            if (!hasTeacherRole)
-            {
-                invalidTeachers.Add(user);
-            }
-        }
+        // Single batched query to get all UserRole records for these users with Teacher role
+        var usersWithTeacherRole = await userRoleRepository
+            .FindAll(ur => ur.RoleId == teacherRole.Id && userIds.Contains(ur.UserId))
+            .Select(ur => ur.UserId)
+            .ToListAsync(cancellationToken);
+
+        // Build HashSet for O(1) lookup performance
+        var validTeacherIds = usersWithTeacherRole.ToHashSet();
+
+        // Find invalid teachers by checking which users are NOT in the HashSet
+        var invalidTeachers = users
+            .Where(user => !validTeacherIds.Contains(user.Id))
+            .ToList();
 
         return invalidTeachers;
     }

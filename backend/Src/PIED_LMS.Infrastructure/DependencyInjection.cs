@@ -84,6 +84,11 @@ public static class PersistenceExtensions
             .ValidateDataAnnotations()
             .ValidateOnStart();
 
+        services.AddOptions<CourseManagementSettings>()
+            .Bind(configuration.GetSection(CourseManagementSettings.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
         // Configure AWS S3 with credentials from appsettings
         var awsAccessKey = configuration["AWS:Credentials:AccessKey"];
         var awsSecretKey = configuration["AWS:Credentials:SecretKey"];
@@ -94,10 +99,14 @@ public static class PersistenceExtensions
             // Use explicit credentials from configuration
             services.AddSingleton<IAmazonS3>(sp =>
             {
+                var s3Settings = sp.GetRequiredService<IOptions<S3Settings>>().Value;
                 var credentials = new Amazon.Runtime.BasicAWSCredentials(awsAccessKey, awsSecretKey);
                 var config = new AmazonS3Config
                 {
-                    RegionEndpoint = Amazon.RegionEndpoint.GetBySystemName(awsRegion ?? "us-east-2")
+                    RegionEndpoint = Amazon.RegionEndpoint.GetBySystemName(awsRegion ?? "us-east-2"),
+                    Timeout = TimeSpan.FromMilliseconds(s3Settings.RequestTimeoutMs),
+                    MaxErrorRetry = 3,
+                    UseHttp = false // Force HTTPS
                 };
                 return new AmazonS3Client(credentials, config);
             });
