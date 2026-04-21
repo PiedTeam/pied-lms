@@ -87,7 +87,21 @@ public class DeleteCourseHandler(
             // Return success message
             return new ServiceResponse<string>(true, "Course deleted successfully");
         }
-        catch (Exception ex)
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (InvalidOperationException ex)
+        {
+            logger.LogError(ex, "Unexpected error occurred while deleting course {CourseId}", request.Id);
+            return new ServiceResponse<string>(false, "An unexpected error occurred while deleting the course.");
+        }
+        catch (IOException ex)
+        {
+            logger.LogError(ex, "Unexpected error occurred while deleting course {CourseId}", request.Id);
+            return new ServiceResponse<string>(false, "An unexpected error occurred while deleting the course.");
+        }
+        catch (UnauthorizedAccessException ex)
         {
             logger.LogError(ex, "Unexpected error occurred while deleting course {CourseId}", request.Id);
             return new ServiceResponse<string>(false, "An unexpected error occurred while deleting the course.");
