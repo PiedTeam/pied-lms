@@ -52,7 +52,12 @@ public class CreateCourseHandler(
                         MaxThumbnailSizeBytes,
                         cancellationToken);
                 }
-                catch (Exception ex)
+                catch (ArgumentException ex)
+                {
+                    logger.LogError(ex, "Failed to upload thumbnail to S3 for course creation");
+                    return new ServiceResponse<int>(false, "Failed to upload thumbnail image. Please try again.");
+                }
+                catch (InvalidOperationException ex)
                 {
                     logger.LogError(ex, "Failed to upload thumbnail to S3 for course creation");
                     return new ServiceResponse<int>(false, "Failed to upload thumbnail image. Please try again.");
