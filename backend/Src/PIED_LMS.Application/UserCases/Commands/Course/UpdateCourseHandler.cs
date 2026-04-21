@@ -66,7 +66,7 @@ public class UpdateCourseHandler(
                     logger.LogInformation("Uploaded new thumbnail {ThumbnailPath} for course {CourseId}", 
                         newThumbnailPath, course.Id);
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (ex is not OperationCanceledException)
                 {
                     logger.LogError(ex, "Failed to update thumbnail in S3 for course {CourseId}", request.Id);
                     return new ServiceResponse<string>(false, "Failed to update thumbnail image. Please try again.");
