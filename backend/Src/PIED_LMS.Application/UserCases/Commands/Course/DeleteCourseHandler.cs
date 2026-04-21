@@ -1,3 +1,4 @@
+using System.IO;
 using Microsoft.Extensions.Logging;
 using PIED_LMS.Contract.Abstractions.Shared;
 using PIED_LMS.Contract.Abstractions.Storage;
@@ -46,7 +47,25 @@ public class DeleteCourseHandler(
                             course.ThumbnailPath, course.Id);
                     }
                 }
-                catch (Exception ex)
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (InvalidOperationException ex)
+                {
+                    // Subtask 7.3: Log S3 deletion failures
+                    logger.LogError(ex, "Error occurred while deleting thumbnail {ThumbnailPath} from S3 for course {CourseId}", 
+                        course.ThumbnailPath, course.Id);
+                    // Continue with course deletion even if S3 deletion fails
+                }
+                catch (IOException ex)
+                {
+                    // Subtask 7.3: Log S3 deletion failures
+                    logger.LogError(ex, "Error occurred while deleting thumbnail {ThumbnailPath} from S3 for course {CourseId}", 
+                        course.ThumbnailPath, course.Id);
+                    // Continue with course deletion even if S3 deletion fails
+                }
+                catch (UnauthorizedAccessException ex)
                 {
                     // Subtask 7.3: Log S3 deletion failures
                     logger.LogError(ex, "Error occurred while deleting thumbnail {ThumbnailPath} from S3 for course {CourseId}", 
