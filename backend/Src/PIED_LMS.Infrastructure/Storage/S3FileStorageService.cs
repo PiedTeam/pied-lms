@@ -72,7 +72,7 @@ public class S3FileStorageService : IFileStorageService
                 ContentType = file.ContentType
             };
 
-            var response = await _s3Client.PutObjectAsync(putRequest, cancellationToken);
+            await _s3Client.PutObjectAsync(putRequest, cancellationToken);
 
             _logger.LogInformation(
                 "File uploaded successfully to S3. Bucket: {BucketName}, Key: {ObjectKey}, Size: {FileSize} bytes",
