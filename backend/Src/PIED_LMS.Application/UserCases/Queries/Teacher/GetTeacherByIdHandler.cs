@@ -67,7 +67,18 @@ public class GetTeacherByIdHandler : IRequestHandler<GetTeacherByIdQuery, Servic
                 teacherDto
             );
         }
-        catch (Exception ex)
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (InvalidOperationException ex)
+        {
+            return new ServiceResponse<TeacherDto>(
+                false,
+                $"Error retrieving teacher: {ex.Message}"
+            );
+        }
+        catch (DbUpdateException ex)
         {
             return new ServiceResponse<TeacherDto>(
                 false,
