@@ -111,9 +111,23 @@ public class AssignTeachersHandler(
 
             return new ServiceResponse<string>(true, "Teachers assigned successfully");
         }
-        catch (Exception ex)
+        catch (DbUpdateException ex)
         {
-            logger.LogError(ex, "Unexpected error occurred while assigning teachers to course {CourseId}", 
+            logger.LogError(ex, "Database error occurred while assigning teachers to course {CourseId}",
+                request.CourseId);
+            return new ServiceResponse<string>(false, "An unexpected error occurred while assigning teachers");
+        }
+        catch (OperationCanceledException ex)
+        {
+            logger.LogWarning(ex, "Assigning teachers operation was canceled for course {CourseId}",
+                request.CourseId);
+            return new ServiceResponse<string>(false, "An unexpected error occurred while assigning teachers");
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException
+                                   and not StackOverflowException
+                                   and not AccessViolationException)
+        {
+            logger.LogError(ex, "Unexpected error occurred while assigning teachers to course {CourseId}",
                 request.CourseId);
             return new ServiceResponse<string>(false, "An unexpected error occurred while assigning teachers");
         }
