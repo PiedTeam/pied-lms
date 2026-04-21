@@ -54,11 +54,11 @@ public class GetCoursesHandler(
                 .ToListAsync(cancellationToken);
 
             // Map to DTOs
+            var courseDtoTasks = courses.Select(course => MapToCourseDto(course, cancellationToken));
             var courseDtos = new List<CourseDto>();
-            foreach (var course in courses)
+            foreach (var courseDtoTask in courseDtoTasks)
             {
-                var courseDto = await MapToCourseDto(course, cancellationToken);
-                courseDtos.Add(courseDto);
+                courseDtos.Add(await courseDtoTask);
             }
 
             var pagedResult = new PagedResult<CourseDto>(
