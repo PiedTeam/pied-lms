@@ -43,11 +43,13 @@ public class SmtpEmailService : IEmailService
             mailMessage.To.Add(to);
 
             await client.SendMailAsync(mailMessage, cancellationToken);
-            _logger.LogInformation("Email sent successfully to {To} with subject: {Subject}", to, subject);
+            var maskedTo = MaskEmail(to);
+            _logger.LogInformation("Email sent successfully to {To} with subject: {Subject}", maskedTo, subject);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to send email to {To} with subject: {Subject}", to, subject);
+            var maskedTo = MaskEmail(to);
+            _logger.LogError(ex, "Failed to send email to {To} with subject: {Subject}", maskedTo, subject);
             throw;
         }
     }
@@ -71,10 +73,57 @@ public class SmtpEmailService : IEmailService
         }
         catch (Exception ex)
         {
+            var maskedRecipientEmail = MaskEmail(recipientEmail);
             _logger.LogError(ex, "Failed to send exam room invitation to {Email} for room {RoomName}", 
-                recipientEmail, roomName);
+                maskedRecipientEmail, roomName);
             return false;
         }
+    }
+
+    public async Task<bool> SendCourseAssignmentAsync(
+        string recipientEmail,
+        string recipientName,
+        string courseTitle,
+        DateTime startDate,
+        DateTime endDate,
+        string courseManagementUrl,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var subject = $"Course Assignment: {courseTitle}";
+            var body = BuildCourseAssignmentEmailBody(recipientName, courseTitle, startDate, endDate, courseManagementUrl);
+            
+            await SendEmailAsync(recipientEmail, subject, body, cancellationToken);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            var maskedRecipientEmail = MaskEmail(recipientEmail);
+            _logger.LogError(ex, "Failed to send course assignment email to {Email} for course {CourseTitle}", 
+                maskedRecipientEmail, courseTitle);
+            return false;
+        }
+    }
+
+    private static string MaskEmail(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return "***";
+        }
+
+        var atIndex = email.IndexOf('@');
+        if (atIndex <= 0 || atIndex == email.Length - 1)
+        {
+            return "***";
+        }
+
+        var localPart = email[..atIndex];
+        var domainPart = email[(atIndex + 1)..];
+        var maskedLocalPart = localPart.Length <= 1 ? "*" : $"{localPart[0]}***";
+
+        return $"{maskedLocalPart}@{domainPart}";
     }
 
     private string BuildExamRoomInvitationEmailBody(
@@ -130,6 +179,73 @@ public class SmtpEmailService : IEmailService
             <p>If you have any questions or need assistance, please contact your instructor.</p>
             
             <p>Good luck with your exams!</p>
+            
+            <p>Best regards,<br>PIED LMS Team</p>
+        </div>
+        <div class='footer'>
+            <p>This is an automated message from PIED LMS. Please do not reply to this email.</p>
+        </div>
+    </div>
+</body>
+</html>";
+    }
+
+    private string BuildCourseAssignmentEmailBody(
+        string recipientName,
+        string courseTitle,
+        DateTime startDate,
+        DateTime endDate,
+        string courseManagementUrl)
+    {
+        return $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background-color: #2196F3; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }}
+        .content {{ background-color: #f9f9f9; padding: 30px; border: 1px solid #ddd; border-radius: 0 0 5px 5px; }}
+        .course-title {{ font-size: 24px; font-weight: bold; color: #2196F3; text-align: center; padding: 15px; background-color: #fff; border-radius: 5px; margin: 20px 0; }}
+        .info-box {{ background-color: #fff; padding: 15px; border-left: 4px solid #2196F3; margin: 15px 0; }}
+        .info-label {{ font-weight: bold; color: #555; }}
+        .button {{ display: inline-block; padding: 12px 30px; background-color: #2196F3; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; text-align: center; }}
+        .footer {{ text-align: center; margin-top: 20px; color: #777; font-size: 12px; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h1>Course Assignment Notification</h1>
+        </div>
+        <div class='content'>
+            <p>Dear {recipientName},</p>
+            
+            <p>You have been assigned as a teacher to the following course on PIED LMS:</p>
+            
+            <div class='course-title'>{courseTitle}</div>
+            
+            <div class='info-box'>
+                <p><span class='info-label'>Course Title:</span> {courseTitle}</p>
+                <p><span class='info-label'>Start Date:</span> {startDate:dddd, MMMM dd, yyyy}</p>
+                <p><span class='info-label'>End Date:</span> {endDate:dddd, MMMM dd, yyyy}</p>
+            </div>
+            
+            <p>As an assigned teacher, you will have access to manage course content, monitor student progress, and facilitate learning activities.</p>
+            
+            <div style='text-align: center;'>
+                <a href='{courseManagementUrl}' class='button'>View Course Details</a>
+            </div>
+            
+            <h3>Your Responsibilities:</h3>
+            <ul>
+                <li>Prepare and organize course materials</li>
+                <li>Monitor student participation and progress</li>
+                <li>Provide guidance and support to students</li>
+                <li>Assess student performance and provide feedback</li>
+            </ul>
+            
+            <p>If you have any questions about this assignment or need assistance, please contact the course administrator.</p>
             
             <p>Best regards,<br>PIED LMS Team</p>
         </div>
