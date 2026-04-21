@@ -128,10 +128,24 @@ public class UpdateCourseHandler(
 
             return new ServiceResponse<string>(true, "Course updated successfully");
         }
-        catch (Exception ex)
+        catch (DbUpdateException ex)
         {
-            logger.LogError(ex, "Unexpected error occurred while updating course {CourseId}", request.Id);
-            return new ServiceResponse<string>(false, "An unexpected error occurred while updating the course.");
+            logger.LogError(ex, "Database error occurred while updating course {CourseId}", request.Id);
+            return new ServiceResponse<string>(false, "A database error occurred while updating the course.");
+        }
+        catch (IOException ex)
+        {
+            logger.LogError(ex, "File I/O error occurred while updating course {CourseId}", request.Id);
+            return new ServiceResponse<string>(false, "A file processing error occurred while updating the course.");
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            logger.LogError(ex, "Unauthorized file access while updating course {CourseId}", request.Id);
+            return new ServiceResponse<string>(false, "File access was denied while updating the course.");
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
         }
     }
 
