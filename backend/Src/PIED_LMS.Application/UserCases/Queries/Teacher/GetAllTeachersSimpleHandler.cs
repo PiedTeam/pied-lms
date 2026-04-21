@@ -45,7 +45,21 @@ public class GetAllTeachersSimpleHandler : IRequestHandler<GetAllTeachersSimpleQ
                 teacherDtos
             );
         }
-        catch (Exception ex)
+        catch (IdentityException ex)
+        {
+            return new ServiceResponse<List<TeacherSimpleDto>>(
+                false,
+                $"Error retrieving teachers: {ex.Message}"
+            );
+        }
+        catch (DbUpdateException ex)
+        {
+            return new ServiceResponse<List<TeacherSimpleDto>>(
+                false,
+                $"Error retrieving teachers: {ex.Message}"
+            );
+        }
+        catch (InvalidOperationException ex)
         {
             return new ServiceResponse<List<TeacherSimpleDto>>(
                 false,
