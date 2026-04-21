@@ -43,11 +43,13 @@ public class SmtpEmailService : IEmailService
             mailMessage.To.Add(to);
 
             await client.SendMailAsync(mailMessage, cancellationToken);
-            _logger.LogInformation("Email sent successfully to {To} with subject: {Subject}", to, subject);
+            var maskedTo = MaskEmail(to);
+            _logger.LogInformation("Email sent successfully to {To} with subject: {Subject}", maskedTo, subject);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to send email to {To} with subject: {Subject}", to, subject);
+            var maskedTo = MaskEmail(to);
+            _logger.LogError(ex, "Failed to send email to {To} with subject: {Subject}", maskedTo, subject);
             throw;
         }
     }
@@ -71,8 +73,9 @@ public class SmtpEmailService : IEmailService
         }
         catch (Exception ex)
         {
+            var maskedRecipientEmail = MaskEmail(recipientEmail);
             _logger.LogError(ex, "Failed to send exam room invitation to {Email} for room {RoomName}", 
-                recipientEmail, roomName);
+                maskedRecipientEmail, roomName);
             return false;
         }
     }
@@ -96,10 +99,31 @@ public class SmtpEmailService : IEmailService
         }
         catch (Exception ex)
         {
+            var maskedRecipientEmail = MaskEmail(recipientEmail);
             _logger.LogError(ex, "Failed to send course assignment email to {Email} for course {CourseTitle}", 
-                recipientEmail, courseTitle);
+                maskedRecipientEmail, courseTitle);
             return false;
         }
+    }
+
+    private static string MaskEmail(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return "***";
+        }
+
+        var atIndex = email.IndexOf('@');
+        if (atIndex <= 0 || atIndex == email.Length - 1)
+        {
+            return "***";
+        }
+
+        var localPart = email[..atIndex];
+        var domainPart = email[(atIndex + 1)..];
+        var maskedLocalPart = localPart.Length <= 1 ? "*" : $"{localPart[0]}***";
+
+        return $"{maskedLocalPart}@{domainPart}";
     }
 
     private string BuildExamRoomInvitationEmailBody(
