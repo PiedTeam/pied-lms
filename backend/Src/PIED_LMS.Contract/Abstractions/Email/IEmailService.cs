@@ -12,4 +12,13 @@ public interface IEmailService
         DateTime startTime, 
         DateTime endTime,
         CancellationToken cancellationToken = default);
+    
+    Task<bool> SendCourseAssignmentAsync(
+        string recipientEmail,
+        string recipientName,
+        string courseTitle,
+        DateTime startDate,
+        DateTime endDate,
+        string courseManagementUrl,
+        CancellationToken cancellationToken = default);
 }

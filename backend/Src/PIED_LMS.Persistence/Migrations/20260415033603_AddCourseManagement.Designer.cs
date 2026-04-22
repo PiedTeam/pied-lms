@@ -2,18 +2,21 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PIED_LMS.Persistence;
 
 #nullable disable
 
-namespace PIED_LMS.Persistence.Migrations
+namespace PIED_LMS.Persistence.Migrations;
+
+[DbContext(typeof(PiedLmsDbContext))]
+[Migration("20260415033603_AddCourseManagement")]
+partial class AddCourseManagement
 {
-    [DbContext(typeof(PiedLmsDbContext))]
-    partial class PiedLmsDbContextModelSnapshot : ModelSnapshot
-    {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1263,6 +1266,5 @@ namespace PIED_LMS.Persistence.Migrations
                     b.Navigation("Questions");
                 });
 #pragma warning restore 612, 618
-        }
     }
 }
