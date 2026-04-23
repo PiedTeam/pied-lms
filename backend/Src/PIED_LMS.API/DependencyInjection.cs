@@ -48,6 +48,8 @@ public static class InfrastructureExtensions
                 policy.WithOrigins(
                     "http://localhost:3000",
                     "https://localhost:3000",
+                    "http://localhost:3001",
+                    "https://localhost:3001",
                     "https://pied-lms.vercel.app"
                 )
                 .AllowAnyMethod()
