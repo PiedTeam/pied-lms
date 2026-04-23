@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using PIED_LMS.Contract.Abstractions.Shared;
-
+using Microsoft.AspNetCore.Http;
 namespace PIED_LMS.Contract.Services.Identity;
 
 // Register Commands
@@ -76,3 +76,19 @@ public record ImportStudentsCommand(IReadOnlyList<StudentImportDto> Students) : 
 // Mentor Registration & Approval Commands
 public record RegisterMentorCommand(string Email, string FirstName, string LastName, string Bio, string Password, string ConfirmPassword) : IRequest<ServiceResponse<string>>;
 public record ApproveMentorCommand(Guid UserId) : IRequest<ServiceResponse<string>>;
+
+// Update Profile Commands
+public record UpdateProfileCommand(
+    Guid UserId,
+    string FirstName,
+    string LastName,
+    string? Bio,
+    IFormFile? ProfilePicture
+) : IRequest<ServiceResponse<string>>;
+
+public sealed record UpdateProfileRequest(
+    string FirstName,
+    string LastName,
+    string? Bio,
+    IFormFile? ProfilePicture
+);

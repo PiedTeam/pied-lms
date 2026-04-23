@@ -23,7 +23,8 @@ public record CourseTeacherDto(
     Guid Id,
     string FirstName,
     string LastName,
-    string Email
+    string Email,
+    string? Bio
 );
 
 // Prerequisite DTO

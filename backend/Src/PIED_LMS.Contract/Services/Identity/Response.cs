@@ -18,7 +18,9 @@ public record UserResponse(
     string LastName,
     bool IsActive,
     DateTime CreatedAt,
-    List<string> Roles
+    List<string> Roles,
+    string? Bio,
+    string? ProfilePictureUrl
 );
 
 // Authentication Response

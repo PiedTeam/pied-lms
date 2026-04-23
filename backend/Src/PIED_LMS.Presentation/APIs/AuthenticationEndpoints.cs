@@ -59,6 +59,14 @@ public class AuthenticationEndpoints : ICarterModule
             .Produces<ServiceResponse<string>>()
             .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest);
 
+        group.MapPut("/profile", UpdateProfile)
+            .WithName("UpdateProfile")
+            .WithOpenApi()
+            .RequireAuthorization()
+            .DisableAntiforgery()
+            .Produces<ServiceResponse<string>>()
+            .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest);
+
         group.MapGet("/users/{id}", GetUserById)
             .WithName("GetUserById")
             .WithOpenApi()
@@ -243,6 +251,28 @@ public class AuthenticationEndpoints : ICarterModule
         CancellationToken cancellationToken)
     {
         var command = new AssignRoleCommand(request.UserId, request.RoleName);
+        var result = await mediator.Send(command, cancellationToken);
+        return result.Success ? Results.Ok(result) : Results.BadRequest(result);
+    }
+
+    private static async Task<IResult> UpdateProfile(
+        HttpContext context,
+        [Microsoft.AspNetCore.Mvc.FromForm] UpdateProfileRequest request,
+        IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        var userIdClaim = context.User.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+            return Results.Unauthorized();
+
+        var command = new UpdateProfileCommand(
+            userId,
+            request.FirstName,
+            request.LastName,
+            request.Bio,
+            request.ProfilePicture
+        );
+
         var result = await mediator.Send(command, cancellationToken);
         return result.Success ? Results.Ok(result) : Results.BadRequest(result);
     }

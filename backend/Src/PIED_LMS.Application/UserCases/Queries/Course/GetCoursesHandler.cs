@@ -125,7 +125,8 @@ public class GetCoursesHandler(
             t.Id,
             t.FirstName ?? string.Empty,
             t.LastName ?? string.Empty,
-            t.Email ?? string.Empty
+            t.Email ?? string.Empty,
+            t.Bio
         )).ToList();
 
         return new CourseDto(
