@@ -1,34 +1,43 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using PIED_LMS.Contract.Abstractions.Storage;
+using PIED_LMS.Contract.Constants;
 using PIED_LMS.Contract.Services.Course;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Abstractions;
-using PIED_LMS.Domain.Entities;
 
 namespace PIED_LMS.Application.UserCases.Queries.Course;
 
-public class GetCoursesHandler(
+public class GetStudentAvailableCoursesHandler(
     IUnitOfWork unitOfWork,
     IFileStorageService fileStorageService,
-    ILogger<GetCoursesHandler> logger
-) : IRequestHandler<GetCoursesQuery, ServiceResponse<PagedResult<CourseDto>>>
+    Microsoft.AspNetCore.Http.IHttpContextAccessor httpContextAccessor,
+    ILogger<GetStudentAvailableCoursesHandler> logger
+) : IRequestHandler<GetStudentAvailableCoursesQuery, ServiceResponse<PagedResult<StudentAvailableCourseDto>>>
 {
-    public async Task<ServiceResponse<PagedResult<CourseDto>>> Handle(
-        GetCoursesQuery request,
+    public async Task<ServiceResponse<PagedResult<StudentAvailableCourseDto>>> Handle(
+        GetStudentAvailableCoursesQuery request,
         CancellationToken cancellationToken)
     {
         try
         {
-            // Build query with filters
-            IQueryable<Domain.Entities.Course> query = unitOfWork.Repository<Domain.Entities.Course>()
-                .FindAll()
-                .Include(c => c.Teachers);
-
-            // Filter by Status if provided
-            if (request.Status.HasValue)
+            var userIdClaim = httpContextAccessor.HttpContext?.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
             {
-                query = query.Where(c => c.Status == request.Status.Value);
+                return new ServiceResponse<PagedResult<StudentAvailableCourseDto>>(false, "User is not authenticated");
             }
+
+            // 1. Get the student's completed courses
+            var completedCourseIds = await unitOfWork.Repository<Domain.Entities.Enrollment>()
+                .FindAll(e => e.UserId == userId && e.Status == EnrollmentStatus.Completed)
+                .Select(e => e.CourseId)
+                .ToListAsync(cancellationToken);
+
+            // 2. Query all ACTIVE courses
+            IQueryable<Domain.Entities.Course> query = unitOfWork.Repository<Domain.Entities.Course>()
+                .FindAll(c => c.Status == CourseStatus.Active)
+                .Include(c => c.Teachers)
+                .Include(c => c.PrerequisiteCourses);
 
             // Filter by SearchTerm in Title (case-insensitive)
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
@@ -53,15 +62,15 @@ public class GetCoursesHandler(
                 .Take(request.PageSize)
                 .ToListAsync(cancellationToken);
 
-            // Map to DTOs
-            var courseDtoTasks = courses.Select(course => MapToCourseDto(course, cancellationToken));
-            var courseDtos = new List<CourseDto>();
+            // 3. Map to DTOs and check prerequisites
+            var courseDtoTasks = courses.Select(course => MapToStudentAvailableCourseDto(course, completedCourseIds, cancellationToken));
+            var courseDtos = new List<StudentAvailableCourseDto>();
             foreach (var courseDtoTask in courseDtoTasks)
             {
                 courseDtos.Add(await courseDtoTask);
             }
 
-            var pagedResult = new PagedResult<CourseDto>(
+            var pagedResult = new PagedResult<StudentAvailableCourseDto>(
                 courseDtos,
                 totalCount,
                 request.PageNumber,
@@ -69,31 +78,36 @@ public class GetCoursesHandler(
             );
 
             logger.LogInformation(
-                "Retrieved {Count} courses (page {PageNumber} of {TotalPages})",
+                "Retrieved {Count} available courses for student {UserId}",
                 courseDtos.Count,
-                request.PageNumber,
-                (int)Math.Ceiling(totalCount / (double)request.PageSize)
+                userId
             );
 
-            return new ServiceResponse<PagedResult<CourseDto>>(
+            return new ServiceResponse<PagedResult<StudentAvailableCourseDto>>(
                 true,
-                "Courses retrieved successfully",
+                "Available courses retrieved successfully",
                 pagedResult
             );
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error retrieving courses with filters: Status={Status}, SearchTerm={SearchTerm}, Tag={Tag}",
-                request.Status, request.SearchTerm, request.Tag);
+            var fullErrorMessage = ex.InnerException != null 
+                ? $"{ex.Message} ---> {ex.InnerException.Message}" 
+                : ex.Message;
+
+            logger.LogError(ex, "Error retrieving available courses for student. Details: {Details}", fullErrorMessage);
             
-            return new ServiceResponse<PagedResult<CourseDto>>(
+            return new ServiceResponse<PagedResult<StudentAvailableCourseDto>>(
                 false,
-                "An error occurred while retrieving courses"
+                $"An error occurred: {fullErrorMessage}"
             );
         }
     }
 
-    private async Task<CourseDto> MapToCourseDto(Domain.Entities.Course course, CancellationToken cancellationToken)
+    private async Task<StudentAvailableCourseDto> MapToStudentAvailableCourseDto(
+        Domain.Entities.Course course, 
+        List<int> completedCourseIds,
+        CancellationToken cancellationToken)
     {
         // Get full S3 URL for thumbnail
         string? thumbnailUrl = null;
@@ -102,25 +116,23 @@ public class GetCoursesHandler(
             thumbnailUrl = await fileStorageService.GetFileUrlAsync(course.ThumbnailPath);
         }
 
-        // Parse tags from JSON or comma-separated string
+        // Parse tags
         List<string>? tags = null;
         if (!string.IsNullOrWhiteSpace(course.Tags))
         {
             try
             {
-                // Try parsing as JSON array first
                 tags = System.Text.Json.JsonSerializer.Deserialize<List<string>>(course.Tags);
             }
             catch (System.Text.Json.JsonException)
             {
-                // Fallback to comma-separated
                 tags = course.Tags.Split(',', StringSplitOptions.RemoveEmptyEntries)
                     .Select(t => t.Trim())
                     .ToList();
             }
         }
 
-        // Map teachers to CourseTeacherDto
+        // Map teachers
         var teacherDtos = course.Teachers.Select(t => new CourseTeacherDto(
             t.Id,
             t.FirstName ?? string.Empty,
@@ -129,7 +141,20 @@ public class GetCoursesHandler(
             t.Bio
         )).ToList();
 
-        return new CourseDto(
+        // Check prerequisites
+        var missingPrerequisites = new List<PrerequisiteDto>();
+        bool isEligible = true;
+
+        foreach (var prereq in course.PrerequisiteCourses)
+        {
+            if (!completedCourseIds.Contains(prereq.Id))
+            {
+                isEligible = false;
+                missingPrerequisites.Add(new PrerequisiteDto(prereq.Id, prereq.Title));
+            }
+        }
+
+        return new StudentAvailableCourseDto(
             course.Id,
             course.Title,
             course.Description,
@@ -140,6 +165,8 @@ public class GetCoursesHandler(
             course.Slug,
             tags,
             teacherDtos,
+            missingPrerequisites,
+            isEligible,
             course.CreatedAt,
             course.UpdatedAt
         );

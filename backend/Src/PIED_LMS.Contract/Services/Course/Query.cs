@@ -17,3 +17,11 @@ public record GetCoursesQuery(
 public record GetCourseByIdQuery(
     int Id
 ) : IRequest<ServiceResponse<CourseDto>>;
+
+// Get Student Available Courses Query
+public record GetStudentAvailableCoursesQuery(
+    int PageNumber = 1,
+    int PageSize = 10,
+    string? SearchTerm = null,
+    string? Tag = null
+) : IRequest<ServiceResponse<PagedResult<StudentAvailableCourseDto>>>;

@@ -54,6 +54,8 @@ groups:
       - uid: "loki-bug"
         title: "Immediate Bug/Error Detected"
         condition: "B"
+        noDataState: OK
+        execErrState: Alerting
         data:
           - refId: "A"
             relativeTimeRange:

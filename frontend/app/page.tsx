@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth.store";
+import { remoteLogger } from "@/utils/remote-logger";
 
 export default function Home() {
   const router = useRouter();
@@ -12,6 +13,9 @@ export default function Home() {
 
   // Wait for hydration from localStorage to avoid SSR/hydration mismatch
   useEffect(() => {
+    // Phát log để gửi sang Backend
+    remoteLogger.info("Trang chủ đã được tải - test log FE");
+
     // Use setTimeout to defer state update and avoid cascading renders
     const timer = setTimeout(() => {
       setIsHydrated(true);

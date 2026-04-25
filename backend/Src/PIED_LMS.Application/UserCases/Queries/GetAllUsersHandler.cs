@@ -1,9 +1,11 @@
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Entities;
 
+using PIED_LMS.Contract.Abstractions.Storage;
+
 namespace PIED_LMS.Application.UserCases.Queries;
 
-public class GetAllUsersQueryHandler(UserManager<ApplicationUser> userManager, ILogger<GetAllUsersQueryHandler> logger)
+public class GetAllUsersQueryHandler(UserManager<ApplicationUser> userManager, IFileStorageService fileStorageService, ILogger<GetAllUsersQueryHandler> logger)
     : IRequestHandler<GetAllUsersQuery, ServiceResponse<PaginatedResponse<UserResponse>>>
 {
     public async Task<ServiceResponse<PaginatedResponse<UserResponse>>> Handle(GetAllUsersQuery request,
@@ -21,6 +23,12 @@ public class GetAllUsersQueryHandler(UserManager<ApplicationUser> userManager, I
             foreach (var user in users)
             {
                 var roles = await userManager.GetRolesAsync(user);
+                string? profilePicUrl = null;
+                if (!string.IsNullOrWhiteSpace(user.ProfilePictureUrl))
+                {
+                    profilePicUrl = await fileStorageService.GetFileUrlAsync(user.ProfilePictureUrl);
+                }
+
                 userResponses.Add(new UserResponse(
                     user.Id,
                     user.Email ?? string.Empty,
@@ -28,7 +36,9 @@ public class GetAllUsersQueryHandler(UserManager<ApplicationUser> userManager, I
                     user.LastName,
                     user.IsActive,
                     user.CreatedAt,
-                    [.. roles]
+                    [.. roles],
+                    user.Bio,
+                    profilePicUrl
                 ));
             }
 

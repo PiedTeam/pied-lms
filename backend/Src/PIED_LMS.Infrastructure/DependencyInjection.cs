@@ -14,6 +14,7 @@ using PIED_LMS.Infrastructure.Authentication;
 using PIED_LMS.Infrastructure.Email;
 using PIED_LMS.Infrastructure.Storage;
 using PIED_LMS.Persistence;
+using PIED_LMS.Persistence.Services;
 
 namespace PIED_LMS.Infrastructure;
 
@@ -130,6 +131,7 @@ public static class PersistenceExtensions
         services.AddScoped<IQuestionQuizService, Services.QuestionQuizService>();
         services.AddScoped<ITestCaseStorageService, Services.TestCaseStorageService>();
         services.AddScoped<IFileStorageService, S3FileStorageService>();
+        services.AddScoped<ICourseLockingService, CourseLockingService>();
 
         services.AddAuthentication(options =>
         {

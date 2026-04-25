@@ -1,10 +1,13 @@
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Entities;
 
+using PIED_LMS.Contract.Abstractions.Storage;
+
 namespace PIED_LMS.Application.UserCases.Queries;
 
 public class GetAllStudentsQueryHandler(
     UserManager<ApplicationUser> userManager,
+    IFileStorageService fileStorageService,
     ILogger<GetAllStudentsQueryHandler> logger)
     : IRequestHandler<GetAllStudentsQuery, ServiceResponse<PaginatedResponse<UserResponse>>>
 {
@@ -27,6 +30,12 @@ public class GetAllStudentsQueryHandler(
             foreach (var student in students)
             {
                 var roles = await userManager.GetRolesAsync(student);
+                string? profilePicUrl = null;
+                if (!string.IsNullOrWhiteSpace(student.ProfilePictureUrl))
+                {
+                    profilePicUrl = await fileStorageService.GetFileUrlAsync(student.ProfilePictureUrl);
+                }
+
                 studentResponses.Add(new UserResponse(
                     student.Id,
                     student.Email ?? string.Empty,
@@ -34,7 +43,9 @@ public class GetAllStudentsQueryHandler(
                     student.LastName,
                     student.IsActive,
                     student.CreatedAt,
-                    [.. roles]
+                    [.. roles],
+                    student.Bio,
+                    profilePicUrl
                 ));
             }
 

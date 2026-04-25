@@ -40,10 +40,10 @@
         "enableInfiniteScrolling": false,
         "enableLogDetails": true,
         "showControls": false,
-        "showTime": false,
+        "showTime": true,
         "sortOrder": "Descending",
         "unwrappedColumns": false,
-        "wrapLogMessage": false
+        "wrapLogMessage": true
       },
       "pluginVersion": "12.4.1",
       "targets": [
@@ -54,12 +54,55 @@
           },
           "direction": "backward",
           "editorMode": "code",
-          "expr": "{app=\"pied-lms-backend\"} |= ``",
+          "expr": "{app=\"pied-lms-backend\"} | json | line_format \"[{{.Timestamp}}] {{.Level}} | {{.Message}}\"",
           "queryType": "range",
           "refId": "A"
         }
       ],
-      "title": "BE-Logs",
+      "title": "Backend Logs (Loki)",
+      "type": "logs"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "loki-ds"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "id": 6,
+      "options": {
+        "dedupStrategy": "none",
+        "enableInfiniteScrolling": false,
+        "enableLogDetails": true,
+        "showControls": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "unwrappedColumns": false,
+        "wrapLogMessage": true
+      },
+      "pluginVersion": "12.4.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki-ds"
+          },
+          "direction": "backward",
+          "editorMode": "code",
+          "expr": "{app=\"pied-lms-backend\", Source=\"Frontend\"} | json | line_format \"[{{.Timestamp}}] {{.Level}} | {{.Message}}\"",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Frontend Logs (Client-side)",
       "type": "logs"
     },
     {

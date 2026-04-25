@@ -46,6 +46,29 @@ public class CourseConfiguration : IEntityTypeConfiguration<Course>
         builder.Property(c => c.UpdatedAt)
             .IsRequired(false);
 
+        builder.Property(c => c.MaxCapacity)
+            .IsRequired()
+            .HasDefaultValue(0);
+
+        builder.Property(c => c.CurrentEnrollment)
+            .IsRequired()
+            .HasDefaultValue(0);
+
+        // Many-to-many relationship for Prerequisites
+        builder.HasMany(c => c.PrerequisiteCourses)
+            .WithMany(c => c.PrerequisiteFor)
+            .UsingEntity<Dictionary<string, object>>(
+                "course_prerequisites",
+                j => j.HasOne<Course>()
+                      .WithMany()
+                      .HasForeignKey("prerequisite_course_id")
+                      .OnDelete(DeleteBehavior.Cascade),
+                j => j.HasOne<Course>()
+                      .WithMany()
+                      .HasForeignKey("course_id")
+                      .OnDelete(DeleteBehavior.Cascade)
+            );
+
         // Many-to-many relationship with ApplicationUser (Teachers)
         builder.HasMany(c => c.Teachers)
             .WithMany()

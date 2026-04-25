@@ -23,7 +23,32 @@ public record CourseTeacherDto(
     Guid Id,
     string FirstName,
     string LastName,
-    string Email
+    string Email,
+    string? Bio
+);
+
+// Prerequisite DTO
+public record PrerequisiteDto(
+    int Id,
+    string Title
+);
+
+// Student Available Course DTO
+public record StudentAvailableCourseDto(
+    int Id,
+    string Title,
+    string? Description,
+    string? ThumbnailUrl,
+    DateTime StartDate,
+    DateTime EndDate,
+    CourseStatus Status,
+    string Slug,
+    List<string>? Tags,
+    List<CourseTeacherDto> Teachers,
+    List<PrerequisiteDto> MissingPrerequisites,
+    bool IsEligible,
+    DateTime CreatedAt,
+    DateTime? UpdatedAt
 );
 
 // Paginated Result

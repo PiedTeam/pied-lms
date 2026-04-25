@@ -10,7 +10,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Host.UseSerilog((context, loggerConfig) => loggerConfig.ReadFrom.Configuration(context.Configuration));
 
 builder.Services.AddPersistenceServices(builder.Configuration);
+
 builder.Services.AddApplicationServices();
+
 builder.Services.AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
