@@ -54,14 +54,14 @@ public class CourseEndpoints : ICarterModule
         group.MapGet("", GetCourses)
             .WithName("GetCourses")
             .WithOpenApi()
-            .Produces<ServiceResponse<PagedResult<CourseDto>>>(StatusCodes.Status200OK);
+            .Produces<ServiceResponse<PagedResult<CourseDtoFE>>>(StatusCodes.Status200OK);
 
         // GET /api/courses/{id}
         group.MapGet("/{id:int}", GetCourseById)
             .WithName("GetCourseById")
             .WithOpenApi()
-            .Produces<ServiceResponse<CourseDto>>(StatusCodes.Status200OK)
-            .Produces<ServiceResponse<CourseDto>>(StatusCodes.Status404NotFound);
+            .Produces<ServiceResponse<CourseDtoFE>>(StatusCodes.Status200OK)
+            .Produces<ServiceResponse<CourseDtoFE>>(StatusCodes.Status404NotFound);
     }
 
     // POST /api/courses
@@ -257,3 +257,21 @@ public sealed record GetCoursesRequest
     public string? SearchTerm { get; init; }
     public string? Tag { get; init; }
 };
+
+
+public record CourseDtoFE(
+    int Id,
+    string Title,
+    string? Description,
+    string? ThumbnailUrl,
+    DateTime StartDate,
+    DateTime EndDate,
+    CourseStatus Status,
+    string Slug,
+    List<string>? Tags,
+    List<CourseTeacherDto> Teachers,
+    DateTime CreatedAt,
+    DateTime? UpdatedAt,
+    string href,
+    int value 
+);

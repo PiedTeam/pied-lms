@@ -39,6 +39,13 @@ public class QuizletEndpoints : ICarterModule
             .WithServiceResponseOpenApi<QuizletDetailResponse>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound)
             .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"));
 
+        // GET /api/quizlets/{id}/quick-values (contract-only stub for OpenAPI)
+        group.MapGet("/{id:int}/quick-values", GetQuickQuizletValues)
+            .WithName("GetQuickQuizletValues")
+            .WithServiceResponseOpenApi<List<QuickQuizletValueResponse>>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound)
+            .Produces(StatusCodes.Status501NotImplemented)
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher", "Student"));
+
         // DELETE /api/quizlets/{id}
         group.MapDelete("/{id}", DeleteQuizlet)
             .WithName("DeleteQuizlet")
@@ -78,6 +85,13 @@ public class QuizletEndpoints : ICarterModule
     {
         var result = await sender.Send(new GetQuizletByIdQuery(id));
         return result.ToActionResult(context);
+    }
+
+    // GET /api/quizlets/{id}/quick-values
+    public static IResult GetQuickQuizletValues(int id)
+    {
+        _ = id;
+        return Results.StatusCode(StatusCodes.Status501NotImplemented);
     }
 
     // GET /api/students/quizlets
@@ -140,4 +154,16 @@ public record UpdateQuestionQuizRequest(
     bool IsHidden,
     QuizletLevel Level,
     List<UpdateQuestionDto> ListQuestion
+);
+
+public record QuickQuizletValueResponse(
+    string QuestionId,
+    string Question,
+    bool? IsMultipleMode,
+    List<QuickQuizletItemResponse> Items
+);
+
+public record QuickQuizletItemResponse(
+    string Id,
+    string Answer
 );
