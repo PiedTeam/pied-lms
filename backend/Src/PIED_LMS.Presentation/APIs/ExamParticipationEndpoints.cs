@@ -17,35 +17,26 @@ public class ExamParticipationEndpoints : ICarterModule
         // POST /api/participations/start
         group.MapPost("/start", StartExam)
             .WithName("StartExam")
-            .WithOpenApi()
             .RequireAuthorization(new AuthorizeAttribute { Roles = "Student" })
-            .Produces<ServiceResponse<ExamParticipationResponse>>()
-            .Produces<ServiceResponse<ExamParticipationResponse>>(StatusCodes.Status400BadRequest)
-            .Produces<ServiceResponse<ExamParticipationResponse>>(StatusCodes.Status403Forbidden);
+            .WithServiceResponseOpenApi<ExamParticipationResponse>(ServiceResponseStatusProfile.OkOrBadRequestOrForbidden);
 
         // POST /api/participations/submit
         group.MapPost("/submit", SubmitExam)
             .WithName("SubmitExam")
-            .WithOpenApi()
             .RequireAuthorization(new AuthorizeAttribute { Roles = "Student" })
-            .Produces<ServiceResponse<SubmitExamResponse>>()
-            .Produces<ServiceResponse<SubmitExamResponse>>(StatusCodes.Status400BadRequest)
-            .Produces<ServiceResponse<SubmitExamResponse>>(StatusCodes.Status403Forbidden);
+            .WithServiceResponseOpenApi<SubmitExamResponse>(ServiceResponseStatusProfile.OkOrBadRequestOrForbidden);
 
         // GET /api/participations (for students)
         group.MapGet("", GetStudentParticipations)
             .WithName("GetStudentParticipations")
-            .WithOpenApi()
             .RequireAuthorization(new AuthorizeAttribute { Roles = "Student" })
-            .Produces<ServiceResponse<PaginatedResponse<ExamParticipationResponse>>>();
+            .WithServiceResponseOpenApi<PaginatedResponse<ExamParticipationResponse>>(ServiceResponseStatusProfile.OkOrBadRequest);
 
         // GET /api/participations/room/{examRoomId} (for admin/mentor/teacher)
         group.MapGet("/room/{examRoomId}", GetExamRoomEnrollments)
             .WithName("GetExamRoomEnrollments")
-            .WithOpenApi()
             .RequireAuthorization(new AuthorizeAttribute { Roles = $"{RoleConstants.Administrator},{RoleConstants.Mentor},{RoleConstants.Teacher}" })
-            .Produces<ServiceResponse<PaginatedResponse<ExamRoomEnrollmentResponse>>>()
-            .Produces<ServiceResponse<PaginatedResponse<ExamRoomEnrollmentResponse>>>(StatusCodes.Status404NotFound);
+            .WithServiceResponseOpenApi<PaginatedResponse<ExamRoomEnrollmentResponse>>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound);
     }
 
     // POST /api/participations/start

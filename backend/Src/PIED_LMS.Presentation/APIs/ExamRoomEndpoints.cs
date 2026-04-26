@@ -17,89 +17,64 @@ public class ExamRoomEndpoints : ICarterModule
         // Mentor endpoints
         group.MapPost("", CreateExamRoom)
             .WithName("CreateExamRoom")
-            .WithOpenApi()
             .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
-            .Produces<ServiceResponse<ExamRoomResponse>>()
-            .Produces<ServiceResponse<ExamRoomResponse>>(StatusCodes.Status400BadRequest);
+            .WithServiceResponseOpenApi<ExamRoomResponse>(ServiceResponseStatusProfile.OkOrBadRequest);
 
         group.MapGet("", GetAllExamRooms)
             .WithName("GetAllExamRooms")
-            .WithOpenApi()
             .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
-            .Produces<ServiceResponse<PaginatedResponse<ExamRoomResponse>>>();
+            .WithServiceResponseOpenApi<PaginatedResponse<ExamRoomResponse>>(ServiceResponseStatusProfile.OkOrBadRequest);
 
         group.MapGet("/{id}", GetExamRoomById)
             .WithName("GetExamRoomById")
-            .WithOpenApi()
             .RequireAuthorization()
-            .Produces<ServiceResponse<ExamRoomDetailResponse>>()
-            .Produces<ServiceResponse<ExamRoomDetailResponse>>(StatusCodes.Status404NotFound);
+            .WithServiceResponseOpenApi<ExamRoomDetailResponse>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound);
 
         group.MapPut("/{id}", UpdateExamRoom)
             .WithName("UpdateExamRoom")
-            .WithOpenApi()
             .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
-            .Produces<ServiceResponse<ExamRoomResponse>>()
-            .Produces<ServiceResponse<ExamRoomResponse>>(StatusCodes.Status400BadRequest)
-            .Produces<ServiceResponse<ExamRoomResponse>>(StatusCodes.Status403Forbidden);
+            .WithServiceResponseOpenApi<ExamRoomResponse>(ServiceResponseStatusProfile.OkOrBadRequestOrForbidden);
 
         group.MapDelete("/{id}", DeleteExamRoom)
             .WithName("DeleteExamRoom")
-            .WithOpenApi()
             .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
-            .Produces<ServiceResponse<string>>()
-            .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest)
-            .Produces<ServiceResponse<string>>(StatusCodes.Status403Forbidden);
+            .WithServiceResponseOpenApi<string>(ServiceResponseStatusProfile.OkOrBadRequestOrForbidden);
 
         group.MapPost("/{id}/exams", AssignExamToRoom)
             .WithName("AssignExamToRoom")
-            .WithOpenApi()
             .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
-            .Produces<ServiceResponse<string>>()
-            .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest)
-            .Produces<ServiceResponse<string>>(StatusCodes.Status403Forbidden);
+            .WithServiceResponseOpenApi<string>(ServiceResponseStatusProfile.OkOrBadRequestOrForbidden);
 
         group.MapPost("/{id}/enroll", EnrollStudents)
             .WithName("EnrollStudents")
-            .WithOpenApi()
             .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
-            .Produces<ServiceResponse<EnrollmentResultResponse>>()
-            .Produces<ServiceResponse<EnrollmentResultResponse>>(StatusCodes.Status400BadRequest)
-            .Produces<ServiceResponse<EnrollmentResultResponse>>(StatusCodes.Status403Forbidden);
+            .WithServiceResponseOpenApi<EnrollmentResultResponse>(ServiceResponseStatusProfile.OkOrBadRequestOrForbidden);
 
         group.MapDelete("/{roomId}/exams/{examId}", RemoveExamFromRoom)
             .WithName("RemoveExamFromRoom")
-            .WithOpenApi()
             .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
-            .Produces<ServiceResponse<string>>()
-            .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest)
-            .Produces<ServiceResponse<string>>(StatusCodes.Status403Forbidden);
+            .WithServiceResponseOpenApi<string>(ServiceResponseStatusProfile.OkOrBadRequestOrForbidden);
 
         // Student endpoints
         group.MapGet("/student", GetExamRoomsForStudent)
             .WithName("GetExamRoomsForStudent")
-            .WithOpenApi()
             .RequireAuthorization(new AuthorizeAttribute { Roles = "Student" })
-            .Produces<ServiceResponse<PaginatedResponse<ExamRoomResponse>>>();
+            .WithServiceResponseOpenApi<PaginatedResponse<ExamRoomResponse>>(ServiceResponseStatusProfile.OkOrBadRequest);
 
         group.MapGet("/{roomId}/exams/student", GetExamsInRoomForStudent)
             .WithName("GetExamsInRoomForStudent")
-            .WithOpenApi()
             .RequireAuthorization(new AuthorizeAttribute { Roles = "Student" })
-            .Produces<ServiceResponse<List<Contract.Services.Exam.ExamInRoomResponse>>>()
-            .Produces<ServiceResponse<List<Contract.Services.Exam.ExamInRoomResponse>>>(StatusCodes.Status403Forbidden);
+            .WithServiceResponseOpenApi<List<Contract.Services.Exam.ExamInRoomResponse>>(ServiceResponseStatusProfile.OkOrBadRequestOrForbidden);
 
         group.MapGet("/available", GetAvailableExamRoomsForStudent)
             .WithName("GetAvailableExamRoomsForStudent")
-            .WithOpenApi()
             .RequireAuthorization()
-            .Produces<ServiceResponse<PaginatedResponse<ExamRoomResponse>>>();
+            .WithServiceResponseOpenApi<PaginatedResponse<ExamRoomResponse>>(ServiceResponseStatusProfile.OkOrBadRequest);
 
         group.MapGet("/{id}/access", CheckExamRoomAccess)
             .WithName("CheckExamRoomAccess")
-            .WithOpenApi()
             .RequireAuthorization()
-            .Produces<ServiceResponse<Contract.Services.ExamParticipation.ExamRoomAccessResponse>>();
+            .WithServiceResponseOpenApi<Contract.Services.ExamParticipation.ExamRoomAccessResponse>(ServiceResponseStatusProfile.OkOrBadRequest);
     }
 
     // POST /api/exam-rooms

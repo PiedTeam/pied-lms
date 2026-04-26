@@ -1,21 +1,41 @@
+using Microsoft.AspNetCore.Authorization;
+
 namespace PIED_LMS.API.Filters;
 
 public sealed class SecurityRequirementsOperationFilter : IOperationFilter
 {
-    private static readonly HashSet<string> _publicEndpoints =
-    [
-        "/api/auth/login",
-        "/api/auth/register"
-    ];
-
     public void Apply(OpenApiOperation operation, OperationFilterContext context)
     {
-        // Get endpoint path
-        var path = context.ApiDescription.RelativePath;
-        var normalizedPath = path?.Split('?', '#')[0].TrimStart('/');
+        if (AllowsAnonymous(context) || !RequiresAuthorization(context))
+        {
+            operation.Security = new List<OpenApiSecurityRequirement>();
+            return;
+        }
 
-        // Remove security requirement for public endpoint
-        if (normalizedPath is not null && _publicEndpoints.Contains(normalizedPath, StringComparer.OrdinalIgnoreCase))
-            operation.Security = null;
+        operation.Security = new List<OpenApiSecurityRequirement>
+        {
+            new OpenApiSecurityRequirement
+            {
+                { new OpenApiSecuritySchemeReference("Bearer", context.Document), new List<string>() }
+            }
+        };
+    }
+
+    private static bool AllowsAnonymous(OperationFilterContext context)
+    {
+        var endpointMetadata = context.ApiDescription.ActionDescriptor.EndpointMetadata;
+        if (endpointMetadata is null || endpointMetadata.Count == 0)
+            return false;
+
+        return endpointMetadata.OfType<IAllowAnonymous>().Any();
+    }
+
+    private static bool RequiresAuthorization(OperationFilterContext context)
+    {
+        var endpointMetadata = context.ApiDescription.ActionDescriptor.EndpointMetadata;
+        if (endpointMetadata is null || endpointMetadata.Count == 0)
+            return false;
+
+        return endpointMetadata.OfType<IAuthorizeData>().Any();
     }
 }

@@ -16,48 +16,37 @@ public class AuthenticationEndpoints : ICarterModule
 
         group.MapPost("/register", Register)
             .WithName("Register")
-            .WithOpenApi()
-            .Produces<ServiceResponse<RegisterResponse>>()
-            .Produces<ServiceResponse<RegisterResponse>>(StatusCodes.Status400BadRequest);
+            .WithServiceResponseOpenApi<RegisterResponse>(ServiceResponseStatusProfile.OkOrBadRequest);
 
         group.MapPost("/login", Login)
             .WithName("Login")
-            .WithOpenApi()
-            .Produces<ServiceResponse<LoginResponse>>()
-            .Produces<ServiceResponse<LoginResponse>>(StatusCodes.Status401Unauthorized);
+            .WithServiceResponseOpenApi<LoginResponse>(ServiceResponseStatusProfile.OkOrBadRequest);
 
         group.MapPost("/refresh", RefreshToken)
             .WithName("RefreshToken")
-            .WithOpenApi()
-            .Produces<ServiceResponse<RefreshTokenResponse>>()
-            .Produces<ServiceResponse<RefreshTokenResponse>>(StatusCodes.Status401Unauthorized);
+            .WithServiceResponseOpenApi<RefreshTokenResponse>(ServiceResponseStatusProfile.Ok)
+            .Produces<UnauthorizedErrorResponse>(StatusCodes.Status401Unauthorized);
 
         group.MapPost("/logout", Logout)
             .WithName("Logout")
-            .WithOpenApi()
             .RequireAuthorization()
-            .Produces<ServiceResponse<string>>()
-            .Produces<ServiceResponse<string>>(StatusCodes.Status401Unauthorized);
+            .WithServiceResponseOpenApi<string>(ServiceResponseStatusProfile.OkOrBadRequest)
+            .Produces(StatusCodes.Status401Unauthorized);
 
         group.MapPost("/change-password", ChangePassword)
             .WithName("ChangePassword")
-            .WithOpenApi()
             .RequireAuthorization()
-            .Produces<ServiceResponse<string>>()
-            .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest);
+            .WithServiceResponseOpenApi<string>(ServiceResponseStatusProfile.OkOrBadRequest)
+            .Produces(StatusCodes.Status401Unauthorized);
 
         group.MapPost("/reset-password", ResetPassword)
            .WithName("ResetPassword")
-           .WithOpenApi()
-           .Produces<ServiceResponse<string>>()
-           .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest);
+           .WithServiceResponseOpenApi<string>(ServiceResponseStatusProfile.OkOrBadRequest);
 
         group.MapPost("/assign-role", AssignRole)
             .WithName("AssignRole")
-            .WithOpenApi()
             .RequireAuthorization(new AuthorizeAttribute { Roles = RoleConstants.Administrator })
-            .Produces<ServiceResponse<string>>()
-            .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest);
+            .WithServiceResponseOpenApi<string>(ServiceResponseStatusProfile.OkOrBadRequest);
 
         group.MapPut("/profile", UpdateProfile)
             .WithName("UpdateProfile")
@@ -69,22 +58,18 @@ public class AuthenticationEndpoints : ICarterModule
 
         group.MapGet("/users/{id}", GetUserById)
             .WithName("GetUserById")
-            .WithOpenApi()
             .RequireAuthorization(new AuthorizeAttribute { Roles = RoleConstants.Administrator })
-            .Produces<ServiceResponse<UserResponse>>()
-            .Produces<ServiceResponse<UserResponse>>(StatusCodes.Status404NotFound);
+            .WithServiceResponseOpenApi<UserResponse>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound);
 
         group.MapGet("/users", GetAllUsers)
             .WithName("GetAllUsers")
-            .WithOpenApi()
             .RequireAuthorization(new AuthorizeAttribute { Roles = RoleConstants.Administrator })
-            .Produces<ServiceResponse<PaginatedResponse<UserResponse>>>();
+            .WithServiceResponseOpenApi<PaginatedResponse<UserResponse>>(ServiceResponseStatusProfile.OkOrBadRequest);
 
         group.MapGet("/students", GetAllStudents)
             .WithName("GetAllStudents")
-            .WithOpenApi()
             .RequireAuthorization(new AuthorizeAttribute { Roles = $"{RoleConstants.Administrator},{RoleConstants.Mentor},{RoleConstants.Teacher}" })
-            .Produces<ServiceResponse<PaginatedResponse<UserResponse>>>();
+            .WithServiceResponseOpenApi<PaginatedResponse<UserResponse>>(ServiceResponseStatusProfile.OkOrBadRequest);
     }
 
     private static CookieOptions CreateRefreshTokenCookieOptions(
@@ -94,7 +79,7 @@ public class AuthenticationEndpoints : ICarterModule
         var refreshTokenExpirationDays = configuration.GetValue("JwtSettings:RefreshTokenExpirationDays", 7);
         var sameSite = configuration.GetValue("Cookies:SameSite", SameSiteMode.Lax);
         var secureCookie = configuration.GetValue("Cookies:Secure", !environment.IsDevelopment());
-        
+
         if (sameSite == SameSiteMode.None)
             secureCookie = true;
 
@@ -166,7 +151,7 @@ public class AuthenticationEndpoints : ICarterModule
         {
             logger.LogWarning("Refresh token missing in cookie. HasRefreshTokenCookie: {HasCookie}",
                 context.Request.Cookies.ContainsKey("refreshToken"));
-            return Results.Json(new { error = "Invalid refresh token" }, statusCode: 401);
+            return Results.Json(new UnauthorizedErrorResponse("Invalid refresh token"), statusCode: 401);
         }
 
         var command = new RefreshTokenCommand(refreshToken);
@@ -175,7 +160,7 @@ public class AuthenticationEndpoints : ICarterModule
         if (!result.Success || result.Data == null)
         {
             logger.LogWarning("Refresh token request failed: {Message}", result.Message);
-            return Results.Json(new { error = "Invalid refresh token" }, statusCode: 401);
+            return Results.Json(new UnauthorizedErrorResponse("Invalid refresh token"), statusCode: 401);
         }
 
         // Update refresh token cookie
@@ -332,4 +317,8 @@ public sealed record GetAllUsersRequest(
 public sealed record GetAllStudentsRequest(
     int PageNumber = 1,
     int PageSize = 10
+);
+
+public sealed record UnauthorizedErrorResponse(
+    string Error
 );

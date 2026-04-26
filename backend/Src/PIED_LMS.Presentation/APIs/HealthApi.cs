@@ -8,25 +8,26 @@ public class HealthApi : ICarterModule
             {
                 var report = await healthCheckService.CheckHealthAsync(cancellationToken);
 
-                var response = new
-                {
-                    status = report.Status.ToString(),
-                    timestamp = DateTime.UtcNow,
-                    details = report.Entries.Select(e => new
-                    {
-                        key = e.Key,
-                        description = e.Value.Description,
-                        status = e.Value.Status.ToString(),
-                        duration = e.Value.Duration
-                    })
-                };
+                var response = new HealthStatusResponse(
+                    report.Status.ToString(),
+                    DateTime.UtcNow,
+                    report.Entries.Select(e => new HealthStatusDetailResponse(
+                        e.Key,
+                        e.Value.Description,
+                        e.Value.Status.ToString(),
+                        e.Value.Duration))
+                    .ToList());
 
                 return report.Status == HealthStatus.Healthy
                     ? Results.Ok(response)
                     : Results.Json(response, statusCode: StatusCodes.Status503ServiceUnavailable);
             })
+            .WithName("GetHealthStatus")
+            .WithOpenApi()
             .WithTags("Health")
             .AllowAnonymous()
+            .Produces<HealthStatusResponse>(StatusCodes.Status200OK)
+            .Produces<HealthStatusResponse>(StatusCodes.Status503ServiceUnavailable)
             .WithMetadata(new ResponseCacheAttribute
             {
                 Duration = 10,
@@ -40,7 +41,23 @@ public class HealthApi : ICarterModule
         {
             throw new Exception("This is a test exception to trigger the Grafana loki-bug alert!");
         })
+        .WithName("GetHealthErrorTest")
+        .WithOpenApi()
         .WithTags("Health")
-        .AllowAnonymous();
+        .AllowAnonymous()
+        .ProducesProblem(StatusCodes.Status500InternalServerError, "application/problem+json");
     }
 }
+
+public sealed record HealthStatusResponse(
+    string Status,
+    DateTime Timestamp,
+    IReadOnlyList<HealthStatusDetailResponse> Details
+);
+
+public sealed record HealthStatusDetailResponse(
+    string Key,
+    string? Description,
+    string Status,
+    TimeSpan Duration
+);

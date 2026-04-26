@@ -24,20 +24,20 @@ public sealed class StudentSubmissionEndpoints : ICarterModule
         group.MapPost("/exams/{examId:guid}/submissions", SubmitCode)
             .WithName("SubmitExamCode")
             .RequireAuthorization(policy => policy.RequireRole("Student"))
-            .Produces<ServiceResponse<JudgeResult>>();
+            .WithServiceResponseOpenApi<JudgeResult>(ServiceResponseStatusProfile.OkOrBadRequest);
 
         // Get submission history for an exam
         group.MapGet("/exams/{examId:guid}/submissions", GetSubmissions)
             .WithName("GetExamSubmissions")
             .RequireAuthorization(policy => policy.RequireRole("Student"))
-            .Produces<ServiceResponse<List<SubmissionResponse>>>();
+            .WithServiceResponseOpenApi<List<SubmissionResponse>>(ServiceResponseStatusProfile.OkOrBadRequest);
 
         // Get submission details
         // Admins/Teachers could also use this if they have the ID
         group.MapGet("/submissions/{id:guid}", GetSubmissionById)
             .WithName("GetSubmissionById")
             .RequireAuthorization() // general auth since both teacher and student can view
-            .Produces<ServiceResponse<SubmissionDetailResponse>>();
+            .WithServiceResponseOpenApi<SubmissionDetailResponse>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound);
     }
 
     private static async Task<IResult> SubmitCode(
