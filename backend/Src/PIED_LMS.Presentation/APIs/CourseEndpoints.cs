@@ -15,13 +15,13 @@ public class CourseEndpoints : ICarterModule
     {
         var group = app.MapGroup("/api/courses")
             .WithName("Courses")
-            .WithOpenApi()
-            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator));
+            .WithOpenApi();
 
         // POST /api/courses
         group.MapPost("", CreateCourse)
             .WithName("CreateCourse")
             .WithOpenApi()
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator))
             .DisableAntiforgery()
             .Produces<ServiceResponse<int>>(StatusCodes.Status201Created)
             .Produces<ServiceResponse<int>>(StatusCodes.Status400BadRequest)
@@ -31,6 +31,7 @@ public class CourseEndpoints : ICarterModule
         group.MapPut("/{id:int}", UpdateCourse)
             .WithName("UpdateCourse")
             .WithOpenApi()
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator))
             .DisableAntiforgery()
             .Produces<ServiceResponse<string>>(StatusCodes.Status200OK)
             .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest)
@@ -40,6 +41,7 @@ public class CourseEndpoints : ICarterModule
         group.MapDelete("/{id:int}", DeleteCourse)
             .WithName("DeleteCourse")
             .WithOpenApi()
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator))
             .Produces(StatusCodes.Status204NoContent)
             .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest);
 
@@ -47,6 +49,7 @@ public class CourseEndpoints : ICarterModule
         group.MapPost("/{id:int}/teachers", AssignTeachers)
             .WithName("AssignTeachers")
             .WithOpenApi()
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator))
             .Produces<ServiceResponse<string>>(StatusCodes.Status200OK)
             .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest);
 
@@ -54,24 +57,32 @@ public class CourseEndpoints : ICarterModule
         group.MapGet("", GetCourses)
             .WithName("GetCourses")
             .WithOpenApi()
+            .RequireAuthorization()
             .Produces<ServiceResponse<PagedResult<CourseDtoFE>>>(StatusCodes.Status200OK);
 
         // GET /api/courses/{id}
         group.MapGet("/{id:int}", GetCourseById)
             .WithName("GetCourseById")
             .WithOpenApi()
+            .RequireAuthorization()
             .Produces<ServiceResponse<CourseDtoFE>>(StatusCodes.Status200OK)
             .Produces<ServiceResponse<CourseDtoFE>>(StatusCodes.Status404NotFound);
     }
 
     // POST /api/courses
+    //FEHELP: calib thêm các trường như duration, seats, price, mentorId vào CreateCourseCommand và xử lý trong CreateCourseHandler
+    // Lê Điệp chỉ có thể chỉnh sữa trên tầng presentation thôi, mọi người xử lý logic thêm nhé
     private static async Task<IResult> CreateCourse(
         [FromForm] string title,
-        [FromForm] string? description,
+        [FromForm] string? description, // dạng string, string, string để dể split (',') nhé
         [FromForm] IFormFile? thumbnailFile,
         [FromForm] DateTime startDate,
         [FromForm] DateTime endDate,
         [FromForm] CourseStatus status,
+        [FromForm] int duration, //thời lượng khóa học
+        [FromForm] string? seats, //số lượng chỗ ngồi
+        [FromForm] string? price, //giá tiền khóa họcs
+        [FromForm] string? mentorId, //tên người hướng dẫn || nhớ kiểm tra xem mentorId có phải là thật không ?
         [FromForm] string? tags,
         [FromForm] string? slug,
         IMediator mediator,
@@ -259,6 +270,9 @@ public sealed record GetCoursesRequest
 };
 
 
+//FEHELP: CourseDtoFE là DTO trả về cho FE
+// cần chỉnh sữa lại cái này vì mình đã thay đổi các input khi tạo khóa học, thêm các trường như duration, seats, price, mentorId vào đây để FE dể lấy dữ liệu hơn
+//hãy thêm các trường này vào CourseDto nhé, CourseDtoFE tạo ra để mô tả cho FE thôi    
 public record CourseDtoFE(
     int Id,
     string Title,
@@ -269,9 +283,64 @@ public record CourseDtoFE(
     CourseStatus Status,
     string Slug,
     List<string>? Tags,
-    List<CourseTeacherDto> Teachers,
+    List<CourseTeacherDto> Teachers,//danh sách giáo viên phụ trách khóa học
+    int duration, //thời lượng khóa học
+    string seats, //số lượng chỗ ngồi
+    string price, //giá tiền khóa họcs
     DateTime CreatedAt,
     DateTime? UpdatedAt,
-    string href,
     int value 
 );
+
+// FEHELP: CourseCurriculumDto
+// tôi cần một api để get thông tin chương trình học của khóa học
+// nội dung cần lấy có dạng mảng object như sau:
+/*
+[
+    {
+      title: '01 - datatype',
+      summary: 'tìm hiểu về kiểu dữ liệu nguyên thủy',
+      content: [
+        'các kiểu dữ liệu cơ bản trong lập trình C',
+        'Khái niệm về biến và khai báo biến',
+        'convention name',
+        'swap handler',
+      ],
+    },
+    {
+      title: '02 - if else và toán tử',
+      summary: 'mệnh đề điều kiện',
+      content: ['cấu trúc if else', 'toán tử logic', 'toán tử bit', 'toán tử điều kiện'],
+    },
+    {
+      title: '03 - for loop',
+      summary: 'vòng lặp for',
+      content: ['cấu trúc for loop', 'cấu trúc for each', 'cấu trúc for in', 'cấu trúc for of'],
+    },
+    {
+      title: '04 - while loop',
+      summary: 'vòng lặp while',
+      content: [
+        'cấu trúc while loop',
+        'cấu trúc do while loop',
+        'cấu trúc for loop',
+        'cấu trúc for each',
+      ],
+    },
+  ]
+*/
+
+/*
+* FEHELP: CourseInsideDto
+ tôi cần một api để get các thông tin bên trong một khóa học bất kỳ, những nội dung và hình ảnh mô tả
+ dạng md
+ Course insight
+ [image]
+    Hành trình bắt đầu từ một dòng code đầu tiên
+    Khoanh khac hoc vien dang hoc lap trinh
+    Có những buổi tối bạn ngồi trước màn hình, nhìn lỗi hiện lên liên tục và tự hỏi liệu mình có hợp với lập trình không. Khóa học này được tạo ra chính từ những khoảnh khắc chông chênh đó, để nhắc bạn rằng: ai cũng từng bắt đầu từ con số 0.
+
+    Chúng tôi không chỉ dạy cú pháp C Language, mà còn đồng hành để bạn hiểu cách tư duy, cách kiên nhẫn, và cách đứng dậy sau mỗi lần chương trình chạy sai. Mỗi bài học là một bước nhỏ, nhưng sau 10 tuần, bạn sẽ thấy mình đã đi một quãng đường thật dài.
+
+    "Từ những dòng code vụng về đầu tiên, bạn có thể viết nên một phiên bản mạnh mẽ hơn của chính mình."
+*/

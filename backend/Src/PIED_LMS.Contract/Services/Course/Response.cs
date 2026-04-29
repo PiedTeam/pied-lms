@@ -25,6 +25,7 @@ public record CourseTeacherDto(
     string LastName,
     string Email,
     string? Bio
+    // cho user có mentor có avatar nhé
 );
 
 // Prerequisite DTO
