@@ -20,6 +20,10 @@ public class Course
     public string? Seats { get; set; }
     public string? Price { get; set; }
     public int Value { get; set; }
+    
+    public string? Curriculum { get; set; }
+    public string? Insight { get; set; }
+    
     public int MaxCapacity { get; set; }
     public int CurrentEnrollment { get; set; }
     

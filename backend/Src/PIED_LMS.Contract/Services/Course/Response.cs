@@ -63,3 +63,15 @@ public record PagedResult<T>(
     int PageNumber,
     int PageSize
 );
+
+// Curriculum Section DTO
+public record CurriculumSectionDto(
+    string Title,
+    string Summary,
+    List<string> Content
+);
+
+// Course Insight DTO
+public record CourseInsightDto(
+    string Insight
+);
