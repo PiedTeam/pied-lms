@@ -74,6 +74,10 @@ public class CourseEndpoints : ICarterModule
         [FromForm] CourseStatus status,
         [FromForm] string? tags,
         [FromForm] string? slug,
+        [FromForm] int duration,
+        [FromForm] string? seats,
+        [FromForm] string? price,
+        [FromForm] int value,
         IMediator mediator,
         HttpContext context)
     {
@@ -89,7 +93,11 @@ public class CourseEndpoints : ICarterModule
             endDate,
             status,
             tagsList,
-            slug
+            slug,
+            duration,
+            seats,
+            price,
+            value
         );
 
         var result = await mediator.Send(command);
@@ -113,6 +121,10 @@ public class CourseEndpoints : ICarterModule
         [FromForm] CourseStatus status,
         [FromForm] string? tags,
         [FromForm] string? slug,
+        [FromForm] int duration,
+        [FromForm] string? seats,
+        [FromForm] string? price,
+        [FromForm] int value,
         IMediator mediator,
         HttpContext context)
     {
@@ -129,7 +141,11 @@ public class CourseEndpoints : ICarterModule
             endDate,
             status,
             tagsList,
-            slug
+            slug,
+            duration,
+            seats,
+            price,
+            value
         );
 
         var result = await mediator.Send(command);

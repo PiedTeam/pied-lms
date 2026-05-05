@@ -16,6 +16,10 @@ public class Course
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     
+    public int Duration { get; set; }
+    public string? Seats { get; set; }
+    public string? Price { get; set; }
+    public int Value { get; set; }
     public int MaxCapacity { get; set; }
     public int CurrentEnrollment { get; set; }
     

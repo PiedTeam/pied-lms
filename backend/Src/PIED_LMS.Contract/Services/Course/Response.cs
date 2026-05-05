@@ -14,8 +14,12 @@ public record CourseDto(
     string Slug,
     List<string>? Tags,
     List<CourseTeacherDto> Teachers,
+    int Duration,
+    string? Seats,
+    string? Price,
     DateTime CreatedAt,
-    DateTime? UpdatedAt
+    DateTime? UpdatedAt,
+    int Value
 );
 
 // Course Teacher DTO (simplified for course context)

@@ -77,6 +77,10 @@ public class CreateCourseHandler(
                 Tags = request.Tags != null && request.Tags.Count > 0 
                     ? string.Join(",", request.Tags) 
                     : null,
+                Duration = request.Duration,
+                Seats = request.Seats,
+                Price = request.Price,
+                Value = request.Value,
                 CreatedAt = DateTime.UtcNow
             };
 

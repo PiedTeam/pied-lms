@@ -114,6 +114,10 @@ public class UpdateCourseHandler(
             course.Tags = request.Tags != null && request.Tags.Count > 0 
                 ? string.Join(",", request.Tags) 
                 : null;
+            course.Duration = request.Duration;
+            course.Seats = request.Seats;
+            course.Price = request.Price;
+            course.Value = request.Value;
             course.UpdatedAt = DateTime.UtcNow;
 
             // Update course in repository

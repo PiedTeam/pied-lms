@@ -141,8 +141,12 @@ public class GetCoursesHandler(
             course.Slug,
             tags,
             teacherDtos,
+            course.Duration,
+            course.Seats,
+            course.Price,
             course.CreatedAt,
-            course.UpdatedAt
+            course.UpdatedAt,
+            course.Value
         );
     }
 }
