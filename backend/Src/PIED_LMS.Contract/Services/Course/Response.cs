@@ -24,7 +24,8 @@ public record CourseTeacherDto(
     string FirstName,
     string LastName,
     string Email,
-    string? Bio
+    string? Bio,
+    string? AvatarUrl
 );
 
 // Prerequisite DTO

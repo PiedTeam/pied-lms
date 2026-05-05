@@ -112,7 +112,8 @@ public class GetCourseByIdHandler(
             t.FirstName ?? string.Empty,
             t.LastName ?? string.Empty,
             t.Email ?? string.Empty,
-            t.Bio
+            t.Bio,
+            t.ProfilePictureUrl
         )).ToList();
 
         return new CourseDto(
