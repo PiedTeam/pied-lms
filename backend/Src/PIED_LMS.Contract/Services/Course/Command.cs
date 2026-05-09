@@ -15,7 +15,11 @@ public record CreateCourseCommand(
     DateTime EndDate,
     CourseStatus Status,
     List<string>? Tags,
-    string? Slug
+    string? Slug,
+    int Duration,
+    string? Seats,
+    string? Price,
+    int Value
 ) : IRequest<ServiceResponse<int>>;
 
 // Update Course Command
@@ -28,7 +32,11 @@ public record UpdateCourseCommand(
     DateTime EndDate,
     CourseStatus Status,
     List<string>? Tags,
-    string? Slug
+    string? Slug,
+    int Duration,
+    string? Seats,
+    string? Price,
+    int Value
 ) : IRequest<ServiceResponse<string>>;
 
 // Delete Course Command

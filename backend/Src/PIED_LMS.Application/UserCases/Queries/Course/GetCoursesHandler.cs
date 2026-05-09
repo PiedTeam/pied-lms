@@ -126,7 +126,8 @@ public class GetCoursesHandler(
             t.FirstName ?? string.Empty,
             t.LastName ?? string.Empty,
             t.Email ?? string.Empty,
-            t.Bio
+            t.Bio,
+            t.ProfilePictureUrl
         )).ToList();
 
         return new CourseDto(
@@ -140,8 +141,12 @@ public class GetCoursesHandler(
             course.Slug,
             tags,
             teacherDtos,
+            course.Duration,
+            course.Seats,
+            course.Price,
             course.CreatedAt,
-            course.UpdatedAt
+            course.UpdatedAt,
+            course.Value
         );
     }
 }

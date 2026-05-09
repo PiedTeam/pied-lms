@@ -138,7 +138,8 @@ public class GetStudentAvailableCoursesHandler(
             t.FirstName ?? string.Empty,
             t.LastName ?? string.Empty,
             t.Email ?? string.Empty,
-            t.Bio
+            t.Bio,
+            t.ProfilePictureUrl
         )).ToList();
 
         // Check prerequisites

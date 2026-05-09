@@ -62,6 +62,19 @@ public class CourseEndpoints : ICarterModule
             .WithOpenApi()
             .Produces<ServiceResponse<CourseDto>>(StatusCodes.Status200OK)
             .Produces<ServiceResponse<CourseDto>>(StatusCodes.Status404NotFound);
+        // GET /api/courses/{id}/curriculum
+        group.MapGet("/{id:int}/curriculum", GetCourseCurriculum)
+            .WithName("GetCourseCurriculum")
+            .WithOpenApi()
+            .Produces<ServiceResponse<List<CurriculumSectionDto>>>(StatusCodes.Status200OK)
+            .Produces<ServiceResponse<List<CurriculumSectionDto>>>(StatusCodes.Status404NotFound);
+
+        // GET /api/courses/{id}/insight
+        group.MapGet("/{id:int}/insight", GetCourseInsight)
+            .WithName("GetCourseInsight")
+            .WithOpenApi()
+            .Produces<ServiceResponse<CourseInsightDto>>(StatusCodes.Status200OK)
+            .Produces<ServiceResponse<CourseInsightDto>>(StatusCodes.Status404NotFound);
     }
 
     // POST /api/courses
@@ -74,6 +87,10 @@ public class CourseEndpoints : ICarterModule
         [FromForm] CourseStatus status,
         [FromForm] string? tags,
         [FromForm] string? slug,
+        [FromForm] int duration,
+        [FromForm] string? seats,
+        [FromForm] string? price,
+        [FromForm] int value,
         IMediator mediator,
         HttpContext context)
     {
@@ -89,7 +106,11 @@ public class CourseEndpoints : ICarterModule
             endDate,
             status,
             tagsList,
-            slug
+            slug,
+            duration,
+            seats,
+            price,
+            value
         );
 
         var result = await mediator.Send(command);
@@ -113,6 +134,10 @@ public class CourseEndpoints : ICarterModule
         [FromForm] CourseStatus status,
         [FromForm] string? tags,
         [FromForm] string? slug,
+        [FromForm] int duration,
+        [FromForm] string? seats,
+        [FromForm] string? price,
+        [FromForm] int value,
         IMediator mediator,
         HttpContext context)
     {
@@ -129,7 +154,11 @@ public class CourseEndpoints : ICarterModule
             endDate,
             status,
             tagsList,
-            slug
+            slug,
+            duration,
+            seats,
+            price,
+            value
         );
 
         var result = await mediator.Send(command);
@@ -216,6 +245,28 @@ public class CourseEndpoints : ICarterModule
         HttpContext context)
     {
         var query = new GetCourseByIdQuery(id);
+        var result = await mediator.Send(query);
+        return result.ToActionResult(context);
+    }
+
+    // GET /api/courses/{id}/curriculum
+    private static async Task<IResult> GetCourseCurriculum(
+        int id,
+        IMediator mediator,
+        HttpContext context)
+    {
+        var query = new GetCourseCurriculumQuery(id);
+        var result = await mediator.Send(query);
+        return result.ToActionResult(context);
+    }
+
+    // GET /api/courses/{id}/insight
+    private static async Task<IResult> GetCourseInsight(
+        int id,
+        IMediator mediator,
+        HttpContext context)
+    {
+        var query = new GetCourseInsightQuery(id);
         var result = await mediator.Send(query);
         return result.ToActionResult(context);
     }

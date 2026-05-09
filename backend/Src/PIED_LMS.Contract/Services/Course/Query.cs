@@ -25,3 +25,13 @@ public record GetStudentAvailableCoursesQuery(
     string? SearchTerm = null,
     string? Tag = null
 ) : IRequest<ServiceResponse<PagedResult<StudentAvailableCourseDto>>>;
+
+// Get Course Curriculum Query
+public record GetCourseCurriculumQuery(
+    int Id
+) : IRequest<ServiceResponse<List<CurriculumSectionDto>>>;
+
+// Get Course Insight Query
+public record GetCourseInsightQuery(
+    int Id
+) : IRequest<ServiceResponse<CourseInsightDto>>;

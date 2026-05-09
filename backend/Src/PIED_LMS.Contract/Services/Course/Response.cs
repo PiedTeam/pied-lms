@@ -14,8 +14,12 @@ public record CourseDto(
     string Slug,
     List<string>? Tags,
     List<CourseTeacherDto> Teachers,
+    int Duration,
+    string? Seats,
+    string? Price,
     DateTime CreatedAt,
-    DateTime? UpdatedAt
+    DateTime? UpdatedAt,
+    int Value
 );
 
 // Course Teacher DTO (simplified for course context)
@@ -24,7 +28,8 @@ public record CourseTeacherDto(
     string FirstName,
     string LastName,
     string Email,
-    string? Bio
+    string? Bio,
+    string? AvatarUrl
 );
 
 // Prerequisite DTO
@@ -57,4 +62,16 @@ public record PagedResult<T>(
     int TotalCount,
     int PageNumber,
     int PageSize
+);
+
+// Curriculum Section DTO
+public record CurriculumSectionDto(
+    string Title,
+    string Summary,
+    List<string> Content
+);
+
+// Course Insight DTO
+public record CourseInsightDto(
+    string Insight
 );
