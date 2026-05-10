@@ -14,7 +14,7 @@ public record GetCoursesQuery(
 
 // Get Course By Id Query
 public record GetCourseByIdQuery(
-    int Id
+    Guid Id
 ) : IRequest<ServiceResponse<CourseDto>>;
 
 // Get Student Available Courses Query
@@ -27,10 +27,10 @@ public record GetStudentAvailableCoursesQuery(
 
 // Get Course Curriculum Query
 public record GetCourseCurriculumQuery(
-    int Id
+    Guid Id
 ) : IRequest<ServiceResponse<List<CurriculumSectionDto>>>;
 
 // Get Course Insight Query
 public record GetCourseInsightQuery(
-    int Id
+    Guid Id
 ) : IRequest<ServiceResponse<CourseInsightDto>>;

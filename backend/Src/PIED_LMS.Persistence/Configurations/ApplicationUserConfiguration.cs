@@ -23,7 +23,7 @@ public class ApplicationUserConfiguration : IEntityTypeConfiguration<Application
             .IsRequired()
             .HasMaxLength(256);
 
-        builder.Property(u => u.ProfilePictureUrl)
+        builder.Property(u => u.AvatarUrl)
             .HasMaxLength(500);
 
         builder.Property(u => u.CreatedAt)

@@ -109,6 +109,11 @@ public sealed class JudgeFromFileCommandHandler(
 
         // Calculate score as percentage of passed test cases
         var judgeResult = serviceResult.Data;
+        if (judgeResult == null)
+        {
+            logger.LogError("Judge success but result data is null.");
+            return new ServiceResponse<JudgeResult>(false, "Unexpected error: No judge results returned.", null);
+        }
         var score = CalculateScore(judgeResult.Passed, judgeResult.Total);
 
         // Update participation with new score

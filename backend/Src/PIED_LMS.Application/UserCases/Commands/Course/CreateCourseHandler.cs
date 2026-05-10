@@ -8,12 +8,12 @@ namespace PIED_LMS.Application.UserCases.Commands.Course;
 public class CreateCourseHandler(
     IUnitOfWork unitOfWork,
     IFileStorageService fileStorageService,
-    ILogger<CreateCourseHandler> logger) : IRequestHandler<CreateCourseCommand, ServiceResponse<int>>
+    ILogger<CreateCourseHandler> logger) : IRequestHandler<CreateCourseCommand, ServiceResponse<Guid>>
 {
     private const long MaxThumbnailSizeBytes = 5 * 1024 * 1024; // 5MB
     private static readonly string[] AllowedImageExtensions = [".jpg", ".jpeg", ".png"];
 
-    public async Task<ServiceResponse<int>> Handle(CreateCourseCommand request, CancellationToken cancellationToken)
+    public async Task<ServiceResponse<Guid>> Handle(CreateCourseCommand request, CancellationToken cancellationToken)
     {
         try
         {
@@ -22,7 +22,7 @@ public class CreateCourseHandler(
             if (validationError is not null)
             {
                 logger.LogWarning("Course creation validation failed: {ValidationError}", validationError);
-                return new ServiceResponse<int>(false, validationError);
+                return new ServiceResponse<Guid>(false, validationError);
             }
 
             // Subtask 5.3: Implement slug generation and validation
@@ -31,7 +31,7 @@ public class CreateCourseHandler(
             {
                 var errorMessage = "Slug already exists. Please provide a unique slug.";
                 logger.LogWarning("Course creation failed: {ValidationError}", errorMessage);
-                return new ServiceResponse<int>(false, errorMessage);
+                return new ServiceResponse<Guid>(false, errorMessage);
             }
 
             // Subtask 5.4: Implement file upload and course creation
@@ -49,12 +49,12 @@ public class CreateCourseHandler(
                 catch (ArgumentException ex)
                 {
                     logger.LogError(ex, "Failed to upload thumbnail to S3 for course creation");
-                    return new ServiceResponse<int>(false, "Failed to upload thumbnail image. Please try again.");
+                    return new ServiceResponse<Guid>(false, "Failed to upload thumbnail image. Please try again.");
                 }
                 catch (InvalidOperationException ex)
                 {
                     logger.LogError(ex, "Failed to upload thumbnail to S3 for course creation");
-                    return new ServiceResponse<int>(false, "Failed to upload thumbnail image. Please try again.");
+                    return new ServiceResponse<Guid>(false, "Failed to upload thumbnail image. Please try again.");
                 }
 
             // Create Course entity
@@ -86,23 +86,23 @@ public class CreateCourseHandler(
             logger.LogInformation("Course {CourseId} created successfully with title '{Title}'",
                 course.Id, course.Title);
 
-            return new ServiceResponse<int>(true, "Course created successfully", course.Id);
+            return new ServiceResponse<Guid>(true, "Course created successfully", course.Id);
         }
         catch (DbUpdateException ex)
         {
             logger.LogError(ex, "Database error occurred while creating course with title '{Title}'", request.Title);
-            return new ServiceResponse<int>(false, "A database error occurred while creating the course.");
+            return new ServiceResponse<Guid>(false, "A database error occurred while creating the course.");
         }
         catch (IOException ex)
         {
             logger.LogError(ex, "File storage error occurred while creating course with title '{Title}'",
                 request.Title);
-            return new ServiceResponse<int>(false, "A file storage error occurred while creating the course.");
+            return new ServiceResponse<Guid>(false, "A file storage error occurred while creating the course.");
         }
         catch (UnauthorizedAccessException ex)
         {
             logger.LogError(ex, "Access error occurred while creating course with title '{Title}'", request.Title);
-            return new ServiceResponse<int>(false, "An access error occurred while creating the course.");
+            return new ServiceResponse<Guid>(false, "An access error occurred while creating the course.");
         }
     }
 

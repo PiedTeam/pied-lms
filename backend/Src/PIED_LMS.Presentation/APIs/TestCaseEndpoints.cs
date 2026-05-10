@@ -14,25 +14,24 @@ public class TestCaseEndpoints : ICarterModule
         // POST /api/testcases
         group.MapPost("", CreateTestCase)
             .WithName("CreateTestCase")
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
-            .WithServiceResponseOpenApi<TestCaseResponse>(ServiceResponseStatusProfile
-                .OkOrBadRequestOrForbiddenOrNotFound);
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor"))
+            .WithServiceResponseOpenApi<TestCaseResponse>(ServiceResponseStatusProfile.OkOrBadRequestOrForbiddenOrNotFound);
         // GET /api/testcases/{examId}
         group.MapGet("/{examId:guid}", GetTestCasesByExam)
             .WithName("GetTestCasesByExam")
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor"))
             .WithServiceResponseOpenApi<List<TestCaseResponse>>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound);
 
         // PUT /api/testcases/{testcaseId}
         group.MapPut("/{testcaseId:guid}", UpdateTestCase)
             .WithName("UpdateTestCase")
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor"))
             .WithServiceResponseOpenApi<TestCaseResponse>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound);
 
         // DELETE /api/testcases/{testcaseId}
         group.MapDelete("/{testcaseId:guid}", DeleteTestCase)
             .WithName("DeleteTestCase")
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor"))
             .WithServiceResponseOpenApi<string>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound);
     }
 

@@ -55,21 +55,26 @@ public class AuthenticationEndpoints : ICarterModule
             .Produces<ServiceResponse<string>>()
             .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest);
 
+        group.MapGet("/me", GetMe)
+            .WithName("GetMe")
+            .WithOpenApi()
+            .RequireAuthorization()
+            .WithServiceResponseOpenApi<UserDto>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound);
+
         group.MapGet("/users/{id}", GetUserById)
             .WithName("GetUserById")
             .RequireAuthorization(new AuthorizeAttribute { Roles = RoleConstants.Administrator })
-            .WithServiceResponseOpenApi<UserResponse>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound);
+            .WithServiceResponseOpenApi<UserDto>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound);
 
         group.MapGet("/users", GetAllUsers)
             .WithName("GetAllUsers")
             .RequireAuthorization(new AuthorizeAttribute { Roles = RoleConstants.Administrator })
-            .WithServiceResponseOpenApi<PaginatedResponse<UserResponse>>(ServiceResponseStatusProfile.OkOrBadRequest);
+            .WithServiceResponseOpenApi<PaginatedResponse<UserDto>>(ServiceResponseStatusProfile.OkOrBadRequest);
 
         group.MapGet("/students", GetAllStudents)
             .WithName("GetAllStudents")
-            .RequireAuthorization(new AuthorizeAttribute
-                { Roles = $"{RoleConstants.Administrator},{RoleConstants.Mentor},{RoleConstants.Teacher}" })
-            .WithServiceResponseOpenApi<PaginatedResponse<UserResponse>>(ServiceResponseStatusProfile.OkOrBadRequest);
+            .RequireAuthorization(new AuthorizeAttribute { Roles = $"{RoleConstants.Administrator},{RoleConstants.Mentor}" })
+            .WithServiceResponseOpenApi<PaginatedResponse<UserDto>>(ServiceResponseStatusProfile.OkOrBadRequest);
     }
 
     private static CookieOptions CreateRefreshTokenCookieOptions(
@@ -189,7 +194,7 @@ public class AuthenticationEndpoints : ICarterModule
 
         var command = new LogoutCommand(userId, refreshToken ?? string.Empty, string.IsNullOrEmpty(refreshToken));
         var result = await mediator.Send(command, cancellationToken);
-        return result.Success ? Results.Ok(result) : Results.BadRequest(result);
+        return result.ToActionResult(context);
     }
 
     private static async Task<IResult> ChangePassword(
@@ -210,7 +215,7 @@ public class AuthenticationEndpoints : ICarterModule
         );
 
         var result = await mediator.Send(command, cancellationToken);
-        return result.Success ? Results.Ok(result) : Results.BadRequest(result);
+        return result.ToActionResult(context);
     }
 
     private static async Task<IResult> ResetPassword(
@@ -225,17 +230,18 @@ public class AuthenticationEndpoints : ICarterModule
         );
 
         var result = await mediator.Send(command, cancellationToken);
-        return result.Success ? Results.Ok(result) : Results.BadRequest(result);
+        return result.ToActionResult(context);
     }
 
     private static async Task<IResult> AssignRole(
         AssignRoleRequest request,
         IMediator mediator,
+        HttpContext context,
         CancellationToken cancellationToken)
     {
         var command = new AssignRoleCommand(request.UserId, request.RoleName);
         var result = await mediator.Send(command, cancellationToken);
-        return result.Success ? Results.Ok(result) : Results.BadRequest(result);
+        return result.ToActionResult(context);
     }
 
     private static async Task<IResult> UpdateProfile(
@@ -253,41 +259,58 @@ public class AuthenticationEndpoints : ICarterModule
             request.FirstName,
             request.LastName,
             request.Bio,
-            request.ProfilePicture
+            request.Avatar
         );
 
         var result = await mediator.Send(command, cancellationToken);
-        return result.Success ? Results.Ok(result) : Results.BadRequest(result);
+        return result.ToActionResult(context);
+    }
+
+    private static async Task<IResult> GetMe(
+        HttpContext context,
+        IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        var userIdClaim = context.User.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+            return Results.Unauthorized();
+
+        var query = new GetMeQuery(userId);
+        var result = await mediator.Send(query, cancellationToken);
+        return result.ToActionResult(context);
     }
 
     private static async Task<IResult> GetUserById(
         Guid id,
         IMediator mediator,
+        HttpContext context,
         CancellationToken cancellationToken)
     {
         var query = new GetUserByIdQuery(id);
         var result = await mediator.Send(query, cancellationToken);
-        return result.Success ? Results.Ok(result) : Results.NotFound(result);
+        return result.ToActionResult(context);
     }
 
     private static async Task<IResult> GetAllUsers(
         [AsParameters] GetAllUsersRequest request,
         IMediator mediator,
+        HttpContext context,
         CancellationToken cancellationToken)
     {
         var query = new GetAllUsersQuery(request.PageNumber, request.PageSize);
         var result = await mediator.Send(query, cancellationToken);
-        return result.Success ? Results.Ok(result) : Results.BadRequest(result);
+        return result.ToActionResult(context);
     }
 
     private static async Task<IResult> GetAllStudents(
         [AsParameters] GetAllStudentsRequest request,
         IMediator mediator,
+        HttpContext context,
         CancellationToken cancellationToken)
     {
         var query = new GetAllStudentsQuery(request.PageNumber, request.PageSize);
         var result = await mediator.Send(query, cancellationToken);
-        return result.Success ? Results.Ok(result) : Results.BadRequest(result);
+        return result.ToActionResult(context);
     }
 }
 

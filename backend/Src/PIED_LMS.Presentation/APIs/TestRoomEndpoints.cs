@@ -12,12 +12,12 @@ public class TestRoomEndpoints : ICarterModule
             .WithName("TestRooms")
             .WithOpenApi()
             .WithTags("Test Rooms")
-            .RequireAuthorization(new AuthorizeAttribute { Roles = RoleConstants.Teacher });
+            .RequireAuthorization(new AuthorizeAttribute { Roles = RoleConstants.Mentor });
 
         group.MapPost("/", CreateTestRoom)
             .WithName("CreateTestRoom")
             .WithSummary("Create a new test room")
-            .WithDescription("Creates a new test room. Only teachers can create test rooms.")
+            .WithDescription("Creates a new test room. Only mentors can create test rooms.")
             .WithServiceResponseOpenApi<Guid>(ServiceResponseStatusProfile.OkOrBadRequest);
     }
 

@@ -21,7 +21,7 @@ public class GetCoursesHandler(
             // Build query with filters
             IQueryable<Domain.Entities.Course> query = unitOfWork.Repository<Domain.Entities.Course>()
                 .FindAll()
-                .Include(c => c.Teachers);
+                .Include(c => c.Mentors);
 
             // Filter by Status if provided
             if (request.Status.HasValue) query = query.Where(c => c.Status == request.Status.Value);
@@ -109,14 +109,14 @@ public class GetCoursesHandler(
             }
 
         // Map teachers to CourseTeacherDto
-        var teacherDtos = course.Teachers.Select(t => new CourseTeacherDto(
-            t.Id,
-            t.FirstName ?? string.Empty,
-            t.LastName ?? string.Empty,
-            t.Email ?? string.Empty,
-            t.Bio,
-            t.ProfilePictureUrl
-        )).ToList();
+        var mentorDtos = course.Mentors.Select(t => new CourseMentorDto(
+                t.Id,
+                t.FirstName ?? string.Empty,
+                t.LastName ?? string.Empty,
+                t.Email ?? string.Empty,
+                t.Bio,
+                t.ProfilePictureUrl
+            )).ToList();
 
         return new CourseDto(
             course.Id,
@@ -128,7 +128,7 @@ public class GetCoursesHandler(
             course.Status,
             course.Slug,
             tags,
-            teacherDtos,
+            mentorDtos,
             course.Duration,
             course.Seats,
             course.Price,

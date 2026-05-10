@@ -13,102 +13,97 @@ public class CourseEndpoints : ICarterModule
     {
         var group = app.MapGroup("/api/courses")
             .WithName("Courses")
-            .WithOpenApi()
-            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator));
+            .WithOpenApi();
 
         // POST /api/courses
         group.MapPost("", CreateCourse)
             .WithName("CreateCourse")
             .WithOpenApi()
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator))
             .DisableAntiforgery()
             .Produces<ServiceResponse<int>>(StatusCodes.Status201Created)
             .Produces<ServiceResponse<int>>(StatusCodes.Status400BadRequest)
             .Accepts<IFormFile>("multipart/form-data");
 
         // PUT /api/courses/{id}
-        group.MapPut("/{id:int}", UpdateCourse)
+        group.MapPut("/{id:guid}", UpdateCourse)
             .WithName("UpdateCourse")
             .WithOpenApi()
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator))
             .DisableAntiforgery()
             .Produces<ServiceResponse<string>>()
             .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest)
             .Accepts<IFormFile>("multipart/form-data");
 
         // DELETE /api/courses/{id}
-        group.MapDelete("/{id:int}", DeleteCourse)
+        group.MapDelete("/{id:guid}", DeleteCourse)
             .WithName("DeleteCourse")
             .WithOpenApi()
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator))
             .Produces(StatusCodes.Status204NoContent)
             .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest);
 
-        // POST /api/courses/{id}/teachers
-        group.MapPost("/{id:int}/teachers", AssignTeachers)
-            .WithName("AssignTeachers")
+        // POST /api/courses/{id}/mentors
+        group.MapPost("/{id:guid}/mentors", AssignMentors)
+            .WithName("AssignMentors")
             .WithOpenApi()
-            .Produces<ServiceResponse<string>>()
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator))
+            .Produces<ServiceResponse<string>>(StatusCodes.Status200OK)
             .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest);
 
         // GET /api/courses
         group.MapGet("", GetCourses)
             .WithName("GetCourses")
             .WithOpenApi()
-            .Produces<ServiceResponse<PagedResult<CourseDto>>>();
+            .RequireAuthorization()
+            .Produces<ServiceResponse<PagedResult<CourseDto>>>(StatusCodes.Status200OK);
 
         // GET /api/courses/{id}
-        group.MapGet("/{id:int}", GetCourseById)
+        group.MapGet("/{id:guid}", GetCourseById)
             .WithName("GetCourseById")
             .WithOpenApi()
-            .Produces<ServiceResponse<CourseDto>>()
+            .RequireAuthorization()
+            .Produces<ServiceResponse<CourseDto>>(StatusCodes.Status200OK)
             .Produces<ServiceResponse<CourseDto>>(StatusCodes.Status404NotFound);
+
         // GET /api/courses/{id}/curriculum
-        group.MapGet("/{id:int}/curriculum", GetCourseCurriculum)
+        group.MapGet("/{id:guid}/curriculum", GetCourseCurriculum)
             .WithName("GetCourseCurriculum")
             .WithOpenApi()
-            .Produces<ServiceResponse<List<CurriculumSectionDto>>>()
+            .Produces<ServiceResponse<List<CurriculumSectionDto>>>(StatusCodes.Status200OK)
             .Produces<ServiceResponse<List<CurriculumSectionDto>>>(StatusCodes.Status404NotFound);
 
         // GET /api/courses/{id}/insight
-        group.MapGet("/{id:int}/insight", GetCourseInsight)
+        group.MapGet("/{id:guid}/insight", GetCourseInsight)
             .WithName("GetCourseInsight")
             .WithOpenApi()
-            .Produces<ServiceResponse<CourseInsightDto>>()
+            .Produces<ServiceResponse<CourseInsightDto>>(StatusCodes.Status200OK)
             .Produces<ServiceResponse<CourseInsightDto>>(StatusCodes.Status404NotFound);
     }
 
     // POST /api/courses
     private static async Task<IResult> CreateCourse(
-        [FromForm] string title,
-        [FromForm] string? description,
-        [FromForm] IFormFile? thumbnailFile,
-        [FromForm] DateTime startDate,
-        [FromForm] DateTime endDate,
-        [FromForm] CourseStatus status,
-        [FromForm] string? tags,
-        [FromForm] string? slug,
-        [FromForm] int duration,
-        [FromForm] string? seats,
-        [FromForm] string? price,
-        [FromForm] int value,
+        [AsParameters] CreateCourseRequest request,
         IMediator mediator,
         HttpContext context)
     {
-        var tagsList = string.IsNullOrWhiteSpace(tags)
+        var tagsList = string.IsNullOrWhiteSpace(request.Tags)
             ? null
-            : tags.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+            : request.Tags.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
 
         var command = new CreateCourseCommand(
-            title,
-            description,
-            thumbnailFile,
-            startDate,
-            endDate,
-            status,
+            request.Title,
+            request.Description,
+            request.ThumbnailFile,
+            request.StartDate,
+            request.EndDate,
+            request.Status,
             tagsList,
-            slug,
-            duration,
-            seats,
-            price,
-            value
+            request.Slug,
+            request.Duration,
+            request.Seats,
+            request.Price,
+            request.Value
         );
 
         var result = await mediator.Send(command);
@@ -120,40 +115,29 @@ public class CourseEndpoints : ICarterModule
 
     // PUT /api/courses/{id}
     private static async Task<IResult> UpdateCourse(
-        int id,
-        [FromForm] string title,
-        [FromForm] string? description,
-        [FromForm] IFormFile? thumbnailFile,
-        [FromForm] DateTime startDate,
-        [FromForm] DateTime endDate,
-        [FromForm] CourseStatus status,
-        [FromForm] string? tags,
-        [FromForm] string? slug,
-        [FromForm] int duration,
-        [FromForm] string? seats,
-        [FromForm] string? price,
-        [FromForm] int value,
+        Guid id,
+        [AsParameters] UpdateCourseRequest request,
         IMediator mediator,
         HttpContext context)
     {
-        var tagsList = string.IsNullOrWhiteSpace(tags)
+        var tagsList = string.IsNullOrWhiteSpace(request.Tags)
             ? null
-            : tags.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+            : request.Tags.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
 
         var command = new UpdateCourseCommand(
             id,
-            title,
-            description,
-            thumbnailFile,
-            startDate,
-            endDate,
-            status,
+            request.Title,
+            request.Description,
+            request.ThumbnailFile,
+            request.StartDate,
+            request.EndDate,
+            request.Status,
             tagsList,
-            slug,
-            duration,
-            seats,
-            price,
-            value
+            request.Slug,
+            request.Duration,
+            request.Seats,
+            request.Price,
+            request.Value
         );
 
         var result = await mediator.Send(command);
@@ -162,7 +146,7 @@ public class CourseEndpoints : ICarterModule
 
     // DELETE /api/courses/{id}
     private static async Task<IResult> DeleteCourse(
-        int id,
+        Guid id,
         IMediator mediator,
         HttpContext context)
     {
@@ -174,25 +158,25 @@ public class CourseEndpoints : ICarterModule
         return result.ToActionResult(context);
     }
 
-    // POST /api/courses/{id}/teachers
-    private static async Task<IResult> AssignTeachers(
-        int id,
-        AssignTeachersRequest request,
+    // POST /api/courses/{id}/mentors
+    private static async Task<IResult> AssignMentors(
+        Guid id,
+        AssignMentorsRequest request,
         IMediator mediator,
         HttpContext context)
     {
-        // Guard validation for empty TeacherIds list
-        if (request.TeacherIds is null || request.TeacherIds.Count == 0)
+        // Guard validation for empty MentorIds list
+        if (request.MentorIds == null || request.MentorIds.Count == 0)
         {
             var errorResponse = new ServiceResponse<string>(
                 false,
-                "At least one teacher ID must be provided in TeacherIds. To unassign all teachers, use the unassign endpoint instead."
+                "At least one mentor ID must be provided in MentorIds. To unassign all mentors, use the unassign endpoint instead."
             );
             return Results.BadRequest(errorResponse);
         }
 
-        // Additional validation for duplicate teacher IDs
-        var duplicateIds = request.TeacherIds
+        // Additional validation for duplicate mentor IDs
+        var duplicateIds = request.MentorIds
             .GroupBy(id => id)
             .Where(g => g.Count() > 1)
             .Select(g => g.Key)
@@ -202,12 +186,12 @@ public class CourseEndpoints : ICarterModule
         {
             var errorResponse = new ServiceResponse<string>(
                 false,
-                $"Duplicate teacher IDs found in TeacherIds: {string.Join(", ", duplicateIds)}"
+                $"Duplicate mentor IDs found in MentorIds: {string.Join(", ", duplicateIds)}"
             );
             return Results.BadRequest(errorResponse);
         }
 
-        var command = new AssignTeachersCommand(id, request.TeacherIds);
+        var command = new AssignMentorsCommand(id, request.MentorIds);
         var result = await mediator.Send(command);
         return result.ToActionResult(context);
     }
@@ -232,7 +216,7 @@ public class CourseEndpoints : ICarterModule
 
     // GET /api/courses/{id}
     private static async Task<IResult> GetCourseById(
-        int id,
+        Guid id,
         IMediator mediator,
         HttpContext context)
     {
@@ -243,7 +227,7 @@ public class CourseEndpoints : ICarterModule
 
     // GET /api/courses/{id}/curriculum
     private static async Task<IResult> GetCourseCurriculum(
-        int id,
+        Guid id,
         IMediator mediator,
         HttpContext context)
     {
@@ -254,7 +238,7 @@ public class CourseEndpoints : ICarterModule
 
     // GET /api/courses/{id}/insight
     private static async Task<IResult> GetCourseInsight(
-        int id,
+        Guid id,
         IMediator mediator,
         HttpContext context)
     {
@@ -265,13 +249,6 @@ public class CourseEndpoints : ICarterModule
 }
 
 // Request DTOs
-public sealed record AssignTeachersRequest(
-    [Required(ErrorMessage = "Teacher IDs are required")]
-    [MinLength(1,
-        ErrorMessage =
-            "At least one teacher ID must be provided. To unassign all teachers, use the unassign endpoint instead.")]
-    List<Guid> TeacherIds
-);
 
 public sealed record GetCoursesRequest
 {

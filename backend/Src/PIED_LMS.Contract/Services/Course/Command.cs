@@ -19,11 +19,17 @@ public record CreateCourseCommand(
     string? Seats,
     string? Price,
     int Value
-) : IRequest<ServiceResponse<int>>;
+) : IRequest<ServiceResponse<Guid>>;
+    string? Slug,
+    int Duration,
+    string? Seats,
+    string? Price,
+    int Value
+) : IRequest<ServiceResponse<Guid>>;
 
 // Update Course Command
 public record UpdateCourseCommand(
-    int Id,
+    Guid Id,
     string Title,
     string? Description,
     IFormFile? ThumbnailFile,
@@ -36,11 +42,16 @@ public record UpdateCourseCommand(
     string? Seats,
     string? Price,
     int Value
+    string? Slug,
+    int Duration,
+    string? Seats,
+    string? Price,
+    int Value
 ) : IRequest<ServiceResponse<string>>;
 
 // Delete Course Command
 public record DeleteCourseCommand(
-    int Id
+    Guid Id
 ) : IRequest<ServiceResponse<string>>;
 
 // Assign Teachers Command

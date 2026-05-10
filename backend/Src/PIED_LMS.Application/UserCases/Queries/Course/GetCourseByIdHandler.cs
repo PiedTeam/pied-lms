@@ -18,10 +18,10 @@ public class GetCourseByIdHandler(
     {
         try
         {
-            // Retrieve course with Teachers navigation property
+            // Retrieve course with Mentors navigation property
             var course = await unitOfWork.Repository<Domain.Entities.Course>()
                 .FindAll()
-                .Include(c => c.Teachers)
+                .Include(c => c.Mentors)
                 .FirstOrDefaultAsync(c => c.Id == request.Id, cancellationToken);
 
             // Return error if course not found
@@ -97,8 +97,8 @@ public class GetCourseByIdHandler(
                     .ToList();
             }
 
-        // Map teachers to CourseTeacherDto
-        var teacherDtos = course.Teachers.Select(t => new CourseTeacherDto(
+        // Map mentors to CourseMentorDto
+        var mentorDtos = course.Mentors.Select(t => new CourseMentorDto(
             t.Id,
             t.FirstName ?? string.Empty,
             t.LastName ?? string.Empty,
@@ -117,11 +117,13 @@ public class GetCourseByIdHandler(
             course.Status,
             course.Slug,
             tags,
-            teacherDtos,
+            mentorDtos,
             course.Duration,
             course.Seats,
             course.Price,
             course.CreatedAt,
+            course.UpdatedAt,
+            course.Value
             course.UpdatedAt,
             course.Value
         );

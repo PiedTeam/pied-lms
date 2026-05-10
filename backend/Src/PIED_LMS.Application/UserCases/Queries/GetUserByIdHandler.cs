@@ -10,7 +10,7 @@ public class GetUserByIdQueryHandler(
     ILogger<GetUserByIdQueryHandler> logger)
     : IRequestHandler<GetUserByIdQuery, ServiceResponse<UserResponse>>
 {
-    public async Task<ServiceResponse<UserResponse>> Handle(GetUserByIdQuery request,
+    public async Task<ServiceResponse<UserDto>> Handle(GetUserByIdQuery request,
         CancellationToken cancellationToken)
     {
         try
@@ -20,11 +20,12 @@ public class GetUserByIdQueryHandler(
                 return new ServiceResponse<UserResponse>(false, "User not found");
 
             var roles = await userManager.GetRolesAsync(user);
+            
             string? profilePicUrl = null;
             if (!string.IsNullOrWhiteSpace(user.ProfilePictureUrl))
                 profilePicUrl = await fileStorageService.GetFileUrlAsync(user.ProfilePictureUrl);
 
-            var userResponse = new UserResponse(
+            var userResponse = new UserDto(
                 user.Id,
                 user.Email ?? string.Empty,
                 user.FirstName,
@@ -36,12 +37,22 @@ public class GetUserByIdQueryHandler(
                 profilePicUrl
             );
 
-            return new ServiceResponse<UserResponse>(true, "User retrieved successfully", userResponse);
+            return new ServiceResponse<UserDto>(true, "User retrieved successfully", userResponse);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            logger.LogError(ex, "Unauthorized access while retrieving user {UserId}", request.UserId);
+            return new ServiceResponse<UserDto>(false, "Unauthorized access to user data");
+        }
+        catch (IOException ex)
+        {
+            logger.LogError(ex, "I/O error while retrieving user {UserId}", request.UserId);
+            return new ServiceResponse<UserDto>(false, "Communication error while retrieving user data");
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to retrieve user {UserId}", request.UserId);
-            return new ServiceResponse<UserResponse>(false, "Failed to retrieve user");
+            logger.LogError(ex, "Unexpected error while retrieving user {UserId}", request.UserId);
+            return new ServiceResponse<UserDto>(false, "An unexpected error occurred");
         }
     }
 }

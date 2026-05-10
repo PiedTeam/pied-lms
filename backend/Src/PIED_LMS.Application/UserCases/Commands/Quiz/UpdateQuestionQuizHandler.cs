@@ -54,7 +54,7 @@ public class UpdateQuestionQuizHandler(
 
         foreach (var qDto in request.ListQuestion)
         {
-            var newQ = new Question
+            var newQ = new Domain.Entities.Question
             {
                 Content = qDto.Content,
                 Score = qDto.Score,
