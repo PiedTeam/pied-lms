@@ -1,4 +1,8 @@
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using PIED_LMS.Domain.Constants;
 using PIED_LMS.Domain.Entities;
 
@@ -20,6 +24,7 @@ public static class DbInitializer
 
         // 1. Seed Roles
         foreach (var roleName in roles)
+        {
             if (!await roleManager.RoleExistsAsync(roleName))
             {
                 var description = roleName switch
@@ -50,8 +55,7 @@ public static class DbInitializer
                     logger.LogInformation("Successfully created role: {RoleName}", roleName);
                 }
             }
-                }
-            }
+        }
 
         var adminPassword = configuration["Seed:AdminPassword"];
         var mentorPassword = configuration["Seed:MentorPassword"];
@@ -97,7 +101,6 @@ public static class DbInitializer
                         logger.LogInformation("Admin user collision detected (race condition), re-fetching...");
                         adminUser = await userManager.FindByEmailAsync(adminEmail);
                         if (adminUser is null)
-                        if (adminUser is null)
                         {
                             var errors = string.Join(", ", createResult.Errors.Select(e => e.Description));
                             throw new InvalidOperationException($"Admin user duplicate error but could not re-fetch user: {errors}");
@@ -108,8 +111,6 @@ public static class DbInitializer
                         var errors = string.Join(", ", createResult.Errors.Select(e => e.Description));
                         logger.LogError("Failed to create admin user {UserName} with role {Role}. Errors: {Errors}",
                             adminUser.UserName, RoleConstants.Administrator, errors);
-                        throw new InvalidOperationException(
-                            $"Failed to create admin user '{adminUser.UserName}': {errors}");
                         throw new InvalidOperationException(
                             $"Failed to create admin user '{adminUser.UserName}': {errors}");
                     }
@@ -126,21 +127,18 @@ public static class DbInitializer
                     {
                         var errors = string.Join(", ", roleResult.Errors.Select(e => e.Description));
                         logger.LogError("Failed to assign role {Role} to user {UserName}. Errors: {Errors}",
-                        logger.LogError("Failed to assign role {Role} to user {UserName}. Errors: {Errors}",
                             RoleConstants.Administrator, adminUser.UserName, errors);
                         throw new InvalidOperationException(
                             $"Failed to assign role '{RoleConstants.Administrator}' to user '{adminUser.UserName}': {errors}");
-                        throw new InvalidOperationException(
-                            $"Failed to assign role '{RoleConstants.Administrator}' to user '{adminUser.UserName}': {errors}");
                     }
-
-
-                    logger.LogInformation("Admin user already in role: {UserName} / {Role}",
-                        adminUser.UserName, RoleConstants.Administrator);
+                    else
+                    {
+                        logger.LogInformation("Admin user already in role: {UserName} / {Role}",
+                            adminUser.UserName, RoleConstants.Administrator);
+                    }
                 }
             }
 
-            logger.LogInformation("Successfully created/ensured admin user: {UserName} with role: {Role}",
             logger.LogInformation("Successfully created/ensured admin user: {UserName} with role: {Role}",
                 adminUser.UserName, RoleConstants.Administrator);
         }
@@ -150,7 +148,6 @@ public static class DbInitializer
         {
             var mentorEmail = "mentor@pied.com";
             var mentorUser = await userManager.FindByEmailAsync(mentorEmail);
-            if (mentorUser is null)
             if (mentorUser is null)
             {
                 mentorUser = new ApplicationUser
@@ -170,7 +167,6 @@ public static class DbInitializer
                     {
                         logger.LogInformation("Mentor user collision detected (race condition), re-fetching...");
                         mentorUser = await userManager.FindByEmailAsync(mentorEmail);
-                        if (mentorUser is null)
                         if (mentorUser is null)
                         {
                             var errors = string.Join(", ", createResult.Errors.Select(e => e.Description));
@@ -200,18 +196,17 @@ public static class DbInitializer
                             RoleConstants.Mentor, mentorUser.UserName, errors);
                         throw new InvalidOperationException(
                             $"Failed to assign role '{RoleConstants.Mentor}' to user '{mentorUser.UserName}': {errors}");
-                        throw new InvalidOperationException(
-                            $"Failed to assign role '{RoleConstants.Mentor}' to user '{mentorUser.UserName}': {errors}");
                     }
-
-                    logger.LogInformation("Mentor user already in role: {UserName} / {Role}",
-                        mentorUser.UserName, RoleConstants.Mentor);
+                    else
+                    {
+                        logger.LogInformation("Mentor user already in role: {UserName} / {Role}",
+                            mentorUser.UserName, RoleConstants.Mentor);
+                    }
                 }
             }
 
             logger.LogInformation("Successfully created/ensured mentor user: {UserName} with role: {Role}", 
                 mentorUser.UserName, RoleConstants.Mentor);
         }
-
     }
 }

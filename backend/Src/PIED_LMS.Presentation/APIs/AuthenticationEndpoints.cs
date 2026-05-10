@@ -41,8 +41,6 @@ public class AuthenticationEndpoints : ICarterModule
         group.MapPost("/reset-password", ResetPassword)
             .WithName("ResetPassword")
             .WithServiceResponseOpenApi<string>(ServiceResponseStatusProfile.OkOrBadRequest);
-            .WithName("ResetPassword")
-            .WithServiceResponseOpenApi<string>(ServiceResponseStatusProfile.OkOrBadRequest);
 
         group.MapPost("/assign-role", AssignRole)
             .WithName("AssignRole")

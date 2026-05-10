@@ -14,7 +14,6 @@ public class CourseEndpoints : ICarterModule
         var group = app.MapGroup("/api/courses")
             .WithName("Courses")
             .WithOpenApi();
-            .WithOpenApi();
 
         // POST /api/courses
         group.MapPost("", CreateCourse)

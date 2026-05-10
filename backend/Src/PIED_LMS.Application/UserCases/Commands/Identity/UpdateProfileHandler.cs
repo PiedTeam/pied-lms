@@ -63,6 +63,7 @@ public class UpdateProfileHandler(
                 return new ServiceResponse<string>(false, "Failed to update profile");
             }
 
+            return new ServiceResponse<string>(true, "Profile updated successfully");
         }
         catch (Exception ex)
         {
