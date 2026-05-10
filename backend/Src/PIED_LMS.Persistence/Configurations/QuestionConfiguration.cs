@@ -1,5 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using PIED_LMS.Domain.Entities;
 
 namespace PIED_LMS.Persistence.Configurations;
@@ -21,7 +19,7 @@ public class QuestionConfiguration : IEntityTypeConfiguration<Question>
         builder.Property(x => x.Score)
             .IsRequired()
             .HasDefaultValue(0);
-        
+
         builder.Property(x => x.IsHidden)
             .IsRequired()
             .HasDefaultValue(false);
@@ -39,7 +37,7 @@ public class QuestionConfiguration : IEntityTypeConfiguration<Question>
             .WithOne(a => a.Question)
             .HasForeignKey(a => a.QuestionId)
             .OnDelete(DeleteBehavior.Cascade);
-            
+
         // Configure relationship with Quizlet
         builder.HasOne(x => x.Quizlet)
             .WithMany(q => q.Questions)

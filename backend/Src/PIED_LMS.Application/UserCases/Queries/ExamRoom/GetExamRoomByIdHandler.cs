@@ -1,8 +1,6 @@
-using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Contract.Services.ExamRoom;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Abstractions;
-
 
 namespace PIED_LMS.Application.UserCases.Queries.ExamRoom;
 
@@ -21,22 +19,20 @@ public class GetExamRoomByIdHandler(
             var examRoom = await unitOfWork.Repository<Domain.Entities.ExamRoom>()
                 .FindAll(er => er.Id == request.Id)
                 .Include(er => er.ExamRoomExams)
-                    .ThenInclude(ere => ere.Exam)
+                .ThenInclude(ere => ere.Exam)
                 .FirstOrDefaultAsync(cancellationToken);
 
-            if (examRoom == null)
-            {
+            if (examRoom is null)
                 return new ServiceResponse<ExamRoomDetailResponse>(
                     false,
                     "Exam room not found",
                     ErrorCode: "NOT_FOUND"
                 );
-            }
 
             // Calculate status based on current time
             var now = DateTime.UtcNow;
             var status = now < examRoom.StartTime ? "Upcoming" :
-                        now > examRoom.EndTime ? "Completed" : "Ongoing";
+                now > examRoom.EndTime ? "Completed" : "Ongoing";
 
             // Map exams to response
             var exams = examRoom.ExamRoomExams

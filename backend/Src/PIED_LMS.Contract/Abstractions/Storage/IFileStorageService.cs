@@ -5,7 +5,7 @@ namespace PIED_LMS.Contract.Abstractions.Storage;
 public interface IFileStorageService
 {
     /// <summary>
-    /// Uploads a file to S3 and returns the object key
+    ///     Uploads a file to S3 and returns the object key
     /// </summary>
     /// <param name="file">The file to upload</param>
     /// <param name="folder">The folder path in S3 bucket</param>
@@ -21,7 +21,7 @@ public interface IFileStorageService
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Deletes a file from S3 by object key
+    ///     Deletes a file from S3 by object key
     /// </summary>
     /// <param name="fileKey">The S3 object key to delete</param>
     /// <param name="cancellationToken">Cancellation token</param>
@@ -31,7 +31,7 @@ public interface IFileStorageService
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets the full URL for an S3 object
+    ///     Gets the full URL for an S3 object
     /// </summary>
     /// <param name="fileKey">The S3 object key</param>
     /// <returns>The full URL to access the file</returns>

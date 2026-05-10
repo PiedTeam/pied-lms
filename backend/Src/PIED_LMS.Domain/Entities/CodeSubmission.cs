@@ -1,5 +1,3 @@
-using System;
-
 namespace PIED_LMS.Domain.Entities;
 
 public class CodeSubmission

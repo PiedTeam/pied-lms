@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Authorization;
 using PIED_LMS.Contract.Services.ExamParticipation;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Constants;
@@ -18,7 +17,8 @@ public class ExamParticipationEndpoints : ICarterModule
         group.MapPost("/start", StartExam)
             .WithName("StartExam")
             .RequireAuthorization(new AuthorizeAttribute { Roles = "Student" })
-            .WithServiceResponseOpenApi<ExamParticipationResponse>(ServiceResponseStatusProfile.OkOrBadRequestOrForbidden);
+            .WithServiceResponseOpenApi<ExamParticipationResponse>(ServiceResponseStatusProfile
+                .OkOrBadRequestOrForbidden);
 
         // POST /api/participations/submit
         group.MapPost("/submit", SubmitExam)
@@ -30,13 +30,16 @@ public class ExamParticipationEndpoints : ICarterModule
         group.MapGet("", GetStudentParticipations)
             .WithName("GetStudentParticipations")
             .RequireAuthorization(new AuthorizeAttribute { Roles = "Student" })
-            .WithServiceResponseOpenApi<PaginatedResponse<ExamParticipationResponse>>(ServiceResponseStatusProfile.OkOrBadRequest);
+            .WithServiceResponseOpenApi<PaginatedResponse<ExamParticipationResponse>>(ServiceResponseStatusProfile
+                .OkOrBadRequest);
 
         // GET /api/participations/room/{examRoomId} (for admin/mentor/teacher)
         group.MapGet("/room/{examRoomId}", GetExamRoomEnrollments)
             .WithName("GetExamRoomEnrollments")
-            .RequireAuthorization(new AuthorizeAttribute { Roles = $"{RoleConstants.Administrator},{RoleConstants.Mentor},{RoleConstants.Teacher}" })
-            .WithServiceResponseOpenApi<PaginatedResponse<ExamRoomEnrollmentResponse>>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound);
+            .RequireAuthorization(new AuthorizeAttribute
+                { Roles = $"{RoleConstants.Administrator},{RoleConstants.Mentor},{RoleConstants.Teacher}" })
+            .WithServiceResponseOpenApi<PaginatedResponse<ExamRoomEnrollmentResponse>>(ServiceResponseStatusProfile
+                .OkOrBadRequestOrNotFound);
     }
 
     // POST /api/participations/start

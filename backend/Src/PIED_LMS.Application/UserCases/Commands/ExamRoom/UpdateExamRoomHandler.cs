@@ -1,9 +1,7 @@
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Contract.Services.ExamRoom;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Abstractions;
-
 
 namespace PIED_LMS.Application.UserCases.Commands.ExamRoom;
 
@@ -21,28 +19,24 @@ public class UpdateExamRoomHandler(
         {
             // Get current user ID from HttpContext claims
             var userIdClaim = httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
-            {
+            if (userIdClaim is null || !Guid.TryParse(userIdClaim.Value, out var userId))
                 return new ServiceResponse<ExamRoomResponse>(
                     false,
                     "User not authenticated",
                     ErrorCode: "UNAUTHORIZED"
                 );
-            }
 
             // Find exam room by ID
             var examRoom = await unitOfWork.Repository<Domain.Entities.ExamRoom>()
                 .FindAll(er => er.Id == request.Id && !er.IsDeleted, er => er.ExamRoomExams)
                 .FirstOrDefaultAsync(cancellationToken);
 
-            if (examRoom == null)
-            {
+            if (examRoom is null)
                 return new ServiceResponse<ExamRoomResponse>(
                     false,
                     "Exam room not found",
                     ErrorCode: "NOT_FOUND"
                 );
-            }
 
             // Check if exam room has started
             var now = DateTime.UtcNow;
@@ -50,45 +44,37 @@ public class UpdateExamRoomHandler(
 
             // Validate time range
             if (request.StartTime >= request.EndTime)
-            {
                 return new ServiceResponse<ExamRoomResponse>(
                     false,
                     "Start time must be before end time",
                     ErrorCode: "INVALID_TIME_RANGE"
                 );
-            }
 
             // Validate duration
             var timeSpan = request.EndTime - request.StartTime;
             if (request.DurationInMinutes > timeSpan.TotalMinutes)
-            {
                 return new ServiceResponse<ExamRoomResponse>(
                     false,
                     "Duration cannot exceed the time difference between start and end time",
                     ErrorCode: "INVALID_DURATION"
                 );
-            }
 
             // Prevent updating start time and duration if exam room has started
             if (hasStarted)
             {
                 if (request.StartTime != examRoom.StartTime)
-                {
                     return new ServiceResponse<ExamRoomResponse>(
                         false,
                         "Cannot update start time after exam room has started",
                         ErrorCode: "EXAM_STARTED"
                     );
-                }
 
                 if (request.DurationInMinutes != examRoom.DurationInMinutes)
-                {
                     return new ServiceResponse<ExamRoomResponse>(
                         false,
                         "Cannot update duration after exam room has started",
                         ErrorCode: "EXAM_STARTED"
                     );
-                }
             }
 
             // Update fields
@@ -110,7 +96,7 @@ public class UpdateExamRoomHandler(
 
             // Calculate status
             var status = now < examRoom.StartTime ? "Upcoming" :
-                        now > examRoom.EndTime ? "Completed" : "Ongoing";
+                now > examRoom.EndTime ? "Completed" : "Ongoing";
 
             var response = new ExamRoomResponse(
                 examRoom.Id,

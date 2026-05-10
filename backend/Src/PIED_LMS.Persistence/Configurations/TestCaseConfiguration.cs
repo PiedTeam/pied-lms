@@ -1,5 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using PIED_LMS.Domain.Entities;
 
 namespace PIED_LMS.Persistence.Configurations;

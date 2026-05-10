@@ -1,9 +1,8 @@
-using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 using PIED_LMS.Contract.Abstractions.Storage;
 using PIED_LMS.Contract.Services.Course;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Abstractions;
-using PIED_LMS.Domain.Entities;
 
 namespace PIED_LMS.Application.UserCases.Queries.Course;
 
@@ -26,7 +25,7 @@ public class GetCourseByIdHandler(
                 .FirstOrDefaultAsync(c => c.Id == request.Id, cancellationToken);
 
             // Return error if course not found
-            if (course == null)
+            if (course is null)
             {
                 logger.LogWarning("Course with Id {CourseId} not found", request.Id);
                 return new ServiceResponse<CourseDto>(
@@ -46,10 +45,6 @@ public class GetCourseByIdHandler(
                 courseDto
             );
         }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
         catch (DbUpdateException ex)
         {
             logger.LogError(ex, "Database error retrieving course with Id {CourseId}", request.Id);
@@ -68,7 +63,7 @@ public class GetCourseByIdHandler(
                 "An error occurred while retrieving the course"
             );
         }
-        catch (System.IO.IOException ex)
+        catch (IOException ex)
         {
             logger.LogError(ex, "File storage error retrieving course with Id {CourseId}", request.Id);
 
@@ -84,27 +79,23 @@ public class GetCourseByIdHandler(
         // Get full S3 URL for thumbnail
         string? thumbnailUrl = null;
         if (!string.IsNullOrWhiteSpace(course.ThumbnailPath))
-        {
             thumbnailUrl = await fileStorageService.GetFileUrlAsync(course.ThumbnailPath);
-        }
 
         // Parse tags from JSON or comma-separated string
         List<string>? tags = null;
         if (!string.IsNullOrWhiteSpace(course.Tags))
-        {
             try
             {
                 // Try parsing as JSON array first
-                tags = System.Text.Json.JsonSerializer.Deserialize<List<string>>(course.Tags);
+                tags = JsonSerializer.Deserialize<List<string>>(course.Tags);
             }
-            catch (System.Text.Json.JsonException)
+            catch (JsonException)
             {
                 // Fallback to comma-separated
                 tags = course.Tags.Split(',', StringSplitOptions.RemoveEmptyEntries)
                     .Select(t => t.Trim())
                     .ToList();
             }
-        }
 
         // Map teachers to CourseTeacherDto
         var teacherDtos = course.Teachers.Select(t => new CourseTeacherDto(

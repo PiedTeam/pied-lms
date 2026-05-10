@@ -8,17 +8,17 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="FluentValidation" />
-        <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
-        <PackageReference Include="System.IdentityModel.Tokens.Jwt" />
-        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore" />
-        <PackageReference Include="MediatR" />
+        <PackageReference Include="FluentValidation"/>
+        <PackageReference Include="FluentValidation.DependencyInjectionExtensions"/>
+        <PackageReference Include="System.IdentityModel.Tokens.Jwt"/>
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore"/>
+        <PackageReference Include="MediatR"/>
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\PIED_LMS.Contract\PIED_LMS.Contract.csproj" />
-        <ProjectReference Include="..\PIED_LMS.Domain\PIED_LMS.Domain.csproj" />
+        <ProjectReference Include="..\PIED_LMS.Contract\PIED_LMS.Contract.csproj"/>
+        <ProjectReference Include="..\PIED_LMS.Domain\PIED_LMS.Domain.csproj"/>
     </ItemGroup>
 
 </Project>

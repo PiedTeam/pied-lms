@@ -3,12 +3,9 @@ using PIED_LMS.Application.Abstractions;
 using PIED_LMS.Application.Options;
 using PIED_LMS.Contract.Services.Compiler;
 using PIED_LMS.Contract.Services.Identity;
-using PIED_LMS.Contract.Services.TestCase;
 using PIED_LMS.Domain.Abstractions;
 using PIED_LMS.Domain.Entities;
 using ValidationResult = FluentValidation.Results.ValidationResult;
-using DomainTestCase = PIED_LMS.Domain.Compiler.TestCase;
-using System.Security.Claims;
 
 namespace PIED_LMS.Application.UserCases.Commands.Submission;
 
@@ -24,20 +21,21 @@ public sealed class SubmitCodeCommandHandler(
 {
     private readonly CompilerOption _options = options.Value;
 
-    public async Task<ServiceResponse<JudgeResult>> Handle(SubmitCodeCommand request, CancellationToken cancellationToken)
+    public async Task<ServiceResponse<JudgeResult>> Handle(SubmitCodeCommand request,
+        CancellationToken cancellationToken)
     {
         var validation = await validator.ValidateAsync(request, cancellationToken);
         if (!validation.IsValid)
             return CreateInvalidRequestResponse(validation);
 
         var userIdClaim = httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var studentId))
+        if (userIdClaim is null || !Guid.TryParse(userIdClaim.Value, out var studentId))
             return new ServiceResponse<JudgeResult>(false, "Unauthorized", null, null, false, "UNAUTHORIZED");
 
         // Validate exam exists
-        var exam = await unitOfWork.Repository<PIED_LMS.Domain.Entities.Exam>().GetByIdAsync(request.ExamId, cancellationToken);
-            
-        if (exam == null)
+        var exam = await unitOfWork.Repository<Domain.Entities.Exam>().GetByIdAsync(request.ExamId, cancellationToken);
+
+        if (exam is null)
             return new ServiceResponse<JudgeResult>(false, "Exam not found.", null, null, true, "EXAM_NOT_FOUND");
 
         // Load test cases from file system
@@ -46,7 +44,8 @@ public sealed class SubmitCodeCommandHandler(
             cancellationToken);
 
         if (testCases.Count == 0)
-            return new ServiceResponse<JudgeResult>(false, "No test cases found for this exam.", null, null, false, "NO_TEST_CASES");
+            return new ServiceResponse<JudgeResult>(false, "No test cases found for this exam.", null, null, false,
+                "NO_TEST_CASES");
 
         var timeLimit = _options.DefaultTimeLimitMs;
         var memoryLimit = _options.DefaultMemoryLimitMb;
@@ -67,7 +66,9 @@ public sealed class SubmitCodeCommandHandler(
             StudentId = studentId,
             Language = request.Language,
             Code = request.Code,
-            Status = serviceResult.Success ? (serviceResult.Data?.Passed == serviceResult.Data?.Total ? "Accepted" : "Wrong Answer/Error") : "System Error",
+            Status = serviceResult.Success
+                ? serviceResult.Data?.Passed == serviceResult.Data?.Total ? "Accepted" : "Wrong Answer/Error"
+                : "System Error",
             Runtime = serviceResult.Data?.Results?.Max(r => r.ExecutionTime),
             Memory = null,
             PassedTestCases = 0,
@@ -75,14 +76,14 @@ public sealed class SubmitCodeCommandHandler(
             CreatedAt = DateTime.UtcNow
         };
 
-        if (serviceResult.Success && serviceResult.Data != null)
+        if (serviceResult.Success && serviceResult.Data is not null)
         {
-             submission.Status = serviceResult.Data.Passed == serviceResult.Data.Total ? "Accepted" : "Failed";
-             submission.PassedTestCases = serviceResult.Data.Passed;
-             submission.TotalTestCases = serviceResult.Data.Total;
+            submission.Status = serviceResult.Data.Passed == serviceResult.Data.Total ? "Accepted" : "Failed";
+            submission.PassedTestCases = serviceResult.Data.Passed;
+            submission.TotalTestCases = serviceResult.Data.Total;
         }
 
-        await unitOfWork.Repository<PIED_LMS.Domain.Entities.CodeSubmission>().AddAsync(submission, cancellationToken);
+        await unitOfWork.Repository<CodeSubmission>().AddAsync(submission, cancellationToken);
         await unitOfWork.CommitAsync(cancellationToken);
 
         if (!serviceResult.Success)
@@ -93,8 +94,8 @@ public sealed class SubmitCodeCommandHandler(
                 serviceResult.ErrorMessage ?? "Server is busy.",
                 null,
                 null,
-                IsNotFound: false,
-                ErrorCode: serviceResult.ErrorCode);
+                false,
+                serviceResult.ErrorCode);
         }
 
         return new ServiceResponse<JudgeResult>(
@@ -114,9 +115,9 @@ public sealed class SubmitCodeCommandHandler(
         return new ServiceResponse<JudgeResult>(
             false,
             "Invalid request",
-            Data: null,
-            Errors: errors,
-            IsNotFound: false,
-            ErrorCode: CompilerErrorCode.InvalidRequest);
+            null,
+            errors,
+            false,
+            CompilerErrorCode.InvalidRequest);
     }
 }

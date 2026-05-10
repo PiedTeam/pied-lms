@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Contract.Services.ExamParticipation;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Abstractions;
@@ -20,14 +19,12 @@ public class GetStudentParticipationsHandler(
         {
             // Get current user ID from HttpContext claims
             var userIdClaim = httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var studentId))
-            {
+            if (userIdClaim is null || !Guid.TryParse(userIdClaim.Value, out var studentId))
                 return new ServiceResponse<PaginatedResponse<ExamParticipationResponse>>(
                     false,
                     "User not authenticated",
                     ErrorCode: "UNAUTHORIZED"
                 );
-            }
 
             // Query participations for student with eager loading of exam room and exam
             // We use Repository<ExamParticipation> to start

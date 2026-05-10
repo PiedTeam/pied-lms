@@ -27,7 +27,5 @@ public class PiedLmsDbContext(DbContextOptions<PiedLmsDbContext> options) : Iden
 
         // Apply all configurations from the assembly
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(PiedLmsDbContext).Assembly);
-
-        
     }
 }

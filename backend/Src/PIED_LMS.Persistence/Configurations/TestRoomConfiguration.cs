@@ -1,5 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using PIED_LMS.Domain.Entities;
 
 namespace PIED_LMS.Persistence.Configurations;
@@ -31,7 +29,7 @@ public class TestRoomConfiguration : IEntityTypeConfiguration<TestRoom>
 
         builder.Property(x => x.CreatedAt)
             .IsRequired()
-            .HasDefaultValueSql("now()") 
+            .HasDefaultValueSql("now()")
             .HasColumnType("timestamp with time zone");
         builder.Property(x => x.UpdatedAt)
             .IsRequired(false)
@@ -39,7 +37,8 @@ public class TestRoomConfiguration : IEntityTypeConfiguration<TestRoom>
 
         builder.HasIndex(x => x.JoinCode).IsUnique();
 
-        builder.ToTable(t => t.HasCheckConstraint("CK_TestRoom_EndTime_After_StartTime", "\"end_time\" > \"start_time\""));
+        builder.ToTable(t =>
+            t.HasCheckConstraint("CK_TestRoom_EndTime_After_StartTime", "\"end_time\" > \"start_time\""));
 
         builder.HasOne(t => t.Creator)
             .WithMany()

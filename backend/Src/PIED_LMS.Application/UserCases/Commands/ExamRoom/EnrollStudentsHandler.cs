@@ -1,11 +1,9 @@
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Contract.Abstractions.Email;
 using PIED_LMS.Contract.Services.ExamRoom;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Abstractions;
 using PIED_LMS.Domain.Entities;
-
 
 namespace PIED_LMS.Application.UserCases.Commands.ExamRoom;
 
@@ -24,28 +22,24 @@ public class EnrollStudentsHandler(
         {
             // Get current user ID and roles from HttpContext claims
             var userIdClaim = httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
-            {
+            if (userIdClaim is null || !Guid.TryParse(userIdClaim.Value, out var userId))
                 return new ServiceResponse<EnrollmentResultResponse>(
                     false,
                     "User not authenticated",
                     ErrorCode: "UNAUTHORIZED"
                 );
-            }
 
             // Find exam room by ID
             var examRoom = await unitOfWork.Repository<Domain.Entities.ExamRoom>()
                 .FindAll(er => er.Id == request.ExamRoomId && !er.IsDeleted)
                 .FirstOrDefaultAsync(cancellationToken);
 
-            if (examRoom == null)
-            {
+            if (examRoom is null)
                 return new ServiceResponse<EnrollmentResultResponse>(
                     false,
                     "Exam room not found",
                     ErrorCode: "NOT_FOUND"
                 );
-            }
 
             // Get existing enrollments for this room
             var existingEnrollments = await unitOfWork.Repository<ExamRoomEnrollment>()
@@ -70,7 +64,7 @@ public class EnrollStudentsHandler(
                     .FindAll(u => u.Id == studentId)
                     .FirstOrDefaultAsync(cancellationToken);
 
-                if (student == null)
+                if (student is null)
                 {
                     errors.Add(new EnrollmentError(studentId, "Student not found"));
                     continue;
@@ -109,7 +103,7 @@ public class EnrollStudentsHandler(
                             enrollment.EmailSent = true;
                             enrollment.EmailSentAt = DateTime.UtcNow;
                             await unitOfWork.CommitAsync(cancellationToken);
-                            
+
                             logger.LogInformation(
                                 "Email sent successfully to student {StudentId} for exam room {ExamRoomId}",
                                 studentId,

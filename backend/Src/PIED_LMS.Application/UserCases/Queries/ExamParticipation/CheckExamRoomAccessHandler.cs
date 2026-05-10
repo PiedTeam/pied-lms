@@ -1,9 +1,8 @@
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Contract.Services.ExamParticipation;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Abstractions;
-
+using PIED_LMS.Domain.Entities;
 
 namespace PIED_LMS.Application.UserCases.Queries.ExamParticipation;
 
@@ -21,14 +20,12 @@ public class CheckExamRoomAccessHandler(
         {
             // Get current user ID from HttpContext claims
             var userIdClaim = httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
-            {
+            if (userIdClaim is null || !Guid.TryParse(userIdClaim.Value, out var userId))
                 return new ServiceResponse<ExamRoomAccessResponse>(
                     false,
                     "User not authenticated",
                     ErrorCode: "UNAUTHORIZED"
                 );
-            }
 
             // Get user role from HttpContext
             var user = httpContextAccessor.HttpContext?.User;
@@ -42,14 +39,12 @@ public class CheckExamRoomAccessHandler(
                 .FindAll(er => er.Id == request.ExamRoomId && !er.IsDeleted)
                 .FirstOrDefaultAsync(cancellationToken);
 
-            if (examRoom == null)
-            {
+            if (examRoom is null)
                 return new ServiceResponse<ExamRoomAccessResponse>(
                     false,
                     "Exam room not found",
                     ErrorCode: "NOT_FOUND"
                 );
-            }
 
             var now = DateTime.UtcNow;
 
@@ -78,7 +73,7 @@ public class CheckExamRoomAccessHandler(
 
             // If Student: check enrollment and time window
             // Check if student is enrolled in the exam room
-            var isEnrolled = await unitOfWork.Repository<Domain.Entities.ExamRoomEnrollment>()
+            var isEnrolled = await unitOfWork.Repository<ExamRoomEnrollment>()
                 .AnyAsync(
                     e => e.ExamRoomId == request.ExamRoomId && e.StudentId == userId,
                     cancellationToken);
@@ -154,9 +149,9 @@ public class CheckExamRoomAccessHandler(
             // Check if student has already completed exam
             var hasCompletedExam = await unitOfWork.Repository<Domain.Entities.ExamParticipation>()
                 .AnyAsync(
-                    ep => ep.ExamRoomId == request.ExamRoomId 
-                        && ep.StudentId == userId 
-                        && ep.IsCompleted,
+                    ep => ep.ExamRoomId == request.ExamRoomId
+                          && ep.StudentId == userId
+                          && ep.IsCompleted,
                     cancellationToken);
 
             if (hasCompletedExam)

@@ -1,14 +1,8 @@
-using System.Security.Claims;
-using MediatR;
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using PIED_LMS.Application.Abstractions;
 using PIED_LMS.Contract.Abstractions.Email;
-using PIED_LMS.Contract.Abstractions.Shared;
-using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Contract.Constants;
 using PIED_LMS.Contract.Services.Enrollment;
+using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Abstractions;
 using PIED_LMS.Domain.Entities;
 
@@ -21,21 +15,24 @@ public class RejectEnrollmentHandler(
     ILogger<RejectEnrollmentHandler> logger)
     : IRequestHandler<Command.RejectEnrollmentCommand, ServiceResponse<string>>
 {
-    public async Task<ServiceResponse<string>> Handle(Command.RejectEnrollmentCommand request, CancellationToken cancellationToken)
+    public async Task<ServiceResponse<string>> Handle(Command.RejectEnrollmentCommand request,
+        CancellationToken cancellationToken)
     {
         var adminIdClaim = httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier);
-        if (adminIdClaim == null || !Guid.TryParse(adminIdClaim.Value, out var adminId))
+        if (adminIdClaim is null || !Guid.TryParse(adminIdClaim.Value, out var adminId))
             return new ServiceResponse<string>(false, "Unauthorized", null, null, false, "UNAUTHORIZED");
 
-        var enrollment = await unitOfWork.Repository<PIED_LMS.Domain.Entities.Enrollment>()
+        var enrollment = await unitOfWork.Repository<Domain.Entities.Enrollment>()
             .FindAll(e => e.Id == request.EnrollmentId, e => e.Course, e => e.User)
             .FirstOrDefaultAsync(cancellationToken);
 
-        if (enrollment == null)
-            return new ServiceResponse<string>(false, "Enrollment not found.", null, null, true, "ENROLLMENT_NOT_FOUND");
+        if (enrollment is null)
+            return new ServiceResponse<string>(false, "Enrollment not found.", null, null, true,
+                "ENROLLMENT_NOT_FOUND");
 
         if (enrollment.Status != EnrollmentStatus.Pending)
-            return new ServiceResponse<string>(false, $"Cannot reject enrollment with status: {enrollment.Status}", null, null, false, "INVALID_STATUS");
+            return new ServiceResponse<string>(false, $"Cannot reject enrollment with status: {enrollment.Status}",
+                null, null, false, "INVALID_STATUS");
 
         enrollment.Status = EnrollmentStatus.Rejected;
 
@@ -54,14 +51,16 @@ public class RejectEnrollmentHandler(
         await unitOfWork.CommitAsync(cancellationToken);
 
         // Send rejection email
-        try 
+        try
         {
             await emailService.SendEmailAsync(
                 enrollment.User.Email!,
                 "Từ chối đăng ký khóa học",
                 $"Xin chào {enrollment.User.FirstName},\n\nYêu cầu đăng ký khóa học '{enrollment.Course.Title}' của bạn đã bị từ chối.\nLý do: {request.Reason}\n\nTrân trọng,",
                 cancellationToken);
-        } catch(Exception ex) {
+        }
+        catch (Exception ex)
+        {
             logger.LogError(ex, "Failed to send rejection email");
         }
 

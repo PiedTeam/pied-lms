@@ -1,6 +1,3 @@
-using Microsoft.AspNetCore.Authorization;
-using Carter;
-using MediatR;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Constants;
 using PIED_LMS.Presentation.Extensions;
@@ -23,6 +20,7 @@ public class TestRoomEndpoints : ICarterModule
             .WithDescription("Creates a new test room. Only teachers can create test rooms.")
             .WithServiceResponseOpenApi<Guid>(ServiceResponseStatusProfile.OkOrBadRequest);
     }
+
     private static async Task<IResult> CreateTestRoom(
         CreateRoomCommand request,
         IMediator mediator,

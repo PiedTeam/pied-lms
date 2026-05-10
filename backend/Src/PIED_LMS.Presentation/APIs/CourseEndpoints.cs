@@ -1,9 +1,7 @@
 using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+using PIED_LMS.Contract.Constants;
 using PIED_LMS.Contract.Services.Course;
 using PIED_LMS.Contract.Services.Identity;
-using PIED_LMS.Contract.Constants;
 using PIED_LMS.Domain.Constants;
 using PIED_LMS.Presentation.Extensions;
 
@@ -32,7 +30,7 @@ public class CourseEndpoints : ICarterModule
             .WithName("UpdateCourse")
             .WithOpenApi()
             .DisableAntiforgery()
-            .Produces<ServiceResponse<string>>(StatusCodes.Status200OK)
+            .Produces<ServiceResponse<string>>()
             .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest)
             .Accepts<IFormFile>("multipart/form-data");
 
@@ -47,33 +45,33 @@ public class CourseEndpoints : ICarterModule
         group.MapPost("/{id:int}/teachers", AssignTeachers)
             .WithName("AssignTeachers")
             .WithOpenApi()
-            .Produces<ServiceResponse<string>>(StatusCodes.Status200OK)
+            .Produces<ServiceResponse<string>>()
             .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest);
 
         // GET /api/courses
         group.MapGet("", GetCourses)
             .WithName("GetCourses")
             .WithOpenApi()
-            .Produces<ServiceResponse<PagedResult<CourseDto>>>(StatusCodes.Status200OK);
+            .Produces<ServiceResponse<PagedResult<CourseDto>>>();
 
         // GET /api/courses/{id}
         group.MapGet("/{id:int}", GetCourseById)
             .WithName("GetCourseById")
             .WithOpenApi()
-            .Produces<ServiceResponse<CourseDto>>(StatusCodes.Status200OK)
+            .Produces<ServiceResponse<CourseDto>>()
             .Produces<ServiceResponse<CourseDto>>(StatusCodes.Status404NotFound);
         // GET /api/courses/{id}/curriculum
         group.MapGet("/{id:int}/curriculum", GetCourseCurriculum)
             .WithName("GetCourseCurriculum")
             .WithOpenApi()
-            .Produces<ServiceResponse<List<CurriculumSectionDto>>>(StatusCodes.Status200OK)
+            .Produces<ServiceResponse<List<CurriculumSectionDto>>>()
             .Produces<ServiceResponse<List<CurriculumSectionDto>>>(StatusCodes.Status404NotFound);
 
         // GET /api/courses/{id}/insight
         group.MapGet("/{id:int}/insight", GetCourseInsight)
             .WithName("GetCourseInsight")
             .WithOpenApi()
-            .Produces<ServiceResponse<CourseInsightDto>>(StatusCodes.Status200OK)
+            .Produces<ServiceResponse<CourseInsightDto>>()
             .Produces<ServiceResponse<CourseInsightDto>>(StatusCodes.Status404NotFound);
     }
 
@@ -115,10 +113,7 @@ public class CourseEndpoints : ICarterModule
 
         var result = await mediator.Send(command);
 
-        if (result.Success)
-        {
-            return Results.Created($"/api/courses/{result.Data}", result);
-        }
+        if (result.Success) return Results.Created($"/api/courses/{result.Data}", result);
 
         return result.ToActionResult(context);
     }
@@ -174,10 +169,7 @@ public class CourseEndpoints : ICarterModule
         var command = new DeleteCourseCommand(id);
         var result = await mediator.Send(command);
 
-        if (result.Success)
-        {
-            return Results.NoContent();
-        }
+        if (result.Success) return Results.NoContent();
 
         return result.ToActionResult(context);
     }
@@ -190,7 +182,7 @@ public class CourseEndpoints : ICarterModule
         HttpContext context)
     {
         // Guard validation for empty TeacherIds list
-        if (request.TeacherIds == null || request.TeacherIds.Count == 0)
+        if (request.TeacherIds is null || request.TeacherIds.Count == 0)
         {
             var errorResponse = new ServiceResponse<string>(
                 false,
@@ -206,7 +198,7 @@ public class CourseEndpoints : ICarterModule
             .Select(g => g.Key)
             .ToList();
 
-        if (duplicateIds.Any())
+        if (duplicateIds.Count != 0)
         {
             var errorResponse = new ServiceResponse<string>(
                 false,
@@ -275,31 +267,33 @@ public class CourseEndpoints : ICarterModule
 // Request DTOs
 public sealed record AssignTeachersRequest(
     [Required(ErrorMessage = "Teacher IDs are required")]
-    [MinLength(1, ErrorMessage = "At least one teacher ID must be provided. To unassign all teachers, use the unassign endpoint instead.")]
+    [MinLength(1,
+        ErrorMessage =
+            "At least one teacher ID must be provided. To unassign all teachers, use the unassign endpoint instead.")]
     List<Guid> TeacherIds
 );
 
 public sealed record GetCoursesRequest
 {
-    private int _pageNumber = 1;
-    private int _pageSize = 10;
+    private readonly int _pageNumber = 1;
+    private readonly int _pageSize = 10;
 
     [Range(1, int.MaxValue, ErrorMessage = "Page number must be greater than 0")]
-    public int PageNumber 
-    { 
+    public int PageNumber
+    {
         get => _pageNumber;
-        init => _pageNumber = value < 1 
+        init => _pageNumber = value < 1
             ? throw new ArgumentOutOfRangeException(nameof(PageNumber), value, "Page number must be greater than 0")
             : value;
     }
 
     [Range(1, 100, ErrorMessage = "Page size must be between 1 and 100")]
-    public int PageSize 
-    { 
+    public int PageSize
+    {
         get => _pageSize;
-        init => _pageSize = value < 1 
+        init => _pageSize = value < 1
             ? throw new ArgumentOutOfRangeException(nameof(PageSize), value, "Page size must be greater than 0")
-            : value > 100 
+            : value > 100
                 ? throw new ArgumentOutOfRangeException(nameof(PageSize), value, "Page size cannot exceed 100")
                 : value;
     }
@@ -307,4 +301,4 @@ public sealed record GetCoursesRequest
     public CourseStatus? Status { get; init; }
     public string? SearchTerm { get; init; }
     public string? Tag { get; init; }
-};
+}

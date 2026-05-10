@@ -1,6 +1,4 @@
-using MediatR;
 using PIED_LMS.Contract.Services.Identity;
-using PIED_LMS.Contract.Abstractions.Shared;
 
 namespace PIED_LMS.Contract.Services.QuestionQuiz;
 

@@ -5,7 +5,7 @@ namespace PIED_LMS.Application.Abstractions;
 public interface IBackgroundJobService
 {
     /// <summary>
-    /// Enqueue a background job for student import
+    ///     Enqueue a background job for student import
     /// </summary>
     /// <param name="jobId">Unique job identifier</param>
     /// <param name="students">List of students to import</param>
@@ -14,7 +14,7 @@ public interface IBackgroundJobService
     Task<string> EnqueueStudentImportAsync(string jobId, IReadOnlyList<StudentImportDto> students, Guid adminUserId);
 
     /// <summary>
-    /// Get the status of a background job
+    ///     Get the status of a background job
     /// </summary>
     /// <param name="jobId">Job identifier</param>
     /// <returns>Job status information</returns>

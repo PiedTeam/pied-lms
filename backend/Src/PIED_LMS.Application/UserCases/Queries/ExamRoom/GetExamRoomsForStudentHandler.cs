@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Contract.Services.ExamRoom;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Abstractions;
@@ -20,20 +19,18 @@ public class GetExamRoomsForStudentHandler(
         {
             // Get current student ID from HttpContext claims
             var userIdClaim = httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var studentId))
-            {
+            if (userIdClaim is null || !Guid.TryParse(userIdClaim.Value, out var studentId))
                 return new ServiceResponse<PaginatedResponse<ExamRoomResponse>>(
                     false,
                     "User not authenticated",
                     ErrorCode: "UNAUTHORIZED"
                 );
-            }
 
             // Query exam rooms where student is enrolled via ExamRoomEnrollment
             var query = unitOfWork.Repository<Domain.Entities.ExamRoom>()
                 .FindAll(er => !er.IsDeleted && er.Enrollments.Any(e => e.StudentId == studentId))
                 .Include(er => er.ExamRoomExams)
-                    .ThenInclude(ere => ere.Exam);
+                .ThenInclude(ere => ere.Exam);
 
             // Get total count
             var totalCount = await query.CountAsync(cancellationToken);
@@ -50,9 +47,9 @@ public class GetExamRoomsForStudentHandler(
             var items = examRooms.Select(er =>
             {
                 var status = now < er.StartTime ? "Upcoming" :
-                            now > er.EndTime ? "Completed" : "Ongoing";
+                    now > er.EndTime ? "Completed" : "Ongoing";
 
-                var examCount = er.ExamRoomExams.Count(ere => ere.Exam != null && !ere.Exam.IsDeleted);
+                var examCount = er.ExamRoomExams.Count(ere => ere.Exam is not null && !ere.Exam.IsDeleted);
 
                 return new ExamRoomResponse(
                     er.Id,

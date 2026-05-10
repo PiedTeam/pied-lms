@@ -1,17 +1,14 @@
-using System.Text;
-using Amazon.Runtime;
-using Amazon.S3;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
 using PIED_LMS.Application.Abstractions;
 using PIED_LMS.Application.Options;
 using PIED_LMS.Contract.Abstractions.Email;
+using PIED_LMS.Contract.Abstractions.Excel;
 using PIED_LMS.Contract.Abstractions.Services;
 using PIED_LMS.Contract.Abstractions.Storage;
 using PIED_LMS.Domain.Abstractions;
 using PIED_LMS.Domain.Entities;
 using PIED_LMS.Infrastructure.Authentication;
 using PIED_LMS.Infrastructure.Email;
+using PIED_LMS.Infrastructure.Services;
 using PIED_LMS.Infrastructure.Storage;
 using PIED_LMS.Persistence;
 using PIED_LMS.Persistence.Services;
@@ -101,10 +98,10 @@ public static class PersistenceExtensions
             services.AddSingleton<IAmazonS3>(sp =>
             {
                 var s3Settings = sp.GetRequiredService<IOptions<S3Settings>>().Value;
-                var credentials = new Amazon.Runtime.BasicAWSCredentials(awsAccessKey, awsSecretKey);
+                var credentials = new BasicAWSCredentials(awsAccessKey, awsSecretKey);
                 var config = new AmazonS3Config
                 {
-                    RegionEndpoint = Amazon.RegionEndpoint.GetBySystemName(awsRegion ?? "us-east-2"),
+                    RegionEndpoint = RegionEndpoint.GetBySystemName(awsRegion ?? "us-east-2"),
                     Timeout = TimeSpan.FromMilliseconds(s3Settings.RequestTimeoutMs),
                     MaxErrorRetry = 3,
                     UseHttp = false // Force HTTPS
@@ -126,10 +123,10 @@ public static class PersistenceExtensions
         services.AddMemoryCache();
         services.AddScoped<IRefreshTokenService, RefreshTokenService>();
         services.AddScoped<IEmailService, SmtpEmailService>();
-        services.AddScoped<IRoomCodeService, Services.RoomCodeService>();
-        services.AddScoped<Contract.Abstractions.Excel.IExcelService, Services.ExcelService>();
-        services.AddScoped<IQuestionQuizService, Services.QuestionQuizService>();
-        services.AddScoped<ITestCaseStorageService, Services.TestCaseStorageService>();
+        services.AddScoped<IRoomCodeService, RoomCodeService>();
+        services.AddScoped<IExcelService, ExcelService>();
+        services.AddScoped<IQuestionQuizService, QuestionQuizService>();
+        services.AddScoped<ITestCaseStorageService, TestCaseStorageService>();
         services.AddScoped<IFileStorageService, S3FileStorageService>();
         services.AddScoped<ICourseLockingService, CourseLockingService>();
 
@@ -144,10 +141,10 @@ public static class PersistenceExtensions
             var jwtAudience = configuration[$"{JwtOption.SectionName}:Audience"];
             var jwtSecret = configuration[$"{JwtOption.SectionName}:Secret"];
 
-            if (string.IsNullOrWhiteSpace(jwtIssuer) || string.IsNullOrWhiteSpace(jwtAudience) || string.IsNullOrWhiteSpace(jwtSecret))
-            {
-                throw new InvalidOperationException($"One or more JWT settings are missing. Please configure '{JwtOption.SectionName}:Issuer', '{JwtOption.SectionName}:Audience', and '{JwtOption.SectionName}:Secret'.");
-            }
+            if (string.IsNullOrWhiteSpace(jwtIssuer) || string.IsNullOrWhiteSpace(jwtAudience) ||
+                string.IsNullOrWhiteSpace(jwtSecret))
+                throw new InvalidOperationException(
+                    $"One or more JWT settings are missing. Please configure '{JwtOption.SectionName}:Issuer', '{JwtOption.SectionName}:Audience', and '{JwtOption.SectionName}:Secret'.");
 
             o.TokenValidationParameters = JwtTokenValidationParametersFactory.CreateForAuthentication(
                 jwtIssuer, jwtAudience, jwtSecret);

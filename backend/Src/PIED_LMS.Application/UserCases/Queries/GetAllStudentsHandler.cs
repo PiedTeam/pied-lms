@@ -1,7 +1,6 @@
+using PIED_LMS.Contract.Abstractions.Storage;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Entities;
-
-using PIED_LMS.Contract.Abstractions.Storage;
 
 namespace PIED_LMS.Application.UserCases.Queries;
 
@@ -19,7 +18,7 @@ public class GetAllStudentsQueryHandler(
         {
             // Get all users with Student role
             var studentsInRole = await userManager.GetUsersInRoleAsync("Student");
-            
+
             var totalCount = studentsInRole.Count;
             var students = studentsInRole
                 .Skip((request.PageNumber - 1) * request.PageSize)
@@ -32,9 +31,7 @@ public class GetAllStudentsQueryHandler(
                 var roles = await userManager.GetRolesAsync(student);
                 string? profilePicUrl = null;
                 if (!string.IsNullOrWhiteSpace(student.ProfilePictureUrl))
-                {
                     profilePicUrl = await fileStorageService.GetFileUrlAsync(student.ProfilePictureUrl);
-                }
 
                 studentResponses.Add(new UserResponse(
                     student.Id,

@@ -1,4 +1,4 @@
-using MediatR;
+using Microsoft.AspNetCore.Http;
 using PIED_LMS.Contract.Services.Identity;
 
 namespace PIED_LMS.Contract.Services.Enrollment;
@@ -8,7 +8,7 @@ public static class Command
     // Student requests enrollment
     public record EnrollCourseCommand(
         int CourseId,
-        Microsoft.AspNetCore.Http.IFormFile PaymentProof,
+        IFormFile PaymentProof,
         string? Notes) : IRequest<ServiceResponse<Guid>>;
 
     // Admin approves enrollment

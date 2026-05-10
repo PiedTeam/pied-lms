@@ -1,9 +1,8 @@
-using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 using PIED_LMS.Contract.Abstractions.Storage;
 using PIED_LMS.Contract.Services.Course;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Abstractions;
-using PIED_LMS.Domain.Entities;
 
 namespace PIED_LMS.Application.UserCases.Queries.Course;
 
@@ -25,10 +24,7 @@ public class GetCoursesHandler(
                 .Include(c => c.Teachers);
 
             // Filter by Status if provided
-            if (request.Status.HasValue)
-            {
-                query = query.Where(c => c.Status == request.Status.Value);
-            }
+            if (request.Status.HasValue) query = query.Where(c => c.Status == request.Status.Value);
 
             // Filter by SearchTerm in Title (case-insensitive)
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
@@ -39,9 +35,7 @@ public class GetCoursesHandler(
 
             // Filter by Tag if provided
             if (!string.IsNullOrWhiteSpace(request.Tag))
-            {
                 query = query.Where(c => c.Tags != null && c.Tags.Contains(request.Tag));
-            }
 
             // Get total count before pagination
             var totalCount = await query.CountAsync(cancellationToken);
@@ -56,10 +50,7 @@ public class GetCoursesHandler(
             // Map to DTOs
             var courseDtoTasks = courses.Select(course => MapToCourseDto(course, cancellationToken));
             var courseDtos = new List<CourseDto>();
-            foreach (var courseDtoTask in courseDtoTasks)
-            {
-                courseDtos.Add(await courseDtoTask);
-            }
+            foreach (var courseDtoTask in courseDtoTasks) courseDtos.Add(await courseDtoTask);
 
             var pagedResult = new PagedResult<CourseDto>(
                 courseDtos,
@@ -83,9 +74,10 @@ public class GetCoursesHandler(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error retrieving courses with filters: Status={Status}, SearchTerm={SearchTerm}, Tag={Tag}",
+            logger.LogError(ex,
+                "Error retrieving courses with filters: Status={Status}, SearchTerm={SearchTerm}, Tag={Tag}",
                 request.Status, request.SearchTerm, request.Tag);
-            
+
             return new ServiceResponse<PagedResult<CourseDto>>(
                 false,
                 "An error occurred while retrieving courses"
@@ -98,27 +90,23 @@ public class GetCoursesHandler(
         // Get full S3 URL for thumbnail
         string? thumbnailUrl = null;
         if (!string.IsNullOrWhiteSpace(course.ThumbnailPath))
-        {
             thumbnailUrl = await fileStorageService.GetFileUrlAsync(course.ThumbnailPath);
-        }
 
         // Parse tags from JSON or comma-separated string
         List<string>? tags = null;
         if (!string.IsNullOrWhiteSpace(course.Tags))
-        {
             try
             {
                 // Try parsing as JSON array first
-                tags = System.Text.Json.JsonSerializer.Deserialize<List<string>>(course.Tags);
+                tags = JsonSerializer.Deserialize<List<string>>(course.Tags);
             }
-            catch (System.Text.Json.JsonException)
+            catch (JsonException)
             {
                 // Fallback to comma-separated
                 tags = course.Tags.Split(',', StringSplitOptions.RemoveEmptyEntries)
                     .Select(t => t.Trim())
                     .ToList();
             }
-        }
 
         // Map teachers to CourseTeacherDto
         var teacherDtos = course.Teachers.Select(t => new CourseTeacherDto(

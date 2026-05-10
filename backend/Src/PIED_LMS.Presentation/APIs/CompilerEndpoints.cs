@@ -14,15 +14,18 @@ public sealed class CompilerEndpoints : ICarterModule
 
         group.MapPost("/compile", Compile)
             .WithName("Compile")
-            .WithServiceResponseOpenApi<CompileResult>(ServiceResponseStatusProfile.OkOrBadRequestOrTooManyRequestsOrServiceUnavailable);
+            .WithServiceResponseOpenApi<CompileResult>(ServiceResponseStatusProfile
+                .OkOrBadRequestOrTooManyRequestsOrServiceUnavailable);
 
         group.MapPost("/judge", Judge)
             .WithName("Judge")
-            .WithServiceResponseOpenApi<JudgeResult>(ServiceResponseStatusProfile.OkOrBadRequestOrTooManyRequestsOrServiceUnavailable);
+            .WithServiceResponseOpenApi<JudgeResult>(ServiceResponseStatusProfile
+                .OkOrBadRequestOrTooManyRequestsOrServiceUnavailable);
 
         group.MapPost("/judge-from-file", JudgeFromFile)
             .WithName("JudgeFromFile")
-            .WithServiceResponseOpenApi<JudgeResult>(ServiceResponseStatusProfile.OkOrBadRequestOrTooManyRequestsOrServiceUnavailable);
+            .WithServiceResponseOpenApi<JudgeResult>(ServiceResponseStatusProfile
+                .OkOrBadRequestOrTooManyRequestsOrServiceUnavailable);
     }
 
     private static async Task<IResult> Compile(

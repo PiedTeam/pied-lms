@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Contract.Services.Exam;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Abstractions;
@@ -21,28 +20,24 @@ public class GetExamsByRoomCodeHandler(
         {
             // Get current student ID from HttpContext claims
             var userIdClaim = httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var studentId))
-            {
+            if (userIdClaim is null || !Guid.TryParse(userIdClaim.Value, out var studentId))
                 return new ServiceResponse<List<ExamInRoomResponse>>(
                     false,
                     "User not authenticated",
                     ErrorCode: "UNAUTHORIZED"
                 );
-            }
 
             // Find exam room by room code
             var examRoom = await unitOfWork.Repository<Domain.Entities.ExamRoom>()
                 .FindAll(er => er.RoomCode == request.RoomCode && !er.IsDeleted)
                 .FirstOrDefaultAsync(cancellationToken);
 
-            if (examRoom == null)
-            {
+            if (examRoom is null)
                 return new ServiceResponse<List<ExamInRoomResponse>>(
                     false,
                     "Exam room not found with the provided room code",
                     ErrorCode: "NOT_FOUND"
                 );
-            }
 
             // Verify student is enrolled in exam room
             var isEnrolled = await unitOfWork.Repository<ExamRoomEnrollment>()
@@ -50,33 +45,27 @@ public class GetExamsByRoomCodeHandler(
                 .AnyAsync(cancellationToken);
 
             if (!isEnrolled)
-            {
                 return new ServiceResponse<List<ExamInRoomResponse>>(
                     false,
                     "You are not enrolled in this exam room",
                     ErrorCode: "FORBIDDEN"
                 );
-            }
 
             // Check if exam room is accessible (time window)
             var now = DateTime.UtcNow;
             if (now < examRoom.StartTime)
-            {
                 return new ServiceResponse<List<ExamInRoomResponse>>(
                     false,
                     "Exam room has not started yet",
                     ErrorCode: "ACCESS_DENIED"
                 );
-            }
 
             if (now > examRoom.EndTime)
-            {
                 return new ServiceResponse<List<ExamInRoomResponse>>(
                     false,
                     "Exam room has ended",
                     ErrorCode: "ACCESS_DENIED"
                 );
-            }
 
             // Get all exams in room where IsDeleted = false
             var examIds = await unitOfWork.Repository<ExamRoomExam>()
@@ -90,9 +79,9 @@ public class GetExamsByRoomCodeHandler(
 
             // Get student's participations for these exams
             var participations = await unitOfWork.Repository<Domain.Entities.ExamParticipation>()
-                .FindAll(p => p.StudentId == studentId && 
-                             p.ExamRoomId == examRoom.Id && 
-                             examIds.Contains(p.ExamId))
+                .FindAll(p => p.StudentId == studentId &&
+                              p.ExamRoomId == examRoom.Id &&
+                              examIds.Contains(p.ExamId))
                 .ToListAsync(cancellationToken);
 
             // Build response with completion status

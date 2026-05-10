@@ -23,7 +23,10 @@ public sealed class ContainerPoolManager
         _logger = logger;
         _poolLock = new SemaphoreSlim(_options.ContainerPoolSize, _options.ContainerPoolSize);
         HostWorkRoot = GetHostWorkRoot();
-        _containerNames = [.. Enumerable.Range(1, _options.ContainerPoolSize).Select(index => $"{_options.ContainerNamePrefix}{index}")];
+        _containerNames =
+        [
+            .. Enumerable.Range(1, _options.ContainerPoolSize).Select(index => $"{_options.ContainerNamePrefix}{index}")
+        ];
     }
 
     public string HostWorkRoot { get; }
@@ -104,7 +107,7 @@ public sealed class ContainerPoolManager
         startInfo.ArgumentList.Add("-v");
         startInfo.ArgumentList.Add(
             string.IsNullOrEmpty(_options.ContainerWorkVolume)
-                ? $"{HostWorkRoot}:{_options.ContainerWorkDir}:rw"   // bind mount (local / no compose)
+                ? $"{HostWorkRoot}:{_options.ContainerWorkDir}:rw" // bind mount (local / no compose)
                 : $"{_options.ContainerWorkVolume}:{_options.ContainerWorkDir}:rw"); // named volume (prod)
         startInfo.ArgumentList.Add("-w");
         startInfo.ArgumentList.Add(_options.ContainerWorkDir);

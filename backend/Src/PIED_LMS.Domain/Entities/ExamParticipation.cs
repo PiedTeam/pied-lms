@@ -12,7 +12,7 @@ public class ExamParticipation
     public int? Score { get; set; }
     public bool IsCompleted { get; set; }
     public string? AnswersJson { get; set; } // Store student answers as JSON
-    
+
     // Navigation properties
     public ExamRoom ExamRoom { get; set; } = null!;
     public Exam Exam { get; set; } = null!;

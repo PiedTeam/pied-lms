@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Contract.Services.Exam;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Abstractions;
@@ -21,14 +20,12 @@ public class GetExamByIdHandler(
                 .FindAll(e => e.Id == request.Id)
                 .FirstOrDefaultAsync(cancellationToken);
 
-            if (exam == null)
-            {
+            if (exam is null)
                 return new ServiceResponse<ExamResponse>(
                     false,
                     "Exam not found",
                     ErrorCode: "NOT_FOUND"
                 );
-            }
 
             var response = new ExamResponse(
                 exam.Id,

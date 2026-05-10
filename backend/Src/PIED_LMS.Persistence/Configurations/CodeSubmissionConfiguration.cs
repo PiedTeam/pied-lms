@@ -1,5 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using PIED_LMS.Domain.Entities;
 
 namespace PIED_LMS.Persistence.Configurations;
@@ -25,7 +23,7 @@ public class CodeSubmissionConfiguration : IEntityTypeConfiguration<CodeSubmissi
 
         builder.Property(e => e.Code)
             .IsRequired();
-        
+
         builder.Property(e => e.Status)
             .IsRequired()
             .HasMaxLength(50);

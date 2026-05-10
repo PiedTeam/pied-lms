@@ -20,7 +20,5 @@ public class ApplicationRoleConfiguration : IEntityTypeConfiguration<Application
 
         builder.Property(r => r.CreatedAt)
             .IsRequired();
-
-
     }
 }

@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Contract.Services.Exam;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Abstractions;
@@ -21,10 +20,7 @@ public class GetAllExamsHandler(
                 .FindAll();
 
             // Apply IncludeDeleted filter
-            if (!request.IncludeDeleted)
-            {
-                query = query.Where(e => !e.IsDeleted);
-            }
+            if (!request.IncludeDeleted) query = query.Where(e => !e.IsDeleted);
 
             // Get total count
             var totalCount = await query.CountAsync(cancellationToken);

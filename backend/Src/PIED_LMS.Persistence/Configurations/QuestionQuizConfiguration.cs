@@ -1,5 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using PIED_LMS.Domain.Entities;
 
 namespace PIED_LMS.Persistence.Configurations;
@@ -45,7 +43,7 @@ public class QuestionQuizConfiguration : IEntityTypeConfiguration<QuestionQuiz>
         // Configure relationship with Questions
         builder.HasMany(x => x.Questions)
             .WithOne(q => q.Quizlet)
-            .HasForeignKey(q => q.QuizId) 
+            .HasForeignKey(q => q.QuizId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

@@ -1,5 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using PIED_LMS.Domain.Entities;
 
 namespace PIED_LMS.Persistence.Configurations;
@@ -13,7 +11,7 @@ public class QuestionAnswerConfiguration : IEntityTypeConfiguration<QuestionAnsw
         builder.HasKey(x => x.Id);
 
         builder.Property(x => x.Content).IsRequired();
-        
+
         builder.Property(x => x.IsCorrect).IsRequired();
 
         builder.HasOne(x => x.Question)

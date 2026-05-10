@@ -1,9 +1,8 @@
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Contract.Services.ExamRoom;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Abstractions;
-
+using PIED_LMS.Domain.Entities;
 
 namespace PIED_LMS.Application.UserCases.Commands.ExamRoom;
 
@@ -21,14 +20,12 @@ public class RemoveExamFromRoomHandler(
         {
             // Get current user ID and roles from HttpContext claims
             var userIdClaim = httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
-            {
+            if (userIdClaim is null || !Guid.TryParse(userIdClaim.Value, out var userId))
                 return new ServiceResponse<string>(
                     false,
                     "User not authenticated",
                     ErrorCode: "UNAUTHORIZED"
                 );
-            }
 
             var userRoles = httpContextAccessor.HttpContext?.User.FindAll(ClaimTypes.Role)
                 .Select(c => c.Value)
@@ -42,14 +39,12 @@ public class RemoveExamFromRoomHandler(
                 .Include(er => er.Participations.Where(p => p.ExamId == request.ExamId))
                 .FirstOrDefaultAsync(cancellationToken);
 
-            if (examRoom == null)
-            {
+            if (examRoom is null)
                 return new ServiceResponse<string>(
                     false,
                     "Exam room not found",
                     ErrorCode: "NOT_FOUND"
                 );
-            }
 
             // Check if exam room has started and students have begun taking the exam
             var now = DateTime.UtcNow;
@@ -57,29 +52,25 @@ public class RemoveExamFromRoomHandler(
             var hasActiveParticipations = examRoom.Participations.Any(p => p.ExamId == request.ExamId);
 
             if (hasStarted && hasActiveParticipations)
-            {
                 return new ServiceResponse<string>(
                     false,
                     "Cannot remove exam after students have started taking it",
                     ErrorCode: "EXAM_IN_PROGRESS"
                 );
-            }
 
             // Find and delete ExamRoomExam association
-            var examRoomExam = await unitOfWork.Repository<Domain.Entities.ExamRoomExam>()
+            var examRoomExam = await unitOfWork.Repository<ExamRoomExam>()
                 .FindAll(ere => ere.ExamRoomId == request.ExamRoomId && ere.ExamId == request.ExamId)
                 .FirstOrDefaultAsync(cancellationToken);
 
-            if (examRoomExam == null)
-            {
+            if (examRoomExam is null)
                 return new ServiceResponse<string>(
                     false,
                     "Exam is not assigned to this exam room",
                     ErrorCode: "NOT_FOUND"
                 );
-            }
 
-            unitOfWork.Repository<Domain.Entities.ExamRoomExam>().Remove(examRoomExam);
+            unitOfWork.Repository<ExamRoomExam>().Remove(examRoomExam);
             await unitOfWork.CommitAsync(cancellationToken);
 
             logger.LogInformation(

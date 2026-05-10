@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Contract.Services.ExamRoom;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Abstractions;
+using PIED_LMS.Domain.Entities;
 
 namespace PIED_LMS.Application.UserCases.Commands.ExamRoom;
 
@@ -20,14 +20,12 @@ public class AssignExamToRoomHandler(
         {
             // Get current user ID and roles from HttpContext claims
             var userIdClaim = httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
-            {
+            if (userIdClaim is null || !Guid.TryParse(userIdClaim.Value, out var userId))
                 return new ServiceResponse<string>(
                     false,
                     "User not authenticated",
                     ErrorCode: "UNAUTHORIZED"
                 );
-            }
 
             var userRoles = httpContextAccessor.HttpContext?.User.FindAll(ClaimTypes.Role)
                 .Select(c => c.Value)
@@ -40,52 +38,46 @@ public class AssignExamToRoomHandler(
                 .FindAll(er => er.Id == request.ExamRoomId && !er.IsDeleted)
                 .FirstOrDefaultAsync(cancellationToken);
 
-            if (examRoom == null)
-            {
+            if (examRoom is null)
                 return new ServiceResponse<string>(
                     false,
                     "Exam room not found",
                     ErrorCode: "NOT_FOUND"
                 );
-            }
 
             // Find exam by ID
             var exam = await unitOfWork.Repository<Domain.Entities.Exam>()
                 .FindAll(e => e.Id == request.ExamId && !e.IsDeleted)
                 .FirstOrDefaultAsync(cancellationToken);
 
-            if (exam == null)
-            {
+            if (exam is null)
                 return new ServiceResponse<string>(
                     false,
                     "Exam not found",
                     ErrorCode: "NOT_FOUND"
                 );
-            }
 
             // Check if exam is already assigned to the room
-            var existingAssignment = await unitOfWork.Repository<Domain.Entities.ExamRoomExam>()
+            var existingAssignment = await unitOfWork.Repository<ExamRoomExam>()
                 .FindAll(ere => ere.ExamRoomId == request.ExamRoomId && ere.ExamId == request.ExamId)
                 .FirstOrDefaultAsync(cancellationToken);
 
-            if (existingAssignment != null)
-            {
+            if (existingAssignment is not null)
                 return new ServiceResponse<string>(
                     false,
                     "Exam is already assigned to this exam room",
                     ErrorCode: "DUPLICATE_ASSIGNMENT"
                 );
-            }
 
             // Create ExamRoomExam association
-            var examRoomExam = new Domain.Entities.ExamRoomExam
+            var examRoomExam = new ExamRoomExam
             {
                 ExamRoomId = request.ExamRoomId,
                 ExamId = request.ExamId,
                 AssignedAt = DateTime.UtcNow
             };
 
-            await unitOfWork.Repository<Domain.Entities.ExamRoomExam>().AddAsync(examRoomExam, cancellationToken);
+            await unitOfWork.Repository<ExamRoomExam>().AddAsync(examRoomExam, cancellationToken);
             await unitOfWork.CommitAsync(cancellationToken);
 
             logger.LogInformation(

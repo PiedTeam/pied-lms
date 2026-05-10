@@ -12,11 +12,11 @@ public class HealthApi : ICarterModule
                     report.Status.ToString(),
                     DateTime.UtcNow,
                     report.Entries.Select(e => new HealthStatusDetailResponse(
-                        e.Key,
-                        e.Value.Description,
-                        e.Value.Status.ToString(),
-                        e.Value.Duration))
-                    .ToList());
+                            e.Key,
+                            e.Value.Description,
+                            e.Value.Status.ToString(),
+                            e.Value.Duration))
+                        .ToList());
 
                 return report.Status == HealthStatus.Healthy
                     ? Results.Ok(response)
@@ -26,7 +26,7 @@ public class HealthApi : ICarterModule
             .WithOpenApi()
             .WithTags("Health")
             .AllowAnonymous()
-            .Produces<HealthStatusResponse>(StatusCodes.Status200OK)
+            .Produces<HealthStatusResponse>()
             .Produces<HealthStatusResponse>(StatusCodes.Status503ServiceUnavailable)
             .WithMetadata(new ResponseCacheAttribute
             {
@@ -37,15 +37,13 @@ public class HealthApi : ICarterModule
             .RequireRateLimiting("health-policy");
 
         // Added for testing alerts
-        app.MapGet("/health/error-test", () =>
-        {
-            throw new Exception("This is a test exception to trigger the Grafana loki-bug alert!");
-        })
-        .WithName("GetHealthErrorTest")
-        .WithOpenApi()
-        .WithTags("Health")
-        .AllowAnonymous()
-        .ProducesProblem(StatusCodes.Status500InternalServerError, "application/problem+json");
+        app.MapGet("/health/error-test",
+                () => { throw new Exception("This is a test exception to trigger the Grafana loki-bug alert!"); })
+            .WithName("GetHealthErrorTest")
+            .WithOpenApi()
+            .WithTags("Health")
+            .AllowAnonymous()
+            .ProducesProblem(StatusCodes.Status500InternalServerError, "application/problem+json");
     }
 }
 

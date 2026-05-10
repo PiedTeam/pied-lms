@@ -1,5 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity.Data;
+using PIED_LMS.Application.UserCases.Commands.Auth;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Constants;
 using PIED_LMS.Presentation.Extensions;
@@ -40,8 +39,8 @@ public class AuthenticationEndpoints : ICarterModule
             .Produces(StatusCodes.Status401Unauthorized);
 
         group.MapPost("/reset-password", ResetPassword)
-           .WithName("ResetPassword")
-           .WithServiceResponseOpenApi<string>(ServiceResponseStatusProfile.OkOrBadRequest);
+            .WithName("ResetPassword")
+            .WithServiceResponseOpenApi<string>(ServiceResponseStatusProfile.OkOrBadRequest);
 
         group.MapPost("/assign-role", AssignRole)
             .WithName("AssignRole")
@@ -68,7 +67,8 @@ public class AuthenticationEndpoints : ICarterModule
 
         group.MapGet("/students", GetAllStudents)
             .WithName("GetAllStudents")
-            .RequireAuthorization(new AuthorizeAttribute { Roles = $"{RoleConstants.Administrator},{RoleConstants.Mentor},{RoleConstants.Teacher}" })
+            .RequireAuthorization(new AuthorizeAttribute
+            { Roles = $"{RoleConstants.Administrator},{RoleConstants.Mentor},{RoleConstants.Teacher}" })
             .WithServiceResponseOpenApi<PaginatedResponse<UserResponse>>(ServiceResponseStatusProfile.OkOrBadRequest);
     }
 
@@ -113,10 +113,7 @@ public class AuthenticationEndpoints : ICarterModule
     {
         var result = await mediator.Send(request, cancellationToken);
 
-        if (!result.Success || result.Data == null)
-        {
-            return result.ToActionResult(context);
-        }
+        if (!result.Success || result.Data is null) return result.ToActionResult(context);
 
         // Extract login result (contains response and refresh token)
         var loginResult = result.Data;
@@ -157,7 +154,7 @@ public class AuthenticationEndpoints : ICarterModule
         var command = new RefreshTokenCommand(refreshToken);
         var result = await mediator.Send(command, cancellationToken);
 
-        if (!result.Success || result.Data == null)
+        if (!result.Success || result.Data is null)
         {
             logger.LogWarning("Refresh token request failed: {Message}", result.Message);
             return Results.Json(new UnauthorizedErrorResponse("Invalid refresh token"), statusCode: 401);
@@ -180,7 +177,7 @@ public class AuthenticationEndpoints : ICarterModule
         CancellationToken cancellationToken)
     {
         var userIdClaim = context.User.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+        if (userIdClaim is null || !Guid.TryParse(userIdClaim.Value, out var userId))
             return Results.Unauthorized();
 
         // Get refresh token from cookie and revoke it
@@ -190,7 +187,7 @@ public class AuthenticationEndpoints : ICarterModule
         var cookieOptions = CreateRefreshTokenCookieOptions(configuration, environment);
         context.Response.Cookies.Delete("refreshToken", cookieOptions);
 
-        var command = new LogoutCommand(userId, refreshToken ?? string.Empty, RevokeAll: string.IsNullOrEmpty(refreshToken));
+        var command = new LogoutCommand(userId, refreshToken ?? string.Empty, string.IsNullOrEmpty(refreshToken));
         var result = await mediator.Send(command, cancellationToken);
         return result.Success ? Results.Ok(result) : Results.BadRequest(result);
     }
@@ -202,7 +199,7 @@ public class AuthenticationEndpoints : ICarterModule
         CancellationToken cancellationToken)
     {
         var userIdClaim = context.User.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+        if (userIdClaim is null || !Guid.TryParse(userIdClaim.Value, out var userId))
             return Results.Unauthorized();
 
         var command = new ChangePasswordCommand(
@@ -215,12 +212,13 @@ public class AuthenticationEndpoints : ICarterModule
         var result = await mediator.Send(command, cancellationToken);
         return result.Success ? Results.Ok(result) : Results.BadRequest(result);
     }
+
     private static async Task<IResult> ResetPassword(
-       ResetPasswordRequest request,
-       IMediator mediator,
-       CancellationToken cancellationToken)
+        ResetPasswordRequest request,
+        IMediator mediator,
+        CancellationToken cancellationToken)
     {
-        var command = new PIED_LMS.Application.UserCases.Commands.Auth.ResetPasswordCommand(
+        var command = new ResetPasswordCommand(
             request.Email,
             request.Token,
             request.NewPassword
@@ -242,20 +240,27 @@ public class AuthenticationEndpoints : ICarterModule
 
     private static async Task<IResult> UpdateProfile(
         HttpContext context,
-        [Microsoft.AspNetCore.Mvc.FromForm] UpdateProfileRequest request,
+        [FromForm] UpdateProfileRequest request,
         IMediator mediator,
         CancellationToken cancellationToken)
     {
         var userIdClaim = context.User.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+        if (userIdClaim is null || !Guid.TryParse(userIdClaim.Value, out var userId))
             return Results.Unauthorized();
+
+        var form = await context.Request.ReadFormAsync(cancellationToken);
+
+        var firstName = form["firstName"].FirstOrDefault();
+        var lastName = form["lastName"].FirstOrDefault();
+        var bio = form["bio"].FirstOrDefault();
+        var profilePicture = form.Files.GetFile("profilePicture");
 
         var command = new UpdateProfileCommand(
             userId,
-            request.FirstName,
-            request.LastName,
-            request.Bio,
-            request.ProfilePicture
+            string.IsNullOrEmpty(firstName) ? null : firstName,
+            string.IsNullOrEmpty(lastName) ? null : lastName,
+            string.IsNullOrEmpty(bio) ? null : bio,
+            profilePicture
         );
 
         var result = await mediator.Send(command, cancellationToken);
@@ -303,6 +308,7 @@ public sealed record AssignRoleRequest(
     Guid UserId,
     string RoleName
 );
+
 public sealed record ResetPasswordRequest(
     string Email,
     string Token,

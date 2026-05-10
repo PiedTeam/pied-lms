@@ -1,4 +1,4 @@
-using PIED_LMS.Application.Abstractions;
+using Microsoft.AspNetCore.WebUtilities;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Entities;
 
@@ -18,8 +18,8 @@ public class ResetPasswordCommandHandler(
                 return new ServiceResponse<string>(false, "Invalid user");
 
             // Decode the Base64Url encoded token
-            var tokenBytes = Microsoft.AspNetCore.WebUtilities.WebEncoders.Base64UrlDecode(request.Token);
-            var decodedToken = System.Text.Encoding.UTF8.GetString(tokenBytes);
+            var tokenBytes = WebEncoders.Base64UrlDecode(request.Token);
+            var decodedToken = Encoding.UTF8.GetString(tokenBytes);
 
             var result = await userManager.ResetPasswordAsync(user, decodedToken, request.NewPassword);
 

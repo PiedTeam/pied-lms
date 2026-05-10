@@ -1,9 +1,7 @@
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Contract.Services.ExamRoom;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Abstractions;
-
 
 namespace PIED_LMS.Application.UserCases.Commands.ExamRoom;
 
@@ -21,39 +19,33 @@ public class DeleteExamRoomHandler(
         {
             // Get current user ID from HttpContext claims
             var userIdClaim = httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
-            {
+            if (userIdClaim is null || !Guid.TryParse(userIdClaim.Value, out var userId))
                 return new ServiceResponse<string>(
                     false,
                     "User not authenticated",
                     ErrorCode: "UNAUTHORIZED"
                 );
-            }
 
             // Find exam room by ID
             var examRoom = await unitOfWork.Repository<Domain.Entities.ExamRoom>()
                 .FindAll(er => er.Id == request.Id && !er.IsDeleted, er => er.Participations)
                 .FirstOrDefaultAsync(cancellationToken);
 
-            if (examRoom == null)
-            {
+            if (examRoom is null)
                 return new ServiceResponse<string>(
                     false,
                     "Exam room not found",
                     ErrorCode: "NOT_FOUND"
                 );
-            }
 
             // Check for active participations
             var hasActiveParticipations = examRoom.Participations.Any(p => !p.IsCompleted);
             if (hasActiveParticipations)
-            {
                 return new ServiceResponse<string>(
                     false,
                     "Cannot delete exam room with active student participations",
                     ErrorCode: "ACTIVE_PARTICIPATIONS"
                 );
-            }
 
             // Soft delete exam room
             examRoom.IsDeleted = true;

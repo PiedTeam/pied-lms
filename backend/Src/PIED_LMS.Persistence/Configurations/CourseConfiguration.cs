@@ -60,13 +60,13 @@ public class CourseConfiguration : IEntityTypeConfiguration<Course>
             .UsingEntity<Dictionary<string, object>>(
                 "course_prerequisites",
                 j => j.HasOne<Course>()
-                      .WithMany()
-                      .HasForeignKey("prerequisite_course_id")
-                      .OnDelete(DeleteBehavior.Cascade),
+                    .WithMany()
+                    .HasForeignKey("prerequisite_course_id")
+                    .OnDelete(DeleteBehavior.Cascade),
                 j => j.HasOne<Course>()
-                      .WithMany()
-                      .HasForeignKey("course_id")
-                      .OnDelete(DeleteBehavior.Cascade)
+                    .WithMany()
+                    .HasForeignKey("course_id")
+                    .OnDelete(DeleteBehavior.Cascade)
             );
 
         // Many-to-many relationship with ApplicationUser (Teachers)
@@ -75,13 +75,13 @@ public class CourseConfiguration : IEntityTypeConfiguration<Course>
             .UsingEntity<Dictionary<string, object>>(
                 "course_teachers",
                 j => j.HasOne<ApplicationUser>()
-                      .WithMany()
-                      .HasForeignKey("user_id")
-                      .OnDelete(DeleteBehavior.Cascade),
+                    .WithMany()
+                    .HasForeignKey("user_id")
+                    .OnDelete(DeleteBehavior.Cascade),
                 j => j.HasOne<Course>()
-                      .WithMany()
-                      .HasForeignKey("course_id")
-                      .OnDelete(DeleteBehavior.Cascade)
+                    .WithMany()
+                    .HasForeignKey("course_id")
+                    .OnDelete(DeleteBehavior.Cascade)
             );
     }
 }

@@ -17,6 +17,7 @@ public class MentorEndpoints : ICarterModule
             .WithDescription("Submit an application to become a mentor. Requires admin approval.")
             .WithServiceResponseOpenApi<string>(ServiceResponseStatusProfile.OkOrBadRequest);
     }
+
     private static async Task<IResult> RegisterMentor(
         RegisterMentorCommand request,
         IMediator mediator,

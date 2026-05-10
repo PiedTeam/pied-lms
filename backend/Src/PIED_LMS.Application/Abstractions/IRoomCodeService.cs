@@ -1,14 +1,14 @@
 namespace PIED_LMS.Application.Abstractions;
 
 /// <summary>
-/// Service for generating and validating unique room codes
+///     Service for generating and validating unique room codes
 /// </summary>
 public interface IRoomCodeService
 {
     Task<string> GenerateUniqueRoomCodeAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Checks if a room code already exists in the database
+    ///     Checks if a room code already exists in the database
     /// </summary>
     /// <param name="roomCode">The room code to check</param>
     /// <param name="cancellationToken">Cancellation token</param>

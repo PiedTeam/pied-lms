@@ -1,5 +1,3 @@
-using System.Linq.Expressions;
-
 namespace PIED_LMS.Domain.Abstractions;
 
 public interface IRepository<T> where T : class
@@ -14,7 +12,8 @@ public interface IRepository<T> where T : class
 
     Task<T?> GetByIdAsync(object id, CancellationToken cancellationToken = default);
 
-    IQueryable<T> FindAll(Expression<Func<T, bool>>? predicate = null, params Expression<Func<T, object>>[] includeProperties);
+    IQueryable<T> FindAll(Expression<Func<T, bool>>? predicate = null,
+        params Expression<Func<T, object>>[] includeProperties);
 
     void Remove(T entity);
 }

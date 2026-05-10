@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
 using PIED_LMS.Contract.Services.Identity;
 
 namespace PIED_LMS.Presentation.Extensions;
@@ -22,29 +20,24 @@ public enum ServiceResponseStatusProfile
 
 public static class OpenApiConventionExtensions
 {
-    public static RouteHandlerBuilder WithServiceResponseOpenApi<T>(
-        this RouteHandlerBuilder builder,
-        ServiceResponseStatusProfile profile)
+    extension(RouteHandlerBuilder builder)
     {
-        return builder.WithServiceResponseOpenApi<T>(ResolveStatusCodes(profile));
-    }
+        public RouteHandlerBuilder WithServiceResponseOpenApi<T>(ServiceResponseStatusProfile profile) =>
+            builder.WithServiceResponseOpenApi<T>(ResolveStatusCodes(profile));
 
-    public static RouteHandlerBuilder WithServiceResponseOpenApi<T>(
-        this RouteHandlerBuilder builder,
-        params int[] statusCodes)
-    {
-        ArgumentNullException.ThrowIfNull(builder);
-
-        var normalizedStatusCodes = NormalizeStatusCodes(statusCodes);
-
-        builder.WithOpenApi();
-
-        foreach (var statusCode in normalizedStatusCodes)
+        public RouteHandlerBuilder WithServiceResponseOpenApi<T>(params int[] statusCodes)
         {
-            builder.Produces<ServiceResponse<T>>(statusCode, "application/json");
-        }
+            ArgumentNullException.ThrowIfNull(builder);
 
-        return builder;
+            var normalizedStatusCodes = NormalizeStatusCodes(statusCodes);
+
+            builder.WithOpenApi();
+
+            foreach (var statusCode in normalizedStatusCodes)
+                builder.Produces<ServiceResponse<T>>(statusCode, "application/json");
+
+            return builder;
+        }
     }
 
     private static int[] ResolveStatusCodes(ServiceResponseStatusProfile profile)
@@ -72,31 +65,26 @@ public static class OpenApiConventionExtensions
             ServiceResponseStatusProfile.OkOrForbiddenOrNotFound =>
                 [StatusCodes.Status200OK, StatusCodes.Status403Forbidden, StatusCodes.Status404NotFound],
             ServiceResponseStatusProfile.OkOrBadRequestOrTooManyRequestsOrServiceUnavailable =>
-                [StatusCodes.Status200OK, StatusCodes.Status400BadRequest, StatusCodes.Status429TooManyRequests, StatusCodes.Status503ServiceUnavailable],
+            [
+                StatusCodes.Status200OK, StatusCodes.Status400BadRequest, StatusCodes.Status429TooManyRequests,
+                StatusCodes.Status503ServiceUnavailable
+            ],
             ServiceResponseStatusProfile.OkOrBadRequestOrForbiddenOrNotFound =>
-                [StatusCodes.Status200OK, StatusCodes.Status400BadRequest, StatusCodes.Status403Forbidden, StatusCodes.Status404NotFound],
+            [
+                StatusCodes.Status200OK, StatusCodes.Status400BadRequest, StatusCodes.Status403Forbidden,
+                StatusCodes.Status404NotFound
+            ],
             _ => [StatusCodes.Status200OK]
         };
     }
 
     private static int[] NormalizeStatusCodes(int[]? statusCodes)
     {
-        if (statusCodes is null || statusCodes.Length == 0)
-        {
-            return [StatusCodes.Status200OK];
-        }
+        if (statusCodes is null || statusCodes.Length == 0) return [StatusCodes.Status200OK];
 
         var result = new List<int>(statusCodes.Length);
-        var seen = new HashSet<int>();
+        result.AddRange(statusCodes.Distinct());
 
-        foreach (var statusCode in statusCodes)
-        {
-            if (seen.Add(statusCode))
-            {
-                result.Add(statusCode);
-            }
-        }
-
-        return result.ToArray();
+        return [.. result];
     }
 }

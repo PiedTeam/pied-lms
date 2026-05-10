@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Authorization;
-using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Contract.Services.TestCase;
 using PIED_LMS.Presentation.Extensions;
 

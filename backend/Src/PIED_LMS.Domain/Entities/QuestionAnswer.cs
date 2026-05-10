@@ -1,6 +1,3 @@
-using System;
-using System.Text;
-
 namespace PIED_LMS.Domain.Entities;
 
 public class QuestionAnswer

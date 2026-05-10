@@ -28,12 +28,12 @@ public class ImportExamHandler(
     {
         // --- 1. Authenticate ---
         var userIdClaim = httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+        if (userIdClaim is null || !Guid.TryParse(userIdClaim.Value, out var userId))
             return Fail("User not authenticated", "UNAUTHORIZED");
 
         // --- 2. Validate file basics ---
         var file = request.File;
-        if (file == null || file.Length == 0)
+        if (file is null || file.Length == 0)
             return Fail("No file was uploaded.", "NO_FILE");
 
         if (file.Length > MaxFileSizeBytes)
@@ -50,7 +50,8 @@ public class ImportExamHandler(
         try
         {
             examInfoRows = await excelService.ReadExcelAsync<ExamImportDto>(file, ExamInfoSheet, cancellationToken);
-            testCaseRows = await excelService.ReadExcelAsync<TestCaseImportDto>(file, TestCasesSheet, cancellationToken);
+            testCaseRows =
+                await excelService.ReadExcelAsync<TestCaseImportDto>(file, TestCasesSheet, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -62,7 +63,7 @@ public class ImportExamHandler(
 
         // --- 4. Validate Exam info (Sheet 1) ---
         var examInfo = examInfoRows.FirstOrDefault();
-        if (examInfo == null || string.IsNullOrWhiteSpace(examInfo.Title))
+        if (examInfo is null || string.IsNullOrWhiteSpace(examInfo.Title))
             return Fail("Sheet 'ExamInfo' is empty or missing the 'Title' field.", "INVALID_EXAM_DATA");
 
         if (examInfo.TotalMarks <= 0)
@@ -164,13 +165,14 @@ public class ImportExamHandler(
 
             // Best-effort cleanup of already-written files
             foreach (var idx in savedIndexes)
-            {
-                try { await storageService.DeleteTestCaseAsync(exam.Id, idx, CancellationToken.None); }
+                try
+                {
+                    await storageService.DeleteTestCaseAsync(exam.Id, idx, CancellationToken.None);
+                }
                 catch (Exception cleanEx)
                 {
                     logger.LogWarning(cleanEx, "File cleanup failed. ExamId: {ExamId}, Index: {Idx}", exam.Id, idx);
                 }
-            }
 
             return Fail("An error occurred while saving data. No data was committed.", "INTERNAL_ERROR");
         }

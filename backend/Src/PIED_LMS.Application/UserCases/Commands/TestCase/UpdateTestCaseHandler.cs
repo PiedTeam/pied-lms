@@ -21,40 +21,34 @@ public class UpdateTestCaseHandler(
         {
             // Verify requester is authenticated
             var userIdClaim = httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
-            {
+            if (userIdClaim is null || !Guid.TryParse(userIdClaim.Value, out var userId))
                 return new ServiceResponse<TestCaseResponse>(
                     false,
                     "User not authenticated",
                     ErrorCode: "UNAUTHORIZED"
                 );
-            }
 
             // Find the existing TestCase
             var testCase = await unitOfWork.Repository<Domain.Entities.TestCase>()
                 .GetByIdAsync(request.TestCaseId, cancellationToken);
 
-            if (testCase == null)
-            {
+            if (testCase is null)
                 return new ServiceResponse<TestCaseResponse>(
                     false,
                     $"TestCase with id '{request.TestCaseId}' not found",
                     ErrorCode: "TESTCASE_NOT_FOUND"
                 );
-            }
 
             // Validate that the target Exam exists (in case examId is being changed)
             var exam = await unitOfWork.Repository<Domain.Entities.Exam>()
                 .GetByIdAsync(request.ExamId, cancellationToken);
 
-            if (exam == null)
-            {
+            if (exam is null)
                 return new ServiceResponse<TestCaseResponse>(
                     false,
                     $"Exam with id '{request.ExamId}' not found",
                     ErrorCode: "EXAM_NOT_FOUND"
                 );
-            }
 
             // Update test case files in file system first
             // This ensures consistency - if file write fails, we don't update DB

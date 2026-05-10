@@ -4,7 +4,6 @@ using PIED_LMS.Contract.Services.ExamRoom;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Abstractions;
 
-
 namespace PIED_LMS.Application.UserCases.Commands.ExamRoom;
 
 public class CreateExamRoomHandler(
@@ -22,35 +21,29 @@ public class CreateExamRoomHandler(
         {
             // Get current user ID from HttpContext claims
             var userIdClaim = httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
-            {
+            if (userIdClaim is null || !Guid.TryParse(userIdClaim.Value, out var userId))
                 return new ServiceResponse<ExamRoomResponse>(
                     false,
                     "User not authenticated",
                     ErrorCode: "UNAUTHORIZED"
                 );
-            }
 
             // Validate time range
             if (request.StartTime >= request.EndTime)
-            {
                 return new ServiceResponse<ExamRoomResponse>(
                     false,
                     "Start time must be before end time",
                     ErrorCode: "INVALID_TIME_RANGE"
                 );
-            }
 
             // Validate duration
             var timeSpan = request.EndTime - request.StartTime;
             if (request.DurationInMinutes > timeSpan.TotalMinutes)
-            {
                 return new ServiceResponse<ExamRoomResponse>(
                     false,
                     "Duration cannot exceed the time difference between start and end time",
                     ErrorCode: "INVALID_DURATION"
                 );
-            }
 
             // Generate unique room code
             var roomCode = await roomCodeService.GenerateUniqueRoomCodeAsync(cancellationToken);
@@ -84,7 +77,7 @@ public class CreateExamRoomHandler(
             // Calculate status
             var now = DateTime.UtcNow;
             var status = now < examRoom.StartTime ? "Upcoming" :
-                        now > examRoom.EndTime ? "Completed" : "Ongoing";
+                now > examRoom.EndTime ? "Completed" : "Ongoing";
 
             var response = new ExamRoomResponse(
                 examRoom.Id,

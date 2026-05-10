@@ -1,5 +1,3 @@
-using FluentValidation;
-
 namespace PIED_LMS.Application.UserCases.Commands.Submission;
 
 public sealed class SubmitCodeCommandValidator : AbstractValidator<SubmitCodeCommand>
@@ -12,7 +10,7 @@ public sealed class SubmitCodeCommandValidator : AbstractValidator<SubmitCodeCom
         RuleFor(x => x.Code)
             .NotEmpty().WithMessage("Code is required.")
             .MinimumLength(10).WithMessage("Code must be at least 10 characters long.");
-            
+
         RuleFor(x => x.Language)
             .NotEmpty().WithMessage("Language is required.");
     }

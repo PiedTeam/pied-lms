@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Contract.Services.Exam;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Abstractions;
@@ -21,14 +20,12 @@ public class GetExamsInRoomForStudentHandler(
         {
             // Get current student ID from HttpContext claims
             var userIdClaim = httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var studentId))
-            {
+            if (userIdClaim is null || !Guid.TryParse(userIdClaim.Value, out var studentId))
                 return new ServiceResponse<List<ExamInRoomResponse>>(
                     false,
                     "User not authenticated",
                     ErrorCode: "UNAUTHORIZED"
                 );
-            }
 
             // Verify student is enrolled in exam room
             var isEnrolled = await unitOfWork.Repository<ExamRoomEnrollment>()
@@ -36,13 +33,11 @@ public class GetExamsInRoomForStudentHandler(
                 .AnyAsync(cancellationToken);
 
             if (!isEnrolled)
-            {
                 return new ServiceResponse<List<ExamInRoomResponse>>(
                     false,
                     "You are not enrolled in this exam room",
                     ErrorCode: "FORBIDDEN"
                 );
-            }
 
             // Get all exams in room where IsDeleted = false
             var examIds = await unitOfWork.Repository<ExamRoomExam>()
@@ -56,9 +51,9 @@ public class GetExamsInRoomForStudentHandler(
 
             // Get student's participations for these exams
             var participations = await unitOfWork.Repository<Domain.Entities.ExamParticipation>()
-                .FindAll(p => p.StudentId == studentId && 
-                             p.ExamRoomId == request.ExamRoomId && 
-                             examIds.Contains(p.ExamId))
+                .FindAll(p => p.StudentId == studentId &&
+                              p.ExamRoomId == request.ExamRoomId &&
+                              examIds.Contains(p.ExamId))
                 .ToListAsync(cancellationToken);
 
             // Build response with completion status

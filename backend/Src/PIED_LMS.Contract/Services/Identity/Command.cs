@@ -1,11 +1,9 @@
-using System;
-using System.Collections.Generic;
-using PIED_LMS.Contract.Abstractions.Shared;
 using Microsoft.AspNetCore.Http;
+
 namespace PIED_LMS.Contract.Services.Identity;
 
 // Register Commands
-public  record RegisterCommand(
+public record RegisterCommand(
     string Email,
     string FirstName,
     string LastName,
@@ -14,7 +12,7 @@ public  record RegisterCommand(
 ) : IRequest<ServiceResponse<RegisterResponse>>;
 
 // Login Commands
-public  record LoginCommand(
+public record LoginCommand(
     string Email,
     string Password
 ) : IRequest<ServiceResponse<LoginResult>>;
@@ -71,24 +69,33 @@ public record CreateRoomCommand(
 
 // Import Student Command
 public record StudentImportDto(string Email, string FirstName, string LastName);
+
 public record ImportStudentsCommand(IReadOnlyList<StudentImportDto> Students) : IRequest<ServiceResponse<string>>;
 
 // Mentor Registration & Approval Commands
-public record RegisterMentorCommand(string Email, string FirstName, string LastName, string Bio, string Password, string ConfirmPassword) : IRequest<ServiceResponse<string>>;
+public record RegisterMentorCommand(
+    string Email,
+    string FirstName,
+    string LastName,
+    string Bio,
+    string Password,
+    string ConfirmPassword) : IRequest<ServiceResponse<string>>;
+
 public record ApproveMentorCommand(Guid UserId) : IRequest<ServiceResponse<string>>;
 
 // Update Profile Commands
 public record UpdateProfileCommand(
     Guid UserId,
-    string FirstName,
-    string LastName,
+    string? FirstName,
+    string? LastName,
     string? Bio,
     IFormFile? ProfilePicture
 ) : IRequest<ServiceResponse<string>>;
 
-public sealed record UpdateProfileRequest(
-    string FirstName,
-    string LastName,
-    string? Bio,
-    IFormFile? ProfilePicture
-);
+public sealed record UpdateProfileRequest
+{
+    public string? FirstName { get; init; }
+    public string? LastName { get; init; }
+    public string? Bio { get; init; }
+    public IFormFile? ProfilePicture { get; init; }
+}

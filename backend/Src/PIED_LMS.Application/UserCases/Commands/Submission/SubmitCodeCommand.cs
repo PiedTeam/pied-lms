@@ -1,4 +1,3 @@
-using PIED_LMS.Application.Abstractions;
 using PIED_LMS.Contract.Services.Compiler;
 using PIED_LMS.Contract.Services.Identity;
 
@@ -8,5 +7,5 @@ public sealed record SubmitCodeCommand(
     Guid ExamId,
     string Code,
     string Language = "c",
-    OptimizationLevel? OptimizationLevel = null) 
+    OptimizationLevel? OptimizationLevel = null)
     : IRequest<ServiceResponse<JudgeResult>>;

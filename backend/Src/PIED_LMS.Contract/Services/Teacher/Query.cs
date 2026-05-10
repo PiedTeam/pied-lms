@@ -14,5 +14,4 @@ public sealed record GetTeacherByIdQuery(
     Guid TeacherId
 ) : IRequest<ServiceResponse<TeacherDto>>;
 
-public sealed record GetAllTeachersSimpleQuery()
-    : IRequest<ServiceResponse<List<TeacherSimpleDto>>>;
+public sealed record GetAllTeachersSimpleQuery : IRequest<ServiceResponse<List<TeacherSimpleDto>>>;

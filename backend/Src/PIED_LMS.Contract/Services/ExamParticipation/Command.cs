@@ -13,6 +13,6 @@ public record StartExamCommand(
 // Submit Exam Command
 public record SubmitExamCommand(
     Guid ParticipationId,
-    string SourceCode,  // Code C của học sinh
+    string SourceCode, // Code C của học sinh
     bool IsFinalSubmission = false // true = nộp bài cuối cùng, false = lưu tạm
 ) : IRequest<ServiceResponse<SubmitExamResponse>>;

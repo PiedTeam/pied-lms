@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Contract.Services.ExamParticipation;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Abstractions;
@@ -23,14 +22,12 @@ public class GetExamRoomEnrollmentsHandler(
                 .AnyAsync(er => er.Id == request.ExamRoomId, cancellationToken);
 
             if (!examRoomExists)
-            {
                 return new ServiceResponse<PaginatedResponse<ExamRoomEnrollmentResponse>>(
                     false,
                     "Exam room not found",
                     IsNotFound: true,
                     ErrorCode: "NOT_FOUND"
                 );
-            }
 
             // Get enrollments for the exam room
             var enrollmentsQuery = unitOfWork.Repository<ExamRoomEnrollment>()
@@ -49,9 +46,8 @@ public class GetExamRoomEnrollmentsHandler(
             foreach (var enrollment in enrollments)
             {
                 var student = await userManager.FindByIdAsync(enrollment.StudentId.ToString());
-                
-                if (student != null)
-                {
+
+                if (student is not null)
                     enrollmentResponses.Add(new ExamRoomEnrollmentResponse(
                         enrollment.Id,
                         enrollment.StudentId,
@@ -62,7 +58,6 @@ public class GetExamRoomEnrollmentsHandler(
                         enrollment.EmailSent,
                         enrollment.EmailSentAt
                     ));
-                }
             }
 
             var paginatedResponse = new PaginatedResponse<ExamRoomEnrollmentResponse>(

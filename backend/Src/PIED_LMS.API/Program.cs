@@ -3,7 +3,6 @@ using PIED_LMS.API;
 using PIED_LMS.Application;
 using PIED_LMS.Infrastructure;
 using PIED_LMS.Persistence;
-using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 

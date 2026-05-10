@@ -1,16 +1,17 @@
-using System;
-
+using Microsoft.AspNetCore.WebUtilities;
 using PIED_LMS.Contract.Abstractions.Email;
 using PIED_LMS.Contract.Services.Identity;
-using PIED_LMS.Domain.Entities;
-using PIED_LMS.Domain.Constants;
 using PIED_LMS.Domain.Abstractions;
-
-using Microsoft.Extensions.Configuration;
+using PIED_LMS.Domain.Constants;
+using PIED_LMS.Domain.Entities;
 
 namespace PIED_LMS.Application.UserCases.Commands;
 
-public class ImportStudentsHandler(UserManager<ApplicationUser> userManager, IEmailService emailService, IUnitOfWork unitOfWork, IConfiguration configuration) 
+public class ImportStudentsHandler(
+    UserManager<ApplicationUser> userManager,
+    IEmailService emailService,
+    IUnitOfWork unitOfWork,
+    IConfiguration configuration)
     : IRequestHandler<ImportStudentsCommand, ServiceResponse<string>>
 {
     public async Task<ServiceResponse<string>> Handle(ImportStudentsCommand request, CancellationToken ct)
@@ -18,51 +19,49 @@ public class ImportStudentsHandler(UserManager<ApplicationUser> userManager, IEm
         var errors = new List<string>();
         var successCount = 0;
 
-        foreach (var st in request.Students) {
-            try 
+        foreach (var st in request.Students)
+            try
             {
-                await unitOfWork.ExecuteInTransactionAsync(async (token) => 
+                await unitOfWork.ExecuteInTransactionAsync(async token =>
                 {
                     var password = GenerateSecurePassword();
-                    var user = new ApplicationUser 
-                    { 
-                        UserName = st.Email, 
-                        Email = st.Email, 
-                        FirstName = st.FirstName, 
-                        LastName = st.LastName, 
-                        IsActive = true 
-                    };
-                    
-                    var result = await userManager.CreateAsync(user, password);
-                    if (!result.Succeeded) 
+                    var user = new ApplicationUser
                     {
-                         throw new Exception(string.Join(", ", result.Errors.Select(e => e.Description)));
-                    }
+                        UserName = st.Email,
+                        Email = st.Email,
+                        FirstName = st.FirstName,
+                        LastName = st.LastName,
+                        IsActive = true
+                    };
+
+                    var result = await userManager.CreateAsync(user, password);
+                    if (!result.Succeeded)
+                        throw new Exception(string.Join(", ", result.Errors.Select(e => e.Description)));
 
 
                     await userManager.AddToRoleAsync(user, RoleConstants.Student);
-                    
+
                     var tokenReset = await userManager.GeneratePasswordResetTokenAsync(user);
-                    var tokenBytes = System.Text.Encoding.UTF8.GetBytes(tokenReset);
-                    var encodedToken = Microsoft.AspNetCore.WebUtilities.WebEncoders.Base64UrlEncode(tokenBytes);
+                    var tokenBytes = Encoding.UTF8.GetBytes(tokenReset);
+                    var encodedToken = WebEncoders.Base64UrlEncode(tokenBytes);
                     var baseUrl = configuration["Frontend:BaseUrl"] ?? "http://localhost:3000";
                     var resetLink = $"{baseUrl}/auth/reset-password?email={st.Email}&token={encodedToken}";
-                    
-                    await emailService.SendEmailAsync(st.Email, "Welcome to PIED LMS", $"Your account has been created. Please click the link to set your password: {resetLink}", token);
+
+                    await emailService.SendEmailAsync(st.Email, "Welcome to PIED LMS",
+                        $"Your account has been created. Please click the link to set your password: {resetLink}",
+                        token);
                 }, ct);
-                
+
                 successCount++;
             }
             catch (Exception ex)
             {
                 errors.Add($"{st.Email}: {ex.Message}");
             }
-        }
 
         if (errors.Count > 0)
-        {
-             return new ServiceResponse<string>(false, $"Imported {successCount}/{request.Students.Count}. Failures: {string.Join(" | ", errors)}");
-        }
+            return new ServiceResponse<string>(false,
+                $"Imported {successCount}/{request.Students.Count}. Failures: {string.Join(" | ", errors)}");
 
         return new ServiceResponse<string>(true, $"Successfully imported all {successCount} students.");
     }
@@ -77,7 +76,7 @@ public class ImportStudentsHandler(UserManager<ApplicationUser> userManager, IEm
         var chars = new char[12];
 
         var buffer = new byte[12];
-        System.Security.Cryptography.RandomNumberGenerator.Fill(buffer);
+        RandomNumberGenerator.Fill(buffer);
 
         // Ensure at least one of each required type
         chars[0] = lower[buffer[0] % lower.Length];
@@ -86,19 +85,16 @@ public class ImportStudentsHandler(UserManager<ApplicationUser> userManager, IEm
         chars[3] = special[buffer[3] % special.Length];
 
         const string allChars = lower + upper + digits + special;
-        
-        for (int i = 4; i < 12; i++)
-        {
-            chars[i] = allChars[buffer[i] % allChars.Length];
-        }
+
+        for (var i = 4; i < 12; i++) chars[i] = allChars[buffer[i] % allChars.Length];
 
         // Shuffle
-        for (int i = 0; i < 12; i++)
+        for (var i = 0; i < 12; i++)
         {
             var rndIndex = buffer[i] % 12;
             (chars[i], chars[rndIndex]) = (chars[rndIndex], chars[i]);
         }
-        
+
         return new string(chars);
     }
 }

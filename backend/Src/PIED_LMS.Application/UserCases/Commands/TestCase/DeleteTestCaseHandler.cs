@@ -21,27 +21,23 @@ public class DeleteTestCaseHandler(
         {
             // Verify requester is authenticated
             var userIdClaim = httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
-            {
+            if (userIdClaim is null || !Guid.TryParse(userIdClaim.Value, out var userId))
                 return new ServiceResponse<string>(
                     false,
                     "User not authenticated",
                     ErrorCode: "UNAUTHORIZED"
                 );
-            }
 
             // Find the existing TestCase
             var testCase = await unitOfWork.Repository<Domain.Entities.TestCase>()
                 .GetByIdAsync(request.TestCaseId, cancellationToken);
 
-            if (testCase == null)
-            {
+            if (testCase is null)
                 return new ServiceResponse<string>(
                     false,
                     $"TestCase with id '{request.TestCaseId}' not found",
                     ErrorCode: "TESTCASE_NOT_FOUND"
                 );
-            }
 
             // Store exam id and index for file deletion
             var examId = testCase.ExamId;

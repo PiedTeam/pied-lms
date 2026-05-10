@@ -1,12 +1,6 @@
-using Carter;
-using MediatR;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Routing;
 using PIED_LMS.Application.UserCases.Commands.Submission;
 using PIED_LMS.Application.UserCases.Queries.Submission;
 using PIED_LMS.Contract.Services.Compiler;
-using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Contract.Services.Submission;
 using PIED_LMS.Presentation.Extensions;
 
@@ -37,7 +31,8 @@ public sealed class StudentSubmissionEndpoints : ICarterModule
         group.MapGet("/submissions/{id:guid}", GetSubmissionById)
             .WithName("GetSubmissionById")
             .RequireAuthorization() // general auth since both teacher and student can view
-            .WithServiceResponseOpenApi<SubmissionDetailResponse>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound);
+            .WithServiceResponseOpenApi<
+                SubmissionDetailResponse>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound);
     }
 
     private static async Task<IResult> SubmitCode(
@@ -73,7 +68,6 @@ public sealed class StudentSubmissionEndpoints : ICarterModule
         var response = await mediator.Send(query, cancellationToken);
         return response.ToActionResult(context);
     }
-
 }
 
 public sealed record SubmitCodeRequest(
