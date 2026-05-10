@@ -16,9 +16,14 @@ public class UpdateProfileHandler(
             var user = await userManager.FindByIdAsync(request.UserId.ToString());
             if (user is null) return new ServiceResponse<string>(false, "User not found");
 
-            user.FirstName = request.FirstName;
-            user.LastName = request.LastName;
-            user.Bio = request.Bio;
+            if (!string.IsNullOrEmpty(request.FirstName))
+                user.FirstName = request.FirstName;
+
+            if (!string.IsNullOrEmpty(request.LastName))
+                user.LastName = request.LastName;
+
+            if (!string.IsNullOrEmpty(request.Bio))
+                user.Bio = request.Bio;
 
             // Handle Profile Picture upload if provided
             if (request.ProfilePicture is not null)
@@ -27,7 +32,7 @@ public class UpdateProfileHandler(
                 if (!string.IsNullOrWhiteSpace(user.ProfilePictureUrl))
                     try
                     {
-                        await fileStorageService.DeleteFileAsync(user.ProfilePictureUrl);
+                        await fileStorageService.DeleteFileAsync(user.ProfilePictureUrl, cancellationToken);
                     }
                     catch (Exception ex)
                     {
@@ -50,15 +55,12 @@ public class UpdateProfileHandler(
             user.UpdatedAt = DateTime.UtcNow;
 
             var result = await userManager.UpdateAsync(user);
-            if (!result.Succeeded)
-            {
-                var errors = result.Errors.Select(e => e.Description).ToList();
-                logger.LogWarning("Failed to update profile for user {UserId}: {Errors}", user.Id,
-                    string.Join(", ", errors));
-                return new ServiceResponse<string>(false, "Failed to update profile");
-            }
+            if (result.Succeeded) return new ServiceResponse<string>(true, "Profile updated successfully");
+            var errors = result.Errors.Select(e => e.Description).ToList();
+            logger.LogWarning("Failed to update profile for user {UserId}: {Errors}", user.Id,
+                string.Join(", ", errors));
+            return new ServiceResponse<string>(false, "Failed to update profile");
 
-            return new ServiceResponse<string>(true, "Profile updated successfully");
         }
         catch (Exception ex)
         {
