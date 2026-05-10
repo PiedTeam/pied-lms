@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Authorization;
 using PIED_LMS.Contract.Services.Exam;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Presentation.Extensions;
@@ -53,7 +52,8 @@ public class ExamEndpoints : ICarterModule
         group.MapPost("/verify-room", VerifyRoomCodeAndGetExams)
             .WithName("VerifyRoomCodeAndGetExams")
             .RequireAuthorization(new AuthorizeAttribute { Roles = "Student" })
-            .WithServiceResponseOpenApi<List<ExamInRoomResponse>>(ServiceResponseStatusProfile.OkOrBadRequestOrForbiddenOrNotFound);
+            .WithServiceResponseOpenApi<List<ExamInRoomResponse>>(ServiceResponseStatusProfile
+                .OkOrBadRequestOrForbiddenOrNotFound);
 
         // POST /api/exams/import - Import Exam + TestCases from Excel
         group.MapPost("/import", ImportExam)

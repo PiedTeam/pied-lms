@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Contract.Abstractions.Shared;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Contract.Services.Teacher;
@@ -11,8 +9,8 @@ namespace PIED_LMS.Application.UserCases.Queries.Teacher;
 
 public class GetTeachersHandler : IRequestHandler<GetTeachersQuery, ServiceResponse<PagedResult<TeacherDto>>>
 {
-    private readonly UserManager<ApplicationUser> _userManager;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly UserManager<ApplicationUser> _userManager;
 
     public GetTeachersHandler(
         UserManager<ApplicationUser> userManager,
@@ -48,10 +46,7 @@ public class GetTeachersHandler : IRequestHandler<GetTeachersQuery, ServiceRespo
                     (u.UserName != null && u.UserName.ToLower().Contains(searchTerm)));
             }
 
-            if (request.IsActive.HasValue)
-            {
-                query = query.Where(u => u.IsActive == request.IsActive.Value);
-            }
+            if (request.IsActive.HasValue) query = query.Where(u => u.IsActive == request.IsActive.Value);
 
             var totalCount = await query.CountAsync(cancellationToken);
 

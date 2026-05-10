@@ -6,7 +6,7 @@ using PIED_LMS.Domain.Entities;
 namespace PIED_LMS.Infrastructure.Services;
 
 /// <summary>
-/// Service implementation for generating and validating unique room codes
+///     Service implementation for generating and validating unique room codes
 /// </summary>
 public class RoomCodeService : IRoomCodeService
 {
@@ -17,16 +17,16 @@ public class RoomCodeService : IRoomCodeService
         _unitOfWork = unitOfWork;
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<string> GenerateUniqueRoomCodeAsync(CancellationToken cancellationToken = default)
     {
-        return await RoomCodeGenerator.GenerateUniqueAsync(async (roomCode) =>
+        return await RoomCodeGenerator.GenerateUniqueAsync(async roomCode =>
         {
             return await RoomCodeExistsAsync(roomCode, cancellationToken);
         });
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<bool> RoomCodeExistsAsync(string roomCode, CancellationToken cancellationToken = default)
     {
         return await _unitOfWork.Repository<ExamRoom>().AnyAsync(

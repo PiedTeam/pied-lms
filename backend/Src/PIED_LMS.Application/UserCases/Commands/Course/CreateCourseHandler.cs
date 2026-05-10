@@ -1,12 +1,7 @@
-using System.Text.RegularExpressions;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using PIED_LMS.Contract.Abstractions.Shared;
 using PIED_LMS.Contract.Abstractions.Storage;
 using PIED_LMS.Contract.Services.Course;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Abstractions;
-using PIED_LMS.Domain.Entities;
 
 namespace PIED_LMS.Application.UserCases.Commands.Course;
 
@@ -24,7 +19,7 @@ public class CreateCourseHandler(
         {
             // Subtask 5.2: Implement validation logic
             var validationError = await ValidateCommandAsync(request, cancellationToken);
-            if (validationError != null)
+            if (validationError is not null)
             {
                 logger.LogWarning("Course creation validation failed: {ValidationError}", validationError);
                 return new ServiceResponse<int>(false, validationError);
@@ -32,7 +27,7 @@ public class CreateCourseHandler(
 
             // Subtask 5.3: Implement slug generation and validation
             var slug = await GenerateAndValidateSlugAsync(request.Slug, request.Title, cancellationToken);
-            if (slug == null)
+            if (slug is null)
             {
                 var errorMessage = "Slug already exists. Please provide a unique slug.";
                 logger.LogWarning("Course creation failed: {ValidationError}", errorMessage);
@@ -41,8 +36,7 @@ public class CreateCourseHandler(
 
             // Subtask 5.4: Implement file upload and course creation
             string? thumbnailPath = null;
-            if (request.ThumbnailFile != null)
-            {
+            if (request.ThumbnailFile is not null)
                 try
                 {
                     thumbnailPath = await fileStorageService.SaveFileAsync(
@@ -62,7 +56,6 @@ public class CreateCourseHandler(
                     logger.LogError(ex, "Failed to upload thumbnail to S3 for course creation");
                     return new ServiceResponse<int>(false, "Failed to upload thumbnail image. Please try again.");
                 }
-            }
 
             // Create Course entity
             var course = new Domain.Entities.Course
@@ -74,8 +67,8 @@ public class CreateCourseHandler(
                 EndDate = request.EndDate,
                 Status = request.Status,
                 Slug = slug,
-                Tags = request.Tags != null && request.Tags.Count > 0 
-                    ? string.Join(",", request.Tags) 
+                Tags = request.Tags is not null && request.Tags.Count > 0
+                    ? string.Join(",", request.Tags)
                     : null,
                 Duration = request.Duration,
                 Seats = request.Seats,
@@ -90,7 +83,7 @@ public class CreateCourseHandler(
             await unitOfWork.CommitAsync(cancellationToken);
 
             // Subtask 5.5: Add logging for course creation
-            logger.LogInformation("Course {CourseId} created successfully with title '{Title}'", 
+            logger.LogInformation("Course {CourseId} created successfully with title '{Title}'",
                 course.Id, course.Title);
 
             return new ServiceResponse<int>(true, "Course created successfully", course.Id);
@@ -102,7 +95,8 @@ public class CreateCourseHandler(
         }
         catch (IOException ex)
         {
-            logger.LogError(ex, "File storage error occurred while creating course with title '{Title}'", request.Title);
+            logger.LogError(ex, "File storage error occurred while creating course with title '{Title}'",
+                request.Title);
             return new ServiceResponse<int>(false, "A file storage error occurred while creating the course.");
         }
         catch (UnauthorizedAccessException ex)
@@ -115,48 +109,37 @@ public class CreateCourseHandler(
     private async Task<string?> ValidateCommandAsync(CreateCourseCommand request, CancellationToken cancellationToken)
     {
         // Validate Title is not null or empty
-        if (string.IsNullOrWhiteSpace(request.Title))
-        {
-            return "Title is required and cannot be empty.";
-        }
+        if (string.IsNullOrWhiteSpace(request.Title)) return "Title is required and cannot be empty.";
 
         // Validate StartDate is before EndDate
-        if (request.StartDate >= request.EndDate)
-        {
-            return "Start date must be before end date.";
-        }
+        if (request.StartDate >= request.EndDate) return "Start date must be before end date.";
 
         // Validate EndDate is not in the past for new courses
-        if (request.EndDate < DateTime.UtcNow)
-        {
-            return "End date cannot be in the past.";
-        }
+        if (request.EndDate < DateTime.UtcNow) return "End date cannot be in the past.";
 
         // Validate ThumbnailFile if provided
-        if (request.ThumbnailFile != null)
+        if (request.ThumbnailFile is not null)
         {
             // Validate file extension
             var fileExtension = Path.GetExtension(request.ThumbnailFile.FileName).ToLowerInvariant();
             if (!AllowedImageExtensions.Contains(fileExtension))
-            {
-                return $"Thumbnail file must have one of the following extensions: {string.Join(", ", AllowedImageExtensions)}";
-            }
+                return
+                    $"Thumbnail file must have one of the following extensions: {string.Join(", ", AllowedImageExtensions)}";
 
             // Validate file size (max 5MB)
             if (request.ThumbnailFile.Length > MaxThumbnailSizeBytes)
-            {
                 return $"Thumbnail file size must not exceed {MaxThumbnailSizeBytes / (1024 * 1024)}MB.";
-            }
         }
 
         return null;
     }
 
-    private async Task<string?> GenerateAndValidateSlugAsync(string? providedSlug, string title, CancellationToken cancellationToken)
+    private async Task<string?> GenerateAndValidateSlugAsync(string? providedSlug, string title,
+        CancellationToken cancellationToken)
     {
         // Generate URL-friendly slug from Title if not provided
-        var slug = string.IsNullOrWhiteSpace(providedSlug) 
-            ? GenerateSlugFromTitle(title) 
+        var slug = string.IsNullOrWhiteSpace(providedSlug)
+            ? GenerateSlugFromTitle(title)
             : providedSlug.ToLowerInvariant().Trim();
 
         // Validate slug uniqueness by querying repository
@@ -164,10 +147,7 @@ public class CreateCourseHandler(
         var slugExists = await repository.AnyAsync(c => c.Slug == slug, cancellationToken);
 
         // Return null if slug already exists
-        if (slugExists)
-        {
-            return null;
-        }
+        if (slugExists) return null;
 
         return slug;
     }

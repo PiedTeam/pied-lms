@@ -13,17 +13,11 @@ public class LogoutCommandHandler(
         try
         {
             if (request.RevokeAll)
-            {
                 await refreshTokenService.RevokeAllRefreshTokenAsync(request.UserId);
-            }
             else if (!string.IsNullOrWhiteSpace(request.RefreshToken))
-            {
-                 await refreshTokenService.RevokeRefreshTokenAsync(request.RefreshToken);
-            }
+                await refreshTokenService.RevokeRefreshTokenAsync(request.RefreshToken);
             else
-            {
                 return new ServiceResponse<string>(false, "Logout failed", "Refresh token required");
-            }
 
             return new ServiceResponse<string>(true, "Logout successful", "User logged out");
         }

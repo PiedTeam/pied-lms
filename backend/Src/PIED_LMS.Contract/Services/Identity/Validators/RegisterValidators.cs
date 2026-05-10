@@ -1,5 +1,3 @@
-using FluentValidation;
-using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Contract.Extensions;
 
 namespace PIED_LMS.Contract.Services.Identity.Validators;

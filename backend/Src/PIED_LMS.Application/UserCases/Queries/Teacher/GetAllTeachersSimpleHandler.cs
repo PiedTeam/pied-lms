@@ -1,7 +1,3 @@
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using PIED_LMS.Contract.Abstractions.Shared;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Contract.Services.Teacher;
 using PIED_LMS.Domain.Constants;
@@ -9,10 +5,11 @@ using PIED_LMS.Domain.Entities;
 
 namespace PIED_LMS.Application.UserCases.Queries.Teacher;
 
-public class GetAllTeachersSimpleHandler : IRequestHandler<GetAllTeachersSimpleQuery, ServiceResponse<List<TeacherSimpleDto>>>
+public class
+    GetAllTeachersSimpleHandler : IRequestHandler<GetAllTeachersSimpleQuery, ServiceResponse<List<TeacherSimpleDto>>>
 {
-    private readonly UserManager<ApplicationUser> _userManager;
     private readonly ILogger<GetAllTeachersSimpleHandler> _logger;
+    private readonly UserManager<ApplicationUser> _userManager;
 
     public GetAllTeachersSimpleHandler(
         UserManager<ApplicationUser> userManager,

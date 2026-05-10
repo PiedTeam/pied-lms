@@ -1,8 +1,9 @@
-using Microsoft.AspNetCore.Authorization;
-using PIED_LMS.Contract.Services.ExamRoom;
+using PIED_LMS.Contract.Services.Exam;
 using PIED_LMS.Contract.Services.ExamParticipation;
+using PIED_LMS.Contract.Services.ExamRoom;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Presentation.Extensions;
+using ExamRoomAccessResponse = PIED_LMS.Contract.Services.ExamParticipation.ExamRoomAccessResponse;
 
 namespace PIED_LMS.Presentation.APIs;
 
@@ -23,7 +24,8 @@ public class ExamRoomEndpoints : ICarterModule
         group.MapGet("", GetAllExamRooms)
             .WithName("GetAllExamRooms")
             .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
-            .WithServiceResponseOpenApi<PaginatedResponse<ExamRoomResponse>>(ServiceResponseStatusProfile.OkOrBadRequest);
+            .WithServiceResponseOpenApi<PaginatedResponse<ExamRoomResponse>>(
+                ServiceResponseStatusProfile.OkOrBadRequest);
 
         group.MapGet("/{id}", GetExamRoomById)
             .WithName("GetExamRoomById")
@@ -48,7 +50,8 @@ public class ExamRoomEndpoints : ICarterModule
         group.MapPost("/{id}/enroll", EnrollStudents)
             .WithName("EnrollStudents")
             .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
-            .WithServiceResponseOpenApi<EnrollmentResultResponse>(ServiceResponseStatusProfile.OkOrBadRequestOrForbidden);
+            .WithServiceResponseOpenApi<EnrollmentResultResponse>(
+                ServiceResponseStatusProfile.OkOrBadRequestOrForbidden);
 
         group.MapDelete("/{roomId}/exams/{examId}", RemoveExamFromRoom)
             .WithName("RemoveExamFromRoom")
@@ -59,22 +62,25 @@ public class ExamRoomEndpoints : ICarterModule
         group.MapGet("/student", GetExamRoomsForStudent)
             .WithName("GetExamRoomsForStudent")
             .RequireAuthorization(new AuthorizeAttribute { Roles = "Student" })
-            .WithServiceResponseOpenApi<PaginatedResponse<ExamRoomResponse>>(ServiceResponseStatusProfile.OkOrBadRequest);
+            .WithServiceResponseOpenApi<PaginatedResponse<ExamRoomResponse>>(
+                ServiceResponseStatusProfile.OkOrBadRequest);
 
         group.MapGet("/{roomId}/exams/student", GetExamsInRoomForStudent)
             .WithName("GetExamsInRoomForStudent")
             .RequireAuthorization(new AuthorizeAttribute { Roles = "Student" })
-            .WithServiceResponseOpenApi<List<Contract.Services.Exam.ExamInRoomResponse>>(ServiceResponseStatusProfile.OkOrBadRequestOrForbidden);
+            .WithServiceResponseOpenApi<List<ExamInRoomResponse>>(
+                ServiceResponseStatusProfile.OkOrBadRequestOrForbidden);
 
         group.MapGet("/available", GetAvailableExamRoomsForStudent)
             .WithName("GetAvailableExamRoomsForStudent")
             .RequireAuthorization()
-            .WithServiceResponseOpenApi<PaginatedResponse<ExamRoomResponse>>(ServiceResponseStatusProfile.OkOrBadRequest);
+            .WithServiceResponseOpenApi<PaginatedResponse<ExamRoomResponse>>(
+                ServiceResponseStatusProfile.OkOrBadRequest);
 
         group.MapGet("/{id}/access", CheckExamRoomAccess)
             .WithName("CheckExamRoomAccess")
             .RequireAuthorization()
-            .WithServiceResponseOpenApi<Contract.Services.ExamParticipation.ExamRoomAccessResponse>(ServiceResponseStatusProfile.OkOrBadRequest);
+            .WithServiceResponseOpenApi<ExamRoomAccessResponse>(ServiceResponseStatusProfile.OkOrBadRequest);
     }
 
     // POST /api/exam-rooms
@@ -200,7 +206,7 @@ public class ExamRoomEndpoints : ICarterModule
         IMediator mediator,
         HttpContext context)
     {
-        var query = new Contract.Services.Exam.GetExamsInRoomForStudentQuery(roomId);
+        var query = new GetExamsInRoomForStudentQuery(roomId);
         var result = await mediator.Send(query);
         return result.ToActionResult(context);
     }

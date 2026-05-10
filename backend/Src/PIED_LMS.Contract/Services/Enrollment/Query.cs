@@ -1,7 +1,6 @@
-using MediatR;
 using PIED_LMS.Contract.Abstractions.Shared;
-using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Contract.Constants;
+using PIED_LMS.Contract.Services.Identity;
 
 namespace PIED_LMS.Contract.Services.Enrollment;
 

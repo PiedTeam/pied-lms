@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Contract.Services.Exam;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Abstractions;
@@ -20,38 +19,32 @@ public class UpdateExamHandler(
         {
             // Get current user ID from HttpContext claims
             var userIdClaim = httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
-            {
+            if (userIdClaim is null || !Guid.TryParse(userIdClaim.Value, out var userId))
                 return new ServiceResponse<ExamResponse>(
                     false,
                     "User not authenticated",
                     ErrorCode: "UNAUTHORIZED"
                 );
-            }
 
             // Find exam by ID
             var exam = await unitOfWork.Repository<Domain.Entities.Exam>()
                 .FindAll(e => e.Id == request.Id && !e.IsDeleted)
                 .FirstOrDefaultAsync(cancellationToken);
 
-            if (exam == null)
-            {
+            if (exam is null)
                 return new ServiceResponse<ExamResponse>(
                     false,
                     "Exam not found",
                     ErrorCode: "NOT_FOUND"
                 );
-            }
 
             // Validate passing marks <= total marks
             if (request.PassingMarks > request.TotalMarks)
-            {
                 return new ServiceResponse<ExamResponse>(
                     false,
                     "Passing marks cannot exceed total marks",
                     ErrorCode: "INVALID_MARKS"
                 );
-            }
 
             // Update fields
             exam.Title = request.Title;

@@ -9,9 +9,9 @@ public class EnrollStudentsValidator : AbstractValidator<EnrollStudentsCommand>
 
         RuleFor(x => x.StudentIds)
             .NotEmpty().WithMessage("Student IDs list is required")
-            .Must(list => list != null && list.Count > 0)
+            .Must(list => list is not null && list.Count > 0)
             .WithMessage("At least one student ID must be provided")
-            .Must(list => list != null && list.All(id => id != Guid.Empty))
+            .Must(list => list is not null && list.All(id => id != Guid.Empty))
             .WithMessage("All student IDs must be valid GUIDs");
     }
 }

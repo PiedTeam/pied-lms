@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using Microsoft.Extensions.Caching.Memory;
 using PIED_LMS.Application.Abstractions;
 
 namespace PIED_LMS.Infrastructure.Authentication;
@@ -8,22 +7,22 @@ public class RefreshTokenService(IMemoryCache memoryCache) : IRefreshTokenServic
 {
     private const string _cacheKeyPrefix = "RefreshToken_";
     private const string _userTokensPrefix = "UserTokens_";
-    private readonly IMemoryCache _memoryCache = memoryCache;
     private static readonly ConcurrentDictionary<Guid, object> _userTokenLocks = new();
+    private readonly IMemoryCache _memoryCache = memoryCache;
 
     public Task<string> StoreRefreshTokenAsync(Guid userId, string refreshToken, int expirationDays)
     {
         var cacheKey = $"{_cacheKeyPrefix}{refreshToken}";
         var cacheOptions = new MemoryCacheEntryOptions
         {
-             AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(expirationDays),
-             SlidingExpiration = null
+            AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(expirationDays),
+            SlidingExpiration = null
         };
 
         _memoryCache.Set(cacheKey, userId, cacheOptions);
 
         var userTokensKey = $"{_userTokensPrefix}{userId}";
-        
+
         while (true)
         {
             var userLock = _userTokenLocks.GetOrAdd(userId, _ => new object());
@@ -31,16 +30,13 @@ public class RefreshTokenService(IMemoryCache memoryCache) : IRefreshTokenServic
             {
                 if (_userTokenLocks.TryGetValue(userId, out var currentLock) && currentLock == userLock)
                 {
-                    var userTokens = _memoryCache.GetOrCreate(userTokensKey, entry => 
+                    var userTokens = _memoryCache.GetOrCreate(userTokensKey, entry =>
                     {
                         entry.Priority = CacheItemPriority.NeverRemove;
                         return new HashSet<string>();
                     });
 
-                    if (userTokens != null)
-                    {
-                        userTokens.Add(refreshToken);
-                    }
+                    if (userTokens is not null) userTokens.Add(refreshToken);
                     break;
                 }
             }
@@ -61,12 +57,12 @@ public class RefreshTokenService(IMemoryCache memoryCache) : IRefreshTokenServic
     {
         var cacheKey = $"{_cacheKeyPrefix}{refreshToken}";
         var existed = _memoryCache.TryGetValue<Guid>(cacheKey, out var userId);
-        if (existed) 
+        if (existed)
         {
             _memoryCache.Remove(cacheKey);
-            
+
             var userTokensKey = $"{_userTokensPrefix}{userId}";
-            bool shouldRemoveLock = false;
+            var shouldRemoveLock = false;
 
             while (true)
             {
@@ -75,7 +71,8 @@ public class RefreshTokenService(IMemoryCache memoryCache) : IRefreshTokenServic
                 {
                     if (_userTokenLocks.TryGetValue(userId, out var currentLock) && currentLock == userLock)
                     {
-                        if (_memoryCache.TryGetValue<HashSet<string>>(userTokensKey, out var userTokens) && userTokens != null)
+                        if (_memoryCache.TryGetValue<HashSet<string>>(userTokensKey, out var userTokens) &&
+                            userTokens is not null)
                         {
                             userTokens.Remove(refreshToken);
                             if (userTokens.Count == 0)
@@ -84,24 +81,23 @@ public class RefreshTokenService(IMemoryCache memoryCache) : IRefreshTokenServic
                                 shouldRemoveLock = true;
                             }
                         }
+
                         break;
                     }
                 }
             }
 
-            if (shouldRemoveLock)
-            {
-                _userTokenLocks.TryRemove(userId, out _);
-            }
+            if (shouldRemoveLock) _userTokenLocks.TryRemove(userId, out _);
         }
+
         return Task.FromResult(existed);
     }
-    
+
     public Task RevokeAllRefreshTokenAsync(Guid userId)
     {
         var userTokensKey = $"{_userTokensPrefix}{userId}";
         List<string> tokensToRevoke = [];
-        
+
         while (true)
         {
             var userLock = _userTokenLocks.GetOrAdd(userId, _ => new object());
@@ -109,11 +105,13 @@ public class RefreshTokenService(IMemoryCache memoryCache) : IRefreshTokenServic
             {
                 if (_userTokenLocks.TryGetValue(userId, out var currentLock) && currentLock == userLock)
                 {
-                    if (_memoryCache.TryGetValue<HashSet<string>>(userTokensKey, out var userTokens) && userTokens != null)
+                    if (_memoryCache.TryGetValue<HashSet<string>>(userTokensKey, out var userTokens) &&
+                        userTokens is not null)
                     {
                         tokensToRevoke = userTokens.ToList() ?? [];
                         _memoryCache.Remove(userTokensKey);
                     }
+
                     break;
                 }
             }
@@ -122,15 +120,13 @@ public class RefreshTokenService(IMemoryCache memoryCache) : IRefreshTokenServic
         // Remove lock entry and revoke tokens after releasing lock
         _userTokenLocks.TryRemove(userId, out _);
 
-        if (tokensToRevoke != null)
-        {
+        if (tokensToRevoke is not null)
             foreach (var token in tokensToRevoke)
             {
-                 var cacheKey = $"{_cacheKeyPrefix}{token}";
-                 _memoryCache.Remove(cacheKey);
+                var cacheKey = $"{_cacheKeyPrefix}{token}";
+                _memoryCache.Remove(cacheKey);
             }
-        }
-        
+
         return Task.CompletedTask;
     }
 }

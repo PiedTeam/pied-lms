@@ -1,8 +1,8 @@
 namespace PIED_LMS.Contract.Services.Exam;
 
 /// <summary>
-/// DTO for parsing Exam info from Sheet 1 of the Excel file.
-/// Column headers must match exactly: Title, Description, TotalMarks, PassingMarks
+///     DTO for parsing Exam info from Sheet 1 of the Excel file.
+///     Column headers must match exactly: Title, Description, TotalMarks, PassingMarks
 /// </summary>
 public class ExamImportDto
 {
@@ -13,8 +13,8 @@ public class ExamImportDto
 }
 
 /// <summary>
-/// DTO for parsing Test Case rows from Sheet 2 of the Excel file.
-/// Column headers must match exactly: Input, ExpectedOutput, IsHidden
+///     DTO for parsing Test Case rows from Sheet 2 of the Excel file.
+///     Column headers must match exactly: Input, ExpectedOutput, IsHidden
 /// </summary>
 public class TestCaseImportDto
 {

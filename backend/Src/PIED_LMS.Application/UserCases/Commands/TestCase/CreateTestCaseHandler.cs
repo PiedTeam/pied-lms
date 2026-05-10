@@ -21,27 +21,23 @@ public class CreateTestCaseHandler(
         {
             // Verify requester is authenticated
             var userIdClaim = httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
-            {
+            if (userIdClaim is null || !Guid.TryParse(userIdClaim.Value, out var userId))
                 return new ServiceResponse<TestCaseResponse>(
                     false,
                     "User not authenticated",
                     ErrorCode: "UNAUTHORIZED"
                 );
-            }
 
             // Validate that the Exam exists
             var exam = await unitOfWork.Repository<Domain.Entities.Exam>()
                 .GetByIdAsync(request.ExamId, cancellationToken);
 
-            if (exam == null)
-            {
+            if (exam is null)
                 return new ServiceResponse<TestCaseResponse>(
                     false,
                     $"Exam with id '{request.ExamId}' not found",
                     ErrorCode: "EXAM_NOT_FOUND"
                 );
-            }
 
             // Save test case files to file system first
             // This ensures consistency - if file write fails, we don't update DB

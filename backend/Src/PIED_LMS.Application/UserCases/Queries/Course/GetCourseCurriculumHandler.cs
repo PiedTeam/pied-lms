@@ -1,10 +1,7 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using PIED_LMS.Contract.Abstractions.Shared;
+using System.Text.Json;
 using PIED_LMS.Contract.Services.Course;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Abstractions;
-using System.Text.Json;
 
 namespace PIED_LMS.Application.UserCases.Queries.Course;
 
@@ -22,7 +19,7 @@ public class GetCourseCurriculumHandler(
             var course = await unitOfWork.Repository<Domain.Entities.Course>()
                 .GetByIdAsync(request.Id, cancellationToken);
 
-            if (course == null)
+            if (course is null)
             {
                 logger.LogWarning("Course with Id {CourseId} not found", request.Id);
                 return new ServiceResponse<List<CurriculumSectionDto>>(
@@ -32,13 +29,12 @@ public class GetCourseCurriculumHandler(
             }
 
             var curriculum = new List<CurriculumSectionDto>();
-            
+
             if (!string.IsNullOrWhiteSpace(course.Curriculum))
-            {
                 try
                 {
                     curriculum = JsonSerializer.Deserialize<List<CurriculumSectionDto>>(
-                        course.Curriculum, 
+                        course.Curriculum,
                         new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
                     ) ?? new List<CurriculumSectionDto>();
                 }
@@ -47,8 +43,7 @@ public class GetCourseCurriculumHandler(
                     logger.LogError(ex, "Failed to parse curriculum JSON for course {CourseId}", request.Id);
                     // Fallback to empty list or you could return an error
                 }
-            }
-            
+
             // For now, if it's empty and we need to return the dummy data the user requested 
             // when it's not set in the DB, we could do it here. But standard is to return what's in DB.
             if (curriculum.Count == 0)

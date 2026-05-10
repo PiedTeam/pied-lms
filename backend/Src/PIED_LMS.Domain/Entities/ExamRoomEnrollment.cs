@@ -8,7 +8,7 @@ public class ExamRoomEnrollment
     public DateTime EnrolledAt { get; set; } = DateTime.UtcNow;
     public bool EmailSent { get; set; }
     public DateTime? EmailSentAt { get; set; }
-    
+
     // Navigation properties
     public ExamRoom ExamRoom { get; set; } = null!;
     public ApplicationUser Student { get; set; } = null!;

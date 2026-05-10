@@ -1,10 +1,5 @@
-using Carter;
-using MediatR;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Routing;
 using PIED_LMS.Contract.Constants;
+using PIED_LMS.Contract.Services.Course;
 using PIED_LMS.Contract.Services.Enrollment;
 using PIED_LMS.Domain.Constants;
 using PIED_LMS.Presentation.Extensions;
@@ -84,8 +79,8 @@ public class EnrollmentEndpoints : ICarterModule
         IMediator mediator,
         HttpContext context)
     {
-        var query = new PIED_LMS.Contract.Services.Course.GetStudentAvailableCoursesQuery(
-            pageIndex > 0 ? pageIndex : 1, 
+        var query = new GetStudentAvailableCoursesQuery(
+            pageIndex > 0 ? pageIndex : 1,
             pageSize > 0 ? pageSize : 10,
             searchTerm,
             tag);
@@ -112,14 +107,13 @@ public class EnrollmentEndpoints : ICarterModule
         return result.ToActionResult(context);
     }
 
-    private static async Task<IResult> RejectEnrollment(Guid id, [FromBody] RejectRequest request, IMediator mediator, HttpContext context)
+    private static async Task<IResult> RejectEnrollment(Guid id, [FromBody] RejectRequest request, IMediator mediator,
+        HttpContext context)
     {
         var command = new Command.RejectEnrollmentCommand(id, request.Reason);
         var result = await mediator.Send(command);
         return result.ToActionResult(context);
     }
 }
-
-
 
 public record RejectRequest(string Reason);

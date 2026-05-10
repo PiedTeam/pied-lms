@@ -1,5 +1,3 @@
-using FluentValidation;
-
 namespace PIED_LMS.Contract.Services.Identity.Validators;
 
 public class GetAllUsersQueryValidator : AbstractValidator<GetAllUsersQuery>

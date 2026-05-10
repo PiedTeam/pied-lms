@@ -15,22 +15,22 @@ public class Course
     public string? Tags { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
-    
+
     public int Duration { get; set; }
     public string? Seats { get; set; }
     public string? Price { get; set; }
     public int Value { get; set; }
-    
+
     public string? Curriculum { get; set; }
     public string? Insight { get; set; }
-    
+
     public int MaxCapacity { get; set; }
     public int CurrentEnrollment { get; set; }
-    
+
     // Navigation properties
     public ICollection<ApplicationUser> Teachers { get; set; } = new List<ApplicationUser>();
     public ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();
-    
+
     // Self-referencing many-to-many for prerequisites
     public ICollection<Course> PrerequisiteCourses { get; set; } = new List<Course>();
     public ICollection<Course> PrerequisiteFor { get; set; } = new List<Course>();

@@ -1,8 +1,5 @@
-using Amazon.S3;
 using Amazon.S3.Model;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using PIED_LMS.Application.Options;
 using PIED_LMS.Contract.Abstractions.Storage;
 
@@ -10,9 +7,9 @@ namespace PIED_LMS.Infrastructure.Storage;
 
 public class S3FileStorageService : IFileStorageService
 {
+    private readonly ILogger<S3FileStorageService> _logger;
     private readonly IAmazonS3 _s3Client;
     private readonly S3Settings _s3Settings;
-    private readonly ILogger<S3FileStorageService> _logger;
 
     public S3FileStorageService(
         IAmazonS3 s3Client,
@@ -34,38 +31,33 @@ public class S3FileStorageService : IFileStorageService
         try
         {
             // Explicit guard clauses for input validation
-            if (folder == null)
+            if (folder is null)
                 throw new ArgumentNullException(nameof(folder));
-            
-            if (allowedExtensions == null)
+
+            if (allowedExtensions is null)
                 throw new ArgumentNullException(nameof(allowedExtensions));
-            
+
             if (string.IsNullOrWhiteSpace(folder))
                 throw new ArgumentException("Folder cannot be null, empty, or whitespace", nameof(folder));
-            
+
             if (allowedExtensions.Length == 0)
-                throw new ArgumentException("At least one allowed extension must be provided", nameof(allowedExtensions));
+                throw new ArgumentException("At least one allowed extension must be provided",
+                    nameof(allowedExtensions));
 
             // Validate file is not null
-            if (file == null || file.Length == 0)
-            {
+            if (file is null || file.Length == 0)
                 throw new ArgumentException("File is required and cannot be empty", nameof(file));
-            }
 
             // Validate file name before calling Path.GetExtension
             if (string.IsNullOrWhiteSpace(file.FileName))
-            {
                 throw new ArgumentException("File name cannot be null, empty, or whitespace", nameof(file));
-            }
 
             // Validate file extension with case-insensitive comparison
             var fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
             if (!allowedExtensions.Contains(fileExtension, StringComparer.OrdinalIgnoreCase))
-            {
                 throw new ArgumentException(
                     $"File extension '{fileExtension}' is not allowed. Allowed extensions: {string.Join(", ", allowedExtensions)}",
                     nameof(file));
-            }
 
             // Validate file size
             if (file.Length > maxSizeInBytes)
@@ -98,7 +90,7 @@ public class S3FileStorageService : IFileStorageService
             try
             {
                 var response = await _s3Client.PutObjectAsync(putRequest, timeoutCts.Token);
-                
+
                 _logger.LogInformation(
                     "File uploaded successfully to S3. Bucket: {BucketName}, Key: {ObjectKey}, Size: {FileSize} bytes, ETag: {ETag}",
                     _s3Settings.BucketName,
@@ -106,7 +98,8 @@ public class S3FileStorageService : IFileStorageService
                     file.Length,
                     response.ETag);
             }
-            catch (OperationCanceledException) when (timeoutCts.Token.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
+            catch (OperationCanceledException) when (timeoutCts.Token.IsCancellationRequested &&
+                                                     !cancellationToken.IsCancellationRequested)
             {
                 // Timeout occurred
                 _logger.LogError(
@@ -169,7 +162,8 @@ public class S3FileStorageService : IFileStorageService
 
             return true;
         }
-        catch (OperationCanceledException) when (timeoutCts.Token.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
+        catch (OperationCanceledException) when (timeoutCts.Token.IsCancellationRequested &&
+                                                 !cancellationToken.IsCancellationRequested)
         {
             // Timeout occurred - log and rethrow for caller to handle
             _logger.LogError(
@@ -206,9 +200,7 @@ public class S3FileStorageService : IFileStorageService
     public Task<string> GetFileUrlAsync(string fileKey)
     {
         if (string.IsNullOrWhiteSpace(fileKey))
-        {
             throw new ArgumentException("File key cannot be null or empty", nameof(fileKey));
-        }
 
         // Use CloudFront URL if configured, otherwise use S3 URL
         var baseUrl = !string.IsNullOrWhiteSpace(_s3Settings.CloudFrontUrl)
@@ -223,16 +215,13 @@ public class S3FileStorageService : IFileStorageService
     }
 
     /// <summary>
-    /// URL-encodes a file key while preserving path separators (/)
+    ///     URL-encodes a file key while preserving path separators (/)
     /// </summary>
     /// <param name="fileKey">The file key to encode</param>
     /// <returns>URL-encoded file key with preserved path separators</returns>
     private static string EncodeFileKey(string fileKey)
     {
-        if (string.IsNullOrWhiteSpace(fileKey))
-        {
-            return string.Empty;
-        }
+        if (string.IsNullOrWhiteSpace(fileKey)) return string.Empty;
 
         // Split by path separator, encode each segment, then rejoin
         var segments = fileKey.Split('/', StringSplitOptions.RemoveEmptyEntries);

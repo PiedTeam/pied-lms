@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Domain.Abstractions;
 using PIED_LMS.Domain.Entities;
 

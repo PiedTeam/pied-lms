@@ -1,9 +1,5 @@
-using System;
-using System.Collections.Generic;
 using System.Net;
 using System.Net.Mail;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using PIED_LMS.Application.Options;
 using PIED_LMS.Contract.Abstractions.Email;
 
@@ -23,7 +19,8 @@ public class SmtpEmailService : IEmailService
         ValidateEmailSettings();
     }
 
-    public async Task SendEmailAsync(string to, string subject, string body, CancellationToken cancellationToken = default)
+    public async Task SendEmailAsync(string to, string subject, string body,
+        CancellationToken cancellationToken = default)
     {
         try
         {
@@ -55,11 +52,11 @@ public class SmtpEmailService : IEmailService
     }
 
     public async Task<bool> SendExamRoomInvitationAsync(
-        string recipientEmail, 
+        string recipientEmail,
         string recipientName,
-        string roomName, 
-        string roomCode, 
-        DateTime startTime, 
+        string roomName,
+        string roomCode,
+        DateTime startTime,
         DateTime endTime,
         CancellationToken cancellationToken = default)
     {
@@ -67,14 +64,14 @@ public class SmtpEmailService : IEmailService
         {
             var subject = $"Invitation to Exam Room: {roomName}";
             var body = BuildExamRoomInvitationEmailBody(recipientName, roomName, roomCode, startTime, endTime);
-            
+
             await SendEmailAsync(recipientEmail, subject, body, cancellationToken);
             return true;
         }
         catch (Exception ex)
         {
             var maskedRecipientEmail = MaskEmail(recipientEmail);
-            _logger.LogError(ex, "Failed to send exam room invitation to {Email} for room {RoomName}", 
+            _logger.LogError(ex, "Failed to send exam room invitation to {Email} for room {RoomName}",
                 maskedRecipientEmail, roomName);
             return false;
         }
@@ -92,15 +89,16 @@ public class SmtpEmailService : IEmailService
         try
         {
             var subject = $"Course Assignment: {courseTitle}";
-            var body = BuildCourseAssignmentEmailBody(recipientName, courseTitle, startDate, endDate, courseManagementUrl);
-            
+            var body = BuildCourseAssignmentEmailBody(recipientName, courseTitle, startDate, endDate,
+                courseManagementUrl);
+
             await SendEmailAsync(recipientEmail, subject, body, cancellationToken);
             return true;
         }
         catch (Exception ex)
         {
             var maskedRecipientEmail = MaskEmail(recipientEmail);
-            _logger.LogError(ex, "Failed to send course assignment email to {Email} for course {CourseTitle}", 
+            _logger.LogError(ex, "Failed to send course assignment email to {Email} for course {CourseTitle}",
                 maskedRecipientEmail, courseTitle);
             return false;
         }
@@ -108,16 +106,10 @@ public class SmtpEmailService : IEmailService
 
     private static string MaskEmail(string email)
     {
-        if (string.IsNullOrWhiteSpace(email))
-        {
-            return "***";
-        }
+        if (string.IsNullOrWhiteSpace(email)) return "***";
 
         var atIndex = email.IndexOf('@');
-        if (atIndex <= 0 || atIndex == email.Length - 1)
-        {
-            return "***";
-        }
+        if (atIndex <= 0 || atIndex == email.Length - 1) return "***";
 
         var localPart = email[..atIndex];
         var domainPart = email[(atIndex + 1)..];
@@ -127,10 +119,10 @@ public class SmtpEmailService : IEmailService
     }
 
     private string BuildExamRoomInvitationEmailBody(
-        string recipientName, 
-        string roomName, 
-        string roomCode, 
-        DateTime startTime, 
+        string recipientName,
+        string roomName,
+        string roomCode,
+        DateTime startTime,
         DateTime endTime)
     {
         return $@"
@@ -275,7 +267,6 @@ public class SmtpEmailService : IEmailService
 
         // Validate email format
         if (!string.IsNullOrWhiteSpace(_emailSettings.SenderEmail))
-        {
             try
             {
                 var addr = new MailAddress(_emailSettings.SenderEmail);
@@ -286,7 +277,6 @@ public class SmtpEmailService : IEmailService
             {
                 errors.Add($"EmailSettings:SenderEmail has invalid format: {_emailSettings.SenderEmail}");
             }
-        }
 
         if (errors.Count > 0)
         {
@@ -295,7 +285,7 @@ public class SmtpEmailService : IEmailService
             throw new InvalidOperationException(errorMessage);
         }
 
-        _logger.LogInformation("Email service initialized successfully with host: {Host}:{Port}, sender: {SenderEmail}", 
+        _logger.LogInformation("Email service initialized successfully with host: {Host}:{Port}, sender: {SenderEmail}",
             _emailSettings.Host, _emailSettings.Port, _emailSettings.SenderEmail);
     }
 }

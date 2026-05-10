@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Authorization;
-
 namespace PIED_LMS.API.Filters;
 
 public sealed class SecurityRequirementsOperationFilter : IOperationFilter
@@ -14,7 +12,7 @@ public sealed class SecurityRequirementsOperationFilter : IOperationFilter
 
         operation.Security = new List<OpenApiSecurityRequirement>
         {
-            new OpenApiSecurityRequirement
+            new()
             {
                 { new OpenApiSecuritySchemeReference("Bearer", context.Document), new List<string>() }
             }

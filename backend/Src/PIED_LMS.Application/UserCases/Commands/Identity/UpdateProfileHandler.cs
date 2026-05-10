@@ -1,6 +1,3 @@
-using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Logging;
-using PIED_LMS.Contract.Abstractions.Shared;
 using PIED_LMS.Contract.Abstractions.Storage;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Entities;
@@ -17,30 +14,26 @@ public class UpdateProfileHandler(
         try
         {
             var user = await userManager.FindByIdAsync(request.UserId.ToString());
-            if (user == null)
-            {
-                return new ServiceResponse<string>(false, "User not found");
-            }
+            if (user is null) return new ServiceResponse<string>(false, "User not found");
 
             user.FirstName = request.FirstName;
             user.LastName = request.LastName;
             user.Bio = request.Bio;
 
             // Handle Profile Picture upload if provided
-            if (request.ProfilePicture != null)
+            if (request.ProfilePicture is not null)
             {
                 // Delete old picture from S3 if it exists
                 if (!string.IsNullOrWhiteSpace(user.ProfilePictureUrl))
-                {
                     try
                     {
                         await fileStorageService.DeleteFileAsync(user.ProfilePictureUrl);
                     }
                     catch (Exception ex)
                     {
-                        logger.LogWarning(ex, "Failed to delete old profile picture {Key} for user {UserId}", user.ProfilePictureUrl, user.Id);
+                        logger.LogWarning(ex, "Failed to delete old profile picture {Key} for user {UserId}",
+                            user.ProfilePictureUrl, user.Id);
                     }
-                }
 
                 // Upload new picture
                 var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
@@ -50,7 +43,7 @@ public class UpdateProfileHandler(
                     allowedExtensions,
                     5 * 1024 * 1024,
                     cancellationToken);
-                
+
                 user.ProfilePictureUrl = key;
             }
 
@@ -60,7 +53,8 @@ public class UpdateProfileHandler(
             if (!result.Succeeded)
             {
                 var errors = result.Errors.Select(e => e.Description).ToList();
-                logger.LogWarning("Failed to update profile for user {UserId}: {Errors}", user.Id, string.Join(", ", errors));
+                logger.LogWarning("Failed to update profile for user {UserId}: {Errors}", user.Id,
+                    string.Join(", ", errors));
                 return new ServiceResponse<string>(false, "Failed to update profile");
             }
 

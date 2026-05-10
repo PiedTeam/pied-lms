@@ -1,12 +1,14 @@
+using PIED_LMS.Domain.Compiler;
+
 namespace PIED_LMS.Application.Abstractions;
 
 /// <summary>
-/// Service for managing test case file storage
+///     Service for managing test case file storage
 /// </summary>
 public interface ITestCaseStorageService
 {
     /// <summary>
-    /// Saves test case input and output to file system and returns the storage paths
+    ///     Saves test case input and output to file system and returns the storage paths
     /// </summary>
     /// <param name="examId">The exam identifier</param>
     /// <param name="index">The test case index</param>
@@ -24,7 +26,7 @@ public interface ITestCaseStorageService
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Updates existing test case files
+    ///     Updates existing test case files
     /// </summary>
     /// <param name="examId">The exam identifier</param>
     /// <param name="index">The test case index</param>
@@ -42,7 +44,7 @@ public interface ITestCaseStorageService
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Deletes test case files from file system
+    ///     Deletes test case files from file system
     /// </summary>
     /// <param name="examId">The exam identifier</param>
     /// <param name="index">The test case index</param>
@@ -53,7 +55,7 @@ public interface ITestCaseStorageService
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Reads test case input content from file system
+    ///     Reads test case input content from file system
     /// </summary>
     /// <param name="inputPath">The relative path to the input file</param>
     /// <param name="cancellationToken">Cancellation token</param>
@@ -63,7 +65,7 @@ public interface ITestCaseStorageService
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Reads test case output content from file system
+    ///     Reads test case output content from file system
     /// </summary>
     /// <param name="outputPath">The relative path to the output file</param>
     /// <param name="cancellationToken">Cancellation token</param>
@@ -73,12 +75,12 @@ public interface ITestCaseStorageService
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Loads all test cases for an exam from file system
+    ///     Loads all test cases for an exam from file system
     /// </summary>
     /// <param name="examId">The exam identifier</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>A list of test cases sorted by index</returns>
-    Task<IReadOnlyList<Domain.Compiler.TestCase>> LoadTestCasesForExamAsync(
+    Task<IReadOnlyList<TestCase>> LoadTestCasesForExamAsync(
         Guid examId,
         CancellationToken cancellationToken = default);
 }

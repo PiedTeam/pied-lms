@@ -1,6 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using PIED_LMS.Contract.Abstractions.Shared;
 using PIED_LMS.Contract.Services.Course;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Abstractions;
@@ -21,7 +18,7 @@ public class GetCourseInsightHandler(
             var course = await unitOfWork.Repository<Domain.Entities.Course>()
                 .GetByIdAsync(request.Id, cancellationToken);
 
-            if (course == null)
+            if (course is null)
             {
                 logger.LogWarning("Course with Id {CourseId} not found", request.Id);
                 return new ServiceResponse<CourseInsightDto>(

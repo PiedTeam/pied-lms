@@ -416,7 +416,7 @@ public sealed class DockerCompilerService(
             await File.WriteAllTextAsync(
                 filePath,
                 testCases[index].Input,
-                new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
+                new UTF8Encoding(false),
                 cancellationToken);
         }
     }

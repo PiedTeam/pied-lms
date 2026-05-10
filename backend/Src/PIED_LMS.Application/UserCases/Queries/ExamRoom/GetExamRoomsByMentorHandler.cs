@@ -1,9 +1,7 @@
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Contract.Services.ExamRoom;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Abstractions;
-
 
 namespace PIED_LMS.Application.UserCases.Queries.ExamRoom;
 
@@ -21,14 +19,12 @@ public class GetExamRoomsByMentorHandler(
         {
             // Get current user ID from HttpContext claims
             var userIdClaim = httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
-            {
+            if (userIdClaim is null || !Guid.TryParse(userIdClaim.Value, out var userId))
                 return new ServiceResponse<PaginatedResponse<ExamRoomResponse>>(
                     false,
                     "User not authenticated",
                     ErrorCode: "UNAUTHORIZED"
                 );
-            }
 
             // Query exam rooms created by mentor
             IQueryable<Domain.Entities.ExamRoom> query = unitOfWork.Repository<Domain.Entities.ExamRoom>()
@@ -39,7 +35,6 @@ public class GetExamRoomsByMentorHandler(
             // Filter by status if provided
             var now = DateTime.UtcNow;
             if (!string.IsNullOrWhiteSpace(request.Status))
-            {
                 query = request.Status.ToLower() switch
                 {
                     "upcoming" => query.Where(er => er.StartTime > now),
@@ -47,12 +42,10 @@ public class GetExamRoomsByMentorHandler(
                     "completed" => query.Where(er => er.EndTime < now),
                     _ => query
                 };
-            }
 
-            IQueryable<Domain.Entities.ExamRoom> queryTyped = query;
+            var queryTyped = query;
 
             if (!string.IsNullOrWhiteSpace(request.Status))
-            {
                 queryTyped = request.Status.ToLower() switch
                 {
                     "upcoming" => queryTyped.Where(er => er.StartTime > now),
@@ -60,7 +53,6 @@ public class GetExamRoomsByMentorHandler(
                     "completed" => queryTyped.Where(er => er.EndTime < now),
                     _ => queryTyped
                 };
-            }
 
             // Get total count
             var totalCount = await queryTyped.CountAsync(cancellationToken);
@@ -76,10 +68,10 @@ public class GetExamRoomsByMentorHandler(
             var items = examRooms.Select(er =>
             {
                 var status = now < er.StartTime ? "Upcoming" :
-                            now > er.EndTime ? "Completed" : "Ongoing";
+                    now > er.EndTime ? "Completed" : "Ongoing";
 
                 // Since we included Exams, we can check IsDeleted on the existing navigation property
-                var examCount = er.ExamRoomExams.Count(ere => ere.Exam != null && !ere.Exam.IsDeleted);
+                var examCount = er.ExamRoomExams.Count(ere => ere.Exam is not null && !ere.Exam.IsDeleted);
 
                 return new ExamRoomResponse(
                     er.Id,

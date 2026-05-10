@@ -1,10 +1,4 @@
-using MediatR;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Routing;
 using PIED_LMS.Contract.Services.Identity;
-using Carter;
-using Microsoft.AspNetCore.Authorization;
 using PIED_LMS.Domain.Constants;
 using PIED_LMS.Presentation.Extensions;
 
@@ -29,7 +23,8 @@ public class AdminEndpoints : ICarterModule
         group.MapPost("/mentors/{userId}/approve", ApproveMentor)
             .WithName("ApproveMentor")
             .WithSummary("Approve a mentor application")
-            .WithDescription("Approve a user's application to become a mentor. Only administrators can perform this operation.")
+            .WithDescription(
+                "Approve a user's application to become a mentor. Only administrators can perform this operation.")
             .WithServiceResponseOpenApi<string>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound);
     }
 

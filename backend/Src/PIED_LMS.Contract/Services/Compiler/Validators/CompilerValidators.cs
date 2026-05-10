@@ -39,11 +39,11 @@ internal static partial class CompilerValidationRules
     public static bool IsSafeCode(string code)
     {
         return !_dangerousHeadersRegex.IsMatch(code)
-                && !_dangerousCallsRegex.IsMatch(code)
-                && !_inlineAsmRegex.IsMatch(code)
-                && !_pragmaRegex.IsMatch(code)
-                && !_hexOctalEscapeRegex.IsMatch(code)
-                && !_macroAbuseRegex.IsMatch(code);
+               && !_dangerousCallsRegex.IsMatch(code)
+               && !_inlineAsmRegex.IsMatch(code)
+               && !_pragmaRegex.IsMatch(code)
+               && !_hexOctalEscapeRegex.IsMatch(code)
+               && !_macroAbuseRegex.IsMatch(code);
     }
 
     [GeneratedRegex(@"\bmain\s*\(", RegexOptions.Compiled | RegexOptions.CultureInvariant)]
@@ -53,15 +53,22 @@ internal static partial class CompilerValidationRules
         @"#\s*include\s*<\s*(sys/socket\.h|netinet/in\.h|curl/curl\.h|windows\.h|sys/ptrace\.h|linux/user\.h|pthread\.h|thread|future)\s*>",
         RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant)]
     private static partial Regex MyRegex1();
-    [GeneratedRegex(@"\b(system|fork|exec|popen|kill|chroot|mount|fopen|remove|rename)\b", RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant)]
+
+    [GeneratedRegex(@"\b(system|fork|exec|popen|kill|chroot|mount|fopen|remove|rename)\b",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant)]
     private static partial Regex MyRegex2();
+
     [GeneratedRegex(@"\b(__asm__|asm|__volatile__)\b", RegexOptions.Compiled | RegexOptions.CultureInvariant)]
     private static partial Regex MyRegex3();
+
     [GeneratedRegex(@"#\s*pragma\b", RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant)]
     private static partial Regex MyRegex4();
+
     [GeneratedRegex(@"\\x[0-9A-Fa-f]{2}|\\[0-7]{3}", RegexOptions.Compiled | RegexOptions.CultureInvariant)]
     private static partial Regex MyRegex5();
-    [GeneratedRegex(@"#\s*define\s+\w+\s+(system|fork|exec|popen|kill|chroot|mount)", RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant)]
+
+    [GeneratedRegex(@"#\s*define\s+\w+\s+(system|fork|exec|popen|kill|chroot|mount)",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant)]
     private static partial Regex MyRegex6();
 }
 

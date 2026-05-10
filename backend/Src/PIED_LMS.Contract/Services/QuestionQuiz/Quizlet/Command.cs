@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Http;
-using PIED_LMS.Contract.Abstractions.Shared;
 using PIED_LMS.Contract.Services.Identity;
 
 namespace PIED_LMS.Contract.Services.Quizlet;

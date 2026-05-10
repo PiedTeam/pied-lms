@@ -21,27 +21,23 @@ public class GetVisibleTestCasesByExamHandler(
         {
             // Verify requester is authenticated
             var userIdClaim = httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out _))
-            {
+            if (userIdClaim is null || !Guid.TryParse(userIdClaim.Value, out _))
                 return new ServiceResponse<List<TestCaseResponse>>(
                     false,
                     "User not authenticated",
                     ErrorCode: "UNAUTHORIZED"
                 );
-            }
 
             // Validate that the Exam exists
             var exam = await unitOfWork.Repository<Domain.Entities.Exam>()
                 .GetByIdAsync(request.ExamId, cancellationToken);
 
-            if (exam == null)
-            {
+            if (exam is null)
                 return new ServiceResponse<List<TestCaseResponse>>(
                     false,
                     $"Exam with id '{request.ExamId}' not found",
                     ErrorCode: "EXAM_NOT_FOUND"
                 );
-            }
 
             // Fetch ONLY non-hidden test cases for the exam
             var testCases = unitOfWork.Repository<Domain.Entities.TestCase>()

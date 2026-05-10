@@ -2,6 +2,11 @@ namespace PIED_LMS.Domain.Entities;
 
 public class QuestionQuiz
 {
+    public QuestionQuiz()
+    {
+        Questions = [];
+    }
+
     public int Id { get; set; }
 
     public string Title { get; set; } = string.Empty;
@@ -22,9 +27,4 @@ public class QuestionQuiz
 
     public virtual ICollection<Question> Questions { get; set; }
     public virtual ApplicationUser User { get; set; } = null!;
-    public QuestionQuiz()
-    {
-        Questions = [];
-    }
-
 }

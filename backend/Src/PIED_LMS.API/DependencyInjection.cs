@@ -2,11 +2,9 @@ using PIED_LMS.API.Filters;
 using PIED_LMS.API.Middlewares;
 using PIED_LMS.Application.Abstractions;
 using PIED_LMS.Application.Options;
+using PIED_LMS.Application.UserCases.Commands.Submission;
 using PIED_LMS.Contract.Services.Compiler.Validators;
 using PIED_LMS.Infrastructure.Compiler;
-using Prometheus;
-
-
 
 namespace PIED_LMS.API;
 
@@ -46,15 +44,15 @@ public static class InfrastructureExtensions
             options.AddPolicy("AllowFrontend", policy =>
             {
                 policy.WithOrigins(
-                    "http://localhost:3000",
-                    "https://localhost:3000",
-                    "http://localhost:3001",
-                    "https://localhost:3001",
-                    "https://pied-lms.vercel.app"
-                )
-                .AllowAnyMethod()
-                .AllowAnyHeader()
-                .AllowCredentials();
+                        "http://localhost:3000",
+                        "https://localhost:3000",
+                        "http://localhost:3001",
+                        "https://localhost:3001",
+                        "https://pied-lms.vercel.app"
+                    )
+                    .AllowAnyMethod()
+                    .AllowAnyHeader()
+                    .AllowCredentials();
             });
         });
 
@@ -89,7 +87,7 @@ public static class InfrastructureExtensions
         services.AddProblemDetails();
         services.AddCarter();
         services.AddValidatorsFromAssemblyContaining<CompileCommandValidator>();
-        services.AddValidatorsFromAssemblyContaining<PIED_LMS.Application.UserCases.Commands.Submission.SubmitCodeCommandValidator>();
+        services.AddValidatorsFromAssemblyContaining<SubmitCodeCommandValidator>();
         services.AddHealthChecks()
             .AddCheck("self", () => HealthCheckResult.Healthy("API is reachable"));
         services.AddResponseCaching();
@@ -113,7 +111,8 @@ public static class InfrastructureExtensions
         app.UseExceptionHandler();
         app.UseSerilogRequestLogging(options =>
         {
-            options.MessageTemplate = "[Status: {StatusCode}] - HTTP {Method} {Path} responded {StatusCode} in {Elapsed:0.0000} ms{ErrorSummary}";
+            options.MessageTemplate =
+                "[Status: {StatusCode}] - HTTP {Method} {Path} responded {StatusCode} in {Elapsed:0.0000} ms{ErrorSummary}";
             options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
             {
                 if (httpContext.Items.TryGetValue("ErrorMessage", out var errorMessage))
@@ -141,10 +140,7 @@ public static class InfrastructureExtensions
         if (app.Environment.IsDevelopment())
         {
             app.UseSwagger();
-            app.UseSwaggerUI(c =>
-            {
-                c.DisplayOperationId();
-            });
+            app.UseSwaggerUI(c => { c.DisplayOperationId(); });
             app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
         }
 

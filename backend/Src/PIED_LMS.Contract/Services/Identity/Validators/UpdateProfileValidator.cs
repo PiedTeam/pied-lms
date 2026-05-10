@@ -1,6 +1,3 @@
-using FluentValidation;
-using PIED_LMS.Contract.Services.Identity;
-
 namespace PIED_LMS.Contract.Services.Identity.Validators;
 
 public class UpdateProfileValidator : AbstractValidator<UpdateProfileCommand>
@@ -18,13 +15,13 @@ public class UpdateProfileValidator : AbstractValidator<UpdateProfileCommand>
         RuleFor(x => x.Bio)
             .MaximumLength(2000).WithMessage("Bio must not exceed 2000 characters.")
             .When(x => !string.IsNullOrEmpty(x.Bio));
-            
+
         RuleFor(x => x.ProfilePicture)
-            .Must(file => file == null || file.Length <= 5 * 1024 * 1024)
+            .Must(file => file is null || file.Length <= 5 * 1024 * 1024)
             .WithMessage("Profile picture must not exceed 5MB.")
-            .Must(file => 
+            .Must(file =>
             {
-                if (file == null) return true;
+                if (file is null) return true;
                 var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
                 var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
                 return allowedExtensions.Contains(extension);

@@ -1,10 +1,5 @@
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using PIED_LMS.Application.Options;
 using PIED_LMS.Contract.Abstractions.Email;
-using PIED_LMS.Contract.Abstractions.Shared;
 using PIED_LMS.Contract.Services.Course;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Abstractions;
@@ -21,7 +16,8 @@ public class AssignTeachersHandler(
 {
     private readonly CourseManagementSettings _courseManagementSettings = courseManagementOptions.Value;
 
-    public async Task<ServiceResponse<string>> Handle(AssignTeachersCommand request, CancellationToken cancellationToken)
+    public async Task<ServiceResponse<string>> Handle(AssignTeachersCommand request,
+        CancellationToken cancellationToken)
     {
         try
         {
@@ -32,7 +28,7 @@ public class AssignTeachersHandler(
                 .FirstOrDefaultAsync(cancellationToken);
 
             // Return error if course not found
-            if (course == null)
+            if (course is null)
             {
                 logger.LogWarning("Course assignment failed: Course with ID {CourseId} not found", request.CourseId);
                 return new ServiceResponse<string>(false, "Course not found");
@@ -49,16 +45,16 @@ public class AssignTeachersHandler(
             {
                 var foundIds = teachers.Select(t => t.Id).ToList();
                 var missingIds = request.TeacherIds.Except(foundIds).ToList();
-                logger.LogWarning("Course assignment failed: Invalid teacher IDs: {MissingIds}", 
+                logger.LogWarning("Course assignment failed: Invalid teacher IDs: {MissingIds}",
                     string.Join(", ", missingIds));
                 return new ServiceResponse<string>(false, "One or more teacher IDs are invalid");
             }
 
             // Validate that all users have Teacher role
             var invalidTeachers = await ValidateTeacherRolesAsync(teachers, cancellationToken);
-            if (invalidTeachers.Any())
+            if (invalidTeachers.Count != 0)
             {
-                logger.LogWarning("Course assignment failed: Users without Teacher role: {InvalidTeachers}", 
+                logger.LogWarning("Course assignment failed: Users without Teacher role: {InvalidTeachers}",
                     string.Join(", ", invalidTeachers.Select(t => $"{t.FirstName} {t.LastName} ({t.Email})")));
                 return new ServiceResponse<string>(false, "One or more users do not have the Teacher role");
             }
@@ -67,10 +63,7 @@ public class AssignTeachersHandler(
             course.Teachers.Clear();
 
             // Add new teacher assignments to Teachers navigation property
-            foreach (var teacher in teachers)
-            {
-                course.Teachers.Add(teacher);
-            }
+            foreach (var teacher in teachers) course.Teachers.Add(teacher);
 
             // Update course using unitOfWork.Repository<Course>().Update()
             courseRepository.Update(course);
@@ -123,20 +116,18 @@ public class AssignTeachersHandler(
                                 CancellationToken.None);
 
                             emailSent = true;
-                            
+
                             if (attempt > 1)
-                            {
                                 logger.LogInformation(
                                     "Successfully sent course assignment email to teacher {TeacherId} ({Email}) for course {CourseId} on attempt {Attempt}",
                                     teacher.Id, teacher.Email, course.Id, attempt);
-                            }
                         }
                         catch (Exception ex)
                         {
                             if (attempt == retryAttempts)
                             {
                                 // Final failure - log error
-                                logger.LogError(ex, 
+                                logger.LogError(ex,
                                     "Failed to send course assignment email to teacher {TeacherId} ({Email}) for course {CourseId} after {Attempts} attempts",
                                     teacher.Id, teacher.Email, course.Id, retryAttempts);
                             }
@@ -169,8 +160,8 @@ public class AssignTeachersHandler(
             return new ServiceResponse<string>(false, "An unexpected error occurred while assigning teachers");
         }
         catch (Exception ex) when (ex is not OutOfMemoryException
-                                   and not StackOverflowException
-                                   and not AccessViolationException)
+                                       and not StackOverflowException
+                                       and not AccessViolationException)
         {
             logger.LogError(ex, "Unexpected error occurred while assigning teachers to course {CourseId}",
                 request.CourseId);
@@ -190,7 +181,7 @@ public class AssignTeachersHandler(
             .FindAll(r => r.Name == RoleConstants.Teacher)
             .FirstOrDefaultAsync(cancellationToken);
 
-        if (teacherRole == null)
+        if (teacherRole is null)
         {
             logger.LogError("Teacher role not found in the system");
             // If Teacher role doesn't exist, all users are invalid

@@ -18,7 +18,6 @@ public sealed class OptimizationLevelJsonConverter : JsonConverter<OptimizationL
         if (reader.TokenType != JsonTokenType.String) return new OptimizationLevel(string.Empty);
         var value = reader.GetString();
         return value is null ? new OptimizationLevel(string.Empty) : new OptimizationLevel(value);
-
     }
 
     public override void Write(Utf8JsonWriter writer, OptimizationLevel value, JsonSerializerOptions options) =>

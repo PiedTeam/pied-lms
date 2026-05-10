@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Contract.Services.ExamRoom;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Abstractions;
@@ -23,15 +22,11 @@ public class GetAllExamRoomsHandler(
                 .ThenInclude(ere => ere.Exam);
 
             // Handle IncludeDeleted parameter
-            if (!request.IncludeDeleted)
-            {
-                query = query.Where(er => !er.IsDeleted);
-            }
+            if (!request.IncludeDeleted) query = query.Where(er => !er.IsDeleted);
 
             // Filter by status if provided
             var now = DateTime.UtcNow;
             if (!string.IsNullOrWhiteSpace(request.Status))
-            {
                 query = request.Status.ToLower() switch
                 {
                     "upcoming" => query.Where(er => er.StartTime > now),
@@ -39,7 +34,6 @@ public class GetAllExamRoomsHandler(
                     "completed" => query.Where(er => er.EndTime < now),
                     _ => query
                 };
-            }
 
             // Get total count
             var totalCount = await query.CountAsync(cancellationToken);
@@ -55,9 +49,9 @@ public class GetAllExamRoomsHandler(
             var items = examRooms.Select(er =>
             {
                 var status = now < er.StartTime ? "Upcoming" :
-                            now > er.EndTime ? "Completed" : "Ongoing";
+                    now > er.EndTime ? "Completed" : "Ongoing";
 
-                var examCount = er.ExamRoomExams.Count(ere => ere.Exam != null && !ere.Exam.IsDeleted);
+                var examCount = er.ExamRoomExams.Count(ere => ere.Exam is not null && !ere.Exam.IsDeleted);
 
                 return new ExamRoomResponse(
                     er.Id,

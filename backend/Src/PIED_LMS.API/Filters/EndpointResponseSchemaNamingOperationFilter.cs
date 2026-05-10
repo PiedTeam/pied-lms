@@ -38,9 +38,7 @@ public sealed class EndpointResponseSchemaNamingOperationFilter : IOperationFilt
 
                 if (context.SchemaRepository.Schemas.TryGetValue(aliasSchemaId, out var existingAliasSchema) &&
                     !ReferenceEquals(existingAliasSchema, originalSchema))
-                {
                     continue;
-                }
 
                 context.SchemaRepository.Schemas[aliasSchemaId] = originalSchema;
                 mediaType.Schema = new OpenApiSchemaReference(aliasSchemaId, context.Document, string.Empty);

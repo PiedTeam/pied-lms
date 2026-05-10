@@ -1,13 +1,4 @@
-using Carter;
 using PIED_LMS.Contract.Services.QuestionQuiz;
-using MediatR;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Routing;
-using Microsoft.AspNetCore.Mvc;
-using PIED_LMS.Contract.Abstractions.Shared;
-using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Presentation.Extensions;
 
 namespace PIED_LMS.Presentation.APIs;
@@ -109,7 +100,8 @@ public class QuizletEndpoints : ICarterModule
             ? level.Value
             : QuizletLevel.Easy;
 
-        var command = new CreateQuestionQuizCommand(title, description ?? string.Empty, isPublished, isHidden, finalLevel, listQuestion);
+        var command = new CreateQuestionQuizCommand(title, description ?? string.Empty, isPublished, isHidden,
+            finalLevel, listQuestion);
         var result = await sender.Send(command);
         return result.ToActionResult(context);
     }
@@ -128,7 +120,8 @@ public class QuizletEndpoints : ICarterModule
         ISender sender,
         HttpContext context)
     {
-        var command = new UpdateQuestionQuizCommand(id, request.Title, request.IsPublished, request.IsHidden, request.Level, request.ListQuestion);
+        var command = new UpdateQuestionQuizCommand(id, request.Title, request.IsPublished, request.IsHidden,
+            request.Level, request.ListQuestion);
         var result = await sender.Send(command);
         return result.ToActionResult(context);
     }

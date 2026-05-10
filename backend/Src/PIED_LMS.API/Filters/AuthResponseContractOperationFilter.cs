@@ -1,16 +1,16 @@
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.OpenApi;
-
 namespace PIED_LMS.API.Filters;
 
 public sealed class AuthResponseContractOperationFilter : IOperationFilter
 {
     private const string UnauthorizedNoContentNote =
         "Authentication middleware can reject the request with an empty response body.";
+
     private const string ForbiddenNoContentNote =
         "Authorization middleware can reject the request with an empty response body.";
+
     private const string UnauthorizedWithBodyNote =
         "Business logic may return a response body; authentication middleware can also reject with an empty body.";
+
     private const string ForbiddenWithBodyNote =
         "Business logic may return a response body; authorization middleware can also reject with an empty body.";
 
@@ -22,8 +22,10 @@ public sealed class AuthResponseContractOperationFilter : IOperationFilter
         if (operation.Responses is null)
             return;
 
-        EnsureAuthResponse(operation.Responses, StatusCodes.Status401Unauthorized, UnauthorizedNoContentNote, UnauthorizedWithBodyNote);
-        EnsureAuthResponse(operation.Responses, StatusCodes.Status403Forbidden, ForbiddenNoContentNote, ForbiddenWithBodyNote);
+        EnsureAuthResponse(operation.Responses, StatusCodes.Status401Unauthorized, UnauthorizedNoContentNote,
+            UnauthorizedWithBodyNote);
+        EnsureAuthResponse(operation.Responses, StatusCodes.Status403Forbidden, ForbiddenNoContentNote,
+            ForbiddenWithBodyNote);
     }
 
     private static bool RequiresAuthorization(OperationFilterContext context)

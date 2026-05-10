@@ -1,11 +1,13 @@
+using PIED_LMS.Contract.Abstractions.Storage;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Entities;
 
-using PIED_LMS.Contract.Abstractions.Storage;
-
 namespace PIED_LMS.Application.UserCases.Queries;
 
-public class GetUserByIdQueryHandler(UserManager<ApplicationUser> userManager, IFileStorageService fileStorageService, ILogger<GetUserByIdQueryHandler> logger)
+public class GetUserByIdQueryHandler(
+    UserManager<ApplicationUser> userManager,
+    IFileStorageService fileStorageService,
+    ILogger<GetUserByIdQueryHandler> logger)
     : IRequestHandler<GetUserByIdQuery, ServiceResponse<UserResponse>>
 {
     public async Task<ServiceResponse<UserResponse>> Handle(GetUserByIdQuery request,
@@ -14,15 +16,13 @@ public class GetUserByIdQueryHandler(UserManager<ApplicationUser> userManager, I
         try
         {
             var user = await userManager.FindByIdAsync(request.UserId.ToString());
-            if (user == null)
+            if (user is null)
                 return new ServiceResponse<UserResponse>(false, "User not found");
 
             var roles = await userManager.GetRolesAsync(user);
             string? profilePicUrl = null;
             if (!string.IsNullOrWhiteSpace(user.ProfilePictureUrl))
-            {
                 profilePicUrl = await fileStorageService.GetFileUrlAsync(user.ProfilePictureUrl);
-            }
 
             var userResponse = new UserResponse(
                 user.Id,

@@ -1,5 +1,3 @@
-using MediatR;
-using PIED_LMS.Contract.Abstractions.Shared;
 using PIED_LMS.Contract.Services.Identity;
 
 namespace PIED_LMS.Contract.Services.QuestionQuiz;
@@ -49,5 +47,5 @@ public record QuestionResponse(
 public enum QuestionType
 {
     SingleChoice = 0,
-    MultipleChoice = 1,
+    MultipleChoice = 1
 }

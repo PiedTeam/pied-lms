@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace PIED_LMS.Application.Options;
 
 public class EmailSettings

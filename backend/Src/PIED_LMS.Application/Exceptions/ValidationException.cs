@@ -7,4 +7,5 @@ public abstract class ValidationException(IReadOnlyCollection<ValidationError> e
 {
     public IReadOnlyCollection<ValidationError> Errors { get; } = errors;
 }
+
 public abstract record ValidationError(string PropertyName, string ErrorMessage);

@@ -1,5 +1,5 @@
-using FluentValidation;
-using MediatR;
+using PIED_LMS.Contract.Services.Identity;
+using ValidationException = FluentValidation.ValidationException;
 
 namespace PIED_LMS.Application.Behaviors;
 
@@ -11,7 +11,7 @@ public class ValidationBehavior<TRequest, TResponse>(IEnumerable<IValidator<TReq
         TRequest request,
         RequestHandlerDelegate<TResponse> next,
         CancellationToken cancellationToken)
-{
+    {
         if (validators.Any())
         {
             var context = new ValidationContext<TRequest>(request);
@@ -20,15 +20,15 @@ public class ValidationBehavior<TRequest, TResponse>(IEnumerable<IValidator<TReq
                 validators.Select(v => v.ValidateAsync(context, cancellationToken)));
 
             var failures = validationResults
-                .Where(r => r.Errors.Any())
+                .Where(r => r.Errors.Count != 0)
                 .SelectMany(r => r.Errors)
                 .ToList();
 
-            if (failures.Any())
+            if (failures.Count != 0)
             {
                 // Nếu TResponse là ServiceResponse<T>, chúng ta trả về instance thất bại thay vì ném Exception
-                if (typeof(TResponse).IsGenericType && 
-                    typeof(TResponse).GetGenericTypeDefinition() == typeof(PIED_LMS.Contract.Services.Identity.ServiceResponse<>))
+                if (typeof(TResponse).IsGenericType &&
+                    typeof(TResponse).GetGenericTypeDefinition() == typeof(ServiceResponse<>))
                 {
                     var errors = failures
                         .GroupBy(x => x.PropertyName)
@@ -39,16 +39,16 @@ public class ValidationBehavior<TRequest, TResponse>(IEnumerable<IValidator<TReq
 
                     // Tạo một instance của ServiceResponse<T> với Success = false
                     return (TResponse)Activator.CreateInstance(
-                        typeof(TResponse), 
-                        false, 
-                        "Validation failed", 
-                        default, 
-                        errors, 
-                        false, 
+                        typeof(TResponse),
+                        false,
+                        "Validation failed",
+                        default,
+                        errors,
+                        false,
                         null)!;
                 }
 
-                throw new FluentValidation.ValidationException(failures);
+                throw new ValidationException(failures);
             }
         }
 

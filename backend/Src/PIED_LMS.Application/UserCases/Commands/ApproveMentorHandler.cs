@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Logging;
 using PIED_LMS.Contract.Abstractions.Email;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Constants;
@@ -6,8 +5,9 @@ using PIED_LMS.Domain.Entities;
 
 namespace PIED_LMS.Application.UserCases.Commands;
 
-public class ApproveMentorHandler(UserManager<ApplicationUser> userManager, 
-    IEmailService emailService, 
+public class ApproveMentorHandler(
+    UserManager<ApplicationUser> userManager,
+    IEmailService emailService,
     ILogger<ApproveMentorHandler> logger)
     : IRequestHandler<ApproveMentorCommand, ServiceResponse<string>>
 {
@@ -23,7 +23,7 @@ public class ApproveMentorHandler(UserManager<ApplicationUser> userManager,
 
         user.IsActive = true;
         var result = await userManager.UpdateAsync(user);
-        
+
         if (!result.Succeeded)
             return new ServiceResponse<string>(false, "Failed to approve mentor");
 
@@ -39,8 +39,7 @@ public class ApproveMentorHandler(UserManager<ApplicationUser> userManager,
             logger.LogError(ex, "Failed to send approval email to {Email}", user.Email);
             return new ServiceResponse<string>(true, "Approved (Warning: Failed to send email)");
         }
-        
+
         return new ServiceResponse<string>(true, "Approved");
     }
-
 }

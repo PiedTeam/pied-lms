@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Contract.Services.ExamRoom;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Abstractions;
@@ -20,14 +19,12 @@ public class GetAvailableExamRoomsForStudentHandler(
         {
             // Get current user ID and role from HttpContext claims
             var userIdClaim = httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
-            {
+            if (userIdClaim is null || !Guid.TryParse(userIdClaim.Value, out var userId))
                 return new ServiceResponse<PaginatedResponse<ExamRoomResponse>>(
                     false,
                     "User not authenticated",
                     ErrorCode: "UNAUTHORIZED"
                 );
-            }
 
             var user = httpContextAccessor.HttpContext?.User;
             var isAdmin = user?.IsInRole("Admin") ?? false;
@@ -44,7 +41,7 @@ public class GetAvailableExamRoomsForStudentHandler(
                 query = unitOfWork.Repository<Domain.Entities.ExamRoom>()
                     .FindAll(er => !er.IsDeleted)
                     .Include(er => er.ExamRoomExams)
-                        .ThenInclude(ere => ere.Exam);
+                    .ThenInclude(ere => ere.Exam);
 
                 // Get total count
                 var totalCount = await query.CountAsync(cancellationToken);
@@ -60,8 +57,8 @@ public class GetAvailableExamRoomsForStudentHandler(
                 var items = examRooms.Select(er =>
                 {
                     var status = now < er.StartTime ? "Upcoming" :
-                                now > er.EndTime ? "Completed" : "Ongoing";
-                    var examCount = er.ExamRoomExams.Count(ere => ere.Exam != null && !ere.Exam.IsDeleted);
+                        now > er.EndTime ? "Completed" : "Ongoing";
+                    var examCount = er.ExamRoomExams.Count(ere => ere.Exam is not null && !ere.Exam.IsDeleted);
 
                     return new ExamRoomResponse(
                         er.Id,
@@ -101,25 +98,25 @@ public class GetAvailableExamRoomsForStudentHandler(
 
             // If Student: return enrolled rooms with time window filter
             query = unitOfWork.Repository<Domain.Entities.ExamRoom>()
-                .FindAll(er => !er.IsDeleted && 
-                              er.StartTime <= now && 
-                              er.EndTime >= now &&
-                              er.Enrollments.Any(e => e.StudentId == userId))
+                .FindAll(er => !er.IsDeleted &&
+                               er.StartTime <= now &&
+                               er.EndTime >= now &&
+                               er.Enrollments.Any(e => e.StudentId == userId))
                 .Include(er => er.ExamRoomExams)
-                    .ThenInclude(ere => ere.Exam)
+                .ThenInclude(ere => ere.Exam)
                 .Include(er => er.Participations);
 
             // Exclude rooms where student has completed all exams
             var availableRooms = await query.ToListAsync(cancellationToken);
-            
+
             var filteredRooms = availableRooms.Where(er =>
             {
                 var examIds = er.ExamRoomExams
-                    .Where(ere => ere.Exam != null && !ere.Exam.IsDeleted)
+                    .Where(ere => ere.Exam is not null && !ere.Exam.IsDeleted)
                     .Select(ere => ere.ExamId)
                     .ToList();
 
-                if (!examIds.Any())
+                if (examIds.Count == 0)
                     return false;
 
                 var completedExamIds = er.Participations
@@ -145,7 +142,7 @@ public class GetAvailableExamRoomsForStudentHandler(
             var studentItems = paginatedRooms.Select(er =>
             {
                 var status = "Ongoing";
-                var examCount = er.ExamRoomExams.Count(ere => ere.Exam != null && !ere.Exam.IsDeleted);
+                var examCount = er.ExamRoomExams.Count(ere => ere.Exam is not null && !ere.Exam.IsDeleted);
 
                 return new ExamRoomResponse(
                     er.Id,

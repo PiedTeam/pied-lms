@@ -1,10 +1,3 @@
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Routing;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using Carter;
-
 namespace PIED_LMS.Presentation.APIs;
 
 public class FrontendLogRequest
@@ -27,7 +20,7 @@ public class LogBridgeEndpoints : ICarterModule
     }
 
     private static IResult LogFrontendMessage(
-        [FromBody] FrontendLogRequest request, 
+        [FromBody] FrontendLogRequest request,
         ILogger<LogBridgeEndpoints> logger)
     {
         using var scope = logger.BeginScope(new Dictionary<string, object>
@@ -36,7 +29,7 @@ public class LogBridgeEndpoints : ICarterModule
             { "FrontendContext", request.Context ?? string.Empty },
             { "StackTrace", request.StackTrace ?? string.Empty }
         });
-        
+
         var message = request.Message;
 
         switch (request.Level.ToLower())
@@ -58,4 +51,3 @@ public class LogBridgeEndpoints : ICarterModule
         return Results.Ok();
     }
 }
-

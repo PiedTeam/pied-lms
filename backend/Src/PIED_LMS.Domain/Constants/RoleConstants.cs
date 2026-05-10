@@ -1,4 +1,3 @@
-
 namespace PIED_LMS.Domain.Constants;
 
 public static class RoleConstants

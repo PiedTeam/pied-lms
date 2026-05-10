@@ -1,7 +1,7 @@
-using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Contract.Services.Exam;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Abstractions;
+using PIED_LMS.Domain.Entities;
 
 namespace PIED_LMS.Application.UserCases.Queries.Exam;
 
@@ -17,7 +17,7 @@ public class GetExamsByRoomHandler(
         try
         {
             // Query exams assigned to exam room via ExamRoomExam join table
-            var exams = await unitOfWork.Repository<Domain.Entities.ExamRoomExam>()
+            var exams = await unitOfWork.Repository<ExamRoomExam>()
                 .FindAll(ere => ere.ExamRoomId == request.ExamRoomId)
                 .Include(ere => ere.Exam)
                 .Where(ere => !ere.Exam.IsDeleted)

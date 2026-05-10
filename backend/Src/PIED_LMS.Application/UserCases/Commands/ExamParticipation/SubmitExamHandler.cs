@@ -1,6 +1,4 @@
-using System.Text.Json;
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Contract.Services.ExamParticipation;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Abstractions;
@@ -21,28 +19,24 @@ public class SubmitExamHandler(
         {
             // Get current user ID from HttpContext claims
             var userIdClaim = httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var studentId))
-            {
+            if (userIdClaim is null || !Guid.TryParse(userIdClaim.Value, out var studentId))
                 return new ServiceResponse<SubmitExamResponse>(
                     false,
                     "User not authenticated",
                     ErrorCode: "UNAUTHORIZED"
                 );
-            }
 
             // Find participation by ID
             var participation = await unitOfWork.Repository<Domain.Entities.ExamParticipation>()
                 .FindAll(p => p.Id == request.ParticipationId)
                 .FirstOrDefaultAsync(cancellationToken);
 
-            if (participation == null)
-            {
+            if (participation is null)
                 return new ServiceResponse<SubmitExamResponse>(
                     false,
                     "Exam participation not found",
                     ErrorCode: "NOT_FOUND"
                 );
-            }
 
             // Verify the participation belongs to the current student
             if (participation.StudentId != studentId)
@@ -63,13 +57,11 @@ public class SubmitExamHandler(
 
             // Check if already completed (final submission done)
             if (participation.IsCompleted)
-            {
                 return new ServiceResponse<SubmitExamResponse>(
                     false,
                     "Exam has already been submitted (final submission)",
                     ErrorCode: "ALREADY_SUBMITTED"
                 );
-            }
 
             var now = DateTime.UtcNow;
 
@@ -80,7 +72,7 @@ public class SubmitExamHandler(
                 participation.AnswersJson = request.SourceCode;
                 participation.SubmittedAt = now;
                 participation.IsCompleted = true;
-                
+
                 await unitOfWork.CommitAsync(cancellationToken);
 
                 logger.LogWarning(
@@ -113,7 +105,7 @@ public class SubmitExamHandler(
             {
                 participation.SubmittedAt = now;
                 participation.IsCompleted = true;
-                
+
                 logger.LogInformation(
                     "Exam final submission. ParticipationId: {ParticipationId}, StudentId: {StudentId}, SubmittedAt: {SubmittedAt}",
                     participation.Id,

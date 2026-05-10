@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Contract.Services.Exam;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Abstractions;
@@ -20,28 +19,24 @@ public class DeleteExamHandler(
         {
             // Get current user ID from HttpContext claims
             var userIdClaim = httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
-            {
+            if (userIdClaim is null || !Guid.TryParse(userIdClaim.Value, out var userId))
                 return new ServiceResponse<string>(
                     false,
                     "User not authenticated",
                     ErrorCode: "UNAUTHORIZED"
                 );
-            }
 
             // Find exam by ID
             var exam = await unitOfWork.Repository<Domain.Entities.Exam>()
                 .FindAll(e => e.Id == request.Id && !e.IsDeleted)
                 .FirstOrDefaultAsync(cancellationToken);
 
-            if (exam == null)
-            {
+            if (exam is null)
                 return new ServiceResponse<string>(
                     false,
                     "Exam not found",
                     ErrorCode: "NOT_FOUND"
                 );
-            }
 
             // Soft delete exam
             exam.IsDeleted = true;

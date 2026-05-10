@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Application.Abstractions;
 using PIED_LMS.Application.Options;
 using PIED_LMS.Contract.Services.Compiler;
@@ -17,8 +16,8 @@ public sealed class JudgeFromFileCommandHandler(
     ILogger<JudgeFromFileCommandHandler> logger)
     : IRequestHandler<JudgeFromFileCommand, ServiceResponse<JudgeResult>>
 {
-    private readonly CompilerOption _options = options.Value;
     private const int MaxJudgeScore = 100;
+    private readonly CompilerOption _options = options.Value;
 
     public async Task<ServiceResponse<JudgeResult>> Handle(
         JudgeFromFileCommand request,
@@ -35,8 +34,8 @@ public sealed class JudgeFromFileCommandHandler(
                 $"Requested memory limit exceeds container maximum ({_options.ContainerMemoryLimitMb} MB).",
                 null,
                 null,
-                IsNotFound: false,
-                ErrorCode: CompilerErrorCode.InvalidRequest);
+                false,
+                CompilerErrorCode.InvalidRequest);
 
         var timeLimit = request.TimeLimit ?? _options.DefaultTimeLimitMs;
 
@@ -44,44 +43,38 @@ public sealed class JudgeFromFileCommandHandler(
         var exam = await unitOfWork.Repository<Domain.Entities.Exam>()
             .GetByIdAsync(request.ExamId, cancellationToken);
 
-        if (exam == null)
-        {
+        if (exam is null)
             return new ServiceResponse<JudgeResult>(
                 false,
                 $"Exam with id '{request.ExamId}' not found",
                 null,
                 null,
-                IsNotFound: true,
-                ErrorCode: CompilerErrorCode.InvalidRequest);
-        }
+                true,
+                CompilerErrorCode.InvalidRequest);
 
         // Verify participation exists and belongs to this exam
         var participation = await unitOfWork.Repository<Domain.Entities.ExamParticipation>()
             .FindAll(p => p.Id == request.ParticipationId && p.ExamId == request.ExamId)
             .FirstOrDefaultAsync(cancellationToken);
 
-        if (participation == null)
-        {
+        if (participation is null)
             return new ServiceResponse<JudgeResult>(
                 false,
                 "Exam participation not found or does not belong to this exam",
                 null,
                 null,
-                IsNotFound: true,
-                ErrorCode: CompilerErrorCode.InvalidRequest);
-        }
+                true,
+                CompilerErrorCode.InvalidRequest);
 
         // Check if already completed (final submission)
         if (participation.IsCompleted)
-        {
             return new ServiceResponse<JudgeResult>(
                 false,
                 "Cannot judge code after final submission",
                 null,
                 null,
-                IsNotFound: false,
-                ErrorCode: CompilerErrorCode.InvalidRequest);
-        }
+                false,
+                CompilerErrorCode.InvalidRequest);
 
         // Load test cases from file system
         var testCases = await storageService.LoadTestCasesForExamAsync(
@@ -110,8 +103,8 @@ public sealed class JudgeFromFileCommandHandler(
                 serviceResult.ErrorMessage ?? "Server is busy.",
                 null,
                 null,
-                IsNotFound: false,
-                ErrorCode: serviceResult.ErrorCode);
+                false,
+                serviceResult.ErrorCode);
         }
 
         // Calculate score as percentage of passed test cases
@@ -137,7 +130,7 @@ public sealed class JudgeFromFileCommandHandler(
     }
 
     /// <summary>
-    /// Calculates score as percentage of passed test cases
+    ///     Calculates score as percentage of passed test cases
     /// </summary>
     private static int CalculateScore(int passed, int total)
     {
@@ -158,9 +151,9 @@ public sealed class JudgeFromFileCommandHandler(
         return new ServiceResponse<JudgeResult>(
             false,
             "Invalid request",
-            Data: null,
-            Errors: errors,
-            IsNotFound: false,
-            ErrorCode: CompilerErrorCode.InvalidRequest);
+            null,
+            errors,
+            false,
+            CompilerErrorCode.InvalidRequest);
     }
 }

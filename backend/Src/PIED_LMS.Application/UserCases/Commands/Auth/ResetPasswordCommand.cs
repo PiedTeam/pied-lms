@@ -1,4 +1,3 @@
-using PIED_LMS.Application.Abstractions;
 using PIED_LMS.Contract.Services.Identity;
 
 namespace PIED_LMS.Application.UserCases.Commands.Auth;

@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Authorization;
-using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Contract.Services.TestCase;
 using PIED_LMS.Presentation.Extensions;
 
@@ -17,7 +15,8 @@ public class TestCaseEndpoints : ICarterModule
         group.MapPost("", CreateTestCase)
             .WithName("CreateTestCase")
             .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
-            .WithServiceResponseOpenApi<TestCaseResponse>(ServiceResponseStatusProfile.OkOrBadRequestOrForbiddenOrNotFound);
+            .WithServiceResponseOpenApi<TestCaseResponse>(ServiceResponseStatusProfile
+                .OkOrBadRequestOrForbiddenOrNotFound);
         // GET /api/testcases/{examId}
         group.MapGet("/{examId:guid}", GetTestCasesByExam)
             .WithName("GetTestCasesByExam")

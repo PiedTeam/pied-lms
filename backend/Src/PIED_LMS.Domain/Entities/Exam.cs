@@ -12,7 +12,7 @@ public class Exam
     public DateTime? UpdatedAt { get; set; }
     public bool IsDeleted { get; set; }
     public DateTime? DeletedAt { get; set; }
-    
+
     // Navigation properties
     public ApplicationUser Creator { get; set; } = null!;
     public ICollection<ExamRoomExam> ExamRoomExams { get; set; } = [];
