@@ -14,6 +14,7 @@ public class CourseEndpoints : ICarterModule
         var group = app.MapGroup("/api/courses")
             .WithName("Courses")
             .WithOpenApi();
+            .WithOpenApi();
 
         // POST /api/courses
         group.MapPost("", CreateCourse)
@@ -21,6 +22,7 @@ public class CourseEndpoints : ICarterModule
             .WithOpenApi()
             .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator))
             .DisableAntiforgery()
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator))
             .Produces<ServiceResponse<int>>(StatusCodes.Status201Created)
             .Produces<ServiceResponse<int>>(StatusCodes.Status400BadRequest)
             .Accepts<IFormFile>("multipart/form-data");
@@ -39,6 +41,7 @@ public class CourseEndpoints : ICarterModule
         group.MapDelete("/{id:guid}", DeleteCourse)
             .WithName("DeleteCourse")
             .WithOpenApi()
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator))
             .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator))
             .Produces(StatusCodes.Status204NoContent)
             .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest);
@@ -70,14 +73,14 @@ public class CourseEndpoints : ICarterModule
         group.MapGet("/{id:guid}/curriculum", GetCourseCurriculum)
             .WithName("GetCourseCurriculum")
             .WithOpenApi()
-            .Produces<ServiceResponse<List<CurriculumSectionDto>>>(StatusCodes.Status200OK)
+            .Produces<ServiceResponse<List<CurriculumSectionDto>>>()
             .Produces<ServiceResponse<List<CurriculumSectionDto>>>(StatusCodes.Status404NotFound);
 
         // GET /api/courses/{id}/insight
         group.MapGet("/{id:guid}/insight", GetCourseInsight)
             .WithName("GetCourseInsight")
             .WithOpenApi()
-            .Produces<ServiceResponse<CourseInsightDto>>(StatusCodes.Status200OK)
+            .Produces<ServiceResponse<CourseInsightDto>>()
             .Produces<ServiceResponse<CourseInsightDto>>(StatusCodes.Status404NotFound);
     }
 
@@ -154,6 +157,7 @@ public class CourseEndpoints : ICarterModule
         var result = await mediator.Send(command);
 
         if (result.Success) return Results.NoContent();
+        if (result.Success) return Results.NoContent();
 
         return result.ToActionResult(context);
     }
@@ -182,6 +186,7 @@ public class CourseEndpoints : ICarterModule
             .Select(g => g.Key)
             .ToList();
 
+        if (duplicateIds.Count != 0)
         if (duplicateIds.Count != 0)
         {
             var errorResponse = new ServiceResponse<string>(

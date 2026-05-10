@@ -86,15 +86,16 @@ public record ApproveMentorCommand(Guid UserId) : IRequest<ServiceResponse<strin
 // Update Profile Commands
 public record UpdateProfileCommand(
     Guid UserId,
-    string FirstName,
-    string LastName,
+    string? FirstName,
+    string? LastName,
     string? Bio,
     IFormFile? ProfilePicture
 ) : IRequest<ServiceResponse<string>>;
 
-public sealed record UpdateProfileRequest(
-    string FirstName,
-    string LastName,
-    string? Bio,
-    IFormFile? ProfilePicture
-);
+public sealed record UpdateProfileRequest
+{
+    public string? FirstName { get; init; }
+    public string? LastName { get; init; }
+    public string? Bio { get; init; }
+    public IFormFile? ProfilePicture { get; init; }
+}

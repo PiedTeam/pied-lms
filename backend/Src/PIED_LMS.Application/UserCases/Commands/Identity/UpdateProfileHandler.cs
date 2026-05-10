@@ -16,9 +16,14 @@ public class UpdateProfileHandler(
             var user = await userManager.FindByIdAsync(request.UserId.ToString());
             if (user is null) return new ServiceResponse<string>(false, "User not found");
 
-            user.FirstName = request.FirstName;
-            user.LastName = request.LastName;
-            user.Bio = request.Bio;
+            if (!string.IsNullOrEmpty(request.FirstName))
+                user.FirstName = request.FirstName;
+
+            if (!string.IsNullOrEmpty(request.LastName))
+                user.LastName = request.LastName;
+
+            if (!string.IsNullOrEmpty(request.Bio))
+                user.Bio = request.Bio;
 
             // Handle Profile Picture upload if provided
             if (request.ProfilePicture is not null)
@@ -27,7 +32,7 @@ public class UpdateProfileHandler(
                 if (!string.IsNullOrWhiteSpace(user.ProfilePictureUrl))
                     try
                     {
-                        await fileStorageService.DeleteFileAsync(user.ProfilePictureUrl);
+                        await fileStorageService.DeleteFileAsync(user.ProfilePictureUrl, cancellationToken);
                     }
                     catch (Exception ex)
                     {
@@ -58,7 +63,6 @@ public class UpdateProfileHandler(
                 return new ServiceResponse<string>(false, "Failed to update profile");
             }
 
-            return new ServiceResponse<string>(true, "Profile updated successfully");
         }
         catch (Exception ex)
         {

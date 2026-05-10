@@ -41,6 +41,8 @@ public class AuthenticationEndpoints : ICarterModule
         group.MapPost("/reset-password", ResetPassword)
             .WithName("ResetPassword")
             .WithServiceResponseOpenApi<string>(ServiceResponseStatusProfile.OkOrBadRequest);
+            .WithName("ResetPassword")
+            .WithServiceResponseOpenApi<string>(ServiceResponseStatusProfile.OkOrBadRequest);
 
         group.MapPost("/assign-role", AssignRole)
             .WithName("AssignRole")
@@ -255,12 +257,19 @@ public class AuthenticationEndpoints : ICarterModule
         if (userIdClaim is null || !Guid.TryParse(userIdClaim.Value, out var userId))
             return Results.Unauthorized();
 
+        var form = await context.Request.ReadFormAsync(cancellationToken);
+
+        var firstName = form["firstName"].FirstOrDefault();
+        var lastName = form["lastName"].FirstOrDefault();
+        var bio = form["bio"].FirstOrDefault();
+        var profilePicture = form.Files.GetFile("profilePicture");
+
         var command = new UpdateProfileCommand(
             userId,
-            request.FirstName,
-            request.LastName,
-            request.Bio,
-            request.ProfilePicture
+            string.IsNullOrEmpty(firstName) ? null : firstName,
+            string.IsNullOrEmpty(lastName) ? null : lastName,
+            string.IsNullOrEmpty(bio) ? null : bio,
+            profilePicture
         );
 
         var result = await mediator.Send(command, cancellationToken);

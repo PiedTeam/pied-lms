@@ -17,6 +17,7 @@ public sealed class JudgeFromFileCommandHandler(
     : IRequestHandler<JudgeFromFileCommand, ServiceResponse<JudgeResult>>
 {
     private const int MaxJudgeScore = 100;
+    private const int MaxJudgeScore = 100;
     private readonly CompilerOption _options = options.Value;
 
     public async Task<ServiceResponse<JudgeResult>> Handle(
@@ -103,6 +104,8 @@ public sealed class JudgeFromFileCommandHandler(
                 serviceResult.ErrorMessage ?? "Server is busy.",
                 null,
                 null,
+                false,
+                serviceResult.ErrorCode);
                 false,
                 serviceResult.ErrorCode);
         }

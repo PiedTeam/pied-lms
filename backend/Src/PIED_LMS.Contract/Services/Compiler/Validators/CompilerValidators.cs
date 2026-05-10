@@ -1,5 +1,3 @@
-using System.Text.RegularExpressions;
-
 namespace PIED_LMS.Contract.Services.Compiler.Validators;
 
 internal static partial class CompilerValidationRules

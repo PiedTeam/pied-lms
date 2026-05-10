@@ -4,6 +4,7 @@ using PIED_LMS.Contract.Services.ExamRoom;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Presentation.Extensions;
 using ExamRoomAccessResponse = PIED_LMS.Contract.Services.ExamParticipation.ExamRoomAccessResponse;
+using ExamRoomAccessResponse = PIED_LMS.Contract.Services.ExamParticipation.ExamRoomAccessResponse;
 
 namespace PIED_LMS.Presentation.APIs;
 
@@ -62,16 +63,22 @@ public class ExamRoomEndpoints : ICarterModule
             .RequireAuthorization(new AuthorizeAttribute { Roles = "Student" })
             .WithServiceResponseOpenApi<PaginatedResponse<ExamRoomResponse>>(
                 ServiceResponseStatusProfile.OkOrBadRequest);
+            .WithServiceResponseOpenApi<PaginatedResponse<ExamRoomResponse>>(
+                ServiceResponseStatusProfile.OkOrBadRequest);
 
         group.MapGet("/{roomId}/exams/student", GetExamsInRoomForStudent)
             .WithName("GetExamsInRoomForStudent")
             .RequireAuthorization(new AuthorizeAttribute { Roles = "Student" })
             .WithServiceResponseOpenApi<List<ExamInRoomResponse>>(
                 ServiceResponseStatusProfile.OkOrBadRequestOrForbidden);
+            .WithServiceResponseOpenApi<List<ExamInRoomResponse>>(
+                ServiceResponseStatusProfile.OkOrBadRequestOrForbidden);
 
         group.MapGet("/available", GetAvailableExamRoomsForStudent)
             .WithName("GetAvailableExamRoomsForStudent")
             .RequireAuthorization()
+            .WithServiceResponseOpenApi<PaginatedResponse<ExamRoomResponse>>(
+                ServiceResponseStatusProfile.OkOrBadRequest);
             .WithServiceResponseOpenApi<PaginatedResponse<ExamRoomResponse>>(
                 ServiceResponseStatusProfile.OkOrBadRequest);
 
