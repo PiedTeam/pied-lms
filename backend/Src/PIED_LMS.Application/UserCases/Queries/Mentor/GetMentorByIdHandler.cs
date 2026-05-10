@@ -29,7 +29,7 @@ public class GetMentorByIdHandler(UserManager<ApplicationUser> userManager)
             user.LastName,
             user.Email ?? string.Empty,
             user.Bio,
-            user.AvatarUrl,
+            user.ProfilePictureUrl,
             user.IsActive
         );
 

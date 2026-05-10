@@ -124,8 +124,6 @@ public class GetCourseByIdHandler(
             course.CreatedAt,
             course.UpdatedAt,
             course.Value
-            course.UpdatedAt,
-            course.Value
         );
     }
 }

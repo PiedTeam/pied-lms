@@ -12,48 +12,41 @@ public partial class ChangeCourseFromIntegerToGuid : Migration
     /// <inheritdoc />
     protected override void Up(MigrationBuilder migrationBuilder)
     {
-        migrationBuilder.AlterColumn<Guid>(
-            name: "course_id",
-            table: "enrollments",
-            type: "uuid",
-            nullable: false,
-            oldClrType: typeof(int),
-            oldType: "integer");
+        migrationBuilder.DropForeignKey(name: "fk_enrollments_courses_course_id", table: "enrollments");
+        migrationBuilder.DropForeignKey(name: "fk_course_mentors_courses_course_id", table: "course_mentors");
+        migrationBuilder.DropForeignKey(name: "fk_course_prerequisites_courses_course_id", table: "course_prerequisites");
+        migrationBuilder.DropForeignKey(name: "fk_course_prerequisites_courses_prerequisite_course_id", table: "course_prerequisites");
 
-        migrationBuilder.AlterColumn<Guid>(
-            name: "id",
-            table: "courses",
-            type: "uuid",
-            nullable: false,
-            oldClrType: typeof(int),
-            oldType: "integer")
-            .OldAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+        migrationBuilder.Sql("ALTER TABLE courses ALTER COLUMN id DROP IDENTITY IF EXISTS;");
+        migrationBuilder.Sql("ALTER TABLE courses ALTER COLUMN id TYPE uuid USING (id::text::uuid);");
 
-        migrationBuilder.AlterColumn<Guid>(
-            name: "prerequisite_course_id",
-            table: "course_prerequisites",
-            type: "uuid",
-            nullable: false,
-            oldClrType: typeof(int),
-            oldType: "integer");
+        migrationBuilder.Sql("ALTER TABLE enrollments ALTER COLUMN course_id TYPE uuid USING (course_id::text::uuid);");
+        migrationBuilder.Sql("ALTER TABLE course_mentors ALTER COLUMN course_id TYPE uuid USING (course_id::text::uuid);");
+        migrationBuilder.Sql("ALTER TABLE course_prerequisites ALTER COLUMN course_id TYPE uuid USING (course_id::text::uuid);");
+        migrationBuilder.Sql("ALTER TABLE course_prerequisites ALTER COLUMN prerequisite_course_id TYPE uuid USING (prerequisite_course_id::text::uuid);");
 
-        migrationBuilder.AlterColumn<Guid>(
-            name: "course_id",
-            table: "course_prerequisites",
-            type: "uuid",
-            nullable: false,
-            oldClrType: typeof(int),
-            oldType: "integer");
+        migrationBuilder.AlterColumn<Guid>(name: "id", table: "courses", type: "uuid", nullable: false);
+        migrationBuilder.AlterColumn<Guid>(name: "course_id", table: "enrollments", type: "uuid", nullable: false);
+        migrationBuilder.AlterColumn<Guid>(name: "course_id", table: "course_mentors", type: "uuid", nullable: false);
+        migrationBuilder.AlterColumn<Guid>(name: "course_id", table: "course_prerequisites", type: "uuid", nullable: false);
+        migrationBuilder.AlterColumn<Guid>(name: "prerequisite_course_id", table: "course_prerequisites", type: "uuid", nullable: false);
 
-        migrationBuilder.AlterColumn<Guid>(
-            name: "course_id",
-            table: "course_mentors",
-            type: "uuid",
-            nullable: false,
-            oldClrType: typeof(int),
-            oldType: "integer");
+        migrationBuilder.AddForeignKey(
+            name: "fk_enrollments_courses_course_id", table: "enrollments", column: "course_id",
+            principalTable: "courses", principalColumn: "id", onDelete: ReferentialAction.Cascade);
+
+        migrationBuilder.AddForeignKey(
+            name: "fk_course_mentors_courses_course_id", table: "course_mentors", column: "course_id",
+            principalTable: "courses", principalColumn: "id", onDelete: ReferentialAction.Cascade);
+
+        migrationBuilder.AddForeignKey(
+            name: "fk_course_prerequisites_courses_course_id", table: "course_prerequisites", column: "course_id",
+            principalTable: "courses", principalColumn: "id", onDelete: ReferentialAction.Cascade);
+
+        migrationBuilder.AddForeignKey(
+            name: "fk_course_prerequisites_courses_prerequisite_course_id", table: "course_prerequisites", column: "prerequisite_course_id",
+            principalTable: "courses", principalColumn: "id", onDelete: ReferentialAction.Cascade);
     }
-
     /// <inheritdoc />
     protected override void Down(MigrationBuilder migrationBuilder)
     {

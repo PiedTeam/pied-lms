@@ -22,7 +22,7 @@ public class GetAllMentorsSimpleHandler(UserManager<ApplicationUser> userManager
             .Select(u => new MentorSimpleDto(
                 u.Id,
                 $"{u.FirstName} {u.LastName}",
-                u.AvatarUrl
+                u.ProfilePictureUrl
             ))
             .OrderBy(u => u.FullName)
             .ToList();

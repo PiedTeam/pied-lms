@@ -27,7 +27,7 @@ public class UpdateProfileHandler(
                 if (!string.IsNullOrWhiteSpace(user.ProfilePictureUrl))
                     try
                     {
-                        await fileStorageService.DeleteFileAsync(user.AvatarUrl);
+                        await fileStorageService.DeleteFileAsync(user.ProfilePictureUrl);
                     }
                     catch (Exception ex)
                     {
@@ -38,7 +38,7 @@ public class UpdateProfileHandler(
                 // Upload new picture
                 var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
                 var key = await fileStorageService.SaveFileAsync(
-                    request.Avatar,
+                    request.ProfilePicture,
                     "profiles",
                     allowedExtensions,
                     5 * 1024 * 1024,

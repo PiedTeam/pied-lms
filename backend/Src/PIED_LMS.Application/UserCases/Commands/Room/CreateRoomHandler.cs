@@ -41,7 +41,7 @@ public class CreateTestRoomHandler(
                 StartTime = request.StartTime,
                 EndTime = request.EndTime,
                 JoinCode = joinCode,
-                CreatedBy = teacherId,
+                CreatedBy = mentorId,
                 CreatedAt = DateTimeOffset.UtcNow
             };
 

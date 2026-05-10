@@ -95,8 +95,8 @@ public class QuizletEndpoints : ICarterModule
             ? request.Level.Value
             : QuizletLevel.Easy;
 
-        var command = new CreateQuestionQuizCommand(title, description ?? string.Empty, isPublished, isHidden,
-            finalLevel, listQuestion);
+        var command = new CreateQuestionQuizCommand(request.Title, request.Description ?? string.Empty, request.IsPublished, request.IsHidden,
+            finalLevel, request.ListQuestion);
         var result = await sender.Send(command);
         return result.ToActionResult(context);
     }

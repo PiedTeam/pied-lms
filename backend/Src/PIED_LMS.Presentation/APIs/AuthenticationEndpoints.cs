@@ -221,6 +221,7 @@ public class AuthenticationEndpoints : ICarterModule
     private static async Task<IResult> ResetPassword(
         ResetPasswordRequest request,
         IMediator mediator,
+        HttpContext context,
         CancellationToken cancellationToken)
     {
         var command = new ResetPasswordCommand(
@@ -259,7 +260,7 @@ public class AuthenticationEndpoints : ICarterModule
             request.FirstName,
             request.LastName,
             request.Bio,
-            request.Avatar
+            request.ProfilePicture
         );
 
         var result = await mediator.Send(command, cancellationToken);

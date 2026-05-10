@@ -89,12 +89,12 @@ public record UpdateProfileCommand(
     string FirstName,
     string LastName,
     string? Bio,
-    IFormFile? Avatar
+    IFormFile? ProfilePicture
 ) : IRequest<ServiceResponse<string>>;
 
 public sealed record UpdateProfileRequest(
     string FirstName,
     string LastName,
     string? Bio,
-    IFormFile? Avatar
+    IFormFile? ProfilePicture
 );

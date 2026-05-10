@@ -42,7 +42,7 @@ public class GetMentorsHandler(UserManager<ApplicationUser> userManager)
                 u.LastName,
                 u.Email ?? string.Empty,
                 u.Bio,
-                u.AvatarUrl,
+                u.ProfilePictureUrl,
                 u.IsActive
             ))
             .ToList();

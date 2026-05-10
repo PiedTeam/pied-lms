@@ -8,7 +8,7 @@ public class GetUserByIdQueryHandler(
     UserManager<ApplicationUser> userManager,
     IFileStorageService fileStorageService,
     ILogger<GetUserByIdQueryHandler> logger)
-    : IRequestHandler<GetUserByIdQuery, ServiceResponse<UserResponse>>
+    : IRequestHandler<GetUserByIdQuery, ServiceResponse<UserDto>>
 {
     public async Task<ServiceResponse<UserDto>> Handle(GetUserByIdQuery request,
         CancellationToken cancellationToken)
@@ -17,7 +17,7 @@ public class GetUserByIdQueryHandler(
         {
             var user = await userManager.FindByIdAsync(request.UserId.ToString());
             if (user is null)
-                return new ServiceResponse<UserResponse>(false, "User not found");
+                return new ServiceResponse<UserDto>(false, "User not found");
 
             var roles = await userManager.GetRolesAsync(user);
             

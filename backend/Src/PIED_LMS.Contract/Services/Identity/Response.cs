@@ -20,7 +20,7 @@ public record UserDto(
     DateTime CreatedAt,
     List<string> Roles,
     string? Bio,
-    string? AvatarUrl
+    string? ProfilePictureUrl
 );
 
 // Authentication Response

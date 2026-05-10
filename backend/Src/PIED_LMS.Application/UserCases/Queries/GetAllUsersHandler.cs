@@ -8,7 +8,7 @@ public class GetAllUsersQueryHandler(
     UserManager<ApplicationUser> userManager,
     IFileStorageService fileStorageService,
     ILogger<GetAllUsersQueryHandler> logger)
-    : IRequestHandler<GetAllUsersQuery, ServiceResponse<PaginatedResponse<UserResponse>>>
+    : IRequestHandler<GetAllUsersQuery, ServiceResponse<PaginatedResponse<UserDto>>>
 {
     public async Task<ServiceResponse<PaginatedResponse<UserDto>>> Handle(GetAllUsersQuery request,
         CancellationToken cancellationToken)

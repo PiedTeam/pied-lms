@@ -22,15 +22,15 @@ public class GetMeHandler(
         var roles = await userManager.GetRolesAsync(user);
         
         string? profilePicUrl = null;
-        if (!string.IsNullOrWhiteSpace(user.AvatarUrl))
+        if (!string.IsNullOrWhiteSpace(user.ProfilePictureUrl))
         {
             try
             {
-                profilePicUrl = await fileStorageService.GetFileUrlAsync(user.AvatarUrl);
+                profilePicUrl = await fileStorageService.GetFileUrlAsync(user.ProfilePictureUrl);
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Failed to resolve profile picture URL for user {UserId}. Key: {Key}", user.Id, user.AvatarUrl);
+                logger.LogWarning(ex, "Failed to resolve profile picture URL for user {UserId}. Key: {Key}", user.Id, user.ProfilePictureUrl);
             }
         }
 

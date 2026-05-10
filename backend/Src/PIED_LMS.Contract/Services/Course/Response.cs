@@ -20,8 +20,6 @@ public record CourseDto(
     DateTime CreatedAt,
     DateTime? UpdatedAt,
     int Value
-    DateTime? UpdatedAt,
-    int Value
 );
 
 // Course Mentor DTO (simplified for course context)
@@ -31,7 +29,7 @@ public record CourseMentorDto(
     string LastName,
     string Email,
     string? Bio,
-    string? AvatarUrl
+    string? ProfilePictureUrl
    
 );
 
@@ -65,18 +63,6 @@ public record PagedResult<T>(
     int TotalCount,
     int PageNumber,
     int PageSize
-);
-
-// Curriculum Section DTO
-public record CurriculumSectionDto(
-    string Title,
-    string Summary,
-    List<string> Content
-);
-
-// Course Insight DTO
-public record CourseInsightDto(
-    string Insight
 );
 
 // Curriculum Section DTO

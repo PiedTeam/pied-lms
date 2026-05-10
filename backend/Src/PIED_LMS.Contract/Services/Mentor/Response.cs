@@ -6,12 +6,12 @@ public record MentorDto(
     string LastName,
     string Email,
     string? Bio,
-    string? AvatarUrl,
+    string? ProfilePictureUrl,
     bool IsActive
 );
 
 public record MentorSimpleDto(
     Guid Id,
     string FullName,
-    string? AvatarUrl
+    string? ProfilePictureUrl
 );
