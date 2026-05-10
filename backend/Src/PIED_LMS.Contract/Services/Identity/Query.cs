@@ -3,6 +3,9 @@ namespace PIED_LMS.Contract.Services.Identity;
 // Get User By ID Query
 public record GetUserByIdQuery(Guid UserId) : IRequest<ServiceResponse<UserResponse>>;
 
+// Get Profile Query
+public record GetProfileQuery(Guid UserId) : IRequest<ServiceResponse<UserResponse>>;
+
 // Get All Users Query
 public record GetAllUsersQuery(int PageNumber = 1, int PageSize = 10)
     : IRequest<ServiceResponse<PaginatedResponse<UserResponse>>>;

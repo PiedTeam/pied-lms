@@ -56,6 +56,12 @@ public class AuthenticationEndpoints : ICarterModule
             .Produces<ServiceResponse<string>>()
             .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest);
 
+        group.MapGet("/profile", GetProfile)
+            .WithName("GetProfile")
+            .WithOpenApi()
+            .RequireAuthorization()
+            .WithServiceResponseOpenApi<UserResponse>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound);
+
         group.MapGet("/users/{id}", GetUserById)
             .WithName("GetUserById")
             .RequireAuthorization(new AuthorizeAttribute { Roles = RoleConstants.Administrator })
@@ -260,6 +266,20 @@ public class AuthenticationEndpoints : ICarterModule
 
         var result = await mediator.Send(command, cancellationToken);
         return result.Success ? Results.Ok(result) : Results.BadRequest(result);
+    }
+
+    private static async Task<IResult> GetProfile(
+        HttpContext context,
+        IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        var userIdClaim = context.User.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+            return Results.Unauthorized();
+
+        var query = new GetProfileQuery(userId);
+        var result = await mediator.Send(query, cancellationToken);
+        return result.Success ? Results.Ok(result) : Results.NotFound(result);
     }
 
     private static async Task<IResult> GetUserById(
