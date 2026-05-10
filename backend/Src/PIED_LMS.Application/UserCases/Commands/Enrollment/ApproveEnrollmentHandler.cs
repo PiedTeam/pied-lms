@@ -18,7 +18,6 @@ namespace PIED_LMS.Application.UserCases.Commands.Enrollment;
 public class ApproveEnrollmentHandler(
     IUnitOfWork unitOfWork,
     ICourseLockingService courseLockingService,
-    UserManager<ApplicationUser> userManager,
     IEmailService emailService,
     IHttpContextAccessor httpContextAccessor,
     ILogger<ApproveEnrollmentHandler> logger)

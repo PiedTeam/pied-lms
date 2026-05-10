@@ -198,7 +198,7 @@ public class AuthenticationEndpoints : ICarterModule
 
         var command = new LogoutCommand(userId, refreshToken ?? string.Empty, RevokeAll: string.IsNullOrEmpty(refreshToken));
         var result = await mediator.Send(command, cancellationToken);
-        return result.Success ? Results.Ok(result) : Results.BadRequest(result);
+        return result.ToActionResult(context);
     }
 
     private static async Task<IResult> ChangePassword(
@@ -219,11 +219,12 @@ public class AuthenticationEndpoints : ICarterModule
         );
 
         var result = await mediator.Send(command, cancellationToken);
-        return result.Success ? Results.Ok(result) : Results.BadRequest(result);
+        return result.ToActionResult(context);
     }
     private static async Task<IResult> ResetPassword(
        ResetPasswordRequest request,
        IMediator mediator,
+       HttpContext context,
        CancellationToken cancellationToken)
     {
         var command = new PIED_LMS.Application.UserCases.Commands.Auth.ResetPasswordCommand(
@@ -233,17 +234,18 @@ public class AuthenticationEndpoints : ICarterModule
         );
 
         var result = await mediator.Send(command, cancellationToken);
-        return result.Success ? Results.Ok(result) : Results.BadRequest(result);
+        return result.ToActionResult(context);
     }
 
     private static async Task<IResult> AssignRole(
         AssignRoleRequest request,
         IMediator mediator,
+        HttpContext context,
         CancellationToken cancellationToken)
     {
         var command = new AssignRoleCommand(request.UserId, request.RoleName);
         var result = await mediator.Send(command, cancellationToken);
-        return result.Success ? Results.Ok(result) : Results.BadRequest(result);
+        return result.ToActionResult(context);
     }
 
     private static async Task<IResult> UpdateProfile(
@@ -265,7 +267,7 @@ public class AuthenticationEndpoints : ICarterModule
         );
 
         var result = await mediator.Send(command, cancellationToken);
-        return result.Success ? Results.Ok(result) : Results.BadRequest(result);
+        return result.ToActionResult(context);
     }
 
     private static async Task<IResult> GetProfile(
@@ -279,37 +281,40 @@ public class AuthenticationEndpoints : ICarterModule
 
         var query = new GetProfileQuery(userId);
         var result = await mediator.Send(query, cancellationToken);
-        return result.Success ? Results.Ok(result) : Results.NotFound(result);
+        return result.ToActionResult(context);
     }
 
     private static async Task<IResult> GetUserById(
         Guid id,
         IMediator mediator,
+        HttpContext context,
         CancellationToken cancellationToken)
     {
         var query = new GetUserByIdQuery(id);
         var result = await mediator.Send(query, cancellationToken);
-        return result.Success ? Results.Ok(result) : Results.NotFound(result);
+        return result.ToActionResult(context);
     }
 
     private static async Task<IResult> GetAllUsers(
         [AsParameters] GetAllUsersRequest request,
         IMediator mediator,
+        HttpContext context,
         CancellationToken cancellationToken)
     {
         var query = new GetAllUsersQuery(request.PageNumber, request.PageSize);
         var result = await mediator.Send(query, cancellationToken);
-        return result.Success ? Results.Ok(result) : Results.BadRequest(result);
+        return result.ToActionResult(context);
     }
 
     private static async Task<IResult> GetAllStudents(
         [AsParameters] GetAllStudentsRequest request,
         IMediator mediator,
+        HttpContext context,
         CancellationToken cancellationToken)
     {
         var query = new GetAllStudentsQuery(request.PageNumber, request.PageSize);
         var result = await mediator.Send(query, cancellationToken);
-        return result.Success ? Results.Ok(result) : Results.BadRequest(result);
+        return result.ToActionResult(context);
     }
 }
 
