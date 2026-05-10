@@ -15,5 +15,5 @@ public class CourseManagementSettings
     [Range(100, 10000, ErrorMessage = "Email retry delay must be between 100 and 10000 milliseconds")]
     public int EmailRetryDelayMs { get; set; } = 1000;
 
-    public string GetCourseUrl(int courseId) => $"{BaseUrl.TrimEnd('/')}/courses/{courseId}";
+    public string GetCourseUrl(Guid courseId) => $"{BaseUrl.TrimEnd('/')}/courses/{courseId}";
 }

@@ -7,7 +7,7 @@ public static class Command
 {
     // Student requests enrollment
     public record EnrollCourseCommand(
-        int CourseId,
+        Guid CourseId,
         Microsoft.AspNetCore.Http.IFormFile PaymentProof,
         string? Notes) : IRequest<ServiceResponse<Guid>>;
 

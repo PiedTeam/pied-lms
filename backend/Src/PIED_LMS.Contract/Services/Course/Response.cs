@@ -4,7 +4,7 @@ namespace PIED_LMS.Contract.Services.Course;
 
 // Course DTO
 public record CourseDto(
-    int Id,
+    Guid Id,
     string Title,
     string? Description,
     string? ThumbnailUrl,
@@ -34,13 +34,13 @@ public record CourseMentorDto(
 
 // Prerequisite DTO
 public record PrerequisiteDto(
-    int Id,
+    Guid Id,
     string Title
 );
 
 // Student Available Course DTO
 public record StudentAvailableCourseDto(
-    int Id,
+    Guid Id,
     string Title,
     string? Description,
     string? ThumbnailUrl,

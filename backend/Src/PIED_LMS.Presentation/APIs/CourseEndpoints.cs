@@ -28,7 +28,7 @@ public class CourseEndpoints : ICarterModule
             .Accepts<IFormFile>("multipart/form-data");
 
         // PUT /api/courses/{id}
-        group.MapPut("/{id:int}", UpdateCourse)
+        group.MapPut("/{id:guid}", UpdateCourse)
             .WithName("UpdateCourse")
             .WithOpenApi()
             .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator))
@@ -38,7 +38,7 @@ public class CourseEndpoints : ICarterModule
             .Accepts<IFormFile>("multipart/form-data");
 
         // DELETE /api/courses/{id}
-        group.MapDelete("/{id:int}", DeleteCourse)
+        group.MapDelete("/{id:guid}", DeleteCourse)
             .WithName("DeleteCourse")
             .WithOpenApi()
             .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator))
@@ -46,7 +46,7 @@ public class CourseEndpoints : ICarterModule
             .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest);
 
         // POST /api/courses/{id}/mentors
-        group.MapPost("/{id:int}/mentors", AssignMentors)
+        group.MapPost("/{id:guid}/mentors", AssignMentors)
             .WithName("AssignMentors")
             .WithOpenApi()
             .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator))
@@ -61,7 +61,7 @@ public class CourseEndpoints : ICarterModule
             .Produces<ServiceResponse<PagedResult<CourseDto>>>(StatusCodes.Status200OK);
 
         // GET /api/courses/{id}
-        group.MapGet("/{id:int}", GetCourseById)
+        group.MapGet("/{id:guid}", GetCourseById)
             .WithName("GetCourseById")
             .WithOpenApi()
             .RequireAuthorization()
@@ -69,14 +69,14 @@ public class CourseEndpoints : ICarterModule
             .Produces<ServiceResponse<CourseDto>>(StatusCodes.Status404NotFound);
 
         // GET /api/courses/{id}/curriculum
-        group.MapGet("/{id:int}/curriculum", GetCourseCurriculum)
+        group.MapGet("/{id:guid}/curriculum", GetCourseCurriculum)
             .WithName("GetCourseCurriculum")
             .WithOpenApi()
             .Produces<ServiceResponse<List<CurriculumSectionDto>>>(StatusCodes.Status200OK)
             .Produces<ServiceResponse<List<CurriculumSectionDto>>>(StatusCodes.Status404NotFound);
 
         // GET /api/courses/{id}/insight
-        group.MapGet("/{id:int}/insight", GetCourseInsight)
+        group.MapGet("/{id:guid}/insight", GetCourseInsight)
             .WithName("GetCourseInsight")
             .WithOpenApi()
             .Produces<ServiceResponse<CourseInsightDto>>(StatusCodes.Status200OK)
@@ -120,7 +120,7 @@ public class CourseEndpoints : ICarterModule
 
     // PUT /api/courses/{id}
     private static async Task<IResult> UpdateCourse(
-        int id,
+        Guid id,
         [AsParameters] UpdateCourseRequest request,
         IMediator mediator,
         HttpContext context)
@@ -151,7 +151,7 @@ public class CourseEndpoints : ICarterModule
 
     // DELETE /api/courses/{id}
     private static async Task<IResult> DeleteCourse(
-        int id,
+        Guid id,
         IMediator mediator,
         HttpContext context)
     {
@@ -168,7 +168,7 @@ public class CourseEndpoints : ICarterModule
 
     // POST /api/courses/{id}/mentors
     private static async Task<IResult> AssignMentors(
-        int id,
+        Guid id,
         AssignMentorsRequest request,
         IMediator mediator,
         HttpContext context)
@@ -224,7 +224,7 @@ public class CourseEndpoints : ICarterModule
 
     // GET /api/courses/{id}
     private static async Task<IResult> GetCourseById(
-        int id,
+        Guid id,
         IMediator mediator,
         HttpContext context)
     {
@@ -235,7 +235,7 @@ public class CourseEndpoints : ICarterModule
 
     // GET /api/courses/{id}/curriculum
     private static async Task<IResult> GetCourseCurriculum(
-        int id,
+        Guid id,
         IMediator mediator,
         HttpContext context)
     {
@@ -246,7 +246,7 @@ public class CourseEndpoints : ICarterModule
 
     // GET /api/courses/{id}/insight
     private static async Task<IResult> GetCourseInsight(
-        int id,
+        Guid id,
         IMediator mediator,
         HttpContext context)
     {

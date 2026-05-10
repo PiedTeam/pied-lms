@@ -20,11 +20,11 @@ public record CreateCourseCommand(
     string? Seats,
     string? Price,
     int Value
-) : IRequest<ServiceResponse<int>>;
+) : IRequest<ServiceResponse<Guid>>;
 
 // Update Course Command
 public record UpdateCourseCommand(
-    int Id,
+    Guid Id,
     string Title,
     string? Description,
     IFormFile? ThumbnailFile,
@@ -41,13 +41,12 @@ public record UpdateCourseCommand(
 
 // Delete Course Command
 public record DeleteCourseCommand(
-    int Id
+    Guid Id
 ) : IRequest<ServiceResponse<string>>;
 
 // Assign Mentors Command
 public record AssignMentorsCommand(
-    [Range(1, int.MaxValue, ErrorMessage = "Course ID must be greater than 0")]
-    int CourseId,
+    Guid CourseId,
     
     [Required(ErrorMessage = "Mentor IDs are required")]
     [MinLength(1, ErrorMessage = "At least one mentor ID must be provided")]

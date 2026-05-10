@@ -47,7 +47,7 @@ public class EnrollmentEndpoints : ICarterModule
     }
 
     private static async Task<IResult> EnrollCourse(
-        [FromForm] int courseId,
+        [FromForm] Guid courseId,
         [FromForm] IFormFile paymentProof,
         [FromForm] string? notes,
         IMediator mediator,

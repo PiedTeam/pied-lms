@@ -106,7 +106,7 @@ public class GetStudentAvailableCoursesHandler(
 
     private async Task<StudentAvailableCourseDto> MapToStudentAvailableCourseDto(
         Domain.Entities.Course course, 
-        List<int> completedCourseIds,
+        List<Guid> completedCourseIds,
         CancellationToken cancellationToken)
     {
         // Get full S3 URL for thumbnail
