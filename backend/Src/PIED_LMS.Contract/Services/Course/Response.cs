@@ -13,7 +13,7 @@ public record CourseDto(
     CourseStatus Status,
     string Slug,
     List<string>? Tags,
-    List<CourseTeacherDto> Teachers,
+    List<CourseMentorDto> Mentors,
     int Duration,
     string? Seats,
     string? Price,
@@ -22,8 +22,8 @@ public record CourseDto(
     int Value
 );
 
-// Course Teacher DTO (simplified for course context)
-public record CourseTeacherDto(
+// Course Mentor DTO (simplified for course context)
+public record CourseMentorDto(
     Guid Id,
     string FirstName,
     string LastName,
@@ -49,7 +49,7 @@ public record StudentAvailableCourseDto(
     CourseStatus Status,
     string Slug,
     List<string>? Tags,
-    List<CourseTeacherDto> Teachers,
+    List<CourseMentorDto> Mentors,
     List<PrerequisiteDto> MissingPrerequisites,
     bool IsEligible,
     DateTime CreatedAt,

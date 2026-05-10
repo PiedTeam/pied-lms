@@ -56,26 +56,26 @@ public class AuthenticationEndpoints : ICarterModule
             .Produces<ServiceResponse<string>>()
             .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest);
 
-        group.MapGet("/profile", GetProfile)
-            .WithName("GetProfile")
+        group.MapGet("/me", GetMe)
+            .WithName("GetMe")
             .WithOpenApi()
             .RequireAuthorization()
-            .WithServiceResponseOpenApi<UserResponse>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound);
+            .WithServiceResponseOpenApi<UserDto>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound);
 
         group.MapGet("/users/{id}", GetUserById)
             .WithName("GetUserById")
             .RequireAuthorization(new AuthorizeAttribute { Roles = RoleConstants.Administrator })
-            .WithServiceResponseOpenApi<UserResponse>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound);
+            .WithServiceResponseOpenApi<UserDto>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound);
 
         group.MapGet("/users", GetAllUsers)
             .WithName("GetAllUsers")
             .RequireAuthorization(new AuthorizeAttribute { Roles = RoleConstants.Administrator })
-            .WithServiceResponseOpenApi<PaginatedResponse<UserResponse>>(ServiceResponseStatusProfile.OkOrBadRequest);
+            .WithServiceResponseOpenApi<PaginatedResponse<UserDto>>(ServiceResponseStatusProfile.OkOrBadRequest);
 
         group.MapGet("/students", GetAllStudents)
             .WithName("GetAllStudents")
-            .RequireAuthorization(new AuthorizeAttribute { Roles = $"{RoleConstants.Administrator},{RoleConstants.Mentor},{RoleConstants.Teacher}" })
-            .WithServiceResponseOpenApi<PaginatedResponse<UserResponse>>(ServiceResponseStatusProfile.OkOrBadRequest);
+            .RequireAuthorization(new AuthorizeAttribute { Roles = $"{RoleConstants.Administrator},{RoleConstants.Mentor}" })
+            .WithServiceResponseOpenApi<PaginatedResponse<UserDto>>(ServiceResponseStatusProfile.OkOrBadRequest);
     }
 
     private static CookieOptions CreateRefreshTokenCookieOptions(
@@ -263,14 +263,14 @@ public class AuthenticationEndpoints : ICarterModule
             request.FirstName,
             request.LastName,
             request.Bio,
-            request.ProfilePicture
+            request.Avatar
         );
 
         var result = await mediator.Send(command, cancellationToken);
         return result.ToActionResult(context);
     }
 
-    private static async Task<IResult> GetProfile(
+    private static async Task<IResult> GetMe(
         HttpContext context,
         IMediator mediator,
         CancellationToken cancellationToken)
@@ -279,7 +279,7 @@ public class AuthenticationEndpoints : ICarterModule
         if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
             return Results.Unauthorized();
 
-        var query = new GetProfileQuery(userId);
+        var query = new GetMeQuery(userId);
         var result = await mediator.Send(query, cancellationToken);
         return result.ToActionResult(context);
     }

@@ -36,7 +36,7 @@ public class GetStudentAvailableCoursesHandler(
             // 2. Query all ACTIVE courses
             IQueryable<Domain.Entities.Course> query = unitOfWork.Repository<Domain.Entities.Course>()
                 .FindAll(c => c.Status == CourseStatus.Active)
-                .Include(c => c.Teachers)
+                .Include(c => c.Mentors)
                 .Include(c => c.PrerequisiteCourses);
 
             // Filter by SearchTerm in Title (case-insensitive)
@@ -132,14 +132,14 @@ public class GetStudentAvailableCoursesHandler(
             }
         }
 
-        // Map teachers
-        var teacherDtos = course.Teachers.Select(t => new CourseTeacherDto(
+        // Map mentors
+        var mentorDtos = course.Mentors.Select(t => new CourseMentorDto(
             t.Id,
             t.FirstName ?? string.Empty,
             t.LastName ?? string.Empty,
             t.Email ?? string.Empty,
             t.Bio,
-            t.ProfilePictureUrl
+            t.AvatarUrl
         )).ToList();
 
         // Check prerequisites
@@ -165,7 +165,7 @@ public class GetStudentAvailableCoursesHandler(
             course.Status,
             course.Slug,
             tags,
-            teacherDtos,
+            mentorDtos,
             missingPrerequisites,
             isEligible,
             course.CreatedAt,

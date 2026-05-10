@@ -6,9 +6,9 @@ using PIED_LMS.Contract.Abstractions.Storage;
 namespace PIED_LMS.Application.UserCases.Queries;
 
 public class GetAllUsersQueryHandler(UserManager<ApplicationUser> userManager, IFileStorageService fileStorageService, ILogger<GetAllUsersQueryHandler> logger)
-    : IRequestHandler<GetAllUsersQuery, ServiceResponse<PaginatedResponse<UserResponse>>>
+    : IRequestHandler<GetAllUsersQuery, ServiceResponse<PaginatedResponse<UserDto>>>
 {
-    public async Task<ServiceResponse<PaginatedResponse<UserResponse>>> Handle(GetAllUsersQuery request,
+    public async Task<ServiceResponse<PaginatedResponse<UserDto>>> Handle(GetAllUsersQuery request,
         CancellationToken cancellationToken)
     {
         try
@@ -19,17 +19,17 @@ public class GetAllUsersQueryHandler(UserManager<ApplicationUser> userManager, I
                 .Take(request.PageSize)
                 .ToListAsync(cancellationToken);
 
-            var userResponses = new List<UserResponse>();
+            var userResponses = new List<UserDto>();
             foreach (var user in users)
             {
                 var roles = await userManager.GetRolesAsync(user);
                 string? profilePicUrl = null;
-                if (!string.IsNullOrWhiteSpace(user.ProfilePictureUrl))
+                if (!string.IsNullOrWhiteSpace(user.AvatarUrl))
                 {
-                    profilePicUrl = await fileStorageService.GetFileUrlAsync(user.ProfilePictureUrl);
+                    profilePicUrl = await fileStorageService.GetFileUrlAsync(user.AvatarUrl);
                 }
 
-                userResponses.Add(new UserResponse(
+                userResponses.Add(new UserDto(
                     user.Id,
                     user.Email ?? string.Empty,
                     user.FirstName,
@@ -42,20 +42,20 @@ public class GetAllUsersQueryHandler(UserManager<ApplicationUser> userManager, I
                 ));
             }
 
-            var paginatedResponse = new PaginatedResponse<UserResponse>(
+            var paginatedResponse = new PaginatedResponse<UserDto>(
                 userResponses,
                 totalCount,
                 request.PageNumber,
                 request.PageSize
             );
 
-            return new ServiceResponse<PaginatedResponse<UserResponse>>(true, "Users retrieved successfully",
+            return new ServiceResponse<PaginatedResponse<UserDto>>(true, "Users retrieved successfully",
                 paginatedResponse);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to retrieve users");
-            return new ServiceResponse<PaginatedResponse<UserResponse>>(false,
+            return new ServiceResponse<PaginatedResponse<UserDto>>(false,
                 "Failed to retrieve users");
         }
     }

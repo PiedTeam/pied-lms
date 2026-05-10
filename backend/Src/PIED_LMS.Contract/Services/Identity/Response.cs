@@ -10,8 +10,8 @@ public record ServiceResponse<T>(
     string? ErrorCode = null
 );
 
-// User Response
-public record UserResponse(
+// User DTO
+public record UserDto(
     Guid Id,
     string Email,
     string FirstName,
@@ -20,7 +20,7 @@ public record UserResponse(
     DateTime CreatedAt,
     List<string> Roles,
     string? Bio,
-    string? ProfilePictureUrl
+    string? AvatarUrl
 );
 
 // Authentication Response

@@ -17,12 +17,12 @@ public class ExamRoomEndpoints : ICarterModule
         // Mentor endpoints
         group.MapPost("", CreateExamRoom)
             .WithName("CreateExamRoom")
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor"))
             .WithServiceResponseOpenApi<ExamRoomResponse>(ServiceResponseStatusProfile.OkOrBadRequest);
 
         group.MapGet("", GetAllExamRooms)
             .WithName("GetAllExamRooms")
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor"))
             .WithServiceResponseOpenApi<PaginatedResponse<ExamRoomResponse>>(ServiceResponseStatusProfile.OkOrBadRequest);
 
         group.MapGet("/{id}", GetExamRoomById)
@@ -32,27 +32,27 @@ public class ExamRoomEndpoints : ICarterModule
 
         group.MapPut("/{id}", UpdateExamRoom)
             .WithName("UpdateExamRoom")
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor"))
             .WithServiceResponseOpenApi<ExamRoomResponse>(ServiceResponseStatusProfile.OkOrBadRequestOrForbidden);
 
         group.MapDelete("/{id}", DeleteExamRoom)
             .WithName("DeleteExamRoom")
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor"))
             .WithServiceResponseOpenApi<string>(ServiceResponseStatusProfile.OkOrBadRequestOrForbidden);
 
         group.MapPost("/{id}/exams", AssignExamToRoom)
             .WithName("AssignExamToRoom")
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor"))
             .WithServiceResponseOpenApi<string>(ServiceResponseStatusProfile.OkOrBadRequestOrForbidden);
 
         group.MapPost("/{id}/enroll", EnrollStudents)
             .WithName("EnrollStudents")
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor"))
             .WithServiceResponseOpenApi<EnrollmentResultResponse>(ServiceResponseStatusProfile.OkOrBadRequestOrForbidden);
 
         group.MapDelete("/{roomId}/exams/{examId}", RemoveExamFromRoom)
             .WithName("RemoveExamFromRoom")
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor"))
             .WithServiceResponseOpenApi<string>(ServiceResponseStatusProfile.OkOrBadRequestOrForbidden);
 
         // Student endpoints

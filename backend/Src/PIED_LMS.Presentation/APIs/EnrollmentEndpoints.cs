@@ -77,30 +77,28 @@ public class EnrollmentEndpoints : ICarterModule
     }
 
     private static async Task<IResult> GetAvailableCourses(
-        [FromQuery] int pageIndex,
-        [FromQuery] int pageSize,
-        [FromQuery] string? searchTerm,
-        [FromQuery] string? tag,
+        [AsParameters] GetAvailableCoursesRequest request,
         IMediator mediator,
         HttpContext context)
     {
         var query = new PIED_LMS.Contract.Services.Course.GetStudentAvailableCoursesQuery(
-            pageIndex > 0 ? pageIndex : 1, 
-            pageSize > 0 ? pageSize : 10,
-            searchTerm,
-            tag);
+            request.PageIndex > 0 ? request.PageIndex : 1, 
+            request.PageSize > 0 ? request.PageSize : 10,
+            request.SearchTerm,
+            request.Tag);
         var result = await mediator.Send(query);
         return result.ToActionResult(context);
     }
 
     private static async Task<IResult> GetEnrollments(
-        [FromQuery] EnrollmentStatus? status,
-        [FromQuery] int pageIndex,
-        [FromQuery] int pageSize,
+        [AsParameters] GetEnrollmentsRequest request,
         IMediator mediator,
         HttpContext context)
     {
-        var query = new Query.GetEnrollmentsQuery(status, pageIndex > 0 ? pageIndex : 1, pageSize > 0 ? pageSize : 10);
+        var query = new Query.GetEnrollmentsQuery(
+            request.Status, 
+            request.PageIndex > 0 ? request.PageIndex : 1, 
+            request.PageSize > 0 ? request.PageSize : 10);
         var result = await mediator.Send(query);
         return result.ToActionResult(context);
     }

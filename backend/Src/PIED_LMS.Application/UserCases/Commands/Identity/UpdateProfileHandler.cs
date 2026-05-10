@@ -26,32 +26,32 @@ public class UpdateProfileHandler(
             user.LastName = request.LastName;
             user.Bio = request.Bio;
 
-            // Handle Profile Picture upload if provided
-            if (request.ProfilePicture != null)
+            // Handle Avatar upload if provided
+            if (request.Avatar != null)
             {
                 // Delete old picture from S3 if it exists
-                if (!string.IsNullOrWhiteSpace(user.ProfilePictureUrl))
+                if (!string.IsNullOrWhiteSpace(user.AvatarUrl))
                 {
                     try
                     {
-                        await fileStorageService.DeleteFileAsync(user.ProfilePictureUrl);
+                        await fileStorageService.DeleteFileAsync(user.AvatarUrl);
                     }
                     catch (Exception ex)
                     {
-                        logger.LogWarning(ex, "Failed to delete old profile picture {Key} for user {UserId}", user.ProfilePictureUrl, user.Id);
+                        logger.LogWarning(ex, "Failed to delete old profile picture {Key} for user {UserId}", user.AvatarUrl, user.Id);
                     }
                 }
 
                 // Upload new picture
                 var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
                 var key = await fileStorageService.SaveFileAsync(
-                    request.ProfilePicture,
+                    request.Avatar,
                     "profiles",
                     allowedExtensions,
                     5 * 1024 * 1024,
                     cancellationToken);
                 
-                user.ProfilePictureUrl = key;
+                user.AvatarUrl = key;
             }
 
             user.UpdatedAt = DateTime.UtcNow;

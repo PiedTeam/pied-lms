@@ -22,7 +22,7 @@ public record ExamRoomAccessResponse(
     DateTime? AvailableUntil
 );
 
-// ExamRoom Enrollment Response (for Admin/Mentor/Teacher)
+// ExamRoom Enrollment Response (for Admin/Mentor)
 public record ExamRoomEnrollmentResponse(
     Guid Id,
     Guid StudentId,

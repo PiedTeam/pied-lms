@@ -32,10 +32,10 @@ public class ExamParticipationEndpoints : ICarterModule
             .RequireAuthorization(new AuthorizeAttribute { Roles = "Student" })
             .WithServiceResponseOpenApi<PaginatedResponse<ExamParticipationResponse>>(ServiceResponseStatusProfile.OkOrBadRequest);
 
-        // GET /api/participations/room/{examRoomId} (for admin/mentor/teacher)
+        // GET /api/participations/room/{examRoomId} (for admin/mentor)
         group.MapGet("/room/{examRoomId}", GetExamRoomEnrollments)
             .WithName("GetExamRoomEnrollments")
-            .RequireAuthorization(new AuthorizeAttribute { Roles = $"{RoleConstants.Administrator},{RoleConstants.Mentor},{RoleConstants.Teacher}" })
+            .RequireAuthorization(new AuthorizeAttribute { Roles = $"{RoleConstants.Administrator},{RoleConstants.Mentor}" })
             .WithServiceResponseOpenApi<PaginatedResponse<ExamRoomEnrollmentResponse>>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound);
     }
 

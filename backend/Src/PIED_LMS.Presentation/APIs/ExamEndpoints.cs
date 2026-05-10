@@ -16,13 +16,13 @@ public class ExamEndpoints : ICarterModule
         // POST /api/exams
         group.MapPost("", CreateExam)
             .WithName("CreateExam")
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor"))
             .WithServiceResponseOpenApi<ExamResponse>(ServiceResponseStatusProfile.OkOrBadRequest);
 
         // GET /api/exams
         group.MapGet("", GetExamsByMentor)
             .WithName("GetExamsByMentor")
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor"))
             .WithServiceResponseOpenApi<PaginatedResponse<ExamResponse>>(ServiceResponseStatusProfile.OkOrBadRequest);
 
         // GET /api/exams/{id}
@@ -34,13 +34,13 @@ public class ExamEndpoints : ICarterModule
         // PUT /api/exams/{id}
         group.MapPut("/{id}", UpdateExam)
             .WithName("UpdateExam")
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor"))
             .WithServiceResponseOpenApi<ExamResponse>(ServiceResponseStatusProfile.OkOrBadRequestOrForbidden);
 
         // DELETE /api/exams/{id}
         group.MapDelete("/{id}", DeleteExam)
             .WithName("DeleteExam")
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor"))
             .WithServiceResponseOpenApi<string>(ServiceResponseStatusProfile.OkOrBadRequestOrForbidden);
 
         // GET /api/exams/by-room-code/{roomCode} - Student gets exams by room code
@@ -58,7 +58,7 @@ public class ExamEndpoints : ICarterModule
         // POST /api/exams/import - Import Exam + TestCases from Excel
         group.MapPost("/import", ImportExam)
             .WithName("ImportExam")
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"))
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor"))
             .DisableAntiforgery()
             .WithServiceResponseOpenApi<ExamResponse>(ServiceResponseStatusProfile.OkOrBadRequest)
             .Accepts<IFormFile>("multipart/form-data");

@@ -44,12 +44,12 @@ public record DeleteCourseCommand(
     int Id
 ) : IRequest<ServiceResponse<string>>;
 
-// Assign Teachers Command
-public record AssignTeachersCommand(
+// Assign Mentors Command
+public record AssignMentorsCommand(
     [Range(1, int.MaxValue, ErrorMessage = "Course ID must be greater than 0")]
     int CourseId,
     
-    [Required(ErrorMessage = "Teacher IDs are required")]
-    [MinLength(1, ErrorMessage = "At least one teacher ID must be provided")]
-    List<Guid> TeacherIds
+    [Required(ErrorMessage = "Mentor IDs are required")]
+    [MinLength(1, ErrorMessage = "At least one mentor ID must be provided")]
+    List<Guid> MentorIds
 ) : IRequest<ServiceResponse<string>>;

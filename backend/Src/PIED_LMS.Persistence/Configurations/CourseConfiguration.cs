@@ -69,11 +69,11 @@ public class CourseConfiguration : IEntityTypeConfiguration<Course>
                       .OnDelete(DeleteBehavior.Cascade)
             );
 
-        // Many-to-many relationship with ApplicationUser (Teachers)
-        builder.HasMany(c => c.Teachers)
+        // Many-to-many relationship with ApplicationUser (Mentors)
+        builder.HasMany(c => c.Mentors)
             .WithMany()
             .UsingEntity<Dictionary<string, object>>(
-                "course_teachers",
+                "course_mentors",
                 j => j.HasOne<ApplicationUser>()
                       .WithMany()
                       .HasForeignKey("user_id")

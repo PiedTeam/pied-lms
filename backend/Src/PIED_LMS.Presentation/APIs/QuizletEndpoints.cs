@@ -26,30 +26,30 @@ public class QuizletEndpoints : ICarterModule
             .WithName("CreateQuizlet")
             .DisableAntiforgery()
             .WithServiceResponseOpenApi<string>(ServiceResponseStatusProfile.OkOrBadRequest)
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"));
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor"));
 
-        // GET /api/quizlets  (Admin, Mentor, Teacher — all quizlets summary)
+        // GET /api/quizlets  (Admin, Mentor — all quizlets summary)
         group.MapGet("", GetAllQuizlets)
             .WithName("GetAllQuizlets")
             .WithServiceResponseOpenApi<List<QuizletSummaryResponse>>(ServiceResponseStatusProfile.OkOrBadRequest)
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"));
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor"));
 
         group.MapGet("/{id:int}", GetQuizletById)
             .WithName("GetQuizletById")
             .WithServiceResponseOpenApi<QuizletDetailResponse>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound)
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"));
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor"));
 
         // DELETE /api/quizlets/{id}
         group.MapDelete("/{id}", DeleteQuizlet)
             .WithName("DeleteQuizlet")
             .WithServiceResponseOpenApi<string>(ServiceResponseStatusProfile.OkOrBadRequest)
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"));
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor"));
 
         // PUT /api/quizlets/{id}
         group.MapPut("/{id}", UpdateQuizlet)
             .WithName("UpdateQuizlet")
             .WithServiceResponseOpenApi<string>(ServiceResponseStatusProfile.OkOrBadRequest)
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor", "Teacher"));
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor"));
 
         // GET /api/students/quizlets  (Student — published only, summary)
         app.MapGet("/api/students/quizlets", GetStudentQuizlets)
@@ -96,20 +96,22 @@ public class QuizletEndpoints : ICarterModule
 
     // POST /api/quizlets
     public static async Task<IResult> CreateQuizlet(
-        [FromForm] string title,
-        [FromForm] string? description,
-        [FromForm] bool isPublished,
-        [FromForm] bool isHidden,
-        [FromForm] QuizletLevel? level,
-        IFormFile listQuestion,
+        [AsParameters] CreateQuestionQuizRequest request,
         ISender sender,
         HttpContext context)
     {
-        var finalLevel = level.HasValue && Enum.IsDefined(typeof(QuizletLevel), level.Value)
-            ? level.Value
+        var finalLevel = request.Level.HasValue && Enum.IsDefined(typeof(QuizletLevel), request.Level.Value)
+            ? request.Level.Value
             : QuizletLevel.Easy;
 
-        var command = new CreateQuestionQuizCommand(title, description ?? string.Empty, isPublished, isHidden, finalLevel, listQuestion);
+        var command = new CreateQuestionQuizCommand(
+            request.Title, 
+            request.Description ?? string.Empty, 
+            request.IsPublished, 
+            request.IsHidden, 
+            finalLevel, 
+            request.ListQuestion);
+
         var result = await sender.Send(command);
         return result.ToActionResult(context);
     }
@@ -133,11 +135,3 @@ public class QuizletEndpoints : ICarterModule
         return result.ToActionResult(context);
     }
 }
-
-public record UpdateQuestionQuizRequest(
-    string Title,
-    bool IsPublished,
-    bool IsHidden,
-    QuizletLevel Level,
-    List<UpdateQuestionDto> ListQuestion
-);

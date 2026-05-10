@@ -22,7 +22,7 @@ public class GetCoursesHandler(
             // Build query with filters
             IQueryable<Domain.Entities.Course> query = unitOfWork.Repository<Domain.Entities.Course>()
                 .FindAll()
-                .Include(c => c.Teachers);
+                .Include(c => c.Mentors);
 
             // Filter by Status if provided
             if (request.Status.HasValue)
@@ -120,33 +120,33 @@ public class GetCoursesHandler(
             }
         }
 
-        // Map teachers to CourseTeacherDto
-        var teacherDtos = course.Teachers.Select(t => new CourseTeacherDto(
-            t.Id,
-            t.FirstName ?? string.Empty,
-            t.LastName ?? string.Empty,
-            t.Email ?? string.Empty,
-            t.Bio,
-            t.ProfilePictureUrl
-        )).ToList();
+            // Map mentors to CourseMentorDto
+            var mentorDtos = course.Mentors.Select(t => new CourseMentorDto(
+                t.Id,
+                t.FirstName ?? string.Empty,
+                t.LastName ?? string.Empty,
+                t.Email ?? string.Empty,
+                t.Bio,
+                t.AvatarUrl
+            )).ToList();
 
-        return new CourseDto(
-            course.Id,
-            course.Title,
-            course.Description,
-            thumbnailUrl,
-            course.StartDate,
-            course.EndDate,
-            course.Status,
-            course.Slug,
-            tags,
-            teacherDtos,
-            course.Duration,
-            course.Seats,
-            course.Price,
-            course.CreatedAt,
-            course.UpdatedAt,
-            course.Value
-        );
+            return new CourseDto(
+                course.Id,
+                course.Title,
+                course.Description,
+                thumbnailUrl,
+                course.StartDate,
+                course.EndDate,
+                course.Status,
+                course.Slug,
+                tags,
+                mentorDtos,
+                course.Duration,
+                course.Seats,
+                course.Price,
+                course.CreatedAt,
+                course.UpdatedAt,
+                course.Value
+            );
     }
 }
