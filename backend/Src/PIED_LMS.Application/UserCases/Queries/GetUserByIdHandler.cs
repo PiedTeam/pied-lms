@@ -18,10 +18,18 @@ public class GetUserByIdQueryHandler(UserManager<ApplicationUser> userManager, I
                 return new ServiceResponse<UserResponse>(false, "User not found");
 
             var roles = await userManager.GetRolesAsync(user);
+            
             string? profilePicUrl = null;
             if (!string.IsNullOrWhiteSpace(user.ProfilePictureUrl))
             {
-                profilePicUrl = await fileStorageService.GetFileUrlAsync(user.ProfilePictureUrl);
+                try 
+                {
+                    profilePicUrl = await fileStorageService.GetFileUrlAsync(user.ProfilePictureUrl);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Failed to resolve profile picture URL for user {UserId}. Key: {Key}", user.Id, user.ProfilePictureUrl);
+                }
             }
 
             var userResponse = new UserResponse(
@@ -38,10 +46,20 @@ public class GetUserByIdQueryHandler(UserManager<ApplicationUser> userManager, I
 
             return new ServiceResponse<UserResponse>(true, "User retrieved successfully", userResponse);
         }
+        catch (UnauthorizedAccessException ex)
+        {
+            logger.LogError(ex, "Unauthorized access while retrieving user {UserId}", request.UserId);
+            return new ServiceResponse<UserResponse>(false, "Unauthorized access to user data");
+        }
+        catch (IOException ex)
+        {
+            logger.LogError(ex, "I/O error while retrieving user {UserId}", request.UserId);
+            return new ServiceResponse<UserResponse>(false, "Communication error while retrieving user data");
+        }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to retrieve user {UserId}", request.UserId);
-            return new ServiceResponse<UserResponse>(false, "Failed to retrieve user");
+            logger.LogError(ex, "Unexpected error while retrieving user {UserId}", request.UserId);
+            return new ServiceResponse<UserResponse>(false, "An unexpected error occurred");
         }
     }
 }
