@@ -13,14 +13,14 @@ public class CourseEndpoints : ICarterModule
     {
         var group = app.MapGroup("/api/courses")
             .WithName("Courses")
-            .WithOpenApi()
-            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator));
+            .WithOpenApi();
 
         // POST /api/courses
         group.MapPost("", CreateCourse)
             .WithName("CreateCourse")
             .WithOpenApi()
             .DisableAntiforgery()
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator))
             .Produces<ServiceResponse<int>>(StatusCodes.Status201Created)
             .Produces<ServiceResponse<int>>(StatusCodes.Status400BadRequest)
             .Accepts<IFormFile>("multipart/form-data");
@@ -30,6 +30,7 @@ public class CourseEndpoints : ICarterModule
             .WithName("UpdateCourse")
             .WithOpenApi()
             .DisableAntiforgery()
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator))
             .Produces<ServiceResponse<string>>()
             .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest)
             .Accepts<IFormFile>("multipart/form-data");
@@ -38,12 +39,15 @@ public class CourseEndpoints : ICarterModule
         group.MapDelete("/{id:int}", DeleteCourse)
             .WithName("DeleteCourse")
             .WithOpenApi()
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator))
             .Produces(StatusCodes.Status204NoContent)
             .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest);
 
         // POST /api/courses/{id}/teachers
         group.MapPost("/{id:int}/teachers", AssignTeachers)
             .WithName("AssignTeachers")
+            .WithOpenApi()
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator))
             .WithOpenApi()
             .Produces<ServiceResponse<string>>()
             .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest);
