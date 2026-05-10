@@ -63,5 +63,5 @@ public class GetProfileQueryHandler(UserManager<ApplicationUser> userManager, IF
             logger.LogError(ex, "Unexpected error while retrieving profile for user {UserId}", request.UserId);
             return new ServiceResponse<UserResponse>(false, "An unexpected error occurred");
         }
-    }
+        }
 }
