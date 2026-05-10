@@ -15,13 +15,13 @@ public class CourseEndpoints : ICarterModule
     {
         var group = app.MapGroup("/api/courses")
             .WithName("Courses")
-            .WithOpenApi()
-            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator));
+            .WithOpenApi();
 
         // POST /api/courses
         group.MapPost("", CreateCourse)
             .WithName("CreateCourse")
             .WithOpenApi()
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator))
             .DisableAntiforgery()
             .Produces<ServiceResponse<int>>(StatusCodes.Status201Created)
             .Produces<ServiceResponse<int>>(StatusCodes.Status400BadRequest)
@@ -31,6 +31,7 @@ public class CourseEndpoints : ICarterModule
         group.MapPut("/{id:int}", UpdateCourse)
             .WithName("UpdateCourse")
             .WithOpenApi()
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator))
             .DisableAntiforgery()
             .Produces<ServiceResponse<string>>(StatusCodes.Status200OK)
             .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest)
@@ -40,6 +41,7 @@ public class CourseEndpoints : ICarterModule
         group.MapDelete("/{id:int}", DeleteCourse)
             .WithName("DeleteCourse")
             .WithOpenApi()
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator))
             .Produces(StatusCodes.Status204NoContent)
             .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest);
 
@@ -47,6 +49,7 @@ public class CourseEndpoints : ICarterModule
         group.MapPost("/{id:int}/teachers", AssignTeachers)
             .WithName("AssignTeachers")
             .WithOpenApi()
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator))
             .Produces<ServiceResponse<string>>(StatusCodes.Status200OK)
             .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest);
 
@@ -54,14 +57,17 @@ public class CourseEndpoints : ICarterModule
         group.MapGet("", GetCourses)
             .WithName("GetCourses")
             .WithOpenApi()
+            .RequireAuthorization()
             .Produces<ServiceResponse<PagedResult<CourseDto>>>(StatusCodes.Status200OK);
 
         // GET /api/courses/{id}
         group.MapGet("/{id:int}", GetCourseById)
             .WithName("GetCourseById")
             .WithOpenApi()
+            .RequireAuthorization()
             .Produces<ServiceResponse<CourseDto>>(StatusCodes.Status200OK)
             .Produces<ServiceResponse<CourseDto>>(StatusCodes.Status404NotFound);
+
         // GET /api/courses/{id}/curriculum
         group.MapGet("/{id:int}/curriculum", GetCourseCurriculum)
             .WithName("GetCourseCurriculum")
