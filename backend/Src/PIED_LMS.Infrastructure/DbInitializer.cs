@@ -1,4 +1,8 @@
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using PIED_LMS.Domain.Constants;
 using PIED_LMS.Domain.Entities;
 
@@ -16,19 +20,18 @@ public static class DbInitializer
         var loggerFactory = scope.ServiceProvider.GetRequiredService<ILoggerFactory>();
         var logger = loggerFactory.CreateLogger("DbInitializer");
 
-        string[] roles =
-            { RoleConstants.Administrator, RoleConstants.Teacher, RoleConstants.Student, RoleConstants.Mentor };
+        string[] roles = { RoleConstants.Administrator, RoleConstants.Student, RoleConstants.Mentor };
 
         // 1. Seed Roles
         foreach (var roleName in roles)
+        {
             if (!await roleManager.RoleExistsAsync(roleName))
             {
                 var description = roleName switch
                 {
                     RoleConstants.Administrator => "Administrator with full access",
-                    RoleConstants.Teacher => "Teacher who can create and manage courses",
                     RoleConstants.Student => "Student who can enroll in courses",
-                    RoleConstants.Mentor => "Mentor who can guide students",
+                    RoleConstants.Mentor => "Mentor who can create courses and guide students",
                     _ => $"Role for {roleName}"
                 };
 
@@ -52,9 +55,9 @@ public static class DbInitializer
                     logger.LogInformation("Successfully created role: {RoleName}", roleName);
                 }
             }
+        }
 
         var adminPassword = configuration["Seed:AdminPassword"];
-        var teacherPassword = configuration["Seed:TeacherPassword"];
         var mentorPassword = configuration["Seed:MentorPassword"];
 
         if (string.IsNullOrEmpty(adminPassword))
@@ -64,13 +67,13 @@ public static class DbInitializer
             else
                 logger.LogError("Seed password missing for Admin in Production. Admin seeding will be skipped.");
         }
-
-        if (string.IsNullOrEmpty(teacherPassword))
+        
+        if (string.IsNullOrEmpty(mentorPassword))
         {
             if (env.IsDevelopment())
-                logger.LogWarning("Seed password missing for Teacher. Teacher seeding will be skipped.");
+                logger.LogWarning("Seed password missing for Mentor. Mentor seeding will be skipped.");
             else
-                logger.LogError("Seed password missing for Teacher in Production. Teacher seeding will be skipped.");
+                logger.LogError("Seed password missing for Mentor in Production. Mentor seeding will be skipped.");
         }
 
         // 2. Seed Admin User
@@ -100,8 +103,7 @@ public static class DbInitializer
                         if (adminUser is null)
                         {
                             var errors = string.Join(", ", createResult.Errors.Select(e => e.Description));
-                            throw new InvalidOperationException(
-                                $"Admin user duplicate error but could not re-fetch user: {errors}");
+                            throw new InvalidOperationException($"Admin user duplicate error but could not re-fetch user: {errors}");
                         }
                     }
                     else
@@ -129,9 +131,11 @@ public static class DbInitializer
                         throw new InvalidOperationException(
                             $"Failed to assign role '{RoleConstants.Administrator}' to user '{adminUser.UserName}': {errors}");
                     }
-
-                    logger.LogInformation("Admin user already in role: {UserName} / {Role}",
-                        adminUser.UserName, RoleConstants.Administrator);
+                    else
+                    {
+                        logger.LogInformation("Admin user already in role: {UserName} / {Role}",
+                            adminUser.UserName, RoleConstants.Administrator);
+                    }
                 }
             }
 
@@ -139,73 +143,7 @@ public static class DbInitializer
                 adminUser.UserName, RoleConstants.Administrator);
         }
 
-        // 3. Seed Teacher User
-        if (!string.IsNullOrEmpty(teacherPassword))
-        {
-            var teacherEmail = "teacher@pied.com";
-            var teacherUser = await userManager.FindByEmailAsync(teacherEmail);
-            if (teacherUser is null)
-            {
-                teacherUser = new ApplicationUser
-                {
-                    UserName = teacherEmail,
-                    Email = teacherEmail,
-                    FirstName = "John",
-                    LastName = "Teacher",
-                    IsActive = true,
-                    EmailConfirmed = true
-                };
-
-                var createResult = await userManager.CreateAsync(teacherUser, teacherPassword);
-                if (!createResult.Succeeded)
-                {
-                    if (createResult.Errors.Any(e => e.Code is "DuplicateUserName" or "DuplicateEmail"))
-                    {
-                        logger.LogInformation("Teacher user collision detected (race condition), re-fetching...");
-                        teacherUser = await userManager.FindByEmailAsync(teacherEmail);
-                        if (teacherUser is null)
-                        {
-                            var errors = string.Join(", ", createResult.Errors.Select(e => e.Description));
-                            throw new InvalidOperationException(
-                                $"Teacher user duplicate error but could not re-fetch user: {errors}");
-                        }
-                    }
-                    else
-                    {
-                        var errors = string.Join(", ", createResult.Errors.Select(e => e.Description));
-                        logger.LogError("Failed to create teacher user {UserName} with role {Role}. Errors: {Errors}",
-                            teacherUser.UserName, RoleConstants.Teacher, errors);
-                        throw new InvalidOperationException(
-                            $"Failed to create teacher user '{teacherUser.UserName}': {errors}");
-                    }
-                }
-            }
-
-            if (!await userManager.IsInRoleAsync(teacherUser, RoleConstants.Teacher))
-            {
-                var roleResult = await userManager.AddToRoleAsync(teacherUser, RoleConstants.Teacher);
-                if (!roleResult.Succeeded)
-                {
-                    var alreadyInRole = roleResult.Errors.Any(e => e.Code == "UserAlreadyInRole");
-                    if (!alreadyInRole)
-                    {
-                        var errors = string.Join(", ", roleResult.Errors.Select(e => e.Description));
-                        logger.LogError("Failed to assign role {Role} to user {UserName}. Errors: {Errors}",
-                            RoleConstants.Teacher, teacherUser.UserName, errors);
-                        throw new InvalidOperationException(
-                            $"Failed to assign role '{RoleConstants.Teacher}' to user '{teacherUser.UserName}': {errors}");
-                    }
-
-                    logger.LogInformation("Teacher user already in role: {UserName} / {Role}",
-                        teacherUser.UserName, RoleConstants.Teacher);
-                }
-            }
-
-            logger.LogInformation("Successfully created/ensured teacher user: {UserName} with role: {Role}",
-                teacherUser.UserName, RoleConstants.Teacher);
-        }
-
-        // 4. Seed Mentor User
+        // 3. Seed Mentor User
         if (!string.IsNullOrEmpty(mentorPassword))
         {
             var mentorEmail = "mentor@pied.com";
@@ -227,22 +165,20 @@ public static class DbInitializer
                 {
                     if (createResult.Errors.Any(e => e.Code is "DuplicateUserName" or "DuplicateEmail"))
                     {
-                        logger.LogInformation("Teacher user collision detected (race condition), re-fetching...");
+                        logger.LogInformation("Mentor user collision detected (race condition), re-fetching...");
                         mentorUser = await userManager.FindByEmailAsync(mentorEmail);
                         if (mentorUser is null)
                         {
                             var errors = string.Join(", ", createResult.Errors.Select(e => e.Description));
-                            throw new InvalidOperationException(
-                                $"Teacher user duplicate error but could not re-fetch user: {errors}");
+                            throw new InvalidOperationException($"Mentor user duplicate error but could not re-fetch user: {errors}");
                         }
                     }
                     else
                     {
                         var errors = string.Join(", ", createResult.Errors.Select(e => e.Description));
-                        logger.LogError("Failed to create teacher user {UserName} with role {Role}. Errors: {Errors}",
-                            mentorUser.UserName, RoleConstants.Teacher, errors);
-                        throw new InvalidOperationException(
-                            $"Failed to create teacher user '{mentorUser.UserName}': {errors}");
+                        logger.LogError("Failed to create mentor user {UserName} with role {Role}. Errors: {Errors}", 
+                            mentorUser.UserName, RoleConstants.Mentor, errors);
+                        throw new InvalidOperationException($"Failed to create mentor user '{mentorUser.UserName}': {errors}");
                     }
                 }
             }
@@ -256,18 +192,20 @@ public static class DbInitializer
                     if (!alreadyInRole)
                     {
                         var errors = string.Join(", ", roleResult.Errors.Select(e => e.Description));
-                        logger.LogError("Failed to assign role {Role} to user {UserName}. Errors: {Errors}",
+                        logger.LogError("Failed to assign role {Role} to user {UserName}. Errors: {Errors}", 
                             RoleConstants.Mentor, mentorUser.UserName, errors);
                         throw new InvalidOperationException(
                             $"Failed to assign role '{RoleConstants.Mentor}' to user '{mentorUser.UserName}': {errors}");
                     }
-
-                    logger.LogInformation("Mentor user already in role: {UserName} / {Role}",
-                        mentorUser.UserName, RoleConstants.Mentor);
+                    else
+                    {
+                        logger.LogInformation("Mentor user already in role: {UserName} / {Role}",
+                            mentorUser.UserName, RoleConstants.Mentor);
+                    }
                 }
             }
 
-            logger.LogInformation("Successfully created/ensured mentor user: {UserName} with role: {Role}",
+            logger.LogInformation("Successfully created/ensured mentor user: {UserName} with role: {Role}", 
                 mentorUser.UserName, RoleConstants.Mentor);
         }
     }

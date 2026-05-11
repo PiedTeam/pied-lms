@@ -384,12 +384,10 @@ namespace PIED_LMS.Persistence.Migrations
 
             modelBuilder.Entity("PIED_LMS.Domain.Entities.Course", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
+                        .HasColumnType("uuid")
                         .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -492,8 +490,8 @@ namespace PIED_LMS.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<int>("CourseId")
-                        .HasColumnType("integer")
+                    b.Property<Guid>("CourseId")
+                        .HasColumnType("uuid")
                         .HasColumnName("course_id");
 
                     b.Property<DateTime>("CreatedAt")
@@ -1102,14 +1100,33 @@ namespace PIED_LMS.Persistence.Migrations
                         });
                 });
 
-            modelBuilder.Entity("course_prerequisites", b =>
+            modelBuilder.Entity("course_mentors", b =>
                 {
-                    b.Property<int>("course_id")
-                        .HasColumnType("integer")
+                    b.Property<Guid>("course_id")
+                        .HasColumnType("uuid")
                         .HasColumnName("course_id");
 
-                    b.Property<int>("prerequisite_course_id")
-                        .HasColumnType("integer")
+                    b.Property<Guid>("user_id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("course_id", "user_id")
+                        .HasName("pk_course_mentors");
+
+                    b.HasIndex("user_id")
+                        .HasDatabaseName("ix_course_mentors_user_id");
+
+                    b.ToTable("course_mentors", (string)null);
+                });
+
+            modelBuilder.Entity("course_prerequisites", b =>
+                {
+                    b.Property<Guid>("course_id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("course_id");
+
+                    b.Property<Guid>("prerequisite_course_id")
+                        .HasColumnType("uuid")
                         .HasColumnName("prerequisite_course_id");
 
                     b.HasKey("course_id", "prerequisite_course_id")
@@ -1119,25 +1136,6 @@ namespace PIED_LMS.Persistence.Migrations
                         .HasDatabaseName("ix_course_prerequisites_prerequisite_course_id");
 
                     b.ToTable("course_prerequisites", (string)null);
-                });
-
-            modelBuilder.Entity("course_teachers", b =>
-                {
-                    b.Property<int>("course_id")
-                        .HasColumnType("integer")
-                        .HasColumnName("course_id");
-
-                    b.Property<Guid>("user_id")
-                        .HasColumnType("uuid")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("course_id", "user_id")
-                        .HasName("pk_course_teachers");
-
-                    b.HasIndex("user_id")
-                        .HasDatabaseName("ix_course_teachers_user_id");
-
-                    b.ToTable("course_teachers", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
@@ -1416,6 +1414,23 @@ namespace PIED_LMS.Persistence.Migrations
                     b.Navigation("Creator");
                 });
 
+            modelBuilder.Entity("course_mentors", b =>
+                {
+                    b.HasOne("PIED_LMS.Domain.Entities.Course", null)
+                        .WithMany()
+                        .HasForeignKey("course_id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_course_mentors_courses_course_id");
+
+                    b.HasOne("PIED_LMS.Domain.Entities.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("user_id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_course_mentors_users_user_id");
+                });
+
             modelBuilder.Entity("course_prerequisites", b =>
                 {
                     b.HasOne("PIED_LMS.Domain.Entities.Course", null)
@@ -1431,23 +1446,6 @@ namespace PIED_LMS.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_course_prerequisites_courses_prerequisite_course_id");
-                });
-
-            modelBuilder.Entity("course_teachers", b =>
-                {
-                    b.HasOne("PIED_LMS.Domain.Entities.Course", null)
-                        .WithMany()
-                        .HasForeignKey("course_id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_course_teachers_courses_course_id");
-
-                    b.HasOne("PIED_LMS.Domain.Entities.ApplicationUser", null)
-                        .WithMany()
-                        .HasForeignKey("user_id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_course_teachers_users_user_id");
                 });
 
             modelBuilder.Entity("PIED_LMS.Domain.Entities.Course", b =>

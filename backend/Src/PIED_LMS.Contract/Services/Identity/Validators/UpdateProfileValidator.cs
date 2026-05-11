@@ -1,3 +1,4 @@
+using System.Linq;
 namespace PIED_LMS.Contract.Services.Identity.Validators;
 
 public class UpdateProfileValidator : AbstractValidator<UpdateProfileCommand>

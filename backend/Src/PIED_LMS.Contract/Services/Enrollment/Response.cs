@@ -8,7 +8,7 @@ public static class Response
         Guid Id,
         Guid UserId,
         string StudentName,
-        int CourseId,
+        Guid CourseId,
         string CourseTitle,
         EnrollmentStatus Status,
         string? PaymentProofUrl,

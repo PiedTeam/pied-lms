@@ -55,12 +55,15 @@ public class UpdateProfileHandler(
             user.UpdatedAt = DateTime.UtcNow;
 
             var result = await userManager.UpdateAsync(user);
-            if (result.Succeeded) return new ServiceResponse<string>(true, "Profile updated successfully");
-            var errors = result.Errors.Select(e => e.Description).ToList();
-            logger.LogWarning("Failed to update profile for user {UserId}: {Errors}", user.Id,
-                string.Join(", ", errors));
-            return new ServiceResponse<string>(false, "Failed to update profile");
+            if (!result.Succeeded)
+            {
+                var errors = result.Errors.Select(e => e.Description).ToList();
+                logger.LogWarning("Failed to update profile for user {UserId}: {Errors}", user.Id,
+                    string.Join(", ", errors));
+                return new ServiceResponse<string>(false, "Failed to update profile");
+            }
 
+            return new ServiceResponse<string>(true, "Profile updated successfully");
         }
         catch (Exception ex)
         {

@@ -18,7 +18,7 @@ public class CreateTestRoomHandler(
         if (request.StartTime >= request.EndTime)
             return new ServiceResponse<Guid>(false, "Start time must be before end time.");
         var userIdString = httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (!Guid.TryParse(userIdString, out var teacherId))
+        if (!Guid.TryParse(userIdString, out var mentorId))
             return new ServiceResponse<Guid>(false, "User not found.");
 
         var maxRetries = 3;
@@ -41,7 +41,7 @@ public class CreateTestRoomHandler(
                 StartTime = request.StartTime,
                 EndTime = request.EndTime,
                 JoinCode = joinCode,
-                CreatedBy = teacherId,
+                CreatedBy = mentorId,
                 CreatedAt = DateTimeOffset.UtcNow
             };
 

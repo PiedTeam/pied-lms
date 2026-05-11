@@ -213,7 +213,7 @@ public class SmtpEmailService : IEmailService
         <div class='content'>
             <p>Dear {recipientName},</p>
             
-            <p>You have been assigned as a teacher to the following course on PIED LMS:</p>
+            <p>You have been assigned as a mentor to the following course on PIED LMS:</p>
             
             <div class='course-title'>{courseTitle}</div>
             
@@ -223,7 +223,7 @@ public class SmtpEmailService : IEmailService
                 <p><span class='info-label'>End Date:</span> {endDate:dddd, MMMM dd, yyyy}</p>
             </div>
             
-            <p>As an assigned teacher, you will have access to manage course content, monitor student progress, and facilitate learning activities.</p>
+            <p>As an assigned mentor, you will have access to manage course content, monitor student progress, and facilitate learning activities.</p>
             
             <div style='text-align: center;'>
                 <a href='{courseManagementUrl}' class='button'>View Course Details</a>

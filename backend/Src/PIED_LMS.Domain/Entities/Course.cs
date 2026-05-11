@@ -4,7 +4,7 @@ namespace PIED_LMS.Domain.Entities;
 
 public class Course
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
     public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string? ThumbnailPath { get; set; }
@@ -28,7 +28,7 @@ public class Course
     public int CurrentEnrollment { get; set; }
 
     // Navigation properties
-    public ICollection<ApplicationUser> Teachers { get; set; } = new List<ApplicationUser>();
+    public ICollection<ApplicationUser> Mentors { get; set; } = new List<ApplicationUser>();
     public ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();
 
     // Self-referencing many-to-many for prerequisites

@@ -27,12 +27,11 @@ public sealed class StudentSubmissionEndpoints : ICarterModule
             .WithServiceResponseOpenApi<List<SubmissionResponse>>(ServiceResponseStatusProfile.OkOrBadRequest);
 
         // Get submission details
-        // Admins/Teachers could also use this if they have the ID
+        // Admins/Mentors could also use this if they have the ID
         group.MapGet("/submissions/{id:guid}", GetSubmissionById)
             .WithName("GetSubmissionById")
-            .RequireAuthorization() // general auth since both teacher and student can view
-            .WithServiceResponseOpenApi<
-                SubmissionDetailResponse>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound);
+            .RequireAuthorization() // general auth since both mentor and student can view
+            .WithServiceResponseOpenApi<SubmissionDetailResponse>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound);
     }
 
     private static async Task<IResult> SubmitCode(
