@@ -21,9 +21,8 @@ public class CourseEndpoints : ICarterModule
             .WithOpenApi()
             .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator))
             .DisableAntiforgery()
-            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator))
-            .Produces<ServiceResponse<int>>(StatusCodes.Status201Created)
-            .Produces<ServiceResponse<int>>(StatusCodes.Status400BadRequest)
+            .Produces<ServiceResponse<Guid>>(StatusCodes.Status201Created)
+            .Produces<ServiceResponse<Guid>>(StatusCodes.Status400BadRequest)
             .Accepts<IFormFile>("multipart/form-data");
 
         // PUT /api/courses/{id}
@@ -40,7 +39,6 @@ public class CourseEndpoints : ICarterModule
         group.MapDelete("/{id:guid}", DeleteCourse)
             .WithName("DeleteCourse")
             .WithOpenApi()
-            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator))
             .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator))
             .Produces(StatusCodes.Status204NoContent)
             .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest);
@@ -72,6 +70,7 @@ public class CourseEndpoints : ICarterModule
         group.MapGet("/{id:guid}/curriculum", GetCourseCurriculum)
             .WithName("GetCourseCurriculum")
             .WithOpenApi()
+            .RequireAuthorization()
             .Produces<ServiceResponse<List<CurriculumSectionDto>>>()
             .Produces<ServiceResponse<List<CurriculumSectionDto>>>(StatusCodes.Status404NotFound);
 
@@ -79,6 +78,7 @@ public class CourseEndpoints : ICarterModule
         group.MapGet("/{id:guid}/insight", GetCourseInsight)
             .WithName("GetCourseInsight")
             .WithOpenApi()
+            .RequireAuthorization()
             .Produces<ServiceResponse<CourseInsightDto>>()
             .Produces<ServiceResponse<CourseInsightDto>>(StatusCodes.Status404NotFound);
     }
@@ -156,7 +156,6 @@ public class CourseEndpoints : ICarterModule
         var result = await mediator.Send(command);
 
         if (result.Success) return Results.NoContent();
-        if (result.Success) return Results.NoContent();
 
         return result.ToActionResult(context);
     }
@@ -168,34 +167,33 @@ public class CourseEndpoints : ICarterModule
         IMediator mediator,
         HttpContext context)
     {
-        // Guard validation for empty MentorIds list
-        if (request.MentorIds == null || request.MentorIds.Count == 0)
+        // Guard validation for null Mentors list
+        if (request.Mentors == null)
         {
             var errorResponse = new ServiceResponse<string>(
                 false,
-                "At least one mentor ID must be provided in MentorIds. To unassign all mentors, use the unassign endpoint instead."
+                "Mentors must be provided."
             );
             return Results.BadRequest(errorResponse);
         }
 
         // Additional validation for duplicate mentor IDs
-        var duplicateIds = request.MentorIds
-            .GroupBy(id => id)
+        var duplicateIds = request.Mentors
+            .GroupBy(mentorId => mentorId)
             .Where(g => g.Count() > 1)
             .Select(g => g.Key)
             .ToList();
 
         if (duplicateIds.Count != 0)
-        if (duplicateIds.Count != 0)
         {
             var errorResponse = new ServiceResponse<string>(
                 false,
-                $"Duplicate mentor IDs found in MentorIds: {string.Join(", ", duplicateIds)}"
+                $"Duplicate mentor IDs found in Mentors: {string.Join(", ", duplicateIds)}"
             );
             return Results.BadRequest(errorResponse);
         }
 
-        var command = new AssignMentorsCommand(id, request.MentorIds);
+        var command = new AssignMentorsCommand(id, request.Mentors);
         var result = await mediator.Send(command);
         return result.ToActionResult(context);
     }

@@ -19,7 +19,7 @@ public class QuestionEndpoints : ICarterModule
             .WithName("Questions")
             .WithOpenApi()
             .WithTags("Questions")
-            .AllowAnonymous(); // Everyone can access
+            .RequireAuthorization();
 
         // GET /api/questions/random
         group.MapGet("/random", GetRandomQuestion)
@@ -29,8 +29,7 @@ public class QuestionEndpoints : ICarterModule
         // POST /api/questions/check
         group.MapPost("/check", CheckAnswer)
             .WithName("CheckAnswer")
-            .WithServiceResponseOpenApi<CheckAnswerResponse>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound)
-            .DisableAntiforgery();
+            .WithServiceResponseOpenApi<CheckAnswerResponse>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound);
     }
 
     private static async Task<IResult> GetRandomQuestion(ISender sender, HttpContext context)

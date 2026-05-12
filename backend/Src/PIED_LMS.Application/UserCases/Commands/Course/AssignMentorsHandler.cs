@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using PIED_LMS.Application.Options;
+using PIED_LMS.Contract.Abstractions.BackgroundTasks;
 using PIED_LMS.Contract.Abstractions.Email;
 using PIED_LMS.Contract.Abstractions.Shared;
 using PIED_LMS.Contract.Services.Course;
@@ -16,7 +17,7 @@ namespace PIED_LMS.Application.UserCases.Commands.Course;
 
 public class AssignMentorsHandler(
     IUnitOfWork unitOfWork,
-    IEmailService emailService,
+    IBackgroundEmailQueue backgroundEmailQueue,
     IOptions<CourseManagementSettings> courseManagementOptions,
     ILogger<AssignMentorsHandler> logger) : IRequestHandler<AssignMentorsCommand, ServiceResponse<string>>
 {
@@ -39,13 +40,13 @@ public class AssignMentorsHandler(
 
             var userRepository = unitOfWork.Repository<ApplicationUser>();
             var mentors = await userRepository
-                .FindAll(u => request.MentorIds.Contains(u.Id))
+                .FindAll(u => request.Mentors.Contains(u.Id))
                 .ToListAsync(cancellationToken);
 
-            if (mentors.Count != request.MentorIds.Count)
+            if (mentors.Count != request.Mentors.Count)
             {
                 var foundIds = mentors.Select(t => t.Id).ToList();
-                var missingIds = request.MentorIds.Except(foundIds).ToList();
+                var missingIds = request.Mentors.Except(foundIds).ToList();
                 logger.LogWarning("Course assignment failed: Invalid mentor IDs: {MissingIds}", 
                     string.Join(", ", missingIds));
                 return new ServiceResponse<string>(false, "One or more mentor IDs are invalid");
@@ -54,8 +55,8 @@ public class AssignMentorsHandler(
             var invalidMentors = await ValidateMentorRolesAsync(mentors, cancellationToken);
             if (invalidMentors.Any())
             {
-                logger.LogWarning("Course assignment failed: Users without Mentor role: {InvalidMentors}", 
-                    string.Join(", ", invalidMentors.Select(t => $"{t.FirstName} {t.LastName} ({t.Email})")));
+                logger.LogWarning("Course assignment failed: Users without Mentor role: {InvalidMentorIds}", 
+                    string.Join(", ", invalidMentors.Select(t => t.Id)));
                 return new ServiceResponse<string>(false, "One or more users do not have the Mentor role");
             }
 
@@ -69,72 +70,27 @@ public class AssignMentorsHandler(
             courseRepository.Update(course);
             await unitOfWork.CommitAsync(cancellationToken);
 
-            logger.LogInformation(
-                "Mentors assigned successfully to course {CourseId}. Mentor IDs: {MentorIds}",
-                course.Id,
-                string.Join(", ", request.MentorIds));
-
-            _ = Task.Run(async () =>
+            foreach (var mentor in mentors)
             {
-                foreach (var mentor in mentors)
+                if (string.IsNullOrWhiteSpace(mentor.Email))
                 {
-                    if (string.IsNullOrWhiteSpace(mentor.Email))
-                    {
-                        logger.LogWarning(
-                            "Skipping email notification for mentor {MentorId} - email is null or empty",
-                            mentor.Id);
-                        continue;
-                    }
-
-                    var courseManagementUrl = _courseManagementSettings.GetCourseUrl(course.Id);
-                    var retryAttempts = _courseManagementSettings.EmailRetryAttempts;
-                    var retryDelay = _courseManagementSettings.EmailRetryDelayMs;
-                    var attempt = 0;
-                    var emailSent = false;
-
-                    while (attempt < retryAttempts && !emailSent)
-                    {
-                        attempt++;
-                        try
-                        {
-                            await emailService.SendCourseAssignmentAsync(
-                                mentor.Email,
-                                $"{mentor.FirstName} {mentor.LastName}",
-                                course.Title,
-                                course.StartDate,
-                                course.EndDate,
-                                courseManagementUrl,
-                                CancellationToken.None);
-
-                            emailSent = true;
-                            
-                            if (attempt > 1)
-                            {
-                                logger.LogInformation(
-                                    "Successfully sent course assignment email to mentor {MentorId} ({Email}) for course {CourseId} on attempt {Attempt}",
-                                    mentor.Id, mentor.Email, course.Id, attempt);
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            if (attempt == retryAttempts)
-                            {
-                                logger.LogError(ex, 
-                                    "Failed to send course assignment email to mentor {MentorId} ({Email}) for course {CourseId} after {Attempts} attempts",
-                                    mentor.Id, mentor.Email, course.Id, retryAttempts);
-                            }
-                            else
-                            {
-                                logger.LogWarning(ex,
-                                    "Failed to send course assignment email to mentor {MentorId} ({Email}) for course {CourseId} on attempt {Attempt}. Retrying in {DelayMs}ms",
-                                    mentor.Id, mentor.Email, course.Id, attempt, retryDelay);
-
-                                await Task.Delay(retryDelay, CancellationToken.None);
-                            }
-                        }
-                    }
+                    logger.LogWarning(
+                        "Skipping email notification for mentor {MentorId} - email is null or empty",
+                        mentor.Id);
+                    continue;
                 }
-            }, CancellationToken.None);
+
+                await backgroundEmailQueue.EnqueueEmailAsync(new EmailJob(
+                    mentor.Email,
+                    $"{mentor.FirstName} {mentor.LastName}",
+                    course.Title,
+                    course.StartDate,
+                    course.EndDate,
+                    _courseManagementSettings.GetCourseUrl(course.Id),
+                    _courseManagementSettings.EmailRetryAttempts,
+                    _courseManagementSettings.EmailRetryDelayMs
+                ));
+            }
 
             return new ServiceResponse<string>(true, "Mentors assigned successfully");
         }

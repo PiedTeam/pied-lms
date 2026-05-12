@@ -1,3 +1,4 @@
+using PIED_LMS.Domain.Constants;
 using PIED_LMS.Contract.Services.Exam;
 using PIED_LMS.Contract.Services.ExamParticipation;
 using PIED_LMS.Contract.Services.ExamRoom;
@@ -18,12 +19,12 @@ public class ExamRoomEndpoints : ICarterModule
         // Mentor endpoints
         group.MapPost("", CreateExamRoom)
             .WithName("CreateExamRoom")
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor"))
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator, RoleConstants.Mentor))
             .WithServiceResponseOpenApi<ExamRoomResponse>(ServiceResponseStatusProfile.OkOrBadRequest);
 
         group.MapGet("", GetAllExamRooms)
             .WithName("GetAllExamRooms")
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor"))
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator, RoleConstants.Mentor))
             .WithServiceResponseOpenApi<PaginatedResponse<ExamRoomResponse>>(ServiceResponseStatusProfile.OkOrBadRequest);
 
         group.MapGet("/{id}", GetExamRoomById)
@@ -33,27 +34,27 @@ public class ExamRoomEndpoints : ICarterModule
 
         group.MapPut("/{id}", UpdateExamRoom)
             .WithName("UpdateExamRoom")
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor"))
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator, RoleConstants.Mentor))
             .WithServiceResponseOpenApi<ExamRoomResponse>(ServiceResponseStatusProfile.OkOrBadRequestOrForbidden);
 
         group.MapDelete("/{id}", DeleteExamRoom)
             .WithName("DeleteExamRoom")
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor"))
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator, RoleConstants.Mentor))
             .WithServiceResponseOpenApi<string>(ServiceResponseStatusProfile.OkOrBadRequestOrForbidden);
 
         group.MapPost("/{id}/exams", AssignExamToRoom)
             .WithName("AssignExamToRoom")
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor"))
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator, RoleConstants.Mentor))
             .WithServiceResponseOpenApi<string>(ServiceResponseStatusProfile.OkOrBadRequestOrForbidden);
 
         group.MapPost("/{id}/enroll", EnrollStudents)
             .WithName("EnrollStudents")
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor"))
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator, RoleConstants.Mentor))
             .WithServiceResponseOpenApi<EnrollmentResultResponse>(ServiceResponseStatusProfile.OkOrBadRequestOrForbidden);
 
         group.MapDelete("/{roomId}/exams/{examId}", RemoveExamFromRoom)
             .WithName("RemoveExamFromRoom")
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor"))
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator, RoleConstants.Mentor))
             .WithServiceResponseOpenApi<string>(ServiceResponseStatusProfile.OkOrBadRequestOrForbidden);
 
         // Student endpoints

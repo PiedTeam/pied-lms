@@ -4,20 +4,37 @@ using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Contract.Abstractions.Shared;
 using PIED_LMS.Contract.Services.Mentor;
 using PIED_LMS.Domain.Constants;
+using PIED_LMS.Domain.Abstractions;
 using PIED_LMS.Domain.Entities;
 using MediatR;
 
 namespace PIED_LMS.Application.UserCases.Queries.Mentor;
 
-public class GetMentorsHandler(UserManager<ApplicationUser> userManager) 
-    : IRequestHandler<GetMentorsQuery, ServiceResponse<PIED_LMS.Contract.Abstractions.Shared.PagedResult<MentorDto>>>
+public class GetMentorsHandler(
+    UserManager<ApplicationUser> userManager,
+    RoleManager<ApplicationRole> roleManager,
+    IUnitOfWork unitOfWork) 
+    : IRequestHandler<GetMentorsQuery, ServiceResponse<PagedResult<MentorDto>>>
 {
     private readonly UserManager<ApplicationUser> _userManager = userManager;
+    private readonly RoleManager<ApplicationRole> _roleManager = roleManager;
+    private readonly IUnitOfWork _unitOfWork = unitOfWork;
 
-    public async Task<ServiceResponse<PIED_LMS.Contract.Abstractions.Shared.PagedResult<MentorDto>>> Handle(GetMentorsQuery request, CancellationToken cancellationToken)
+    public async Task<ServiceResponse<PagedResult<MentorDto>>> Handle(GetMentorsQuery request, CancellationToken cancellationToken)
     {
-        var mentorsInRole = await _userManager.GetUsersInRoleAsync(RoleConstants.Mentor);
-        var query = mentorsInRole.AsQueryable();
+        var mentorRole = await _roleManager.FindByNameAsync(RoleConstants.Mentor);
+        if (mentorRole == null)
+        {
+            return new ServiceResponse<PagedResult<MentorDto>>(true, "No mentors found", 
+                new PagedResult<MentorDto>([], 0, request.PageNumber, request.PageSize));
+        }
+
+        var mentorIdsQuery = _unitOfWork.Repository<IdentityUserRole<Guid>>()
+            .FindAll(ur => ur.RoleId == mentorRole.Id)
+            .Select(ur => ur.UserId);
+
+        var query = _userManager.Users
+            .Where(u => mentorIdsQuery.Contains(u.Id));
 
         if (!string.IsNullOrWhiteSpace(request.SearchTerm))
         {
@@ -32,22 +49,26 @@ public class GetMentorsHandler(UserManager<ApplicationUser> userManager)
             query = query.Where(u => u.IsActive == request.IsActive.Value);
         }
 
-        var totalCount = query.Count();
-        var mentors = query
+        var totalCount = await query.CountAsync(cancellationToken);
+        
+        var mentors = await query
+            .OrderBy(u => u.LastName)
+            .ThenBy(u => u.FirstName)
             .Skip((request.PageNumber - 1) * request.PageSize)
             .Take(request.PageSize)
-            .Select(u => new MentorDto(
-                u.Id,
-                u.FirstName,
-                u.LastName,
-                u.Email ?? string.Empty,
-                u.Bio,
-                u.ProfilePictureUrl,
-                u.IsActive
-            ))
-            .ToList();
+            .ToListAsync(cancellationToken);
 
-        var pagedResult = new PIED_LMS.Contract.Abstractions.Shared.PagedResult<MentorDto>(mentors, totalCount, request.PageNumber, request.PageSize);
-        return new ServiceResponse<PIED_LMS.Contract.Abstractions.Shared.PagedResult<MentorDto>>(true, "Mentors retrieved successfully", pagedResult);
+        var mentorDtos = mentors.Select(u => new MentorDto(
+            u.Id,
+            u.FirstName,
+            u.LastName,
+            u.Email ?? string.Empty,
+            u.Bio,
+            u.ProfilePictureUrl,
+            u.IsActive
+        )).ToList();
+
+        var pagedResult = new PagedResult<MentorDto>(mentorDtos, totalCount, request.PageNumber, request.PageSize);
+        return new ServiceResponse<PagedResult<MentorDto>>(true, "Mentors retrieved successfully", pagedResult);
     }
 }

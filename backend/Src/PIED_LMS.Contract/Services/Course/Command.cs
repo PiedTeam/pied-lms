@@ -1,7 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Http;
 using PIED_LMS.Contract.Constants;
-using PIED_LMS.Contract.Constants;
 using PIED_LMS.Contract.Services.Identity;
 
 namespace PIED_LMS.Contract.Services.Course;
@@ -47,7 +46,7 @@ public record DeleteCourseCommand(
 // Assign Mentors Command
 public record AssignMentorsCommand(
     Guid CourseId,
-    [Required(ErrorMessage = "Mentor IDs are required")]
-    [MinLength(1, ErrorMessage = "At least one mentor ID must be provided")]
-    List<Guid> MentorIds
+    [Required(ErrorMessage = "Mentors are required")]
+    [MinLength(1, ErrorMessage = "At least one mentor must be provided")]
+    IReadOnlyList<Guid> Mentors
 ) : IRequest<ServiceResponse<string>>;

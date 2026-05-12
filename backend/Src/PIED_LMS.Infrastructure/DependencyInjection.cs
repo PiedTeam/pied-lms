@@ -1,9 +1,11 @@
 using PIED_LMS.Application.Abstractions;
 using PIED_LMS.Application.Options;
+using PIED_LMS.Contract.Abstractions.BackgroundTasks;
 using PIED_LMS.Contract.Abstractions.Email;
 using PIED_LMS.Contract.Abstractions.Excel;
 using PIED_LMS.Contract.Abstractions.Services;
 using PIED_LMS.Contract.Abstractions.Storage;
+using PIED_LMS.Infrastructure.BackgroundTasks;
 using PIED_LMS.Domain.Abstractions;
 using PIED_LMS.Domain.Entities;
 using PIED_LMS.Infrastructure.Authentication;
@@ -129,6 +131,10 @@ public static class PersistenceExtensions
         services.AddScoped<ITestCaseStorageService, TestCaseStorageService>();
         services.AddScoped<IFileStorageService, S3FileStorageService>();
         services.AddScoped<ICourseLockingService, CourseLockingService>();
+
+        // Background Services
+        services.AddSingleton<IBackgroundEmailQueue, BackgroundEmailQueue>();
+        services.AddHostedService<EmailBackgroundService>();
 
         services.AddAuthentication(options =>
         {
