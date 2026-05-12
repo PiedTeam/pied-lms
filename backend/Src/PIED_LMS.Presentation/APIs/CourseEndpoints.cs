@@ -40,6 +40,7 @@ public class CourseEndpoints : ICarterModule
             .WithName("DeleteCourse")
             .WithOpenApi()
             .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator))
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator))
             .Produces(StatusCodes.Status204NoContent)
             .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest);
 
@@ -156,6 +157,7 @@ public class CourseEndpoints : ICarterModule
         var result = await mediator.Send(command);
 
         if (result.Success) return Results.NoContent();
+        if (result.Success) return Results.NoContent();
 
         return result.ToActionResult(context);
     }
@@ -184,6 +186,7 @@ public class CourseEndpoints : ICarterModule
             .Select(g => g.Key)
             .ToList();
 
+        if (duplicateIds.Count != 0)
         if (duplicateIds.Count != 0)
         {
             var errorResponse = new ServiceResponse<string>(
