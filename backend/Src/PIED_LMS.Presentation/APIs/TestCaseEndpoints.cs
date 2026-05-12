@@ -1,3 +1,4 @@
+using PIED_LMS.Domain.Constants;
 using PIED_LMS.Contract.Services.TestCase;
 using PIED_LMS.Presentation.Extensions;
 
@@ -14,24 +15,24 @@ public class TestCaseEndpoints : ICarterModule
         // POST /api/testcases
         group.MapPost("", CreateTestCase)
             .WithName("CreateTestCase")
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor"))
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator, RoleConstants.Mentor))
             .WithServiceResponseOpenApi<TestCaseResponse>(ServiceResponseStatusProfile.OkOrBadRequestOrForbiddenOrNotFound);
         // GET /api/testcases/{examId}
         group.MapGet("/{examId:guid}", GetTestCasesByExam)
             .WithName("GetTestCasesByExam")
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor"))
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator, RoleConstants.Mentor))
             .WithServiceResponseOpenApi<List<TestCaseResponse>>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound);
 
         // PUT /api/testcases/{testcaseId}
         group.MapPut("/{testcaseId:guid}", UpdateTestCase)
             .WithName("UpdateTestCase")
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor"))
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator, RoleConstants.Mentor))
             .WithServiceResponseOpenApi<TestCaseResponse>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound);
 
         // DELETE /api/testcases/{testcaseId}
         group.MapDelete("/{testcaseId:guid}", DeleteTestCase)
             .WithName("DeleteTestCase")
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor"))
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator, RoleConstants.Mentor))
             .WithServiceResponseOpenApi<string>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound);
     }
 

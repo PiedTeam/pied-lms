@@ -1,4 +1,6 @@
+using PIED_LMS.Domain.Constants;
 using PIED_LMS.Contract.Services.QuestionQuiz;
+using QuizletLevel = PIED_LMS.Contract.Services.QuestionQuiz.QuizletLevel;
 using PIED_LMS.Presentation.Extensions;
 
 namespace PIED_LMS.Presentation.APIs;
@@ -17,30 +19,30 @@ public class QuizletEndpoints : ICarterModule
             .WithName("CreateQuizlet")
             .DisableAntiforgery()
             .WithServiceResponseOpenApi<string>(ServiceResponseStatusProfile.OkOrBadRequest)
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor"));
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator, RoleConstants.Mentor));
 
         // GET /api/quizlets  (Admin, Mentor — all quizlets summary)
         group.MapGet("", GetAllQuizlets)
             .WithName("GetAllQuizlets")
             .WithServiceResponseOpenApi<List<QuizletSummaryResponse>>(ServiceResponseStatusProfile.OkOrBadRequest)
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor"));
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator, RoleConstants.Mentor));
 
         group.MapGet("/{id:int}", GetQuizletById)
             .WithName("GetQuizletById")
             .WithServiceResponseOpenApi<QuizletDetailResponse>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound)
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor"));
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator, RoleConstants.Mentor));
 
         // DELETE /api/quizlets/{id}
         group.MapDelete("/{id}", DeleteQuizlet)
             .WithName("DeleteQuizlet")
             .WithServiceResponseOpenApi<string>(ServiceResponseStatusProfile.OkOrBadRequest)
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor"));
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator, RoleConstants.Mentor));
 
         // PUT /api/quizlets/{id}
         group.MapPut("/{id}", UpdateQuizlet)
             .WithName("UpdateQuizlet")
             .WithServiceResponseOpenApi<string>(ServiceResponseStatusProfile.OkOrBadRequest)
-            .RequireAuthorization(policy => policy.RequireRole("Admin", "Mentor"));
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator, RoleConstants.Mentor));
 
         // GET /api/students/quizlets  (Student — published only, summary)
         app.MapGet("/api/students/quizlets", GetStudentQuizlets)

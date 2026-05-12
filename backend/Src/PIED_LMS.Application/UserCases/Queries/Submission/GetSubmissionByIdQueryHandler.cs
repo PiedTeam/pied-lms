@@ -1,7 +1,12 @@
+using System.Security.Claims;
+using MediatR;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Contract.Services.Submission;
 using PIED_LMS.Domain.Abstractions;
+using PIED_LMS.Domain.Constants;
 using PIED_LMS.Domain.Entities;
 
 namespace PIED_LMS.Application.UserCases.Queries.Submission;
@@ -25,14 +30,19 @@ public sealed class GetSubmissionByIdQueryHandler(
         try
         {
             var submission = await unitOfWork.Repository<CodeSubmission>()
-                .GetByIdAsync(request.Id, cancellationToken);
+                .FindAll(s => s.Id == request.Id, s => s.Exam)
+                .FirstOrDefaultAsync(cancellationToken);
 
             if (submission is null)
                 return new ServiceResponse<SubmissionDetailResponse>(false, "Submission not found", null, null, true,
                     "NOT_FOUND");
 
             // check authorization
-            if (roleClaim == "Student" && submission.StudentId != currentUserId)
+            if (roleClaim == RoleConstants.Student && submission.StudentId != currentUserId)
+                return new ServiceResponse<SubmissionDetailResponse>(false, "Forbidden", null, null, false,
+                    "FORBIDDEN");
+
+            if (roleClaim == RoleConstants.Mentor && submission.Exam.CreatedBy != currentUserId)
                 return new ServiceResponse<SubmissionDetailResponse>(false, "Forbidden", null, null, false,
                     "FORBIDDEN");
 

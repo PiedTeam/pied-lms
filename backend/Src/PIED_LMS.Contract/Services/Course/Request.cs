@@ -36,7 +36,7 @@ public sealed record UpdateCourseRequest(
 );
 
 public sealed record AssignMentorsRequest(
-    [Required(ErrorMessage = "Mentor IDs are required")]
-    [MinLength(1, ErrorMessage = "At least one mentor ID must be provided. To unassign all mentors, use the unassign endpoint instead.")]
-    List<Guid> MentorIds
+    [Required(ErrorMessage = "Mentors are required")]
+    [MinLength(1, ErrorMessage = "At least one mentor must be provided. To unassign all mentors, use the unassign endpoint instead.")]
+    IReadOnlyList<Guid> Mentors
 );

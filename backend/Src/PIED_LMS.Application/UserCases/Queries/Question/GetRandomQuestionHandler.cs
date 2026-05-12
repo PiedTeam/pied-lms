@@ -14,7 +14,7 @@ public class GetRandomQuestionHandler(IUnitOfWork unitOfWork)
     {
         var randomQuestion = await unitOfWork.Repository<Domain.Entities.Question>()
             .FindAll(q => !q.IsHidden && q.Quizlet.IsPublished, q => q.Answers, q => q.Quizlet)
-            .OrderBy(q => Guid.NewGuid()) // Random ordering
+            .OrderBy(q => EF.Functions.Random()) // Random ordering on SQL side
             .FirstOrDefaultAsync(cancellationToken);
 
         if (randomQuestion == null)
