@@ -38,11 +38,19 @@ public class TestCaseEndpoints : ICarterModule
 
     // POST /api/testcases
     private static async Task<IResult> CreateTestCase(
-        CreateTestCaseCommand request,
+        CreateTestCaseRequest request,
         IMediator mediator,
         HttpContext context)
     {
-        var result = await mediator.Send(request);
+        var command = new CreateTestCaseCommand(
+            request.ExamId,
+            request.Index,
+            request.Input,
+            request.Output,
+            request.IsHidden
+        );
+
+        var result = await mediator.Send(command);
         return result.ToActionResult(context);
     }
 
@@ -88,7 +96,15 @@ public class TestCaseEndpoints : ICarterModule
     }
 }
 
-// Request DTO for PUT body
+// Request DTOs
+public sealed record CreateTestCaseRequest(
+    Guid ExamId,
+    int Index,
+    string Input,
+    string Output,
+    bool IsHidden
+);
+
 public sealed record UpdateTestCaseRequest(
     Guid ExamId,
     int Index,

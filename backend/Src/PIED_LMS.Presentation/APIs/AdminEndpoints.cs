@@ -29,12 +29,13 @@ public class AdminEndpoints : ICarterModule
     }
 
     private static async Task<IResult> ImportStudents(
-        ImportStudentsCommand request,
+        ImportStudentsRequest request,
         IMediator mediator,
         HttpContext context,
         CancellationToken cancellationToken)
     {
-        var result = await mediator.Send(request, cancellationToken);
+        var command = new ImportStudentsCommand(request.Students);
+        var result = await mediator.Send(command, cancellationToken);
         return result.ToActionResult(context);
     }
 
@@ -50,3 +51,7 @@ public class AdminEndpoints : ICarterModule
         return result.ToActionResult(context);
     }
 }
+
+public sealed record ImportStudentsRequest(
+    IReadOnlyList<StudentImportDto> Students
+);

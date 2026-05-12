@@ -18,70 +18,54 @@ public class CourseEndpoints : ICarterModule
         // POST /api/courses
         group.MapPost("", CreateCourse)
             .WithName("CreateCourse")
-            .WithOpenApi()
             .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator))
             .DisableAntiforgery()
-            .Produces<ServiceResponse<Guid>>(StatusCodes.Status201Created)
-            .Produces<ServiceResponse<Guid>>(StatusCodes.Status400BadRequest)
+            .WithServiceResponseOpenApi<Guid>(ServiceResponseStatusProfile.OkOrBadRequest)
             .Accepts<IFormFile>("multipart/form-data");
 
         // PUT /api/courses/{id}
         group.MapPut("/{id:guid}", UpdateCourse)
             .WithName("UpdateCourse")
-            .WithOpenApi()
             .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator))
             .DisableAntiforgery()
-            .Produces<ServiceResponse<string>>()
-            .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest)
+            .WithServiceResponseOpenApi<string>(ServiceResponseStatusProfile.OkOrBadRequest)
             .Accepts<IFormFile>("multipart/form-data");
 
         // DELETE /api/courses/{id}
         group.MapDelete("/{id:guid}", DeleteCourse)
             .WithName("DeleteCourse")
-            .WithOpenApi()
             .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator))
-            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator))
-            .Produces(StatusCodes.Status204NoContent)
-            .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest);
+            .WithServiceResponseOpenApi<string>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound);
 
         // POST /api/courses/{id}/mentors
         group.MapPost("/{id:guid}/mentors", AssignMentors)
             .WithName("AssignMentors")
-            .WithOpenApi()
             .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator))
-            .Produces<ServiceResponse<string>>(StatusCodes.Status200OK)
-            .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest);
+            .WithServiceResponseOpenApi<string>(ServiceResponseStatusProfile.OkOrBadRequest);
 
         // GET /api/courses
         group.MapGet("", GetCourses)
             .WithName("GetCourses")
-            .WithOpenApi()
             .RequireAuthorization()
-            .Produces<ServiceResponse<PagedResult<CourseDto>>>(StatusCodes.Status200OK);
+            .WithServiceResponseOpenApi<PagedResult<CourseDto>>(ServiceResponseStatusProfile.OkOrBadRequest);
 
         // GET /api/courses/{id}
         group.MapGet("/{id:guid}", GetCourseById)
             .WithName("GetCourseById")
-            .WithOpenApi()
             .RequireAuthorization()
-            .Produces<ServiceResponse<CourseDto>>(StatusCodes.Status200OK)
-            .Produces<ServiceResponse<CourseDto>>(StatusCodes.Status404NotFound);
+            .WithServiceResponseOpenApi<CourseDto>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound);
 
         // GET /api/courses/{id}/curriculum
         group.MapGet("/{id:guid}/curriculum", GetCourseCurriculum)
             .WithName("GetCourseCurriculum")
-            .WithOpenApi()
             .RequireAuthorization()
-            .Produces<ServiceResponse<List<CurriculumSectionDto>>>()
-            .Produces<ServiceResponse<List<CurriculumSectionDto>>>(StatusCodes.Status404NotFound);
+            .WithServiceResponseOpenApi<List<CurriculumSectionDto>>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound);
 
         // GET /api/courses/{id}/insight
         group.MapGet("/{id:guid}/insight", GetCourseInsight)
             .WithName("GetCourseInsight")
-            .WithOpenApi()
             .RequireAuthorization()
-            .Produces<ServiceResponse<CourseInsightDto>>()
-            .Produces<ServiceResponse<CourseInsightDto>>(StatusCodes.Status404NotFound);
+            .WithServiceResponseOpenApi<CourseInsightDto>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound);
     }
 
     // POST /api/courses
@@ -110,9 +94,6 @@ public class CourseEndpoints : ICarterModule
         );
 
         var result = await mediator.Send(command);
-
-        if (result.Success) return Results.Created($"/api/courses/{result.Data}", result);
-
         return result.ToActionResult(context);
     }
 
@@ -155,10 +136,6 @@ public class CourseEndpoints : ICarterModule
     {
         var command = new DeleteCourseCommand(id);
         var result = await mediator.Send(command);
-
-        if (result.Success) return Results.NoContent();
-        if (result.Success) return Results.NoContent();
-
         return result.ToActionResult(context);
     }
 
@@ -176,7 +153,7 @@ public class CourseEndpoints : ICarterModule
                 false,
                 "Mentors must be provided."
             );
-            return Results.BadRequest(errorResponse);
+            return errorResponse.ToActionResult(context);
         }
 
         // Additional validation for duplicate mentor IDs
@@ -187,13 +164,12 @@ public class CourseEndpoints : ICarterModule
             .ToList();
 
         if (duplicateIds.Count != 0)
-        if (duplicateIds.Count != 0)
         {
             var errorResponse = new ServiceResponse<string>(
                 false,
                 $"Duplicate mentor IDs found in Mentors: {string.Join(", ", duplicateIds)}"
             );
-            return Results.BadRequest(errorResponse);
+            return errorResponse.ToActionResult(context);
         }
 
         var command = new AssignMentorsCommand(id, request.Mentors);
@@ -260,6 +236,7 @@ public sealed record GetCoursesRequest
     private readonly int _pageNumber = 1;
     private readonly int _pageSize = 10;
 
+    [FromQuery(Name = "pageNumber")]
     [Range(1, int.MaxValue, ErrorMessage = "Page number must be greater than 0")]
     public int PageNumber
     {
@@ -269,6 +246,7 @@ public sealed record GetCoursesRequest
             : value;
     }
 
+    [FromQuery(Name = "pageSize")]
     [Range(1, 100, ErrorMessage = "Page size must be between 1 and 100")]
     public int PageSize
     {
@@ -280,7 +258,18 @@ public sealed record GetCoursesRequest
                 : value;
     }
 
+    [FromQuery(Name = "status")]
     public CourseStatus? Status { get; init; }
+
+    [FromQuery(Name = "searchTerm")]
     public string? SearchTerm { get; init; }
+
+    [FromQuery(Name = "tag")]
     public string? Tag { get; init; }
 }
+
+public sealed record AssignMentorsRequest(
+    [Required(ErrorMessage = "Mentors are required")]
+    [MinLength(1, ErrorMessage = "At least one mentor must be provided. To unassign all mentors, use the unassign endpoint instead.")]
+    IReadOnlyList<Guid> Mentors
+);

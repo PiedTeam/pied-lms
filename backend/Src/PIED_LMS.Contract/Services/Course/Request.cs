@@ -6,33 +6,33 @@ using PIED_LMS.Contract.Constants;
 namespace PIED_LMS.Contract.Services.Course;
 
 public sealed record CreateCourseRequest(
-    [FromForm] string Title,
-    [FromForm] string? Description,
-    [FromForm] IFormFile? ThumbnailFile,
-    [FromForm] DateTime StartDate,
-    [FromForm] DateTime EndDate,
-    [FromForm] CourseStatus Status,
-    [FromForm] string? Tags,
-    [FromForm] string? Slug,
-    [FromForm] int Duration,
-    [FromForm] string? Seats,
-    [FromForm] string? Price,
-    [FromForm] int Value
+    [FromForm(Name = "title")] string Title,
+    [FromForm(Name = "description")] string? Description,
+    [FromForm(Name = "thumbnailFile")] IFormFile? ThumbnailFile,
+    [FromForm(Name = "startDate")] DateTime StartDate,
+    [FromForm(Name = "endDate")] DateTime EndDate,
+    [FromForm(Name = "status")] CourseStatus Status,
+    [FromForm(Name = "tags")] string? Tags,
+    [FromForm(Name = "slug")] string? Slug,
+    [FromForm(Name = "duration")] int Duration,
+    [FromForm(Name = "seats")] string? Seats,
+    [FromForm(Name = "price")] string? Price,
+    [FromForm(Name = "value")] int Value
 );
 
 public sealed record UpdateCourseRequest(
-    [FromForm] string Title,
-    [FromForm] string? Description,
-    [FromForm] IFormFile? ThumbnailFile,
-    [FromForm] DateTime StartDate,
-    [FromForm] DateTime EndDate,
-    [FromForm] CourseStatus Status,
-    [FromForm] string? Tags,
-    [FromForm] string? Slug,
-    [FromForm] int Duration,
-    [FromForm] string? Seats,
-    [FromForm] string? Price,
-    [FromForm] int Value
+    [FromForm(Name = "title")] string Title,
+    [FromForm(Name = "description")] string? Description,
+    [FromForm(Name = "thumbnailFile")] IFormFile? ThumbnailFile,
+    [FromForm(Name = "startDate")] DateTime StartDate,
+    [FromForm(Name = "endDate")] DateTime EndDate,
+    [FromForm(Name = "status")] CourseStatus Status,
+    [FromForm(Name = "tags")] string? Tags,
+    [FromForm(Name = "slug")] string? Slug,
+    [FromForm(Name = "duration")] int Duration,
+    [FromForm(Name = "seats")] string? Seats,
+    [FromForm(Name = "price")] string? Price,
+    [FromForm(Name = "value")] int Value
 );
 
 public sealed record AssignMentorsRequest(

@@ -19,32 +19,41 @@ public class EnrollmentEndpoints : ICarterModule
         // Student endpoints
         group.MapPost("/", EnrollCourse)
             .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Student))
+            .WithServiceResponseOpenApi<Guid>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound)
             .Accepts<IFormFile>("multipart/form-data");
 
         group.MapDelete("/{id:guid}", CancelEnrollment)
-            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Student));
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Student))
+            .WithServiceResponseOpenApi<string>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound);
 
         group.MapGet("/my", GetStudentEnrollments)
-            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Student));
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Student))
+            .WithServiceResponseOpenApi<PIED_LMS.Contract.Abstractions.Shared.PagedResult<Response.EnrollmentResponse>>(
+                ServiceResponseStatusProfile.OkOrBadRequest);
 
         group.MapGet("/available-courses", GetAvailableCourses)
-            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Student));
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Student))
+            .WithServiceResponseOpenApi<PagedResult<StudentAvailableCourseDto>>(ServiceResponseStatusProfile.OkOrBadRequest);
 
         // Admin endpoints
         group.MapGet("/", GetEnrollments)
-            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator));
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator))
+            .WithServiceResponseOpenApi<PIED_LMS.Contract.Abstractions.Shared.PagedResult<Response.EnrollmentResponse>>(
+                ServiceResponseStatusProfile.OkOrBadRequest);
 
         group.MapPost("/{id:guid}/approve", ApproveEnrollment)
-            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator));
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator))
+            .WithServiceResponseOpenApi<string>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound);
 
         group.MapPost("/{id:guid}/reject", RejectEnrollment)
-            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator));
+            .RequireAuthorization(policy => policy.RequireRole(RoleConstants.Administrator))
+            .WithServiceResponseOpenApi<string>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound);
     }
 
     private static async Task<IResult> EnrollCourse(
-        [FromForm] Guid courseId,
-        [FromForm] IFormFile paymentProof,
-        [FromForm] string? notes,
+        [FromForm(Name = "courseId")] Guid courseId,
+        [FromForm(Name = "paymentProof")] IFormFile paymentProof,
+        [FromForm(Name = "notes")] string? notes,
         IMediator mediator,
         HttpContext context)
     {
@@ -61,8 +70,8 @@ public class EnrollmentEndpoints : ICarterModule
     }
 
     private static async Task<IResult> GetStudentEnrollments(
-        [FromQuery] int pageIndex,
-        [FromQuery] int pageSize,
+        [FromQuery(Name = "pageIndex")] int pageIndex,
+        [FromQuery(Name = "pageSize")] int pageSize,
         IMediator mediator,
         HttpContext context)
     {
@@ -114,4 +123,4 @@ public class EnrollmentEndpoints : ICarterModule
     }
 }
 
-public record RejectRequest(string Reason);
+public sealed record RejectRequest(string Reason);

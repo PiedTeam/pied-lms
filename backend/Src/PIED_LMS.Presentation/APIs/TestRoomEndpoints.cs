@@ -22,12 +22,26 @@ public class TestRoomEndpoints : ICarterModule
     }
 
     private static async Task<IResult> CreateTestRoom(
-        CreateRoomCommand request,
+        CreateTestRoomRequest request,
         IMediator mediator,
         HttpContext context,
         CancellationToken cancellationToken)
     {
-        var result = await mediator.Send(request, cancellationToken);
+        var command = new CreateRoomCommand(
+            request.Name,
+            request.Description,
+            request.StartTime,
+            request.EndTime
+        );
+
+        var result = await mediator.Send(command, cancellationToken);
         return result.ToActionResult(context);
     }
 }
+
+public sealed record CreateTestRoomRequest(
+    string Name,
+    string? Description,
+    DateTimeOffset StartTime,
+    DateTimeOffset EndTime
+);

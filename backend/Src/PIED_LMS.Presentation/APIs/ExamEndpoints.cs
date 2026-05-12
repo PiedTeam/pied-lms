@@ -67,11 +67,18 @@ public class ExamEndpoints : ICarterModule
 
     // POST /api/exams
     private static async Task<IResult> CreateExam(
-        CreateExamCommand request,
+        CreateExamRequest request,
         IMediator mediator,
         HttpContext context)
     {
-        var result = await mediator.Send(request);
+        var command = new CreateExamCommand(
+            request.Title,
+            request.Description,
+            request.TotalMarks,
+            request.PassingMarks
+        );
+
+        var result = await mediator.Send(command);
         return result.ToActionResult(context);
     }
 
@@ -165,10 +172,17 @@ public class ExamEndpoints : ICarterModule
 }
 
 // Request DTOs
+public sealed record CreateExamRequest(
+    string Title,
+    string Description,
+    int TotalMarks,
+    int PassingMarks
+);
+
 public sealed record GetExamsByMentorRequest(
-    int PageNumber = 1,
-    int PageSize = 10,
-    bool? IncludeDeleted = true
+    [FromQuery(Name = "pageNumber")] int PageNumber = 1,
+    [FromQuery(Name = "pageSize")] int PageSize = 10,
+    [FromQuery(Name = "includeDeleted")] bool? IncludeDeleted = true
 );
 
 public sealed record UpdateExamRequest(

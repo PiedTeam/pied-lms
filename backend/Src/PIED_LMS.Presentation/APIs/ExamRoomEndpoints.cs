@@ -87,11 +87,19 @@ public class ExamRoomEndpoints : ICarterModule
 
     // POST /api/exam-rooms
     private static async Task<IResult> CreateExamRoom(
-        CreateExamRoomCommand request,
+        CreateExamRoomRequest request,
         IMediator mediator,
         HttpContext context)
     {
-        var result = await mediator.Send(request);
+        var command = new CreateExamRoomCommand(
+            request.Name,
+            request.Description,
+            request.StartTime,
+            request.EndTime,
+            request.DurationInMinutes
+        );
+
+        var result = await mediator.Send(command);
         return result.ToActionResult(context);
     }
 
@@ -240,11 +248,19 @@ public class ExamRoomEndpoints : ICarterModule
 }
 
 // Request DTOs
+public sealed record CreateExamRoomRequest(
+    string Name,
+    string Description,
+    DateTime StartTime,
+    DateTime EndTime,
+    int DurationInMinutes
+);
+
 public sealed record GetAllExamRoomsRequest(
-    int PageNumber = 1,
-    int PageSize = 10,
-    string? Status = null,
-    bool IncludeDeleted = true
+    [FromQuery(Name = "pageNumber")] int PageNumber = 1,
+    [FromQuery(Name = "pageSize")] int PageSize = 10,
+    [FromQuery(Name = "status")] string? Status = null,
+    [FromQuery(Name = "includeDeleted")] bool IncludeDeleted = true
 );
 
 public sealed record UpdateExamRoomRequest(
@@ -264,11 +280,11 @@ public sealed record EnrollStudentsRequest(
 );
 
 public sealed record GetExamRoomsForStudentRequest(
-    int PageNumber = 1,
-    int PageSize = 10
+    [FromQuery(Name = "pageNumber")] int PageNumber = 1,
+    [FromQuery(Name = "pageSize")] int PageSize = 10
 );
 
 public sealed record GetAvailableExamRoomsRequest(
-    int PageNumber = 1,
-    int PageSize = 10
+    [FromQuery(Name = "pageNumber")] int PageNumber = 1,
+    [FromQuery(Name = "pageSize")] int PageSize = 10
 );

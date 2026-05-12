@@ -49,11 +49,9 @@ public class AuthenticationEndpoints : ICarterModule
 
         group.MapPut("/profile", UpdateProfile)
             .WithName("UpdateProfile")
-            .WithOpenApi()
             .RequireAuthorization()
             .DisableAntiforgery()
-            .Produces<ServiceResponse<string>>()
-            .Produces<ServiceResponse<string>>(StatusCodes.Status400BadRequest);
+            .WithServiceResponseOpenApi<string>(ServiceResponseStatusProfile.OkOrBadRequest);
 
         group.MapGet("/me", GetMe)
             .WithName("GetMe")
@@ -99,24 +97,33 @@ public class AuthenticationEndpoints : ICarterModule
     }
 
     private static async Task<IResult> Register(
-        RegisterCommand request,
+        RegisterRequest request,
         IMediator mediator,
         HttpContext context,
         CancellationToken cancellationToken)
     {
-        var result = await mediator.Send(request, cancellationToken);
+        var command = new RegisterCommand(
+            request.Email,
+            request.FirstName,
+            request.LastName,
+            request.Password,
+            request.ConfirmPassword
+        );
+
+        var result = await mediator.Send(command, cancellationToken);
         return result.ToActionResult(context);
     }
 
     private static async Task<IResult> Login(
-        LoginCommand request,
+        LoginRequest request,
         IMediator mediator,
         HttpContext context,
         IConfiguration configuration,
         IWebHostEnvironment environment,
         CancellationToken cancellationToken)
     {
-        var result = await mediator.Send(request, cancellationToken);
+        var command = new LoginCommand(request.Email, request.Password);
+        var result = await mediator.Send(command, cancellationToken);
 
         if (!result.Success || result.Data is null) return result.ToActionResult(context);
 
@@ -322,6 +329,19 @@ public class AuthenticationEndpoints : ICarterModule
     }
 }
 
+public sealed record RegisterRequest(
+    string Email,
+    string FirstName,
+    string LastName,
+    string Password,
+    string ConfirmPassword
+);
+
+public sealed record LoginRequest(
+    string Email,
+    string Password
+);
+
 public sealed record ChangePasswordRequest(
     string CurrentPassword,
     string NewPassword,
@@ -340,13 +360,13 @@ public sealed record ResetPasswordRequest(
 );
 
 public sealed record GetAllUsersRequest(
-    int PageNumber = 1,
-    int PageSize = 10
+    [FromQuery(Name = "pageNumber")] int PageNumber = 1,
+    [FromQuery(Name = "pageSize")] int PageSize = 10
 );
 
 public sealed record GetAllStudentsRequest(
-    int PageNumber = 1,
-    int PageSize = 10
+    [FromQuery(Name = "pageNumber")] int PageNumber = 1,
+    [FromQuery(Name = "pageSize")] int PageSize = 10
 );
 
 public sealed record UnauthorizedErrorResponse(

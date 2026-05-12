@@ -1,5 +1,4 @@
 using PIED_LMS.Contract.Services.Compiler;
-using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Presentation.Extensions;
 
 namespace PIED_LMS.Presentation.APIs;
@@ -29,47 +28,94 @@ public sealed class CompilerEndpoints : ICarterModule
     }
 
     private static async Task<IResult> Compile(
-        CompileCommand request,
+        CompileRequest request,
         IMediator mediator,
         HttpContext context,
         CancellationToken cancellationToken)
     {
-        var response = await mediator.Send(request, cancellationToken);
+        var command = new CompileCommand(
+            request.Code,
+            request.Input,
+            request.TimeLimit,
+            request.MemoryLimit,
+            request.OptimizationLevel
+        );
+
+        var response = await mediator.Send(command, cancellationToken);
         return response.ToActionResult(context);
     }
 
     private static async Task<IResult> Judge(
-        JudgeCommand request,
+        JudgeRequest request,
         IMediator mediator,
         HttpContext context,
         CancellationToken cancellationToken)
     {
-        var response = await mediator.Send(request, cancellationToken);
+        var testCases = request.TestCases
+            .Select(testCase => new TestCase(testCase.Input, testCase.ExpectedOutput))
+            .ToList();
+
+        var command = new JudgeCommand(
+            request.Code,
+            testCases,
+            request.TimeLimit,
+            request.MemoryLimit,
+            request.OptimizationLevel
+        );
+
+        var response = await mediator.Send(command, cancellationToken);
         return response.ToActionResult(context);
     }
 
     private static async Task<IResult> JudgeFromFile
     (
-        JudgeFromFileCommand request,
+        JudgeFromFileRequest request,
         IMediator mediator,
         HttpContext context,
         CancellationToken cancellationToken
     )
     {
-        var response = await mediator.Send(request, cancellationToken);
+        var command = new JudgeFromFileCommand(
+            request.Code,
+            request.ExamId,
+            request.ParticipationId,
+            request.TimeLimit,
+            request.MemoryLimit,
+            request.OptimizationLevel
+        );
+
+        var response = await mediator.Send(command, cancellationToken);
         return response.ToActionResult(context);
     }
 
-    private static IResult ToResponse<T>(ServiceResponse<T> response)
-    {
-        var statusCode = response.ErrorCode switch
-        {
-            CompilerErrorCode.InvalidRequest => StatusCodes.Status400BadRequest,
-            CompilerErrorCode.RateLimitExceeded => StatusCodes.Status429TooManyRequests,
-            CompilerErrorCode.ServerBusy => StatusCodes.Status503ServiceUnavailable,
-            _ => StatusCodes.Status200OK
-        };
-
-        return Results.Json(response, statusCode: statusCode);
-    }
 }
+
+public sealed record CompileRequest(
+    string Code,
+    string? Input,
+    int? TimeLimit,
+    int? MemoryLimit,
+    OptimizationLevel? OptimizationLevel
+);
+
+public sealed record JudgeRequest(
+    string Code,
+    IReadOnlyList<CompilerTestCaseRequest> TestCases,
+    int? TimeLimit,
+    int? MemoryLimit,
+    OptimizationLevel? OptimizationLevel
+);
+
+public sealed record CompilerTestCaseRequest(
+    string Input,
+    string ExpectedOutput
+);
+
+public sealed record JudgeFromFileRequest(
+    string Code,
+    Guid ExamId,
+    Guid ParticipationId,
+    int? TimeLimit,
+    int? MemoryLimit,
+    OptimizationLevel? OptimizationLevel
+);

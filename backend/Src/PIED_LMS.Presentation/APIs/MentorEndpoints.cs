@@ -34,30 +34,35 @@ public class MentorEndpoints : ICarterModule
         // GET /api/mentors
         adminGroup.MapGet("", GetMentors)
             .WithName("GetMentors")
-            .WithOpenApi()
-            .Produces<ServiceResponse<PagedResult<MentorDto>>>(StatusCodes.Status200OK);
+            .WithServiceResponseOpenApi<PagedResult<MentorDto>>(ServiceResponseStatusProfile.OkOrBadRequest);
 
         // GET /api/mentors/{id}
         adminGroup.MapGet("/{id:guid}", GetMentorById)
             .WithName("GetMentorById")
-            .WithOpenApi()
-            .Produces<ServiceResponse<MentorDto>>(StatusCodes.Status200OK)
-            .Produces<ServiceResponse<MentorDto>>(StatusCodes.Status404NotFound);
+            .WithServiceResponseOpenApi<MentorDto>(ServiceResponseStatusProfile.OkOrBadRequestOrNotFound);
 
         // GET /api/mentors/list/all - Simple list for dropdowns
         adminGroup.MapGet("/list/all", GetAllMentorsSimple)
             .WithName("GetAllMentorsSimple")
-            .WithOpenApi()
-            .Produces<ServiceResponse<List<MentorSimpleDto>>>(StatusCodes.Status200OK);
+            .WithServiceResponseOpenApi<List<MentorSimpleDto>>(ServiceResponseStatusProfile.OkOrBadRequest);
     }
 
     private static async Task<IResult> RegisterMentor(
-        RegisterMentorCommand request,
+        RegisterMentorRequest request,
         IMediator mediator,
         HttpContext context,
         CancellationToken cancellationToken)
     {
-        var result = await mediator.Send(request, cancellationToken);
+        var command = new RegisterMentorCommand(
+            request.Email,
+            request.FirstName,
+            request.LastName,
+            request.Bio,
+            request.Password,
+            request.ConfirmPassword
+        );
+
+        var result = await mediator.Send(command, cancellationToken);
         return result.ToActionResult(context);
     }
 
@@ -101,11 +106,21 @@ public class MentorEndpoints : ICarterModule
 }
 
 // Request DTOs
+public sealed record RegisterMentorRequest(
+    string Email,
+    string FirstName,
+    string LastName,
+    string Bio,
+    string Password,
+    string ConfirmPassword
+);
+
 public sealed record GetMentorsRequest
 {
     private int _pageNumber = 1;
     private int _pageSize = 10;
 
+    [FromQuery(Name = "pageNumber")]
     [Range(1, int.MaxValue, ErrorMessage = "Page number must be greater than 0")]
     public int PageNumber 
     { 
@@ -115,6 +130,7 @@ public sealed record GetMentorsRequest
             : value;
     }
 
+    [FromQuery(Name = "pageSize")]
     [Range(1, 100, ErrorMessage = "Page size must be between 1 and 100")]
     public int PageSize 
     { 
@@ -126,6 +142,9 @@ public sealed record GetMentorsRequest
                 : value;
     }
 
+    [FromQuery(Name = "searchTerm")]
     public string? SearchTerm { get; init; }
+
+    [FromQuery(Name = "isActive")]
     public bool? IsActive { get; init; }
 };

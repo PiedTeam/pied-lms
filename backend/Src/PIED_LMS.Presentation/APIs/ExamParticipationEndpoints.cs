@@ -42,21 +42,28 @@ public class ExamParticipationEndpoints : ICarterModule
 
     // POST /api/participations/start
     private static async Task<IResult> StartExam(
-        StartExamCommand request,
+        StartExamRequest request,
         IMediator mediator,
         HttpContext context)
     {
-        var result = await mediator.Send(request);
+        var command = new StartExamCommand(request.RoomCode, request.ExamId);
+        var result = await mediator.Send(command);
         return result.ToActionResult(context);
     }
 
     // POST /api/participations/submit
     private static async Task<IResult> SubmitExam(
-        SubmitExamCommand request,
+        SubmitExamRequest request,
         IMediator mediator,
         HttpContext context)
     {
-        var result = await mediator.Send(request);
+        var command = new SubmitExamCommand(
+            request.ParticipationId,
+            request.SourceCode,
+            request.IsFinalSubmission
+        );
+
+        var result = await mediator.Send(command);
         return result.ToActionResult(context);
     }
 
@@ -92,12 +99,23 @@ public class ExamParticipationEndpoints : ICarterModule
 }
 
 // Request DTOs
+public sealed record StartExamRequest(
+    string RoomCode,
+    Guid ExamId
+);
+
+public sealed record SubmitExamRequest(
+    Guid ParticipationId,
+    string SourceCode,
+    bool IsFinalSubmission = false
+);
+
 public sealed record GetStudentParticipationsRequest(
-    int PageNumber = 1,
-    int PageSize = 10
+    [FromQuery(Name = "pageNumber")] int PageNumber = 1,
+    [FromQuery(Name = "pageSize")] int PageSize = 10
 );
 
 public sealed record GetExamRoomEnrollmentsRequest(
-    int PageNumber = 1,
-    int PageSize = 10
+    [FromQuery(Name = "pageNumber")] int PageNumber = 1,
+    [FromQuery(Name = "pageSize")] int PageSize = 10
 );

@@ -39,7 +39,7 @@ public class QuestionEndpoints : ICarterModule
     }
 
     private static async Task<IResult> CheckAnswer(
-        [FromBody] CheckAnswerRequest request, 
+        [FromBody] CheckAnswerRequest request,
         ISender sender, 
         HttpContext context)
     {
@@ -48,3 +48,8 @@ public class QuestionEndpoints : ICarterModule
         return result.ToActionResult(context);
     }
 }
+
+public sealed record CheckAnswerRequest(
+    int QuestionId,
+    List<string> SelectedOptions
+);

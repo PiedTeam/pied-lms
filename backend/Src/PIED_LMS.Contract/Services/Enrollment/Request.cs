@@ -4,14 +4,14 @@ using PIED_LMS.Contract.Constants;
 namespace PIED_LMS.Contract.Services.Enrollment;
 
 public record GetAvailableCoursesRequest(
-    [FromQuery] int PageIndex = 1,
-    [FromQuery] int PageSize = 10,
-    [FromQuery] string? SearchTerm = null,
-    [FromQuery] string? Tag = null
+    [FromQuery(Name = "pageIndex")] int PageIndex = 1,
+    [FromQuery(Name = "pageSize")] int PageSize = 10,
+    [FromQuery(Name = "searchTerm")] string? SearchTerm = null,
+    [FromQuery(Name = "tag")] string? Tag = null
 );
 
 public record GetEnrollmentsRequest(
-    [FromQuery] EnrollmentStatus? Status = null,
-    [FromQuery] int PageIndex = 1,
-    [FromQuery] int PageSize = 10
+    [FromQuery(Name = "status")] EnrollmentStatus? Status = null,
+    [FromQuery(Name = "pageIndex")] int PageIndex = 1,
+    [FromQuery(Name = "pageSize")] int PageSize = 10
 );
