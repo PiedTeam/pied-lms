@@ -7,14 +7,14 @@ namespace PIED_LMS.Application.UserCases.Commands.Identity;
 public class UpdateProfileHandler(
     UserManager<ApplicationUser> userManager,
     IFileStorageService fileStorageService,
-    ILogger<UpdateProfileHandler> logger) : IRequestHandler<UpdateProfileCommand, ServiceResponse<string>>
+    ILogger<UpdateProfileHandler> logger) : IRequestHandler<UpdateProfileCommand, ServiceResponse<UserDto>>
 {
-    public async Task<ServiceResponse<string>> Handle(UpdateProfileCommand request, CancellationToken cancellationToken)
+    public async Task<ServiceResponse<UserDto>> Handle(UpdateProfileCommand request, CancellationToken cancellationToken)
     {
         try
         {
             var user = await userManager.FindByIdAsync(request.UserId.ToString());
-            if (user is null) return new ServiceResponse<string>(false, "User not found");
+            if (user is null) return new ServiceResponse<UserDto>(false, "User not found");
 
             if (!string.IsNullOrEmpty(request.FirstName))
                 user.FirstName = request.FirstName;
@@ -60,15 +60,42 @@ public class UpdateProfileHandler(
                 var errors = result.Errors.Select(e => e.Description).ToList();
                 logger.LogWarning("Failed to update profile for user {UserId}: {Errors}", user.Id,
                     string.Join(", ", errors));
-                return new ServiceResponse<string>(false, "Failed to update profile");
+                return new ServiceResponse<UserDto>(false, "Failed to update profile");
+            }
+ 
+            var roles = await userManager.GetRolesAsync(user);
+            string? profilePicUrl = null;
+            if (!string.IsNullOrWhiteSpace(user.ProfilePictureUrl))
+            {
+                try
+                {
+                    profilePicUrl = await fileStorageService.GetFileUrlAsync(user.ProfilePictureUrl);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Failed to resolve profile picture URL for user {UserId}. Key: {Key}", user.Id,
+                        user.ProfilePictureUrl);
+                }
             }
 
-            return new ServiceResponse<string>(true, "Profile updated successfully", "Profile updated successfully");
+            var userDto = new UserDto(
+                user.Id,
+                user.Email ?? string.Empty,
+                user.FirstName,
+                user.LastName,
+                user.IsActive,
+                user.CreatedAt,
+                roles.ToList(),
+                user.Bio,
+                profilePicUrl
+            );
+
+            return new ServiceResponse<UserDto>(true, "Profile updated successfully", userDto);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error occurred while updating profile for user {UserId}", request.UserId);
-            return new ServiceResponse<string>(false, "An error occurred while updating the profile");
+            return new ServiceResponse<UserDto>(false, "An error occurred while updating the profile");
         }
     }
 }

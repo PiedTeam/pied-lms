@@ -90,7 +90,7 @@ public record UpdateProfileCommand(
     string? LastName,
     string? Bio,
     IFormFile? ProfilePicture
-) : IRequest<ServiceResponse<string>>;
+) : IRequest<ServiceResponse<UserDto>>;
 
 public sealed record UpdateProfileRequest
 {
