@@ -51,7 +51,7 @@ public class AuthenticationEndpoints : ICarterModule
             .WithName("UpdateProfile")
             .RequireAuthorization()
             .DisableAntiforgery()
-            .WithServiceResponseOpenApi<string>(ServiceResponseStatusProfile.OkOrBadRequest);
+            .WithServiceResponseOpenApi<UserDto>(ServiceResponseStatusProfile.OkOrBadRequest);
 
         group.MapGet("/me", GetMe)
             .WithName("GetMe")

@@ -8,9 +8,6 @@ public static class EndpointExtensions
     {
         if (result.Success)
         {
-            if (result.Data is null && typeof(T).IsClass)
-                return Results.NotFound(result);
-
             return Results.Ok(result);
         }
 
@@ -25,7 +22,7 @@ public static class EndpointExtensions
             return Results.Json(result, statusCode: StatusCodes.Status401Unauthorized);
 
         if (result.ErrorCode == "FORBIDDEN" || result.ErrorCode == "ACCESS_DENIED" ||
-            (result.Message.Contains("authorized") || result.Message.Contains("permission")))
+            (result.Message is not null && (result.Message.Contains("authorized") || result.Message.Contains("permission"))))
             return Results.Json(result, statusCode: StatusCodes.Status403Forbidden);
 
         return result.ErrorCode switch
