@@ -17,7 +17,9 @@ public sealed record CreateCourseRequest(
     [FromForm(Name = "duration")] int Duration,
     [FromForm(Name = "seats")] string? Seats,
     [FromForm(Name = "price")] string? Price,
-    [FromForm(Name = "value")] int Value
+    [FromForm(Name = "value")] int Value,
+    [FromForm(Name = "curriculum")] string? Curriculum,
+    [FromForm(Name = "insight")] string? Insight
 );
 
 public sealed record UpdateCourseRequest(
@@ -32,7 +34,9 @@ public sealed record UpdateCourseRequest(
     [FromForm(Name = "duration")] int Duration,
     [FromForm(Name = "seats")] string? Seats,
     [FromForm(Name = "price")] string? Price,
-    [FromForm(Name = "value")] int Value
+    [FromForm(Name = "value")] int Value,
+    [FromForm(Name = "curriculum")] string? Curriculum,
+    [FromForm(Name = "insight")] string? Insight
 );
 
 public sealed record AssignMentorsRequest(

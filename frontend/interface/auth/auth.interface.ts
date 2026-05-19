@@ -29,6 +29,7 @@ export interface LoginResponse {
   email: string;
   firstName: string;
   lastName: string;
+  avatar?: string | null;
 }
 
 // Refresh

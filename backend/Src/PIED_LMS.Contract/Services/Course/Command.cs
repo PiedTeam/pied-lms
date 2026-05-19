@@ -1,7 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Http;
 using PIED_LMS.Contract.Constants;
-using PIED_LMS.Contract.Constants;
 using PIED_LMS.Contract.Services.Identity;
 
 namespace PIED_LMS.Contract.Services.Course;
@@ -19,7 +18,9 @@ public record CreateCourseCommand(
     int Duration,
     string? Seats,
     string? Price,
-    int Value
+    int Value,
+    string? Curriculum,
+    string? Insight
 ) : IRequest<ServiceResponse<Guid>>;
 
 // Update Course Command
@@ -36,7 +37,9 @@ public record UpdateCourseCommand(
     int Duration,
     string? Seats,
     string? Price,
-    int Value
+    int Value,
+    string? Curriculum,
+    string? Insight
 ) : IRequest<ServiceResponse<string>>;
 
 // Delete Course Command
