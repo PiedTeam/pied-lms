@@ -19,7 +19,9 @@ public sealed record CreateCourseRequest(
     [FromForm(Name = "price")] string? Price,
     [FromForm(Name = "value")] int Value,
     [FromForm(Name = "curriculum")] string? Curriculum,
-    [FromForm(Name = "insight")] string? Insight
+    [FromForm(Name = "insight")]
+    [Required(ErrorMessage = "Insight is required and cannot be empty.")]
+    string Insight
 );
 
 public sealed record UpdateCourseRequest(
@@ -36,7 +38,9 @@ public sealed record UpdateCourseRequest(
     [FromForm(Name = "price")] string? Price,
     [FromForm(Name = "value")] int Value,
     [FromForm(Name = "curriculum")] string? Curriculum,
-    [FromForm(Name = "insight")] string? Insight
+    [FromForm(Name = "insight")]
+    [Required(ErrorMessage = "Insight is required and cannot be empty.")]
+    string Insight
 );
 
 public sealed record AssignMentorsRequest(
