@@ -1,4 +1,5 @@
 using PIED_LMS.Application.Abstractions;
+using PIED_LMS.Contract.Abstractions.Storage;
 using PIED_LMS.Contract.Services.Identity;
 using PIED_LMS.Domain.Entities;
 
@@ -8,6 +9,7 @@ public class LoginCommandHandler(
     UserManager<ApplicationUser> userManager,
     IJwtTokenService jwtTokenService,
     IRefreshTokenService refreshTokenService,
+    IFileStorageService fileStorageService,
     IConfiguration configuration,
     ILogger<LoginCommandHandler> logger
 ) : IRequestHandler<LoginCommand, ServiceResponse<LoginResult>>
@@ -46,11 +48,26 @@ public class LoginCommandHandler(
             // Store refresh token mapping
             await refreshTokenService.StoreRefreshTokenAsync(user.Id, refreshToken, _refreshTokenExpirationDays);
 
+            string? profilePicUrl = null;
+            if (!string.IsNullOrWhiteSpace(user.ProfilePictureUrl))
+            {
+                try
+                {
+                    profilePicUrl = await fileStorageService.GetFileUrlAsync(user.ProfilePictureUrl);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Failed to resolve profile picture URL for user {UserId}. Key: {Key}",
+                        user.Id, user.ProfilePictureUrl);
+                }
+            }
+
             var loginResponse = new LoginResponse(
                 accessToken,
                 user.Email ?? string.Empty,
                 user.FirstName,
-                user.LastName
+                user.LastName,
+                profilePicUrl
             );
 
             var result = new LoginResult(loginResponse, refreshToken);

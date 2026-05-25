@@ -1,6 +1,7 @@
 using PIED_LMS.Contract.Abstractions.Storage;
 using PIED_LMS.Contract.Services.Course;
 using PIED_LMS.Contract.Services.Identity;
+using PIED_LMS.Application.UserCases;
 using PIED_LMS.Domain.Abstractions;
 
 namespace PIED_LMS.Application.UserCases.Commands.Course;
@@ -34,6 +35,23 @@ public class UpdateCourseHandler(
                 logger.LogWarning("Course update validation failed for course {CourseId}: {ValidationError}",
                     request.Id, validationError);
                 return new ServiceResponse<string>(false, validationError);
+            }
+
+            var (curriculumJson, curriculumError) = CourseContentHelper.ValidateAndSerializeCurriculum(request.Curriculum);
+            if (curriculumError is not null)
+            {
+                logger.LogWarning("Course update validation failed for course {CourseId}: {ValidationError}",
+                    request.Id, curriculumError);
+                return new ServiceResponse<string>(false, curriculumError);
+            }
+
+            var insight = CourseContentHelper.ValidateAndNormalizeInsight(request.Insight);
+            if (insight is null)
+            {
+                const string errorMessage = "Insight is required and cannot be empty.";
+                logger.LogWarning("Course update validation failed for course {CourseId}: {ValidationError}",
+                    request.Id, errorMessage);
+                return new ServiceResponse<string>(false, errorMessage);
             }
 
             // Subtask 6.3: Implement thumbnail update logic
@@ -95,6 +113,8 @@ public class UpdateCourseHandler(
             if (course.Status != request.Status) changedProperties.Add($"Status: {course.Status} -> {request.Status}");
             if (course.Slug != newSlug) changedProperties.Add($"Slug: '{course.Slug}' -> '{newSlug}'");
             if (course.ThumbnailPath != newThumbnailPath) changedProperties.Add("ThumbnailPath");
+            if (course.Curriculum != curriculumJson) changedProperties.Add("Curriculum");
+            if (course.Insight != insight) changedProperties.Add("Insight");
 
             // Update course properties
             course.Title = request.Title;
@@ -111,6 +131,8 @@ public class UpdateCourseHandler(
             course.Seats = request.Seats;
             course.Price = request.Price;
             course.Value = request.Value;
+            course.Curriculum = curriculumJson;
+            course.Insight = insight;
             course.UpdatedAt = DateTime.UtcNow;
 
             // Update course in repository

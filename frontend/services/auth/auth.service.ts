@@ -239,6 +239,7 @@ export function useLogin() {
         email,
         fullName: `${firstName} ${lastName}`.trim() || null,
         role,
+        avatar: data.avatar ?? null,
       };
 
       // Note: refreshToken is stored in HTTP-only cookie by backend

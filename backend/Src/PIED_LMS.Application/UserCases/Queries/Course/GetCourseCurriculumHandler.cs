@@ -1,6 +1,6 @@
-using System.Text.Json;
 using PIED_LMS.Contract.Services.Course;
 using PIED_LMS.Contract.Services.Identity;
+using PIED_LMS.Application.UserCases;
 using PIED_LMS.Domain.Abstractions;
 
 namespace PIED_LMS.Application.UserCases.Queries.Course;
@@ -28,29 +28,7 @@ public class GetCourseCurriculumHandler(
                 );
             }
 
-            var curriculum = new List<CurriculumSectionDto>();
-
-            if (!string.IsNullOrWhiteSpace(course.Curriculum))
-                try
-                {
-                    curriculum = JsonSerializer.Deserialize<List<CurriculumSectionDto>>(
-                        course.Curriculum,
-                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
-                    ) ?? new List<CurriculumSectionDto>();
-                }
-                catch (JsonException ex)
-                {
-                    logger.LogError(ex, "Failed to parse curriculum JSON for course {CourseId}", request.Id);
-                    // Fallback to empty list or you could return an error
-                }
-
-            // For now, if it's empty and we need to return the dummy data the user requested 
-            // when it's not set in the DB, we could do it here. But standard is to return what's in DB.
-            if (curriculum.Count == 0)
-            {
-                // Optionally provide sample data if nothing in DB yet for demo purposes
-                // based on user's request, or just return empty. I will return empty.
-            }
+            var curriculum = CourseContentHelper.DeserializeCurriculum(course.Curriculum, logger, course.Id);
 
             return new ServiceResponse<List<CurriculumSectionDto>>(
                 true,

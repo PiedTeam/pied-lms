@@ -90,7 +90,9 @@ public class CourseEndpoints : ICarterModule
             request.Duration,
             request.Seats,
             request.Price,
-            request.Value
+            request.Value,
+            request.Curriculum,
+            request.Insight
         );
 
         var result = await mediator.Send(command);
@@ -121,7 +123,9 @@ public class CourseEndpoints : ICarterModule
             request.Duration,
             request.Seats,
             request.Price,
-            request.Value
+            request.Value,
+            request.Curriculum,
+            request.Insight
         );
 
         var result = await mediator.Send(command);

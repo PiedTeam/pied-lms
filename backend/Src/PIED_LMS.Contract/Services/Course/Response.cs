@@ -19,7 +19,9 @@ public record CourseDto(
     string? Price,
     DateTime CreatedAt,
     DateTime? UpdatedAt,
-    int Value
+    int Value,
+    List<CurriculumSectionDto> Curriculum,
+    string Insight
 );
 
 // Course Mentor DTO (simplified for course context)

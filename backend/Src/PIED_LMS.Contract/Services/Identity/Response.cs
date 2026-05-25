@@ -45,7 +45,8 @@ public record LoginResponse(
     string AccessToken,
     string Email,
     string FirstName,
-    string LastName
+    string LastName,
+    string? ProfilePictureUrl
 );
 
 // Refresh Token Response

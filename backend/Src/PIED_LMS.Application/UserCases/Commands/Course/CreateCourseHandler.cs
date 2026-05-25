@@ -1,6 +1,7 @@
 using PIED_LMS.Contract.Abstractions.Storage;
 using PIED_LMS.Contract.Services.Course;
 using PIED_LMS.Contract.Services.Identity;
+using PIED_LMS.Application.UserCases;
 using PIED_LMS.Domain.Abstractions;
 
 namespace PIED_LMS.Application.UserCases.Commands.Course;
@@ -31,6 +32,21 @@ public class CreateCourseHandler(
             {
                 var errorMessage = "Slug already exists. Please provide a unique slug.";
                 logger.LogWarning("Course creation failed: {ValidationError}", errorMessage);
+                return new ServiceResponse<Guid>(false, errorMessage);
+            }
+
+            var (curriculumJson, curriculumError) = CourseContentHelper.ValidateAndSerializeCurriculum(request.Curriculum);
+            if (curriculumError is not null)
+            {
+                logger.LogWarning("Course creation validation failed: {ValidationError}", curriculumError);
+                return new ServiceResponse<Guid>(false, curriculumError);
+            }
+
+            var insight = CourseContentHelper.ValidateAndNormalizeInsight(request.Insight);
+            if (insight is null)
+            {
+                const string errorMessage = "Insight is required and cannot be empty.";
+                logger.LogWarning("Course creation validation failed: {ValidationError}", errorMessage);
                 return new ServiceResponse<Guid>(false, errorMessage);
             }
 
@@ -74,6 +90,8 @@ public class CreateCourseHandler(
                 Seats = request.Seats,
                 Price = request.Price,
                 Value = request.Value,
+                Curriculum = curriculumJson,
+                Insight = insight,
                 CreatedAt = DateTime.UtcNow
             };
 
