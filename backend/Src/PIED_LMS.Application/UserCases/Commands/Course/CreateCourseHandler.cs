@@ -1,7 +1,7 @@
 using PIED_LMS.Contract.Abstractions.Storage;
 using PIED_LMS.Contract.Services.Course;
 using PIED_LMS.Contract.Services.Identity;
-using PIED_LMS.Application.UserCases;
+
 using PIED_LMS.Domain.Abstractions;
 
 namespace PIED_LMS.Application.UserCases.Commands.Course;
@@ -35,20 +35,7 @@ public class CreateCourseHandler(
                 return new ServiceResponse<Guid>(false, errorMessage);
             }
 
-            var (curriculumJson, curriculumError) = CourseContentHelper.ValidateAndSerializeCurriculum(request.Curriculum);
-            if (curriculumError is not null)
-            {
-                logger.LogWarning("Course creation validation failed: {ValidationError}", curriculumError);
-                return new ServiceResponse<Guid>(false, curriculumError);
-            }
 
-            var insight = CourseContentHelper.ValidateAndNormalizeInsight(request.Insight);
-            if (insight is null)
-            {
-                const string errorMessage = "Insight is required and cannot be empty.";
-                logger.LogWarning("Course creation validation failed: {ValidationError}", errorMessage);
-                return new ServiceResponse<Guid>(false, errorMessage);
-            }
 
             // Subtask 5.4: Implement file upload and course creation
             string? thumbnailPath = null;
@@ -90,10 +77,24 @@ public class CreateCourseHandler(
                 Seats = request.Seats,
                 Price = request.Price,
                 Value = request.Value,
-                Curriculum = curriculumJson,
-                Insight = insight,
                 CreatedAt = DateTime.UtcNow
             };
+
+            try
+            {
+                if (request.Curriculum != null)
+                {
+                    var domainCurriculum = request.Curriculum.Select(c => 
+                        new Domain.Entities.CurriculumSection(c.Title, c.Summary, c.Content)).ToList();
+                    course.SetCurriculum(domainCurriculum);
+                }
+                course.SetInsight(request.Insight);
+            }
+            catch (ArgumentException ex)
+            {
+                logger.LogWarning("Course creation validation failed: {ValidationError}", ex.Message);
+                return new ServiceResponse<Guid>(false, ex.Message);
+            }
 
             // Add course to repository
             var repository = unitOfWork.Repository<Domain.Entities.Course>();

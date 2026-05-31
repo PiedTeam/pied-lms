@@ -21,8 +21,8 @@ public class Course
     public string? Price { get; set; }
     public int Value { get; set; }
 
-    public string? Curriculum { get; set; }
-    public string? Insight { get; set; }
+    public List<CurriculumSection> Curriculum { get; private set; } = new();
+    public string? Insight { get; private set; }
 
     public int MaxCapacity { get; set; }
     public int CurrentEnrollment { get; set; }
@@ -34,4 +34,17 @@ public class Course
     // Self-referencing many-to-many for prerequisites
     public ICollection<Course> PrerequisiteCourses { get; set; } = new List<Course>();
     public ICollection<Course> PrerequisiteFor { get; set; } = new List<Course>();
+
+    public void SetCurriculum(List<CurriculumSection>? curriculum)
+    {
+        Curriculum = curriculum ?? new List<CurriculumSection>();
+    }
+
+    public void SetInsight(string insight)
+    {
+        if (string.IsNullOrWhiteSpace(insight))
+            throw new ArgumentException("Insight is required and cannot be empty.");
+            
+        Insight = insight.Trim();
+    }
 }

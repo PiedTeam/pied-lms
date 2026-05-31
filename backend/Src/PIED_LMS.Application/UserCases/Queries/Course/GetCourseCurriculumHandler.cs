@@ -1,6 +1,6 @@
 using PIED_LMS.Contract.Services.Course;
 using PIED_LMS.Contract.Services.Identity;
-using PIED_LMS.Application.UserCases;
+
 using PIED_LMS.Domain.Abstractions;
 
 namespace PIED_LMS.Application.UserCases.Queries.Course;
@@ -28,12 +28,13 @@ public class GetCourseCurriculumHandler(
                 );
             }
 
-            var curriculum = CourseContentHelper.DeserializeCurriculum(course.Curriculum, logger, course.Id);
+            var curriculumDto = course.Curriculum?.Select(c => 
+                new CurriculumSectionDto(c.Title, c.Summary, c.Content)).ToList() ?? new List<CurriculumSectionDto>();
 
             return new ServiceResponse<List<CurriculumSectionDto>>(
                 true,
                 "Curriculum retrieved successfully",
-                curriculum
+                curriculumDto
             );
         }
         catch (Exception ex)
