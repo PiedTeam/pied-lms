@@ -124,10 +124,7 @@ public class UpdateCourseHandler(
                         new Domain.Entities.CurriculumSection(c.Title, c.Summary, c.Content)).ToList();
                     course.SetCurriculum(domainCurriculum);
                 }
-                else
-                {
-                    course.SetCurriculum(null);
-                }
+                
                 course.SetInsight(request.Insight);
             }
             catch (ArgumentException ex)
