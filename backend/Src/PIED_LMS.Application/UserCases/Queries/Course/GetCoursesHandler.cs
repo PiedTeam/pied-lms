@@ -120,7 +120,7 @@ public class GetCoursesHandler(
             )).ToList();
 
         var curriculumDto = course.Curriculum?.Select(c => 
-            new CurriculumSectionDto(c.Title, c.Summary, c.Content)).ToList() ?? new List<CurriculumSectionDto>();
+            new CurriculumSectionDto(c.Title, c.Summary, c.Content.ToList())).ToList() ?? new List<CurriculumSectionDto>();
 
         return new CourseDto(
             course.Id,

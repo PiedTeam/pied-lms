@@ -4,10 +4,15 @@ public class CurriculumSection
 {
     public string Title { get; private set; }
     public string Summary { get; private set; }
-    public List<string> Content { get; private set; }
+    public IReadOnlyList<string> Content { get; private set; }
 
     // Required for EF Core serialization/deserialization or default instantiation
-    private CurriculumSection() { }
+    private CurriculumSection() 
+    { 
+        Title = null!;
+        Summary = null!;
+        Content = null!;
+    }
 
     public CurriculumSection(string title, string summary, List<string> content)
     {
@@ -22,6 +27,6 @@ public class CurriculumSection
 
         Title = title;
         Summary = summary;
-        Content = content;
+        Content = new List<string>(content).AsReadOnly();
     }
 }
