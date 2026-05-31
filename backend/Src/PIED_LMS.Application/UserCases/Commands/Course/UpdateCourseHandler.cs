@@ -1,7 +1,7 @@
 using PIED_LMS.Contract.Abstractions.Storage;
 using PIED_LMS.Contract.Services.Course;
 using PIED_LMS.Contract.Services.Identity;
-using PIED_LMS.Application.UserCases;
+
 using PIED_LMS.Domain.Abstractions;
 
 namespace PIED_LMS.Application.UserCases.Commands.Course;
@@ -37,21 +37,43 @@ public class UpdateCourseHandler(
                 return new ServiceResponse<string>(false, validationError);
             }
 
-            var (curriculumJson, curriculumError) = CourseContentHelper.ValidateAndSerializeCurriculum(request.Curriculum);
-            if (curriculumError is not null)
+
+
+            // Validate new slug uniqueness if slug changed
+            var newSlug = course.Slug;
+            if (!string.IsNullOrWhiteSpace(request.Slug) && request.Slug != course.Slug)
             {
-                logger.LogWarning("Course update validation failed for course {CourseId}: {ValidationError}",
-                    request.Id, curriculumError);
-                return new ServiceResponse<string>(false, curriculumError);
+                var slugToValidate = request.Slug.ToLowerInvariant().Trim();
+                var slugExists = await repository.AnyAsync(
+                    c => c.Slug == slugToValidate && c.Id != request.Id,
+                    cancellationToken);
+
+                if (slugExists)
+                {
+                    logger.LogWarning("Course update failed for course {CourseId}: Slug '{Slug}' already exists",
+                        request.Id, slugToValidate);
+                    return new ServiceResponse<string>(false, "Slug already exists. Please provide a unique slug.");
+                }
+
+                newSlug = slugToValidate;
             }
 
-            var insight = CourseContentHelper.ValidateAndNormalizeInsight(request.Insight);
-            if (insight is null)
+            // Validate Domain rules (Curriculum and Insight) before any side-effects
+            try
             {
-                const string errorMessage = "Insight is required and cannot be empty.";
-                logger.LogWarning("Course update validation failed for course {CourseId}: {ValidationError}",
-                    request.Id, errorMessage);
-                return new ServiceResponse<string>(false, errorMessage);
+                if (request.Curriculum != null)
+                {
+                    var domainCurriculum = request.Curriculum.Select(c => 
+                        new Domain.Entities.CurriculumSection(c.Title, c.Summary, c.Content)).ToList();
+                    course.SetCurriculum(domainCurriculum);
+                }
+                
+                course.SetInsight(request.Insight);
+            }
+            catch (ArgumentException ex)
+            {
+                logger.LogWarning("Course update validation failed for course {CourseId}: {ValidationError}", request.Id, ex.Message);
+                return new ServiceResponse<string>(false, ex.Message);
             }
 
             // Subtask 6.3: Implement thumbnail update logic
@@ -85,25 +107,6 @@ public class UpdateCourseHandler(
                 }
 
             // Subtask 6.4: Implement course update and commit
-            // Validate new slug uniqueness if slug changed
-            var newSlug = course.Slug;
-            if (!string.IsNullOrWhiteSpace(request.Slug) && request.Slug != course.Slug)
-            {
-                var slugToValidate = request.Slug.ToLowerInvariant().Trim();
-                var slugExists = await repository.AnyAsync(
-                    c => c.Slug == slugToValidate && c.Id != request.Id,
-                    cancellationToken);
-
-                if (slugExists)
-                {
-                    logger.LogWarning("Course update failed for course {CourseId}: Slug '{Slug}' already exists",
-                        request.Id, slugToValidate);
-                    return new ServiceResponse<string>(false, "Slug already exists. Please provide a unique slug.");
-                }
-
-                newSlug = slugToValidate;
-            }
-
             // Track changed properties for logging
             var changedProperties = new List<string>();
             if (course.Title != request.Title) changedProperties.Add($"Title: '{course.Title}' -> '{request.Title}'");
@@ -113,8 +116,6 @@ public class UpdateCourseHandler(
             if (course.Status != request.Status) changedProperties.Add($"Status: {course.Status} -> {request.Status}");
             if (course.Slug != newSlug) changedProperties.Add($"Slug: '{course.Slug}' -> '{newSlug}'");
             if (course.ThumbnailPath != newThumbnailPath) changedProperties.Add("ThumbnailPath");
-            if (course.Curriculum != curriculumJson) changedProperties.Add("Curriculum");
-            if (course.Insight != insight) changedProperties.Add("Insight");
 
             // Update course properties
             course.Title = request.Title;
@@ -131,8 +132,6 @@ public class UpdateCourseHandler(
             course.Seats = request.Seats;
             course.Price = request.Price;
             course.Value = request.Value;
-            course.Curriculum = curriculumJson;
-            course.Insight = insight;
             course.UpdatedAt = DateTime.UtcNow;
 
             // Update course in repository

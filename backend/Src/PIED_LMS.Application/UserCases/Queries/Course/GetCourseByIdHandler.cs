@@ -2,7 +2,7 @@ using System.Text.Json;
 using PIED_LMS.Contract.Abstractions.Storage;
 using PIED_LMS.Contract.Services.Course;
 using PIED_LMS.Contract.Services.Identity;
-using PIED_LMS.Application.UserCases;
+
 using PIED_LMS.Domain.Abstractions;
 
 namespace PIED_LMS.Application.UserCases.Queries.Course;
@@ -108,7 +108,8 @@ public class GetCourseByIdHandler(
             t.ProfilePictureUrl
         )).ToList();
 
-        var curriculum = CourseContentHelper.DeserializeCurriculum(course.Curriculum, logger, course.Id);
+        var curriculumDto = course.Curriculum?.Select(c => 
+            new CurriculumSectionDto(c.Title, c.Summary, c.Content.ToList())).ToList() ?? new List<CurriculumSectionDto>();
 
         return new CourseDto(
             course.Id,
@@ -127,7 +128,7 @@ public class GetCourseByIdHandler(
             course.CreatedAt,
             course.UpdatedAt,
             course.Value,
-            curriculum,
+            curriculumDto,
             course.Insight ?? string.Empty
         );
     }

@@ -19,8 +19,8 @@ public record CreateCourseCommand(
     string? Seats,
     string? Price,
     int Value,
-    string? Curriculum,
-    string? Insight
+    List<CurriculumSectionDto>? Curriculum,
+    string Insight
 ) : IRequest<ServiceResponse<Guid>>;
 
 // Update Course Command
@@ -38,8 +38,8 @@ public record UpdateCourseCommand(
     string? Seats,
     string? Price,
     int Value,
-    string? Curriculum,
-    string? Insight
+    List<CurriculumSectionDto>? Curriculum,
+    string Insight
 ) : IRequest<ServiceResponse<string>>;
 
 // Delete Course Command

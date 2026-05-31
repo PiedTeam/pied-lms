@@ -1,3 +1,4 @@
+using System.Text.Json;
 using PIED_LMS.Domain.Entities;
 
 namespace PIED_LMS.Persistence.Configurations;
@@ -53,6 +54,18 @@ public class CourseConfiguration : IEntityTypeConfiguration<Course>
         builder.Property(c => c.CurrentEnrollment)
             .IsRequired()
             .HasDefaultValue(0);
+
+        var jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+        builder.Property(c => c.Curriculum)
+            .HasConversion(
+                v => JsonSerializer.Serialize(v, jsonOptions),
+                v => string.IsNullOrWhiteSpace(v) 
+                    ? new List<CurriculumSection>() 
+                    : JsonSerializer.Deserialize<List<CurriculumSection>>(v, jsonOptions) ?? new List<CurriculumSection>()
+            );
+
+        builder.Property(c => c.Insight)
+            .IsRequired(false); // Can be configured as needed
 
         // Many-to-many relationship for Prerequisites
         builder.HasMany(c => c.PrerequisiteCourses)
