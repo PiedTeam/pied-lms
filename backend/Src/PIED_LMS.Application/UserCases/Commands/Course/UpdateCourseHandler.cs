@@ -133,6 +133,20 @@ public class UpdateCourseHandler(
             catch (ArgumentException ex)
             {
                 logger.LogWarning("Course update validation failed for course {CourseId}: {ValidationError}", request.Id, ex.Message);
+                
+                if (!string.IsNullOrEmpty(newThumbnailPath) && newThumbnailPath != course.ThumbnailPath)
+                {
+                    try
+                    {
+                        await fileStorageService.DeleteFileAsync(newThumbnailPath, cancellationToken);
+                        logger.LogInformation("Deleted newly uploaded thumbnail {ThumbnailPath} after validation failure", newThumbnailPath);
+                    }
+                    catch (Exception deleteEx)
+                    {
+                        logger.LogError(deleteEx, "Failed to delete orphaned thumbnail {ThumbnailPath}", newThumbnailPath);
+                    }
+                }
+                
                 return new ServiceResponse<string>(false, ex.Message);
             }
 

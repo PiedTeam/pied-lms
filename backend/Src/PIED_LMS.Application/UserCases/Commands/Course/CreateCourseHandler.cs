@@ -93,6 +93,20 @@ public class CreateCourseHandler(
             catch (ArgumentException ex)
             {
                 logger.LogWarning("Course creation validation failed: {ValidationError}", ex.Message);
+                
+                if (!string.IsNullOrEmpty(thumbnailPath))
+                {
+                    try
+                    {
+                        await fileStorageService.DeleteFileAsync(thumbnailPath, cancellationToken);
+                        logger.LogInformation("Deleted orphaned thumbnail {ThumbnailPath} after validation failure", thumbnailPath);
+                    }
+                    catch (Exception deleteEx)
+                    {
+                        logger.LogError(deleteEx, "Failed to delete orphaned thumbnail {ThumbnailPath}", thumbnailPath);
+                    }
+                }
+                
                 return new ServiceResponse<Guid>(false, ex.Message);
             }
 
