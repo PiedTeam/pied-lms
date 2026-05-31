@@ -39,6 +39,43 @@ public class UpdateCourseHandler(
 
 
 
+            // Validate new slug uniqueness if slug changed
+            var newSlug = course.Slug;
+            if (!string.IsNullOrWhiteSpace(request.Slug) && request.Slug != course.Slug)
+            {
+                var slugToValidate = request.Slug.ToLowerInvariant().Trim();
+                var slugExists = await repository.AnyAsync(
+                    c => c.Slug == slugToValidate && c.Id != request.Id,
+                    cancellationToken);
+
+                if (slugExists)
+                {
+                    logger.LogWarning("Course update failed for course {CourseId}: Slug '{Slug}' already exists",
+                        request.Id, slugToValidate);
+                    return new ServiceResponse<string>(false, "Slug already exists. Please provide a unique slug.");
+                }
+
+                newSlug = slugToValidate;
+            }
+
+            // Validate Domain rules (Curriculum and Insight) before any side-effects
+            try
+            {
+                if (request.Curriculum != null)
+                {
+                    var domainCurriculum = request.Curriculum.Select(c => 
+                        new Domain.Entities.CurriculumSection(c.Title, c.Summary, c.Content)).ToList();
+                    course.SetCurriculum(domainCurriculum);
+                }
+                
+                course.SetInsight(request.Insight);
+            }
+            catch (ArgumentException ex)
+            {
+                logger.LogWarning("Course update validation failed for course {CourseId}: {ValidationError}", request.Id, ex.Message);
+                return new ServiceResponse<string>(false, ex.Message);
+            }
+
             // Subtask 6.3: Implement thumbnail update logic
             var newThumbnailPath = course.ThumbnailPath;
             if (request.ThumbnailFile is not null)
@@ -70,25 +107,6 @@ public class UpdateCourseHandler(
                 }
 
             // Subtask 6.4: Implement course update and commit
-            // Validate new slug uniqueness if slug changed
-            var newSlug = course.Slug;
-            if (!string.IsNullOrWhiteSpace(request.Slug) && request.Slug != course.Slug)
-            {
-                var slugToValidate = request.Slug.ToLowerInvariant().Trim();
-                var slugExists = await repository.AnyAsync(
-                    c => c.Slug == slugToValidate && c.Id != request.Id,
-                    cancellationToken);
-
-                if (slugExists)
-                {
-                    logger.LogWarning("Course update failed for course {CourseId}: Slug '{Slug}' already exists",
-                        request.Id, slugToValidate);
-                    return new ServiceResponse<string>(false, "Slug already exists. Please provide a unique slug.");
-                }
-
-                newSlug = slugToValidate;
-            }
-
             // Track changed properties for logging
             var changedProperties = new List<string>();
             if (course.Title != request.Title) changedProperties.Add($"Title: '{course.Title}' -> '{request.Title}'");
@@ -115,37 +133,6 @@ public class UpdateCourseHandler(
             course.Price = request.Price;
             course.Value = request.Value;
             course.UpdatedAt = DateTime.UtcNow;
-
-            try
-            {
-                if (request.Curriculum != null)
-                {
-                    var domainCurriculum = request.Curriculum.Select(c => 
-                        new Domain.Entities.CurriculumSection(c.Title, c.Summary, c.Content)).ToList();
-                    course.SetCurriculum(domainCurriculum);
-                }
-                
-                course.SetInsight(request.Insight);
-            }
-            catch (ArgumentException ex)
-            {
-                logger.LogWarning("Course update validation failed for course {CourseId}: {ValidationError}", request.Id, ex.Message);
-                
-                if (!string.IsNullOrEmpty(newThumbnailPath) && newThumbnailPath != course.ThumbnailPath)
-                {
-                    try
-                    {
-                        await fileStorageService.DeleteFileAsync(newThumbnailPath, cancellationToken);
-                        logger.LogInformation("Deleted newly uploaded thumbnail {ThumbnailPath} after validation failure", newThumbnailPath);
-                    }
-                    catch (Exception deleteEx)
-                    {
-                        logger.LogError(deleteEx, "Failed to delete orphaned thumbnail {ThumbnailPath}", newThumbnailPath);
-                    }
-                }
-                
-                return new ServiceResponse<string>(false, ex.Message);
-            }
 
             // Update course in repository
             repository.Update(course);
