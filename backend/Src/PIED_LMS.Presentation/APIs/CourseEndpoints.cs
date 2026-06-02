@@ -78,6 +78,10 @@ public class CourseEndpoints : ICarterModule
             ? null
             : request.Tags.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
 
+        var curriculumList = string.IsNullOrWhiteSpace(request.Curriculum) 
+            ? null 
+            : System.Text.Json.JsonSerializer.Deserialize<List<CurriculumSectionDto>>(request.Curriculum, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
         var command = new CreateCourseCommand(
             request.Title,
             request.Description,
@@ -91,7 +95,7 @@ public class CourseEndpoints : ICarterModule
             request.Seats,
             request.Price,
             request.Value,
-            request.Curriculum,
+            curriculumList,
             request.Insight
         );
 
@@ -110,6 +114,10 @@ public class CourseEndpoints : ICarterModule
             ? null
             : request.Tags.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
 
+        var curriculumList = string.IsNullOrWhiteSpace(request.Curriculum) 
+            ? null 
+            : System.Text.Json.JsonSerializer.Deserialize<List<CurriculumSectionDto>>(request.Curriculum, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
         var command = new UpdateCourseCommand(
             id,
             request.Title,
@@ -124,7 +132,7 @@ public class CourseEndpoints : ICarterModule
             request.Seats,
             request.Price,
             request.Value,
-            request.Curriculum,
+            curriculumList,
             request.Insight
         );
 
