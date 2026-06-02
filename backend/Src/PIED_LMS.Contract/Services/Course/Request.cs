@@ -18,7 +18,7 @@ public sealed record CreateCourseRequest(
     [FromForm(Name = "seats")] string? Seats,
     [FromForm(Name = "price")] string? Price,
     [FromForm(Name = "value")] int Value,
-    [FromForm(Name = "curriculum")] List<CurriculumSectionDto>? Curriculum,
+    [FromForm(Name = "curriculum")] string? Curriculum,
     [FromForm(Name = "insight")]
     [Required(ErrorMessage = "Insight is required and cannot be empty.")]
     string Insight
@@ -37,7 +37,7 @@ public sealed record UpdateCourseRequest(
     [FromForm(Name = "seats")] string? Seats,
     [FromForm(Name = "price")] string? Price,
     [FromForm(Name = "value")] int Value,
-    [FromForm(Name = "curriculum")] List<CurriculumSectionDto>? Curriculum,
+    [FromForm(Name = "curriculum")] string? Curriculum,
     [FromForm(Name = "insight")]
     [Required(ErrorMessage = "Insight is required and cannot be empty.")]
     string Insight
