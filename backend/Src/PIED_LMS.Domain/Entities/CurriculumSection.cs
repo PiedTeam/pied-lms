@@ -1,10 +1,12 @@
+using System.Text.Json.Serialization;
+
 namespace PIED_LMS.Domain.Entities;
 
 public class CurriculumSection
 {
     public string Title { get; private set; }
     public string Summary { get; private set; }
-    public IReadOnlyList<string> Content { get; private set; }
+    public List<string> Content { get; private set; }
 
     // Required for EF Core serialization/deserialization or default instantiation
     private CurriculumSection() 
@@ -14,6 +16,7 @@ public class CurriculumSection
         Content = null!;
     }
 
+    [JsonConstructor]
     public CurriculumSection(string title, string summary, List<string> content)
     {
         if (string.IsNullOrWhiteSpace(title))
@@ -27,6 +30,6 @@ public class CurriculumSection
 
         Title = title;
         Summary = summary;
-        Content = new List<string>(content).AsReadOnly();
+        Content = new List<string>(content);
     }
 }
