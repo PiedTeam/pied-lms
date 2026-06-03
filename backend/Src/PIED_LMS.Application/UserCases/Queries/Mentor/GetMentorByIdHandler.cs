@@ -2,6 +2,7 @@ using PIED_LMS.Contract.Services.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Contract.Abstractions.Shared;
+using PIED_LMS.Contract.Abstractions.Storage;
 using PIED_LMS.Contract.Services.Mentor;
 using PIED_LMS.Domain.Abstractions;
 using PIED_LMS.Domain.Constants;
@@ -10,7 +11,9 @@ using MediatR;
 
 namespace PIED_LMS.Application.UserCases.Queries.Mentor;
 
-public class GetMentorByIdHandler(UserManager<ApplicationUser> userManager) 
+public class GetMentorByIdHandler(
+    UserManager<ApplicationUser> userManager,
+    IFileStorageService fileStorageService) 
     : IRequestHandler<GetMentorByIdQuery, ServiceResponse<MentorDto>>
 {
     public async Task<ServiceResponse<MentorDto>> Handle(GetMentorByIdQuery request, CancellationToken cancellationToken)
@@ -23,13 +26,18 @@ public class GetMentorByIdHandler(UserManager<ApplicationUser> userManager)
         if (!roles.Contains(RoleConstants.Mentor))
             return new ServiceResponse<MentorDto>(false, "User is not a mentor");
 
+        string? profilePicUrl = null;
+        if (!string.IsNullOrWhiteSpace(user.ProfilePictureUrl))
+            try { profilePicUrl = await fileStorageService.GetFileUrlAsync(user.ProfilePictureUrl); }
+            catch { profilePicUrl = user.ProfilePictureUrl; }
+
         var mentorDto = new MentorDto(
             user.Id,
             user.FirstName,
             user.LastName,
             user.Email ?? string.Empty,
             user.Bio,
-            user.ProfilePictureUrl,
+            profilePicUrl,
             user.IsActive
         );
 
