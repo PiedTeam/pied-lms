@@ -109,15 +109,24 @@ public class GetCoursesHandler(
                     .ToList();
             }
 
-        // Map teachers to CourseTeacherDto
-        var mentorDtos = course.Mentors.Select(t => new CourseMentorDto(
+        // Map mentors to CourseMentorDto with full S3 URL for profile pictures
+        var mentorDtos = new List<CourseMentorDto>();
+        foreach (var t in course.Mentors)
+        {
+            string? profilePicUrl = null;
+            if (!string.IsNullOrWhiteSpace(t.ProfilePictureUrl))
+                try { profilePicUrl = await fileStorageService.GetFileUrlAsync(t.ProfilePictureUrl); }
+                catch { profilePicUrl = t.ProfilePictureUrl; }
+
+            mentorDtos.Add(new CourseMentorDto(
                 t.Id,
                 t.FirstName ?? string.Empty,
                 t.LastName ?? string.Empty,
                 t.Email ?? string.Empty,
                 t.Bio,
-                t.ProfilePictureUrl
-            )).ToList();
+                profilePicUrl
+            ));
+        }
 
         var curriculumDto = course.Curriculum?.Select(c => 
             new CurriculumSectionDto(c.Title, c.Summary, c.Content.ToList())).ToList() ?? new List<CurriculumSectionDto>();

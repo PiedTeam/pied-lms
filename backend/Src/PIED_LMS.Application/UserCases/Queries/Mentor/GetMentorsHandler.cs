@@ -2,6 +2,7 @@ using PIED_LMS.Contract.Services.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using PIED_LMS.Contract.Abstractions.Shared;
+using PIED_LMS.Contract.Abstractions.Storage;
 using PIED_LMS.Contract.Services.Mentor;
 using PIED_LMS.Domain.Constants;
 using PIED_LMS.Domain.Abstractions;
@@ -13,7 +14,8 @@ namespace PIED_LMS.Application.UserCases.Queries.Mentor;
 public class GetMentorsHandler(
     UserManager<ApplicationUser> userManager,
     RoleManager<ApplicationRole> roleManager,
-    IUnitOfWork unitOfWork) 
+    IUnitOfWork unitOfWork,
+    IFileStorageService fileStorageService) 
     : IRequestHandler<GetMentorsQuery, ServiceResponse<PagedResult<MentorDto>>>
 {
     private readonly UserManager<ApplicationUser> _userManager = userManager;
@@ -58,15 +60,24 @@ public class GetMentorsHandler(
             .Take(request.PageSize)
             .ToListAsync(cancellationToken);
 
-        var mentorDtos = mentors.Select(u => new MentorDto(
-            u.Id,
-            u.FirstName,
-            u.LastName,
-            u.Email ?? string.Empty,
-            u.Bio,
-            u.ProfilePictureUrl,
-            u.IsActive
-        )).ToList();
+        var mentorDtos = new List<MentorDto>();
+        foreach (var u in mentors)
+        {
+            string? profilePicUrl = null;
+            if (!string.IsNullOrWhiteSpace(u.ProfilePictureUrl))
+                try { profilePicUrl = await fileStorageService.GetFileUrlAsync(u.ProfilePictureUrl); }
+                catch { profilePicUrl = u.ProfilePictureUrl; }
+
+            mentorDtos.Add(new MentorDto(
+                u.Id,
+                u.FirstName,
+                u.LastName,
+                u.Email ?? string.Empty,
+                u.Bio,
+                profilePicUrl,
+                u.IsActive
+            ));
+        }
 
         var pagedResult = new PagedResult<MentorDto>(mentorDtos, totalCount, request.PageNumber, request.PageSize);
         return new ServiceResponse<PagedResult<MentorDto>>(true, "Mentors retrieved successfully", pagedResult);
