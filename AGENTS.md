@@ -598,6 +598,18 @@ dotnet ef migrations add MigrationName --project backend/Src/PIED_LMS.Persistenc
 
 ---
 
+## 👥 Agent-Specific Guides
+
+This AGENTS.md is the **shared foundation** for all agents. For agent-specific workflows, see:
+
+- **[AGENTS-Claude.md](./docs/agents/AGENTS-Claude.md)** — Guide for Claude AI Agent
+- **[AGENTS-Codex.md](./docs/agents/AGENTS-Codex.md)** — Guide for OpenAI Codex
+- **[AGENTS-AntiGravity.md](./docs/agents/AGENTS-AntiGravity.md)** — Guide for AntiGravity multi-agent platform
+
+Each guide builds on this shared foundation and adds agent-specific capabilities, limitations, and workflows.
+
+---
+
 ## ⚠️ Context Continuity Check
 
 If working across multiple conversations:
