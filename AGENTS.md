@@ -15,6 +15,61 @@ When starting work on this project, read these files **in order**:
 
 ---
 
+## 📁 Project Structure
+
+Quick reference for finding things:
+
+```
+backend/
+├── Src/
+│   ├── PIED_LMS.API/                 # ← Start here: Program.cs, middlewares
+│   │   ├── Program.cs
+│   │   ├── DependencyInjection.cs
+│   │   ├── Filters/                  # Swagger filters
+│   │   └── Middlewares/              # GlobalExceptionHandler
+│   │
+│   ├── PIED_LMS.Presentation/        # ← User-facing endpoints
+│   │   ├── APIs/                     # [Feature]Endpoints.cs files
+│   │   ├── Abstractions/             # ApiEndpoint base class
+│   │   └── Extensions/               # Routing helpers
+│   │
+│   ├── PIED_LMS.Application/         # ← Business logic (Commands & Queries)
+│   │   ├── UserCases/
+│   │   │   ├── Commands/[Feature]/   # Write operations
+│   │   │   └── Queries/[Feature]/    # Read operations
+│   │   ├── Behaviors/                # ValidationBehavior
+│   │   ├── Exceptions/               # Custom exceptions
+│   │   └── DependencyInjection.cs    # MediatR & validator setup
+│   │
+│   ├── PIED_LMS.Contract/            # ← DTOs & response models
+│   │   ├── Services/                 # Service DTOs
+│   │   └── Abstractions/             # Base interfaces
+│   │
+│   ├── PIED_LMS.Domain/              # ← Pure domain logic
+│   │   ├── Entities/                 # Domain models
+│   │   ├── Exceptions/               # Domain exceptions
+│   │   └── Abstractions/             # Interfaces (IRepository, etc)
+│   │
+│   ├── PIED_LMS.Persistence/         # ← Database access
+│   │   ├── PiedLmsDbContext.cs       # EF Core DbContext
+│   │   ├── Migrations/               # EF migrations
+│   │   ├── Repositories/             # IRepository implementations
+│   │   └── Seeders/                  # Database seeding
+│   │
+│   └── PIED_LMS.Infrastructure/      # ← External services
+│       └── Services/                 # Email, JWT, Storage, etc
+│
+└── monitoring/                        # Prometheus & Grafana
+```
+
+**Finding things:**
+- Need to add endpoint? → `PIED_LMS.Presentation/APIs/`
+- Need to add business logic? → `PIED_LMS.Application/UserCases/[Commands|Queries]/`
+- Need to map data? → Find `MapTo*()` method in the handler
+- Need to create database migration? → `PIED_LMS.Persistence/Migrations/`
+
+---
+
 ## 🏗️ Architecture
 
 **Pattern:** Clean Architecture + CQRS + Minimal APIs
@@ -252,6 +307,244 @@ GlobalExceptionHandler automatically logs:
 Example log:
 ```
 [14:23:45 ERR] An unhandled exception occurred: Course with ID '123e4567-e89b-12d3-a456-426614174000' not found
+```
+
+---
+
+## 🔄 Data Mapping Pattern
+
+The backend uses **manual mapping** (no AutoMapper). Each handler defines its own mapping logic.
+
+### How to Map
+
+**Inside Query/Command Handler:**
+
+```csharp
+public class GetCourseByIdHandler : IRequestHandler<GetCourseByIdQuery, ServiceResponse<CourseDto>>
+{
+    public async Task<ServiceResponse<CourseDto>> Handle(GetCourseByIdQuery request, CancellationToken ct)
+    {
+        var course = await unitOfWork.Repository<Course>()
+            .FindAll()
+            .FirstOrDefaultAsync(c => c.Id == request.Id, ct);
+        
+        if (course is null)
+            return new ServiceResponse<CourseDto>(false, "Course not found");
+        
+        // Map using private helper method
+        var dto = await MapToCourseDto(course, ct);
+        
+        return new ServiceResponse<CourseDto>(true, "Success", dto);
+    }
+    
+    private async Task<CourseDto> MapToCourseDto(Course course, CancellationToken ct)
+    {
+        // Handle nullable fields
+        var tags = course.Tags?.Split(',').ToList() ?? new List<string>();
+        
+        // Call external services if needed
+        var thumbnailUrl = await fileStorageService.GetFileUrlAsync(course.ThumbnailPath);
+        
+        // Map nested objects
+        var mentors = course.Mentors.Select(m => new MentorDto 
+        { 
+            Id = m.Id, 
+            Name = m.FirstName 
+        }).ToList();
+        
+        return new CourseDto(
+            course.Id,
+            course.Title,
+            course.Description,
+            thumbnailUrl,
+            tags,
+            mentors
+        );
+    }
+}
+```
+
+### Mapping Rules
+
+✅ **DO:**
+- Create `MapTo*()` private methods inside handlers
+- Handle nulls and edge cases in mapping
+- Call external services (like S3 file paths) during mapping
+- Return early if validation fails before mapping
+- Use record types for DTOs (immutable)
+
+❌ **DON'T:**
+- Don't use AutoMapper (not in this project)
+- Don't map in Endpoints (mapping happens in handlers)
+- Don't put mapping logic in Domain layer
+- Don't ignore exceptions during mapping (let them bubble up to GlobalExceptionHandler)
+- Don't return Domain entities directly to client (always use DTOs)
+
+### ServiceResponse<T> Pattern
+
+All query/command handlers return standardized responses:
+
+```csharp
+// Success response
+return new ServiceResponse<CourseDto>(
+    success: true,
+    message: "Course retrieved successfully",
+    data: courseDto
+);
+
+// Failure response
+return new ServiceResponse<CourseDto>(
+    success: false,
+    message: "Course not found",
+    data: null
+);
+
+// Validation failure (if not using ServiceResponse<T>)
+throw new ValidationException(errors);
+```
+
+Response structure:
+```json
+{
+  "success": true,
+  "message": "Course retrieved successfully",
+  "data": { "id": "...", "title": "..." },
+  "errors": null,
+  "statusCode": 200
+}
+```
+
+---
+
+## ⚠️ DO NOT (Anti-Patterns)
+
+Absolutely **avoid these patterns** in this codebase:
+
+### ❌ Exception Handling
+
+```csharp
+// ❌ DON'T: Catch and ignore
+try { ... } catch { }
+
+// ❌ DON'T: Catch Exception globally
+try { ... } catch (Exception ex) { Log(ex); }
+
+// ❌ DON'T: Return errors instead of throwing
+if (course is null) return "Course not found"; // No! Throw instead.
+
+// ❌ DON'T: Generic Exception
+throw new Exception("Something went wrong");
+```
+
+### ❌ Data Access
+
+```csharp
+// ❌ DON'T: Query database in Domain layer
+public class Course
+{
+    public List<Student> GetStudents() => db.Students.ToList(); // NO!
+}
+
+// ❌ DON'T: Multiple separate queries (N+1 problem)
+var courses = await repo.GetAllAsync();
+foreach (var course in courses)
+{
+    course.Mentors = await repo.GetMentorsAsync(course.Id); // NO! Use Include()
+}
+
+// ❌ DON'T: Forget navigation properties
+.FindAll() // ❌ Missing .Include(c => c.Mentors)
+```
+
+### ❌ Validation
+
+```csharp
+// ❌ DON'T: Validate in Endpoint
+app.MapPost("/courses", async (request) =>
+{
+    if (string.IsNullOrEmpty(request.Name)) // NO! Validator should do this
+        return Results.BadRequest();
+});
+
+// ❌ DON'T: Validate in Handler
+public class CreateCourseHandler
+{
+    public async Task<ServiceResponse<Guid>> Handle(CreateCourseCommand cmd, CancellationToken ct)
+    {
+        if (cmd.Name is null) return new ServiceResponse(...); // NO! Validator runs first
+    }
+}
+
+// ❌ DON'T: Forget validator registration
+// Validator must be registered for ValidationBehavior to pick it up
+```
+
+### ❌ Mapping
+
+```csharp
+// ❌ DON'T: Return Domain entity directly
+return new CourseDto { /* copy from entity */ }; // ❌ Missing mapping logic
+
+// ❌ DON'T: Hardcode file URLs
+var url = "https://s3.amazonaws.com/file.jpg"; // ❌ Use fileStorageService
+
+// ❌ DON'T: Map in Endpoint
+app.MapGet("/courses/{id}", async (IMediator mediator, Guid id) =>
+{
+    var course = await mediator.Send(new GetCourseByIdQuery(id));
+    return new { course.Id, course.Title }; // ❌ Mapping should be in handler
+});
+```
+
+### ❌ Dependency Injection
+
+```csharp
+// ❌ DON'T: Use ServiceLocator pattern
+var service = ServiceProvider.GetRequiredService<IEmailService>();
+
+// ❌ DON'T: Create instances with `new`
+var logger = new Logger(); // ❌ Should be injected
+
+// ❌ DON'T: Register service twice
+services.AddScoped<IRepo, Repo>();
+services.AddScoped<IRepo, DifferentRepo>(); // ❌ Duplicate registration
+```
+
+### ❌ Presentation Layer
+
+```csharp
+// ❌ DON'T: Business logic in Endpoints
+app.MapPost("/courses", async (request) =>
+{
+    var courseExists = await db.Courses.AnyAsync(c => c.Title == request.Title);
+    // ❌ This should be in a Command handler
+});
+
+// ❌ DON'T: Complex conditionals in Endpoints
+if (user.Role == "Admin" && course.Status == "Draft")
+{
+    // ❌ Move to business logic
+}
+
+// ❌ DON'T: Multiple endpoints for same operation
+app.MapPost("/courses", CreateCourse);
+app.MapPost("/courses/create", CreateCourse); // ❌ Redundant
+```
+
+### ❌ Database & Migrations
+
+```csharp
+// ❌ DON'T: Direct SQL in code
+await db.Database.ExecuteSqlRawAsync("UPDATE Courses SET ...");
+
+// ❌ DON'T: Forget migrations
+// Make schema changes and don't create migration - data loss risk!
+
+// ❌ DON'T: Hardcoded connection strings
+var conn = "Server=...;Password=123"; // ❌ Use appsettings.json
+
+// ❌ DON'T: Shadow properties without documentation
+modelBuilder.Entity<Course>().Property(c => c.InternalFlag); // ❌ Needs comment
 ```
 
 ---
