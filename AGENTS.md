@@ -98,6 +98,164 @@ dotnet ef database update
 
 ---
 
+## 🚨 Exception Handling Pattern
+
+The backend uses a **centralized exception handling** approach with automatic HTTP mapping.
+
+### How It Works
+
+```
+Handler throws exception
+    ↓
+GlobalExceptionHandler catches it
+    ↓
+Maps to HTTP status code (400, 401, 404, 422, 500)
+    ↓
+Returns ProblemDetails JSON response
+    ↓
+Automatically logged
+```
+
+### Exception Hierarchy
+
+```
+DomainException (base - has Title & Message)
+├── NotFoundException (400)
+├── BadRequestException (400)
+├── ValidationException (422)
+└── IdentityException.TokenException (401)
+```
+
+### Creating Custom Exceptions
+
+**DO:** Create concrete exception classes in Domain layer
+
+```csharp
+// Domain/Exceptions/CourseNotFoundException.cs
+public sealed class CourseNotFoundException(Guid courseId) 
+    : NotFoundException($"Course with ID '{courseId}' not found");
+
+// Domain/Exceptions/InvalidCourseDataException.cs
+public sealed class InvalidCourseDataException(string reason)
+    : BadRequestException($"Invalid course data: {reason}");
+```
+
+**Use in handlers:**
+
+```csharp
+public class GetCourseByIdQueryHandler(IUnitOfWork unitOfWork)
+    : IRequestHandler<GetCourseByIdQuery, CourseResponse>
+{
+    public async Task<CourseResponse> Handle(GetCourseByIdQuery request, CancellationToken ct)
+    {
+        var course = await unitOfWork.CourseRepository.GetByIdAsync(request.CourseId, ct);
+        
+        if (course is null)
+            throw new CourseNotFoundException(request.CourseId); // ✅ Specific exception
+        
+        return new CourseResponse { Id = course.Id, Name = course.Name };
+    }
+}
+```
+
+### Validation Exception Handling
+
+**ValidationBehavior** automatically:
+- Runs all validators BEFORE handler
+- If validation fails:
+  - Throws `ValidationException` (if not using `ServiceResponse<T>`)
+  - Returns failed `ServiceResponse<T>` (if handler returns `ServiceResponse<T>`)
+- GlobalExceptionHandler converts to HTTP 422 response
+
+**Example response:**
+```json
+{
+  "status": 422,
+  "title": "Validation Error",
+  "detail": "One or more validation errors occurred",
+  "type": "ValidationException",
+  "errors": {
+    "Name": ["Name is required"],
+    "Description": ["Description must be at least 10 characters"]
+  }
+}
+```
+
+### HTTP Status Code Mapping
+
+| Exception Type | HTTP Status | Use Case |
+|---|---|---|
+| `NotFoundException` | 404 | Resource not found |
+| `BadRequestException` | 400 | Invalid input/business rule violated |
+| `ValidationException` | 422 | Validation errors |
+| `IdentityException.TokenException` | 401 | Auth token invalid/expired |
+| `OperationCanceledException` | 499 | Client closed request |
+| Unhandled Exception | 500 | Server error |
+
+### ❌ DON'T Do This
+
+```csharp
+// ❌ Generic Exception - loses context
+throw new Exception("Course not found");
+
+// ❌ Try-catch in every endpoint - redundant with global handler
+try { 
+    await handler.Handle(...);
+} catch (Exception ex) { 
+    // Don't do this - global handler has it covered
+}
+
+// ❌ Catch and ignore - bugs silently
+try { ... } catch { }
+```
+
+### ✅ DO This
+
+```csharp
+// ✅ Specific exception - clear error type
+throw new CourseNotFoundException(courseId);
+
+// ✅ Let global handler catch - centralized handling
+public async Task<CourseResponse> Handle(GetCourseByIdQuery request, CancellationToken ct)
+{
+    var course = await repo.GetByIdAsync(request.CourseId, ct);
+    if (course is null)
+        throw new CourseNotFoundException(request.CourseId);
+    return Map(course);
+}
+
+// ✅ For transactional operations with partial failures:
+var errors = new List<string>();
+foreach (var item in items)
+{
+    try 
+    {
+        await ProcessItemAsync(item);
+    }
+    catch (Exception ex)
+    {
+        errors.Add($"Item {item.Id}: {ex.Message}");
+    }
+}
+
+if (errors.Any())
+    return ServiceResponse<T>.FailureResponse(string.Join("; ", errors));
+```
+
+### Logging
+
+GlobalExceptionHandler automatically logs:
+- **Server errors (5xx):** `LogError()` with full stack trace
+- **Client errors (4xx):** `LogWarning()` 
+- **Cancelled requests (499):** Not logged (expected)
+
+Example log:
+```
+[14:23:45 ERR] An unhandled exception occurred: Course with ID '123e4567-e89b-12d3-a456-426614174000' not found
+```
+
+---
+
 ## 👤 Addressing Convention
 
 **IMPORTANT:** When working with this repository, address the user as **"chồng yêu dấu"** (honey/sweetheart in Vietnamese).
